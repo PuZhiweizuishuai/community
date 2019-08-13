@@ -10,6 +10,30 @@ import java.util.HashMap;
  */
 public class StringUtil {
     /**
+     * 密码加密
+     * */
+    public static String BCryptPassword(String password) {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        return bCryptPasswordEncoder.encode(password);
+    }
+
+    /**
+     * 与数据库中的密码进行对比
+     * */
+    public static boolean judgePassword(String rawPassword, String encodedPassword) {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        return bCryptPasswordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    /**
+     * 验证密码格式
+     * */
+    public static boolean checkPassword(String password) {
+        String regx = "^([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){6,30}$";
+        return password.matches(regx);
+    }
+
+    /**
      * 返回处理结果
      */
     public static HashMap<String, Object> dealResultMessage(boolean success, String msg) {
@@ -65,5 +89,14 @@ public class StringUtil {
             return -1;
         }
     }
+
+    /**
+     * 验证邮箱
+     * */
+    public static boolean checkEmail(String email) {
+        String reg="^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        return email.matches(reg);
+    }
+
 
 }

@@ -17,7 +17,5 @@
 [BootStrap4 中文文档]("http://bs4.ntp.org.cn/")
 
 ## 工具
-[EasyCaptcha java验证码]("https://gitee.com/whvse/EasyCaptcha")
-
 [Tempus Dominus]("https://tempusdominus.github.io/bootstrap-4/")
 

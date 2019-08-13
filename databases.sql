@@ -1,5 +1,6 @@
 -- 创建数据库
 create database community;
+use community;
 
 --查看数据库编码
 show variables LIKE 'collation_%';
@@ -20,7 +21,7 @@ CREATE TABLE users
     age int,
     birthday varchar(19),
     school varchar(20),
-    careatTime VARCHAR(19),
+    creationTime VARCHAR(19),
     lastTime VARCHAR(19),
     headUrl VARCHAR(30),
     PRIMARY KEY (id)
@@ -32,6 +33,12 @@ ALTER TABLE community.users ADD UNIQUE (userName);
 ALTER TABLE community.users ADD UNIQUE (email);
 
 --设置主键自增
---alter table users modify userId int auto_increment;
+alter table users modify id int auto_increment;
 --设置主键从1000开始自增
-alter table users modify id int AUTO_INCREMENT=1000;
+alter table users AUTO_INCREMENT=1000;
+
+grant all privileges on community.* to 506@% identified by '123456';
+
+grant all privileges on community.* to 506@% identified by '123456';
+
+

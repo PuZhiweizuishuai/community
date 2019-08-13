@@ -1,6 +1,9 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.dto.User;
+import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -16,6 +19,13 @@ import java.util.HashMap;
  */
 @RestController
 public class SignInController {
+    private final UserService userService;
+
+    @Autowired
+    public SignInController(UserService userService) {
+        this.userService = userService;
+    }
+
     /**
      * 返回登陆视图
      * */
@@ -32,6 +42,21 @@ public class SignInController {
     @PostMapping("/api/signIn")
     @ResponseBody
     public HashMap<String, Object> judgeSignIn(String email, String password, String remember) {
-        return StringUtil.dealResultMessage(false,email+"-" + password + "-" + remember);
+        User user = userService.selectUserByEmail(email);
+        if(user != null) {
+            if(StringUtil.judgePassword(password, user.getPassword())) {
+                // TODO 判断是否记住密码
+                user.setPassword(null);
+                HashMap<String, Object> longUserHashMap = new HashMap<>(2);
+                longUserHashMap.put("msg", true);
+                longUserHashMap.put(email, user);
+                // TODO 页面跳转
+                return longUserHashMap;
+            } else {
+                return StringUtil.dealResultMessage(false, "密码错误！");
+            }
+        } else {
+            return StringUtil.dealResultMessage(false, "用户不存在，请检查邮箱！");
+        }
     }
 }

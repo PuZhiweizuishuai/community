@@ -40,7 +40,7 @@ public class User {
     @NotNull(message = "性别不能为空")
     private String sex;
     private String school;
-    private String createTime;
+    private String creationTime;
     private String headUrl;
     private String lastTime;
 
@@ -48,7 +48,7 @@ public class User {
 
     }
 
-    public User(long id, String userName, String password, String email, String birthday, String sex, String school, String createTime, String headUrl, String lastTime) {
+    public User(long id, String userName, String password, String email, String birthday, String sex, String school, String creationTime, String headUrl, String lastTime) {
         this.id = id;
         this.userName = userName;
         this.password = password;
@@ -56,7 +56,7 @@ public class User {
         this.birthday = birthday;
         this.sex = sex;
         this.school = school;
-        this.createTime = createTime;
+        this.creationTime = creationTime;
         this.headUrl = headUrl;
         this.lastTime = lastTime;
     }
@@ -109,12 +109,12 @@ public class User {
         this.school = school;
     }
 
-    public String getCreateTime() {
-        return createTime;
+    public String getcreationTime() {
+        return creationTime;
     }
 
-    public void setCreateTime(String createTime) {
-        this.createTime = createTime;
+    public void setCreateTime(String creationTime) {
+        this.creationTime = creationTime;
     }
 
     public String getHeadUrl() {
