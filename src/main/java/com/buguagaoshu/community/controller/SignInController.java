@@ -42,6 +42,7 @@ public class SignInController {
     @PostMapping("/api/signIn")
     @ResponseBody
     public HashMap<String, Object> judgeSignIn(String email, String password, String remember) {
+        System.out.println(remember);
         User user = userService.selectUserByEmail(email);
         if(user != null) {
             if(StringUtil.judgePassword(password, user.getPassword())) {

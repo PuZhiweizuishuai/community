@@ -13,7 +13,7 @@ public class CommunityApplicationTests {
     @Test
     public void contextLoads() {
         String pwd1 = "123456";
-        String pwd2 = "pzw123456";
+        String pwd2 = "wer123456";
 
         String pwd3 = StringUtil.BCryptPassword(pwd1);
         String pwd4 = StringUtil.BCryptPassword(pwd2);

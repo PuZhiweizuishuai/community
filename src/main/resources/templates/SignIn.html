@@ -24,8 +24,8 @@
         html,
         body {
             height: 100%;
-            background-size: cover;
-            background-image: url("image/101-desktop-wallpaper.png");
+            //background-size: cover;
+            //background-image: url("image/101-desktop-wallpaper.png");
         }
 
         body {
@@ -77,33 +77,51 @@
 <body class="text-center">
 
 
-    <form class="form-signin" name="user" action="/api/signIn" method="post">
-        <img class="mb-4" src="favicon.png" alt="" width="50%" height="50%">
-        <h1 class="h3 mb-3 font-weight-normal" th:text="#{index.signin.welcome}">Please sign in</h1>
-        <!-- 邮箱 -->
-        <div class="form-group">
-            <input type="email" name="email" class="form-control" id="InputEmail" aria-describedby="emailHelp"
-                   th:placeholder="#{index.Enteremail}">
-            <!-- 错误提示信息 -->
-            <small id="emailHelp" class="form-text text-muted"></small>
+<form class="form-signin" name="user" action="/api/signIn" method="post">
+    <img class="mb-4" src="favicon.png" alt="" width="50%" height="50%">
+    <h1 class="h3 mb-3 font-weight-normal" th:text="#{index.signin.welcome}">Please sign in</h1>
+    <div class="row mb-2">
+        <div class="col">
+            <a href="/" id="a-back"><button onclick="addLocaleUrl('a-back')" type="button" class="btn btn-secondary btn-sm">[[#{index.back}]]</button></a>
         </div>
-
-        <!-- 密码 -->
-        <div class="form-group">
-            <input type="password" name="password" class="form-control" id="InputPassword"
-                   th:placeholder="#{index.Password}">
-            <small id="passwordMessage" class="form-text text-muted"></small>
+        <div class="col">
+            <a href="/sign-up" id="a-sign-up"><button onclick="addLocaleUrl('a-sign-up')" type="button" class="btn btn-success btn-sm">[[#{index.signup}]]</button></a>
         </div>
+    </div>
+    <!-- 邮箱 -->
+    <div class="form-group">
+        <input type="email" name="email" class="form-control" id="InputEmail" aria-describedby="emailHelp"
+               th:placeholder="#{index.Enteremail}">
+        <!-- 错误提示信息 -->
+        <small id="emailHelp" class="form-text text-muted"></small>
+    </div>
 
-        <div class="checkbox mb-3">
-            <label>
-                <input name="remember" type="checkbox" value="remember-me" th:text="#{index.signup.rember}">
-            </label>
+    <!-- 密码 -->
+    <div class="form-group">
+        <input type="password" name="password" class="form-control" id="InputPassword"
+               th:placeholder="#{index.Password}">
+        <small id="passwordMessage" class="form-text text-muted"></small>
+    </div>
+
+    <!--待添加验证码 -->
+
+    <div class="row">
+        <div class="col">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="checkbox" id="rememberBox" name="remember" class="custom-control-input" value="remember-me">
+                <label class="custom-control-label" for="rememberBox">[[#{index.signup.rember}]]</label>
+            </div>
         </div>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-        <p class="mt-5 mb-3 text-muted">&copy; 2019-2019</p>
-    </form>
+        <div class="col">
+            <button type="button" class="btn btn-link">[[#{index.forgetPassword}]]</button>
+        </div>
+    </div>
 
 
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+    <p class="mt-5 mb-3 text-muted">&copy; 2019-2019</p>
+</form>
+
+<script src="/js/url.js" type="text/javascript"></script>
 </body>
 </html>
