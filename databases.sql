@@ -37,8 +37,17 @@ alter table users modify id int auto_increment;
 --设置主键从1000开始自增
 alter table users AUTO_INCREMENT=1000;
 
-grant all privileges on community.* to 506@% identified by '123456';
+--用户权限表
+create table userPermission
+(
+    id int,
+    power int default 1,
+    modifier varchar(20) not null,
+    updateTime varchar(19) not null,
+    constraint privileges_FK foreign key(id) references users(id)
+);
 
-grant all privileges on community.* to 506@% identified by '123456';
-
+alter table userPermission add updateTime varchar(19) not null ;
+alter table userPermission change  column modifer modifier varchar(20)
+insert into userPermission values (1,0);
 

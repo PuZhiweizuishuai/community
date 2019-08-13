@@ -30,7 +30,7 @@ public interface UserMapper {
     /**
      * 通过用户 ID 删除用户信息
      * @param id 用户 ID
-     * @return 行号
+     * @return 1
      * */
     @Delete("delete from users where id=#{id}")
     int deleteUserById(long id);
@@ -38,7 +38,7 @@ public interface UserMapper {
     /**
      * 添加新用户
      * @param user 新用户类
-     * @return 行号
+     * @return 1
      * */
     @Insert("insert into users(userName, password, email, sex, age, birthday, school, creationTime, lastTime, headUrl) " +
             "values(#{userName}, #{password}, #{email}, #{sex}, #{age}, #{birthday}, #{school}, #{creationTime}, #{lastTime}, #{headUrl})")

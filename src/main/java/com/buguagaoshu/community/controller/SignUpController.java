@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.dto.User;
+import com.buguagaoshu.community.dto.UserPermission;
+import com.buguagaoshu.community.mapper.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +26,12 @@ import java.util.List;
 public class SignUpController {
     private final UserService userService;
 
-    /**
-     * 注入 userService
-     */
+    private final UserPermissionService userPermissionService;
+
     @Autowired
-    public SignUpController(UserService userService) {
+    public SignUpController(UserService userService, UserPermissionService userPermissionService) {
         this.userService = userService;
+        this.userPermissionService = userPermissionService;
     }
 
 
@@ -86,8 +88,11 @@ public class SignUpController {
 
         // 插入数据
         if (userService.insertUser(user) == 1) {
-            return StringUtil.dealResultMessage(true, "注册成功！");
             // TODO 页面跳转
+            // 写入权限信息
+            UserPermission userPermission = new UserPermission(user.getId(),1,"0", StringUtil.getNowTime());
+            userPermissionService.insertUserPermission(userPermission);
+            return StringUtil.dealResultMessage(true, "注册成功！");
         } else {
             return StringUtil.dealResultMessage(false, "该邮箱已被注册，请重新输入，，或登陆");
         }

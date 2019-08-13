@@ -3,6 +3,12 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.dto.User;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AccountException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,22 +48,26 @@ public class SignInController {
     @PostMapping("/api/signIn")
     @ResponseBody
     public HashMap<String, Object> judgeSignIn(String email, String password, String remember) {
-        System.out.println(remember);
-        User user = userService.selectUserByEmail(email);
-        if(user != null) {
-            if(StringUtil.judgePassword(password, user.getPassword())) {
-                // TODO 判断是否记住密码
-                user.setPassword(null);
-                HashMap<String, Object> longUserHashMap = new HashMap<>(2);
-                longUserHashMap.put("msg", true);
-                longUserHashMap.put(email, user);
-                // TODO 页面跳转
-                return longUserHashMap;
-            } else {
-                return StringUtil.dealResultMessage(false, "密码错误！");
-            }
-        } else {
+        // 获取 Subject
+        Subject subject = SecurityUtils.getSubject();
+
+        // 封装用户数据
+        UsernamePasswordToken token = new UsernamePasswordToken(email, password);
+
+        // 执行登陆方法
+        try {
+            // 没有异常就是登陆成功
+            subject.login(token);
+            return StringUtil.dealResultMessage(true, "chengggeng");
+        } catch (UnknownAccountException e) {
+            // UnknownAccountException 用户名不存在
             return StringUtil.dealResultMessage(false, "用户不存在，请检查邮箱！");
+        } catch (IncorrectCredentialsException e2) {
+            // IncorrectCredentialsException 密码错误
+            return StringUtil.dealResultMessage(false, "密码错误！");
         }
+
+
+
     }
 }
