@@ -45,4 +45,9 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     public int deleteOnlineUserById(long id) {
         return onlineUserMapper.deleteOnlineUserById(id);
     }
+
+    @Override
+    public int deleteOnlineUserByToken(String token) {
+        return onlineUserMapper.deleteOnlineUserByToken(token);
+    }
 }

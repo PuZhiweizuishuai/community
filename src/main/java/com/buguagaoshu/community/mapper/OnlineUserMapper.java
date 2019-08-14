@@ -47,4 +47,12 @@ public interface OnlineUserMapper {
      * */
     @Delete("delete from onlineUser where id=#{id}")
     int deleteOnlineUserById(long id);
+
+    /**
+     * 删除用户在线记录
+     * @param token 用户token
+     * @return 结果
+     * */
+    @Delete("delete from onlineUser where token=#{token}")
+    int deleteOnlineUserByToken(@Param("token") String token);
 }

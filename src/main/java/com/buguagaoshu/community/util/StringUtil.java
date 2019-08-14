@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.util;
 
+import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -105,6 +106,28 @@ public class StringUtil {
     public static String getUUID() {
         UUID uuid = UUID.randomUUID();
         return uuid.toString();
+    }
+
+    /**
+     * 页面跳转的语言参数
+     * @param url 要跳转的页面
+     * @param isRedirect 是否重定向
+     * */
+    public static String jumpWebLangeParameter(String url , boolean isRedirect,
+                                               HttpServletRequest request) {
+        StringBuffer stringBuffer = new StringBuffer();
+        if(isRedirect) {
+            stringBuffer.append("redirect:");
+        }
+        String l = request.getParameter("l");
+        if(l != null && l.equals("en-US")) {
+
+            stringBuffer.append(url);
+            stringBuffer.append("?l=en-US");
+        } else {
+            stringBuffer.append(url);
+        }
+        return stringBuffer.toString();
     }
 
 

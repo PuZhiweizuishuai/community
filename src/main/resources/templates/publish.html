@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="shortcut icon" th:href="@{/favicon.png}"/>
     <link rel="bookmark" th:href="@{/favicon.png}"/>
-    <title th:text="#{index.title}">不挂高数社区</title>
+    <title th:text="#{index.writePost}">发布</title>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
     <script src="bootstrap/js/jquery-3.3.1.slim.min.js" type="text/javascript"></script>
     <script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
@@ -65,7 +65,7 @@
                 <a class="nav-link" href="#"
                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <img src="/image/icon/message.svg" width="28" height="28"/>
-                        [[#{index.message}]] <span class="badge badge-light">9</span>
+                    [[#{index.message}]] <span class="badge badge-light">9</span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <a class="dropdown-item" href="#" th:text="#{index.myhome}">我的主页</a>
@@ -81,7 +81,7 @@
                 <a class="nav-link" href="#"
                    role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <img src="/image/icon/publish.svg" width="30" height="30" />
-                   [[#{index.writePost}]]
+                    [[#{index.writePost}]]
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <a class="dropdown-item" href="/publish" id="publish-a" onclick="addLocaleUrl('publish-a')" th:text="#{index.issue}">问题</a>
@@ -115,6 +115,17 @@
         <a id="sign-up-a" href="/sign-up" th:if="${session.user == null}"><button type="button" onclick="addLocaleUrl('sign-up-a')" class="btn btn-success mx-2" th:text="#{index.signup}">注册</button></a>
     </div>
 </nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-xl-9" style="background-color: black;">
+            1 of 2
+        </div>
+        <div class="col">
+            2 of 2
+        </div>
+    </div>
+</div>
 
 <script src="/js/url.js" type="text/javascript"></script>
 </body>

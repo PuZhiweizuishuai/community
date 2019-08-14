@@ -20,7 +20,7 @@ public class CommunityApplicationTests {
         System.out.println("pwd1  " + pwd3 + "   " + pwd3.length());
         System.out.println("pwd2  " + pwd4 + "   " + pwd4.length());
         System.out.println(StringUtil.judgePassword(pwd2, pwd3));*/
-        System.out.println(StringUtil.getUUID());
+        //System.out.println(StringUtil.getUUID());
     }
 
 }

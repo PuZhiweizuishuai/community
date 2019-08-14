@@ -85,15 +85,15 @@ public class SignInController {
             // 更新登陆时间
             userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
             // 页面跳转
-            return "redirect:/";
+            return StringUtil.jumpWebLangeParameter("/", true, request);
         } catch (UnknownAccountException e) {
             // UnknownAccountException 用户名不存在
             model.addAttribute("emailMsg", "用户不存在，请检查邮箱！");
-            return "SignIn";
+            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
         } catch (IncorrectCredentialsException e2) {
             // IncorrectCredentialsException 密码错误
             model.addAttribute("pwdMsg", "密码错误！");
-            return "SignIn";
+            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
         }
     }
 }

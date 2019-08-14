@@ -39,4 +39,11 @@ public interface OnlineUserService {
      * @return 结果
      * */
     int deleteOnlineUserById(long id);
+
+    /**
+     * 删除用户在线记录
+     * @param token 用户token
+     * @return 结果
+     * */
+    int deleteOnlineUserByToken(String token);
 }

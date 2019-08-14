@@ -153,6 +153,10 @@
 
         if(password != "" && chheckEmail(email)) {
             var form = document.getElementById("signIn-form");
+            var l = GetQueryString('l');
+            if(l === 'en-US') {
+                form.action = form.action + "?l=" + l;
+            }
             form.submit();
         }
 
