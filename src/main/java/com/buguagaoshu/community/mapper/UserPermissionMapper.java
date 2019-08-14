@@ -1,6 +1,6 @@
 package com.buguagaoshu.community.mapper;
 
-import com.buguagaoshu.community.dto.UserPermission;
+import com.buguagaoshu.community.model.UserPermission;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
 

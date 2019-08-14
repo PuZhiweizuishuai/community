@@ -1,11 +1,10 @@
-package com.buguagaoshu.community.dto;
+package com.buguagaoshu.community.model;
 
 import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.Date;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -44,21 +43,10 @@ public class User {
     private String headUrl;
     private String lastTime;
 
+    private int power;
+
     public User() {
 
-    }
-
-    public User(long id, String userName, String password, String email, String birthday, String sex, String school, String creationTime, String headUrl, String lastTime) {
-        this.id = id;
-        this.userName = userName;
-        this.password = password;
-        this.email = email;
-        this.birthday = birthday;
-        this.sex = sex;
-        this.school = school;
-        this.creationTime = creationTime;
-        this.headUrl = headUrl;
-        this.lastTime = lastTime;
     }
 
     public long getId() {
@@ -93,6 +81,22 @@ public class User {
         this.email = email;
     }
 
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(String birthday) {
+        this.birthday = birthday;
+    }
+
     public String getSex() {
         return sex;
     }
@@ -109,11 +113,11 @@ public class User {
         this.school = school;
     }
 
-    public String getcreationTime() {
+    public String getCreationTime() {
         return creationTime;
     }
 
-    public void setCreateTime(String creationTime) {
+    public void setCreationTime(String creationTime) {
         this.creationTime = creationTime;
     }
 
@@ -133,19 +137,11 @@ public class User {
         this.lastTime = lastTime;
     }
 
-    public String getBirthday() {
-        return birthday;
+    public int getPower() {
+        return power;
     }
 
-    public void setBirthday(String birthday) {
-        this.birthday = birthday;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
+    public void setPower(int power) {
+        this.power = power;
     }
 }

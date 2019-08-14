@@ -14,6 +14,8 @@
 
 [mybatis 文档](http://www.mybatis.org/mybatis-3/zh/index.html)
 
+[mybatis-spring-boot-autoconfigure](http://www.mybatis.org/spring-boot-starter/mybatis-spring-boot-autoconfigure/)
+
 [Java web开发基础](http://jinxuliang.com/course/CoursePortal/Details/5a9268a9a664d72f041e0a6a)
 
 [Apache Shiro 10分钟教程](http://shiro.apache.org/10-minute-tutorial.html)

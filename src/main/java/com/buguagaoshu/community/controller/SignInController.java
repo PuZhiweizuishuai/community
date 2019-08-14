@@ -1,22 +1,28 @@
 package com.buguagaoshu.community.controller;
 
-import com.buguagaoshu.community.dto.User;
-import com.buguagaoshu.community.dto.UserPermission;
+import com.buguagaoshu.community.model.OnlineUser;
+import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserPermission;
+import com.buguagaoshu.community.service.OnlineUserService;
+import com.buguagaoshu.community.service.UserPermissionService;
+import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -25,6 +31,19 @@ import java.util.HashMap;
  */
 @Controller
 public class SignInController {
+    private final UserService userService;
+
+    private final UserPermissionService userPermissionService;
+
+    private final OnlineUserService onlineUserService;
+
+    @Autowired
+    public SignInController(UserService userService, UserPermissionService userPermissionService, OnlineUserService onlineUserService) {
+        this.userService = userService;
+        this.userPermissionService = userPermissionService;
+        this.onlineUserService = onlineUserService;
+    }
+
     /**
      * 返回登陆视图
      * */
@@ -36,7 +55,7 @@ public class SignInController {
 
     @RequestMapping(value = "/sign-in-controller", method = RequestMethod.POST)
     public String signInAndSkip(String email, String password, String remember,
-                                Model model, HttpServletRequest request) {
+                                Model model, HttpServletRequest request, HttpServletResponse response) {
         if(email == null && password == null) {
             model.addAttribute("emailMsg", "密码和邮箱不能为空");
         }
@@ -53,7 +72,18 @@ public class SignInController {
             // 没有异常就是登陆成功
             subject.login(token);
             User user = (User) subject.getPrincipal();
-            request.getSession().setAttribute("user", user);
+            // 写入权限
+            UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
+            user.setPower(userPermission.getPower());
+            // 写入在线表
+            onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), user.getPassword(), IpUtil.getIpAddr(request), StringUtil.getNowTime()));
+            //写入 cookie
+            response.addCookie(new Cookie("token", user.getPassword()));
+
+            user.setPassword("保密");
+
+            // 更新登陆时间
+            userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
             // 页面跳转
             return "redirect:/";
         } catch (UnknownAccountException e) {

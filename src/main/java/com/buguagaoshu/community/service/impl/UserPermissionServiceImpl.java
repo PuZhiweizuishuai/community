@@ -1,7 +1,8 @@
-package com.buguagaoshu.community.service;
+package com.buguagaoshu.community.service.impl;
 
-import com.buguagaoshu.community.dto.UserPermission;
+import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.mapper.UserPermissionMapper;
+import com.buguagaoshu.community.service.UserPermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
  * create          2019-08-13 19:23
  */
 @Service
-public class UserPermissionServiceImpl implements UserPermissionService{
+public class UserPermissionServiceImpl implements UserPermissionService {
     private final UserPermissionMapper userPermissionMapper;
 
     @Autowired

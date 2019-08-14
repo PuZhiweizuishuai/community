@@ -1,6 +1,6 @@
 package com.buguagaoshu.community.service;
 
-import com.buguagaoshu.community.dto.User;
+import com.buguagaoshu.community.model.User;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}

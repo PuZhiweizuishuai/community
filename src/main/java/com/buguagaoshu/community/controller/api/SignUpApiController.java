@@ -1,7 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
-import com.buguagaoshu.community.dto.User;
-import com.buguagaoshu.community.dto.UserPermission;
+import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
@@ -10,7 +10,6 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.util.HashMap;
@@ -74,7 +73,7 @@ public class SignUpApiController {
         }
         // 补全数据
         setDefaultHeadUrl(user);
-        user.setCreateTime(StringUtil.getNowTime());
+        user.setCreationTime(StringUtil.getNowTime());
         user.setLastTime(StringUtil.getNowTime());
         user.setAge(age);
 

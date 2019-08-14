@@ -27,8 +27,6 @@ CREATE TABLE users
     PRIMARY KEY (id)
 );
 
---设置用户名不重复
-ALTER TABLE community.users ADD UNIQUE (userName);
 --设置邮箱不重复
 ALTER TABLE community.users ADD UNIQUE (email);
 
@@ -44,8 +42,22 @@ create table userPermission
     power int default 1,
     modifier varchar(20) not null,
     updateTime varchar(19) not null,
-    constraint privileges_FK foreign key(id) references users(id)
+    PRIMARY KEY (id),
+    constraint userPermission_FK foreign key(id) references users(id)
 );
+
+--在线用户表
+create table onlineUser
+(
+    id int,
+    userName VARCHAR(20) NOT NULL,
+    token varchar (100) not null ,
+    ip varchar (128) not null ,
+    time varchar (19) not null ,
+    PRIMARY KEY (id),
+    constraint onlineUser_FK foreign key(id) references users(id)
+);
+
 
 alter table userPermission add updateTime varchar(19) not null ;
 alter table userPermission change  column modifer modifier varchar(20)

@@ -1,4 +1,4 @@
-package com.buguagaoshu.community.dto;
+package com.buguagaoshu.community.model;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}

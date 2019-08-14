@@ -1,7 +1,8 @@
-package com.buguagaoshu.community.service;
+package com.buguagaoshu.community.service.impl;
 
-import com.buguagaoshu.community.dto.User;
+import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.mapper.UserMapper;
+import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

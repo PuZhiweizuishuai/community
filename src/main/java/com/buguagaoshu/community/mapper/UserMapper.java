@@ -1,6 +1,6 @@
 package com.buguagaoshu.community.mapper;
 
-import com.buguagaoshu.community.dto.User;
+import com.buguagaoshu.community.model.User;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
 
