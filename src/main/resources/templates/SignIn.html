@@ -24,8 +24,8 @@
         html,
         body {
             height: 100%;
-            //background-size: cover;
-            //background-image: url("image/101-desktop-wallpaper.png");
+        / / background-size: cover;
+        / / background-image: url("image/101-desktop-wallpaper.png");
         }
 
         body {
@@ -77,15 +77,23 @@
 <body class="text-center">
 
 
-<form class="form-signin" name="user" action="/api/signIn" method="post">
+<form class="form-signin" name="user" id="signIn-form" action="/sign-in-controller" method="post">
     <img class="mb-4" src="favicon.png" alt="" width="50%" height="50%">
     <h1 class="h3 mb-3 font-weight-normal" th:text="#{index.signin.welcome}">Please sign in</h1>
     <div class="row mb-2">
         <div class="col">
-            <a href="/" id="a-back"><button onclick="addLocaleUrl('a-back')" type="button" class="btn btn-secondary btn-sm">[[#{index.back}]]</button></a>
+            <a href="/" id="a-back">
+                <button onclick="addLocaleUrl('a-back')" type="button" class="btn btn-secondary btn-sm">
+                    [[#{index.back}]]
+                </button>
+            </a>
         </div>
         <div class="col">
-            <a href="/sign-up" id="a-sign-up"><button onclick="addLocaleUrl('a-sign-up')" type="button" class="btn btn-success btn-sm">[[#{index.signup}]]</button></a>
+            <a href="/sign-up" id="a-sign-up">
+                <button onclick="addLocaleUrl('a-sign-up')" type="button" class="btn btn-success btn-sm">
+                    [[#{index.signup}]]
+                </button>
+            </a>
         </div>
     </div>
     <!-- 邮箱 -->
@@ -93,14 +101,14 @@
         <input type="email" name="email" class="form-control" id="InputEmail" aria-describedby="emailHelp"
                th:placeholder="#{index.Enteremail}">
         <!-- 错误提示信息 -->
-        <small id="emailHelp" class="form-text text-muted"></small>
+        <small id="emailHelp" class="form-text text-muted" th:text="${emailMsg}"></small>
     </div>
 
     <!-- 密码 -->
     <div class="form-group">
         <input type="password" name="password" class="form-control" id="InputPassword"
                th:placeholder="#{index.Password}">
-        <small id="passwordMessage" class="form-text text-muted"></small>
+        <small id="passwordMessage" class="form-text text-muted" th:text="${pwdMsg}"></small>
     </div>
 
     <!--待添加验证码 -->
@@ -108,7 +116,8 @@
     <div class="row">
         <div class="col">
             <div class="custom-control custom-radio custom-control-inline">
-                <input type="checkbox" id="rememberBox" name="remember" class="custom-control-input" value="remember-me">
+                <input type="checkbox" id="rememberBox" name="remember" class="custom-control-input"
+                       value="remember-me">
                 <label class="custom-control-label" for="rememberBox">[[#{index.signup.rember}]]</label>
             </div>
         </div>
@@ -118,10 +127,36 @@
     </div>
 
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+    <button class="btn btn-lg btn-primary btn-block" type="button" onclick="check()">[[#{index.signIn}]]
+    </button>
     <p class="mt-5 mb-3 text-muted">&copy; 2019-2019</p>
 </form>
 
 <script src="/js/url.js" type="text/javascript"></script>
+<script src="/js/checkInput.js" type="text/javascript"></script>
+
+<script>
+    var check = function () {
+        var email = document.getElementById("InputEmail").value;
+        var password = document.getElementById("InputPassword").value;
+        if(email == "") {
+            document.getElementById("emailHelp").innerText = "邮箱不能为空！";
+            return;
+        } else if(!chheckEmail(email)) {
+            document.getElementById("emailHelp").innerText = "邮箱格式不正确！";
+            return;
+        }
+        if(password === "") {
+            document.getElementById("passwordMessage").innerText = "密码不能为空！";
+            return;
+        }
+
+        if(password != "" && chheckEmail(email)) {
+            var form = document.getElementById("signIn-form");
+            form.submit();
+        }
+
+    }
+</script>
 </body>
 </html>

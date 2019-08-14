@@ -15,3 +15,24 @@ var addLocaleUrl = function (aObjId) {
         aObj.href = aObj.href +  "?l=" + l;
     }
 };
+
+// 发从登陆请求，测试用
+var sendSignInPost = function () {
+    var email = document.forms["user"]["email"].value;
+    var password = document.forms["user"]["password"].value;
+    var remember = document.forms["user"]["remember"].checkbox;
+
+    $.ajax({
+        type: 'get',
+        url: '/api/checkEmail',
+        data: {
+            "email": email,
+            "password": password,
+            "remember": remember
+        },
+        success: function (resultdata) {
+            console.log(resultdata);
+        }
+
+    });
+}

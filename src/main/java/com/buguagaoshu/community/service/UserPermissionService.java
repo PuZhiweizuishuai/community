@@ -1,4 +1,4 @@
-package com.buguagaoshu.community.mapper;
+package com.buguagaoshu.community.service;
 
 import com.buguagaoshu.community.dto.UserPermission;
 

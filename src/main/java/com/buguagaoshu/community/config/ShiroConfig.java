@@ -63,9 +63,4 @@ public class ShiroConfig {
     public UserRealm getRealm() {
         return new UserRealm();
     }
-
-    @Bean
-    public MyCredentialsMatcher myCredentialsMatcher() {
-        return new MyCredentialsMatcher();
-    }
 }

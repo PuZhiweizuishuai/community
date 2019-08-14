@@ -41,16 +41,15 @@ public class UserRealm extends AuthorizingRealm {
             // 直接 return null 为用户名不存在错误
             throw new UnknownAccountException("用户不存在！");
         }
-        // System.out.println(token.getPassword());
-        /*
+        // 暴力覆盖掉原有的密码判断方法
         if(StringUtil.judgePassword(new String(token.getPassword()), user.getPassword())) {
-            System.out.println(token.getPassword());
-            return new SimpleAuthenticationInfo(user, user.getPassword(), getName());
+            String pas = StringUtil.getUUID();
+            user.setPassword("保密");
+            token.setPassword(pas.toCharArray());
+            return new SimpleAuthenticationInfo(user, pas, getName());
         } else {
             // 密码错误
             throw new IncorrectCredentialsException("密码错误");
         }
-        */
-        return new SimpleAuthenticationInfo(token.getUsername(), user.getPassword(), getName());
     }
 }

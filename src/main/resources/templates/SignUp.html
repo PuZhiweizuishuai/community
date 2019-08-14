@@ -9,7 +9,7 @@
     <title th:text="#{index.signup}">注册</title>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
     <script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
-    <script src="bootstrap/js/jquery-3.3.1.slim.min.js" type="text/javascript"></script>
+    <script src="js/jquery-3.4.1.min.js" type="text/javascript"></script>
     <script type="text/javascript" src="moment/moment.min.js"></script>
     <script type="text/javascript" src="moment/moment-with-locales.min.js"></script>
     <script type="text/javascript" src="js/tempusdominus-bootstrap-4.min.js"></script>
@@ -81,7 +81,7 @@
 </head>
 <body class="text-center">
 
-<form class="form-signin" action="/api/register" method="post" name="user">
+<form class="form-signin" id="signin-form" action="/api/register" method="post" name="user">
     <img class="mb-4" src="favicon.png" alt="" width="50%" height="50%">
     <h1 class="h3 mb-3 font-weight-normal" th:text="#{index.signup.welocme}">Please sign up</h1>
 
@@ -165,12 +165,65 @@
 
     <!--待添加验证码 -->
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit" th:text="#{index.signup}">注册</button>
+    <button class="btn btn-lg btn-primary btn-block" type="button" onclick="check()" th:text="#{index.signup}">注册</button>
 
 
     <p class="mt-5 mb-3 text-muted">&copy; 2019-2019</p>
 </form>
 
 <script src="/js/url.js" type="text/javascript"></script>
+<script src="/js/checkInput.js" type="text/javascript"></script>
+<script>
+    var check = function () {
+        var name = document.getElementById("userName").value;
+        var password1 = document.getElementById("InputPassword").value;
+        var password2 = document.getElementById("InputPassword2").value;
+        var email = document.getElementById("InputEmail").value;
+        if(name == "") {
+            document.getElementById("userNameHelp").innerText = "用户名不能为空！";
+        }
+        if(email == "") {
+            document.getElementById("emailHelp").innerText = "邮箱不能为空！";
+        }
+        if(password1 == "") {
+            document.getElementById("passwordMessage").innerText = "密码不能为空！";
+        }
+        if(password2 == "") {
+            document.getElementById("passwordHelp").innerText = "密码不能为空！";
+        }
+        if(checkPassword(password1)) {
+            document.getElementById("passwordMessage").innerText = "密码格式错误";
+        }
+        if(password1 !== password2) {
+            document.getElementById("passwordHelp").innerText = "两次密码输入不相同！";
+        }
+        if(chheckEmail(email)) {
+            $.ajax({
+                type: 'get',
+                url: '/api/checkEmail',
+                data: {
+                    "email": email
+                },
+                success: function (resultdata) {
+                    if(resultdata.success == false) {
+                        document.getElementById("emailHelp").innerText = "该账号已被注册，请尝试登陆！";
+                    } else {
+                        console.log(checkPassword(password1));
+                        console.log(checkPassword(password1) && password1 == password2);
+                        console.log("pwd1  " + password1);
+                        console.log("pwd2  " + password2);
+                        if(checkPassword(password1) && password1 == password2) {
+                            var form = document.getElementById("signin-form");
+                            form.submit();
+                        }
+                    }
+                }
+
+            });
+        } else {
+            document.getElementById("emailHelp").innerText = "邮箱格式不正确！";
+        }
+    }
+</script>
 </body>
 </html>

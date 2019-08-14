@@ -1,6 +1,7 @@
-package com.buguagaoshu.community.mapper;
+package com.buguagaoshu.community.service;
 
 import com.buguagaoshu.community.dto.UserPermission;
+import com.buguagaoshu.community.mapper.UserPermissionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

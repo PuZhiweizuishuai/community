@@ -3,6 +3,7 @@ package com.buguagaoshu.community.util;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -96,6 +97,14 @@ public class StringUtil {
     public static boolean checkEmail(String email) {
         String reg="^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
         return email.matches(reg);
+    }
+
+    /**
+     * 获取一个UUID
+     * */
+    public static String getUUID() {
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString();
     }
 
 

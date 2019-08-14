@@ -1,4 +1,4 @@
-package com.buguagaoshu.community.controller;
+package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.util.IpUtil;
 import org.springframework.web.bind.annotation.GetMapping;
