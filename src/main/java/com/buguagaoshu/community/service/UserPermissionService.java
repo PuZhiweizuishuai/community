@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.service;
 
 import com.buguagaoshu.community.model.UserPermission;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -35,4 +37,13 @@ public interface UserPermissionService {
      * @return 结果
      * */
     int updateUserPermissionById(long id, int power,  String modifier, String updateTime);
+
+
+    /**
+     * 修改vip到期时间
+     * @param id 用户id
+     * @param power 权限值
+     * @return 结果
+     * */
+    int updateDueTime(@Param("id") long id, int power, String modifier, String updateTime, long dueTime);
 }

@@ -80,7 +80,7 @@ public class SignUpApiController {
         // 插入数据
         if (userService.insertUser(user) == 1) {
             // 写入权限信息
-            UserPermission userPermission = new UserPermission(user.getId(),1,"0", StringUtil.getNowTime());
+            UserPermission userPermission = new UserPermission(user.getId(),1,"0", StringUtil.getNowTime(), System.currentTimeMillis());
             userPermissionService.insertUserPermission(userPermission);
             return StringUtil.dealResultMessage(true, "注册成功！");
         } else {

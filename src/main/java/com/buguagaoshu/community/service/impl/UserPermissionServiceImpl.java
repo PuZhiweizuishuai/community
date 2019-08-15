@@ -39,4 +39,9 @@ public class UserPermissionServiceImpl implements UserPermissionService {
     public int updateUserPermissionById(long id, int power, String modifier, String updateTime) {
         return userPermissionMapper.updateUserPermissionById(id, power, modifier, updateTime);
     }
+
+    @Override
+    public int updateDueTime(long id, int power, String modifier, String updateTime, long dueTime) {
+        return userPermissionMapper.updateDueTime(id, power, modifier, updateTime, dueTime);
+    }
 }

@@ -4,6 +4,9 @@ import com.buguagaoshu.community.model.Question;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -20,4 +23,12 @@ public interface QuestionMapper {
             "values (#{userId}, #{title}, #{classification}, #{description}, #{fileUrl}, #{tag}, #{createTime}, #{alterTime})")
     @Options(useGeneratedKeys = true, keyProperty = "questionId")
     int createQuestion(Question question);
+
+    /**
+     * TODO 优化分页
+     * 获取问题列表
+     * @return 问题列表
+     * */
+    @Select("select * from Questions")
+    List<Question> getSomeQuestion();
 }

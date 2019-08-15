@@ -44,8 +44,8 @@ public class UserRealm extends AuthorizingRealm {
         }
         // 暴力覆盖掉原有的密码判断方法
         if(StringUtil.judgePassword(new String(token.getPassword()), user.getPassword())) {
-            // 用随机的UUID当密码验证，欺骗Shio
-            // 理论上直接继承Shiro的 CredentialsMatcher 方法是可以直接改变 Shiro 的密码判断的
+            // 用随机的UUID当密码验证，欺骗 Shio
+            // 理论上直接继承 Shiro 的 CredentialsMatcher 方法是可以直接改变 Shiro 的密码判断的
             // 不过我试了一下，有 Bug，我懒得改了，直接暴力吧
             String pas = StringUtil.getUUID();
             user.setPassword(pas);

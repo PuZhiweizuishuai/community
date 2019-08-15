@@ -1,10 +1,13 @@
 package com.buguagaoshu.community.model;
 
+import lombok.Data;
+
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-14 19:04
  * 在线用户
  */
+@Data
 public class OnlineUser {
     private long id;
 
@@ -16,8 +19,8 @@ public class OnlineUser {
 
     private String time;
 
-    public long getId() {
-        return id;
+    public OnlineUser() {
+
     }
 
     public OnlineUser(long id, String userName, String token, String ip, String time) {
@@ -25,42 +28,6 @@ public class OnlineUser {
         this.userName = userName;
         this.token = token;
         this.ip = ip;
-        this.time = time;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public String getTime() {
-        return time;
-    }
-
-    public void setTime(String time) {
         this.time = time;
     }
 }

@@ -6,7 +6,6 @@ import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -81,13 +80,13 @@ public class PublishController {
                 && !question.getDescription().equals("") && !question.getClassification().equals("null")) {
             return true;
         }
-        if(question.getTitle().equals("")) {
+        if(question.getTitle().equals("") || question.getTitle() == null) {
             model.addAttribute("titleMessage", "标题不能为空！");
         }
-        if(question.getClassification().equals("") || question.getClassification().equals("null")) {
+        if(question.getClassification().equals("") || question.getClassification().equals("null") || question.getClassification() == null) {
             model.addAttribute("classMessage", "分类不能为空！");
         }
-        if(question.getDescription().equals("")) {
+        if(question.getDescription().equals("") || question.getDescription() != null) {
             model.addAttribute("textMessage", "内容不能为空！");
         }
         model.addAttribute("cacheTitleMsg", question.getTitle());

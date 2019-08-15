@@ -42,6 +42,7 @@ create table userPermission
     power int default 1,
     modifier varchar(20) not null,
     updateTime varchar(19) not null,
+    dueTime BIGINT,
     PRIMARY KEY (id),
     constraint userPermission_FK foreign key(id) references users(id)
 );

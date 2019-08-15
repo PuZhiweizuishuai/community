@@ -1,17 +1,23 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.OnlineUser;
+import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
+import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 首页控制类
@@ -26,27 +32,34 @@ public class IndexController {
 
     private final UserPermissionService userPermissionService;
 
+    private final QuestionService questionService;
+
     @Autowired
-    public IndexController(OnlineUserService onlineUserService, UserService userService, UserPermissionService userPermissionService) {
+    public IndexController(OnlineUserService onlineUserService, UserService userService,
+                           UserPermissionService userPermissionService, QuestionService questionService) {
         this.onlineUserService = onlineUserService;
         this.userService = userService;
         this.userPermissionService = userPermissionService;
+        this.questionService = questionService;
     }
 
     @GetMapping(value = {"/", "index"})
-    public String index(HttpServletRequest request) {
+    public String index(HttpServletRequest request, Model model) {
         /**
          * TODO 待改进优化
          * */
         String token = null;
         if(request.getCookies() != null) {
             Cookie[] cookies = request.getCookies();
-            for(Cookie cookie : cookies) {
-                if(cookie.getName().equals("token")) {
-                    token = cookie.getValue();
-                    break;
+            if(cookies != null) {
+                for(Cookie cookie : cookies) {
+                    if(cookie.getName().equals("token")) {
+                        token = cookie.getValue();
+                        break;
+                    }
                 }
             }
+
         }
         if(token != null) {
             OnlineUser onlineUser = onlineUserService.selectOnlineUserByToken(token);
@@ -59,7 +72,9 @@ public class IndexController {
 
         }
 
+        List<QuestionDto> questionDtoList = questionService.getSomeQuestionDto();
+        model.addAttribute("questions", questionDtoList);
+        System.out.println(questionDtoList == null);
         return "index";
     }
-
 }

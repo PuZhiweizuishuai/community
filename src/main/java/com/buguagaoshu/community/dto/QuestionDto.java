@@ -1,13 +1,14 @@
-package com.buguagaoshu.community.model;
+package com.buguagaoshu.community.dto;
 
+import com.buguagaoshu.community.model.User;
 import lombok.Data;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-08-15 15:44
+ * create          2019-08-15 22:40
  */
 @Data
-public class Question {
+public class QuestionDto {
     private long questionId;
     private long userId;
     private String title;
@@ -20,4 +21,5 @@ public class Question {
     private String tag;
     private String createTime;
     private String alterTime;
+    private User user;
 }

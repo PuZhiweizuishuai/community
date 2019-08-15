@@ -4,11 +4,15 @@
 
 **开发中，未完成**
 
+TODO 目前亟待改进登陆退出判断
+
 已完成登陆注册
 
 部分权限验证
 
 ## 快速运行
+
+再 IDEA 中导入此项目，如果 getter 和 setter 飘红，则需要安装 IDEA 得到 Lombok 插件
 
 
 ## 资料
@@ -30,4 +34,6 @@
 
 ## 工具
 [Tempus Dominus](https://tempusdominus.github.io/bootstrap-4/)
+
+[Lombok](https://www.projectlombok.org)
 

@@ -1,10 +1,13 @@
 package com.buguagaoshu.community.model;
 
+import lombok.Data;
+
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-13 19:04
  * 用户权限
  */
+@Data
 public class UserPermission {
     private long id;
     /**
@@ -26,46 +29,20 @@ public class UserPermission {
      * */
     private String updateTime;
 
+    /**
+     * Vip 到期时间
+     * */
+    private long dueTime;
+
     public UserPermission() {
 
     }
 
-    public UserPermission(long id, int power, String modifier, String updateTime) {
+    public UserPermission(long id, int power, String modifier, String updateTime, long dueTime) {
         this.id = id;
         this.power = power;
         this.modifier = modifier;
         this.updateTime = updateTime;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public int getPower() {
-        return power;
-    }
-
-    public void setPower(int power) {
-        this.power = power;
-    }
-
-    public String getModifier() {
-        return modifier;
-    }
-
-    public void setModifier(String modifer) {
-        this.modifier = modifier;
-    }
-
-    public String getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(String updateTime) {
-        this.updateTime = updateTime;
+        this.dueTime = dueTime;
     }
 }
