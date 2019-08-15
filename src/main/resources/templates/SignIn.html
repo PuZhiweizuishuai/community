@@ -8,6 +8,7 @@
     <link rel="bookmark" th:href="@{/favicon.png}"/>
     <title th:text="#{index.signIn}">登陆</title>
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
+
     <script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <style type="text/css">
         .bd-placeholder-img {
@@ -77,7 +78,7 @@
 <body class="text-center">
 
 
-<form class="form-signin" name="user" id="signIn-form" action="/sign-in-controller" method="post">
+<form class="form-signin" name="user" id="signIn-form" action="/sign-in" method="post">
     <img class="mb-4" src="favicon.png" alt="" width="50%" height="50%">
     <h1 class="h3 mb-3 font-weight-normal" th:text="#{index.signin.welcome}">Please sign in</h1>
     <div class="row mb-2">

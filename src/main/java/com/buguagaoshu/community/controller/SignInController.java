@@ -53,7 +53,7 @@ public class SignInController {
     }
 
 
-    @RequestMapping(value = "/sign-in-controller", method = RequestMethod.POST)
+    @RequestMapping(value = "/sign-in", method = RequestMethod.POST)
     public String signInAndSkip(String email, String password, String remember,
                                 Model model, HttpServletRequest request, HttpServletResponse response) {
         if(email == null && password == null) {

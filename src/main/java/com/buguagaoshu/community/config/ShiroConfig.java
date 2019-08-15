@@ -37,7 +37,7 @@ public class ShiroConfig {
          * */
         LinkedHashMap<String, String> filterMap = new LinkedHashMap<>();
         filterMap.put("/api/update/*","authc");
-        filterMap.put("/publish", "authc");
+        // filterMap.put("/publish", "authc");
         // 修改跳转页面
         shiroFilterFactoryBean.setLoginUrl("/sign-in");
 

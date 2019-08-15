@@ -58,6 +58,24 @@ create table onlineUser
     constraint onlineUser_FK foreign key(id) references users(id)
 );
 
+--问题表
+CREATE TABLE Questions
+(
+    questionId int PRIMARY KEY AUTO_INCREMENT,
+    userId int NOT NULL,
+    title varchar(50),
+    classification varchar (50),
+    description text,
+    fileUrl text,
+    viewCount int DEFAULT 1,
+    commentCount int DEFAULT 0,
+    likeCount int DEFAULT 0,
+    tag varchar(256),
+    createTime varchar(19),
+    alterTime varchar(19),
+    constraint user_question_FK foreign key(userId) references users(id)
+);
+
 
 alter table userPermission add updateTime varchar(19) not null ;
 alter table userPermission change  column modifer modifier varchar(20)
