@@ -26,7 +26,8 @@ CREATE TABLE users
     headUrl VARCHAR(30),
     PRIMARY KEY (id)
 );
-
+--
+ALTER TABLE community.users ADD UNIQUE (userName);
 --设置邮箱不重复
 ALTER TABLE community.users ADD UNIQUE (email);
 

@@ -85,6 +85,7 @@ public class SignInController {
             // 更新登陆时间
             userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
             // 页面跳转
+            System.out.println(StringUtil.jumpWebLangeParameter("/", true, request));
             return StringUtil.jumpWebLangeParameter("/", true, request);
         } catch (UnknownAccountException e) {
             // UnknownAccountException 用户名不存在

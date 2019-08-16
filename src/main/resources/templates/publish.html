@@ -24,119 +24,8 @@
     </style>
 </head>
 <body>
-<!-- 标题栏 -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <!-- 标题 logo 和 文本 -->
-    <a class="navbar-brand" href="/">
-        <img src="favicon.png" width="24" height="32" class="d-inline-block align-top" alt="">
-        不挂高数社区
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <!-- 标题选项 -->
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto mx-2">
-            <li class="nav-item active mx-2">
-                <a class="nav-link" href="/" th:text="#{index.home}">主页<span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item active mx-2">
-                <a class="nav-link" href="#" th:text="#{index.lebel}">分类<span class="sr-only">(current)</span></a>
-            </li>
-            <li class="nav-item active mx-2">
-                <a class="nav-link" href="#" th:text="#{index.hot}">热门<span class="sr-only">(current)</span></a>
-            </li>
-
-            <!-- 搜索 -->
-            <form class="form-inline my-2 my-lg-0 mx-2">
-                <input class="form-control mr-sm-2" type="search" th:placeholder="#{index.search.placeholder}"
-                       aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit" th:text="#{index.search}">搜索</button>
-            </form>
-        </ul>
-
-        <ul class="navbar-nav justify-content-end">
-            <!-- 语言切换 -->
-            <li class="nav-item dropdown mx-2">
-                <a class="nav-link" href="#" role="button" data-toggle="dropdown" aria-haspopup="true"
-                   aria-expanded="false">
-                    Language
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" id="zh-CN-a" th:href="@{/publish(l='zh-CN')}" onclick="addPageNumberForLanguage('zh-CN-a')">中文</a>
-                    <a class="dropdown-item" id="en-US-a" th:href="@{/publish(l='en-US')}" onclick="addPageNumberForLanguage('en-US-a')">English</a>
-                </div>
-            </li>
-
-            <!-- 消息提醒待添加 -->
-            <li class="nav-item dropdown" th:if="${session.user != null}">
-                <a class="nav-link" href="#"
-                   role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img src="/image/icon/message.svg" width="28" height="28"/>
-                    [[#{index.message}]] <span class="badge badge-light">9</span>
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="#" th:text="#{index.myhome}">我的主页</a>
-                    <a class="dropdown-item" href="#" th:text="#{index.setting}">设置</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="#" th:text="#{index.signout}">退出登陆</a>
-                </div>
-            </li>
-
-            <!-- 发起 -->
-            <li class="nav-item dropdown" th:if="${session.user != null}">
-
-                <a class="nav-link" href="#"
-                   role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img src="/image/icon/publish.svg" width="30" height="30"/>
-                    [[#{index.writePost}]]
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="/publish" id="publish-a" onclick="addLocaleUrl('publish-a')"
-                       th:text="#{index.issue}">问题</a>
-                    <div class="dropdown-divider"></div>
-
-                </div>
-            </li>
-
-            <!-- 我 -->
-            <li class="nav-item dropdown" th:if="${session.user != null}">
-                <a class="nav-link dropdown-toggle" href="#"
-                   role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img src="/image/head/boyhead.png" width="30" height="30" class="d-inline-block align-top" alt="">
-                    [[${session.user.getUserName()}]]
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="#" th:text="#{index.myhome}">我的主页</a>
-                    <a class="dropdown-item" href="#" th:text="#{index.setting}">设置</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="/sign-out" id="sign-out-a" onclick="addLocaleUrl('sign-out-a')"
-                       th:text="#{index.signout}">退出登陆</a>
-                </div>
-            </li>
-
-        </ul>
-
-        <ul style="color: transparent" class="navbar-nav justify-content-end" th:if="${session.user != null}">
-            <button type="button" class="btn btn-primary"
-                    style="color: transparent; background-color: transparent;border-color: transparent">Prima
-            </button>
-        </ul>
-
-        <a id="sign-in-a" href="/sign-in" th:if="${session.user == null}">
-            <button onclick="addLocaleUrl('sign-in-a')" id="signInBtn" type="button" class="btn btn-primary mx-2"
-                    th:text="#{index.signIn}">登陆
-            </button>
-        </a>
-        <a id="sign-up-a" href="/sign-up" th:if="${session.user == null}">
-            <button type="button" onclick="addLocaleUrl('sign-up-a')" class="btn btn-success mx-2"
-                    th:text="#{index.signup}">注册
-            </button>
-        </a>
-    </div>
-</nav>
+<!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->
+<div th:insert="~{navigation :: navbar}"></div>
 
 <!-- 发布页面 -->
 <div class="container" style="height: 30px">
@@ -186,7 +75,7 @@
 
                 <!--上传附件--->
                 <div class="row">
-                    <div class="col">
+                    <div class="col-5">
                         <div class="form-group mb-3">
                             <p>[[#{publish.issue.updatefile}]]</p>
                             <div class="custom-file">
@@ -197,7 +86,7 @@
                             <small id="fileHelp" class="form-text" style="color: red" th:text="${fileMessage}"></small>
                         </div>
                     </div>
-                    <div class="col-8">
+                    <div class="col">
                         <p>&nbsp;</p>
                         <div class="container">
                             <!-- Button trigger modal -->
@@ -321,6 +210,14 @@
 </div>
 <div class="container" style="height: 30px">
 </div>
+
+<!-- 页脚 -->
+<footer class="footer mt-auto py-3">
+    <div class="container">
+        <span class="text-muted">Copyright © 2019 · 不挂高数社区</span>
+    </div>
+</footer>
+
 
 <script src="/js/url.js" type="text/javascript"></script>
 </body>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>导航</title>
+</head>
+<body>
+<div th:fragment="navbar">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <!-- 标题 logo 和 文本 -->
+        <a class="navbar-brand" href="/" id="link-logo-a" onclick="addLocaleUrl('link-logo-a')">
+            <img src="favicon.png" width="24" height="32" class="d-inline-block align-top" alt="">
+            不挂高数社区
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- 标题选项 -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto mx-2">
+                <li class="nav-item active mx-2">
+                    <a class="nav-link" href="/" th:text="#{index.home}" id="link-hone-a" onclick="addLocaleUrl('link-hone-a')">主页<span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active mx-2">
+                    <a class="nav-link" href="#" th:text="#{index.lebel}">分类<span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active mx-2">
+                    <a class="nav-link" href="#" th:text="#{index.hot}">热门<span class="sr-only">(current)</span></a>
+                </li>
+
+                <!-- 搜索 -->
+                <form class="form-inline my-2 my-lg-0 mx-2">
+                    <input class="form-control mr-sm-2" type="search" th:placeholder="#{index.search.placeholder}"
+                           aria-label="Search">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit" th:text="#{index.search}">搜索</button>
+                </form>
+            </ul>
+
+            <ul class="navbar-nav justify-content-end">
+                <!-- 语言切换 -->
+                <li class="nav-item dropdown mx-2">
+                    <a class="nav-link" href="#" role="button" data-toggle="dropdown" aria-haspopup="true"
+                       aria-expanded="false">
+                        Language
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" id="zh-CN-a" th:href="@{/(l='zh-CN')}" onclick="addPageNumberForLanguage('zh-CN-a')">中文</a>
+                        <a class="dropdown-item" id="en-US-a" th:href="@{/(l='en-US')}" onclick="addPageNumberForLanguage('en-US-a')">English</a>
+                    </div>
+                </li>
+
+                <!-- 消息提醒待添加 -->
+                <li class="nav-item dropdown" th:if="${session.user != null}">
+                    <a class="nav-link" href="#"
+                       role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img src="/image/icon/message.svg" width="28" height="28"/>
+                        [[#{index.message}]] <span class="badge badge-light">9</span>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="#" th:text="#{index.myhome}">我的主页</a>
+                        <a class="dropdown-item" href="#" th:text="#{index.setting}">设置</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" th:text="#{index.signout}">退出登陆</a>
+                    </div>
+                </li>
+
+                <!-- 发起 -->
+                <li class="nav-item dropdown" th:if="${session.user != null}">
+
+                    <a class="nav-link" href="#"
+                       role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img src="/image/icon/publish.svg" width="30" height="30"/>
+                        [[#{index.writePost}]]
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="/publish" id="publish-a" onclick="addLocaleUrl('publish-a')"
+                           th:text="#{index.issue}">问题</a>
+                        <div class="dropdown-divider"></div>
+
+                    </div>
+                </li>
+
+                <!-- 我 -->
+                <li class="nav-item dropdown" th:if="${session.user != null}">
+                    <a class="nav-link dropdown-toggle" href="#"
+                       role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img th:src="${session.user.getHeadUrl()}" width="30" height="30" class="d-inline-block align-top" alt="">
+                        [[${session.user.getUserName()}]]
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="/user/" th:text="#{index.myhome}">我的主页</a>
+                        <a class="dropdown-item" href="#" th:text="#{index.setting}">设置</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="/sign-out" id="sign-out-a" onclick="addLocaleUrl('sign-out-a')"
+                           th:text="#{index.signout}">退出登陆</a>
+                    </div>
+                </li>
+
+            </ul>
+
+            <ul style="color: transparent" class="navbar-nav justify-content-end" th:if="${session.user != null}">
+                <button type="button" class="btn btn-primary"
+                        style="color: transparent; background-color: transparent;border-color: transparent">Prima
+                </button>
+            </ul>
+
+            <a id="sign-in-a" href="/sign-in" th:if="${session.user == null}">
+                <button onclick="addLocaleUrl('sign-in-a')" id="signInBtn" type="button" class="btn btn-primary mx-2"
+                        th:text="#{index.signIn}">登陆
+                </button>
+            </a>
+            <a id="sign-up-a" href="/sign-up" th:if="${session.user == null}">
+                <button type="button" onclick="addLocaleUrl('sign-up-a')" class="btn btn-success mx-2"
+                        th:text="#{index.signup}">注册
+                </button>
+            </a>
+        </div>
+    </nav>
+</div>
+
+</body>
+</html>
