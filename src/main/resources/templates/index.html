@@ -28,7 +28,7 @@
 <!-- 标题栏 -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <!-- 标题 logo 和 文本 -->
-    <a class="navbar-brand" href="/">
+    <a class="navbar-brand" href="/" id="link-logo-a" onclick="addLocaleUrl('link-logo-a')">
         <img src="favicon.png" width="24" height="32" class="d-inline-block align-top" alt="">
         不挂高数社区
     </a>
@@ -41,7 +41,7 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto mx-2">
             <li class="nav-item active mx-2">
-                <a class="nav-link" href="/" th:text="#{index.home}">主页<span class="sr-only">(current)</span></a>
+                <a class="nav-link" href="/" th:text="#{index.home}" id="link-hone-a" onclick="addLocaleUrl('link-hone-a')">主页<span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item active mx-2">
                 <a class="nav-link" href="#" th:text="#{index.lebel}">分类<span class="sr-only">(current)</span></a>
@@ -66,8 +66,8 @@
                     Language
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" th:href="@{/(l='zh-CN')}">中文</a>
-                    <a class="dropdown-item" th:href="@{/(l='en-US')}">English</a>
+                    <a class="dropdown-item" id="zh-CN-a" th:href="@{/(l='zh-CN')}" onclick="addPageNumberForLanguage('zh-CN-a')">中文</a>
+                    <a class="dropdown-item" id="en-US-a" th:href="@{/(l='en-US')}" onclick="addPageNumberForLanguage('en-US-a')">English</a>
                 </div>
             </li>
 
@@ -175,7 +175,7 @@
                 <hr style="margin-top: 0%;">
             </div>
             <!-- 帖子 -->
-            <div th:each="question : ${questions}">
+            <div th:each="question : ${paginationDto.questions}">
                 <div class="media">
                     <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${question.user.headUrl}"
                          src="image/head/boyhead.png"
@@ -197,6 +197,54 @@
                 </div>
                 <hr/>
             </div>
+
+            <!-- 页码 -->
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-end">
+                    <!-- 返回首页 -->
+                    <li class="page-item" th:if="${paginationDto.showFirstPage}">
+                        <a class="page-link" id="first-page-a" href="/" aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
+                    <!-- 上一页 -->
+                    <li class="page-item" th:if="${paginationDto.showPrevious}">
+                        <a class="page-link" id="link-to-last-a" th:href='@{/(page=${paginationDto.nowPage} - 1)}' aria-label="Previous"
+                        onclick="addLocaleUrlForPage('link-to-last-a')">
+                            <span aria-hidden="true">&laquo;</span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
+
+
+                    <li class="page-item" th:each="page : ${paginationDto.pages}" th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
+                        <a class="page-link" th:href="@{/(page=${page})}" th:text="${page}" th:id="${page}"
+                           th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
+                            1
+                        </a>
+                    </li>
+
+
+
+                    <!-- 下一页 -->
+                    <li class="page-item" th:if="${paginationDto.showNext}">
+                        <a class="page-link" id="lind-to-next-a" th:href='@{/(page=${paginationDto.nowPage} + 1)}' aria-label="Next"
+                            onclick="addLocaleUrlForPage('lind-to-next-a')">
+                            <span aria-hidden="true">&raquo;</span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                    </li>
+                    <!-- 最后一页 -->
+                    <li class="page-item" th:if="${paginationDto.showEndPage}">
+                        <a class="page-link" id="link-to-end-a" th:href='@{/(page=${paginationDto.totalPage})}' th:if="${paginationDto.showEndPage}"
+                           aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
 
         <!-- 右边 -->

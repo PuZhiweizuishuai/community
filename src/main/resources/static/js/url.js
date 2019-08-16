@@ -9,12 +9,35 @@ var GetQueryString = function (name) {
 // 更改url
 var addLocaleUrl = function (aObjId) {
     var l = GetQueryString('l');
+    var page = GetQueryString('page');
+    console.log(page);
+    //根据id获取超链接,设置href属性
+    var aObj = document.getElementById(aObjId);
     if(l === 'en-US') {
-        //根据id获取超链接,设置href属性
-        var aObj = document.getElementById(aObjId);
         aObj.href = aObj.href +  "?l=" + l;
     }
 };
+
+var addPageNumberForLanguage = function (aObjId) {
+    var l = GetQueryString('l');
+    var page = GetQueryString('page');
+    console.log(page);
+    //根据id获取超链接,设置href属性
+    var aObj = document.getElementById(aObjId);
+    if(page != null) {
+        aObj.href = aObj.href + "&page=" + page;
+    }
+}
+
+
+
+var addLocaleUrlForPage = function (aObjId) {
+    var l = GetQueryString('l');
+    var aObj = document.getElementById(aObjId);
+    if(l === 'en-US') {
+        aObj.href = aObj.href +  "&l=" + l;
+    }
+}
 
 // 发从登陆请求，测试用
 var sendSignInPost = function () {

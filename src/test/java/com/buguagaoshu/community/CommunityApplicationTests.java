@@ -3,12 +3,15 @@ package com.buguagaoshu.community;
 import com.buguagaoshu.community.util.StringUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class CommunityApplicationTests {
+    @Value("${index.page.size}")
+    private String size;
 
     @Test
     public void contextLoads() {
@@ -21,6 +24,7 @@ public class CommunityApplicationTests {
         System.out.println("pwd2  " + pwd4 + "   " + pwd4.length());
         System.out.println(StringUtil.judgePassword(pwd2, pwd3));*/
         //System.out.println(StringUtil.getUUID());
+        System.out.println(size);
     }
 
 }

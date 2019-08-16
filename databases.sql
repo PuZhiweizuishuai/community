@@ -77,8 +77,8 @@ CREATE TABLE Questions
     constraint user_question_FK foreign key(userId) references users(id)
 );
 
-
-alter table userPermission add updateTime varchar(19) not null ;
-alter table userPermission change  column modifer modifier varchar(20)
-insert into userPermission values (1,0);
+select * from Questions limit 0, 5;
+--alter table userPermission add updateTime varchar(19) not null ;
+--alter table userPermission change  column modifer modifier varchar(20)
+--insert into userPermission values (1,0);
 

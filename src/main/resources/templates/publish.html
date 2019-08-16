@@ -65,8 +65,8 @@
                     Language
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" th:href="@{/publish(l='zh-CN')}">中文</a>
-                    <a class="dropdown-item" th:href="@{/publish(l='en-US')}">English</a>
+                    <a class="dropdown-item" id="zh-CN-a" th:href="@{/publish(l='zh-CN')}" onclick="addPageNumberForLanguage('zh-CN-a')">中文</a>
+                    <a class="dropdown-item" id="en-US-a" th:href="@{/publish(l='en-US')}" onclick="addPageNumberForLanguage('en-US-a')">English</a>
                 </div>
             </li>
 

@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.service;
 
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
 
@@ -19,8 +20,10 @@ public interface QuestionService {
 
     /**
      * TODO 优化分页
+     * @param page 页码
+     * @param size 每页显示数量
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
-    List<QuestionDto> getSomeQuestionDto();
+    PaginationDto getSomeQuestionDto(String page, String size);
 }

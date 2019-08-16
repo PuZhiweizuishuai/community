@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.Question;
@@ -10,9 +11,11 @@ import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -43,8 +46,12 @@ public class IndexController {
         this.questionService = questionService;
     }
 
+
+
     @GetMapping(value = {"/", "index"})
-    public String index(HttpServletRequest request, Model model) {
+    public String index(HttpServletRequest request, Model model,
+                        @RequestParam(value = "page", defaultValue = "1") String page,
+                        @RequestParam(value = "size", defaultValue = "10") String size) {
         /**
          * TODO 待改进优化
          * */
@@ -72,9 +79,8 @@ public class IndexController {
 
         }
 
-        List<QuestionDto> questionDtoList = questionService.getSomeQuestionDto();
-        model.addAttribute("questions", questionDtoList);
-        System.out.println(questionDtoList == null);
+        PaginationDto paginationDto = questionService.getSomeQuestionDto(page, size);
+        model.addAttribute("paginationDto", paginationDto);
         return "index";
     }
 }

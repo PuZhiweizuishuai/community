@@ -45,4 +45,15 @@ public class User {
     private String headUrl;
     private String lastTime;
     private int power;
+
+    /**
+     * 清除敏感数据
+     * */
+    public void clean() {
+        this.password = null;
+        this.email = null;
+        this.age = 0;
+        this.birthday = null;
+        this.lastTime = null;
+    }
 }

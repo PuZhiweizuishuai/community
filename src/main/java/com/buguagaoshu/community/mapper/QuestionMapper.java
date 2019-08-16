@@ -1,10 +1,7 @@
 package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Question;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -27,8 +24,17 @@ public interface QuestionMapper {
     /**
      * TODO 优化分页
      * 获取问题列表
+     * @param page 页码
+     * @param size 每页显示数量
      * @return 问题列表
      * */
-    @Select("select * from Questions")
-    List<Question> getSomeQuestion();
+    @Select("select * from Questions limit #{page}, #{size}")
+    List<Question> getSomeQuestion(@Param("page") int page, @Param("size") int size);
+
+
+    /**
+     * @return 返回问题总数
+     * */
+    @Select("SELECT COUNT(1) FROM Questions")
+    int getQuestionCount();
 }

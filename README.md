@@ -2,6 +2,8 @@
 
 **[参考项目](https://github.com/codedrinker/community)**
 
+目前还是MVC模式，开发完成后可能会考虑前后端分离
+
 **开发中，未完成**
 
 TODO 目前亟待改进登陆退出判断
@@ -12,7 +14,7 @@ TODO 目前亟待改进登陆退出判断
 
 ## 快速运行
 
-再 IDEA 中导入此项目，如果 getter 和 setter 飘红，则需要安装 IDEA 得到 Lombok 插件
+在 IDEA 中导入此项目，如果 getter 和 setter 飘红，则需要安装 IDEA 得到 Lombok 插件
 
 
 ## 资料
