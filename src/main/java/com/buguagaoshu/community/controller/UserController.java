@@ -1,7 +1,9 @@
 package com.buguagaoshu.community.controller;
 
 
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,13 +24,19 @@ import javax.servlet.http.HttpServletRequest;
 public class UserController {
     private final UserService userService;
 
+    private final QuestionService questionService;
+
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, QuestionService questionService) {
         this.userService = userService;
+        this.questionService = questionService;
     }
 
     @GetMapping("/user/{userId}")
-    public String getUserHome(@PathVariable("userId") String userId, Model model,
+    public String getUserHome(@PathVariable("userId") String userId,
+                              @RequestParam(value = "page", defaultValue = "1") String page,
+                              @RequestParam(value = "size", defaultValue = "10") String size,
+                              Model model,
                               HttpServletRequest request) {
         if(userId == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
@@ -35,6 +44,8 @@ public class UserController {
         User user = userService.selectUserByUserId(userId);
         if(user != null) {
             model.addAttribute("user", user);
+            PaginationDto paginationDto = questionService.getQuestionByUserId(page, size, user.getId());
+            model.addAttribute("paginationDto", paginationDto);
             return StringUtil.jumpWebLangeParameter("user", false, request);
         }
         return StringUtil.jumpWebLangeParameter("/", true, request);

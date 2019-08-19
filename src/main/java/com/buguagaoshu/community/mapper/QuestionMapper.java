@@ -33,8 +33,26 @@ public interface QuestionMapper {
 
 
     /**
+     * TODO 优化分页
+     * 获取当前用户发布的问题列表
+     * @param page 页码
+     * @param size 每页显示数量
+     * @param id 用户id
+     * @return 问题列表
+     * */
+    @Select("select * from Questions where userId=#{userId} limit #{page}, #{size}")
+    List<Question> getQuestionByUserId(@Param("page") int page, @Param("size") int size, @Param("userId") long id);
+
+    /**
      * @return 返回问题总数
      * */
     @Select("SELECT COUNT(1) FROM Questions")
     int getQuestionCount();
+
+    /**
+     * @param id 用户 id
+     * @return 返回问题总数
+     * */
+    @Select("SELECT COUNT(1) FROM Questions where userId=#{id}")
+    int getUserQuestionCount(long id);
 }

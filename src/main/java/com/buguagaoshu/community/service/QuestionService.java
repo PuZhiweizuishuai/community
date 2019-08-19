@@ -19,11 +19,20 @@ public interface QuestionService {
     int createQuestion(Question question);
 
     /**
-     * TODO 优化分页
      * @param page 页码
      * @param size 每页显示数量
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
     PaginationDto getSomeQuestionDto(String page, String size);
+
+
+    /**
+     * 获取当前用户发布的问题列表
+     * @param page 页码
+     * @param size 每页显示数量
+     * @param id 用户id
+     * @return 问题列表
+     * */
+    PaginationDto getQuestionByUserId(String page, String size, long id);
 }
