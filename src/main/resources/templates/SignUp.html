@@ -77,6 +77,9 @@
             border-top-left-radius: 0;
             border-top-right-radius: 0;
         }
+        .form-text {
+            color: red;
+        }
     </style>
 </head>
 <body class="text-center">
@@ -94,25 +97,32 @@
         </div>
     </div>
 
-    <!-- 用户名 -->
+    <!-- z账号 -->
+    <div class="form-group">
+        <input type="text" name="userId" class="form-control" id="userId" th:placeholder="#{index.userId}">
+        <!-- 错误提示信息 -->
+        <small id="userIdHelp" class="form-text">20个字符以内,可以是字母或数字(注册后不可更改！)</small>
+    </div>
+
+    <!-- 昵称 -->
     <div class="form-group">
         <input type="text" name="userName" class="form-control" id="userName" th:placeholder="#{index.userName}">
         <!-- 错误提示信息 -->
-        <small id="userNameHelp" class="form-text text-muted">20个字符以内，可以使用汉字</small>
+        <small id="userNameHelp" class="form-text">20个字符以内，可以是汉字</small>
     </div>
 
     <!-- 邮箱 -->
     <div class="form-group">
         <input type="text" name="email" class="form-control" id="InputEmail" th:placeholder="#{index.Enteremail}">
         <!-- 错误提示信息 -->
-        <small id="emailHelp" class="form-text text-muted"></small>
+        <small id="emailHelp" class="form-text"></small>
     </div>
 
     <!-- 密码 -->
     <div class="form-group">
         <input type="password" name="password" class="form-control" id="InputPassword"
                th:placeholder="#{index.Password}">
-        <small id="passwordMessage" class="form-text text-muted">6~30个字符，可以是字母数字或其它特殊字符</small>
+        <small id="passwordMessage" class="form-text">6~30个字符，可以是字母数字或其它特殊字符</small>
     </div>
 
     <!-- 密码 -->
@@ -120,7 +130,7 @@
         <input type="password" name="password2" class="form-control" id="InputPassword2"
                th:placeholder="#{index.Password2}">
         <!-- 错误提示信息 -->
-        <small id="passwordHelp" class="form-text text-muted"></small>
+        <small id="passwordHelp" class="form-text"></small>
     </div>
 
     <!-- 性别 -->
@@ -160,7 +170,15 @@
         <input type="text" name="school" class="form-control" id="userSchool" aria-describedby="userSchoolHelp"
                th:placeholder="#{index.school}">
         <!-- 错误提示信息 -->
-        <small id="userSchoolHelp" class="form-text text-muted"></small>
+        <small id="userSchoolHelp" class="form-text"></small>
+    </div>
+
+    <!-- 专业 -->
+    <div class="form-group">
+        <input type="text" name="major" class="form-control" id="userMajor" aria-describedby="userMajorHelp"
+               th:placeholder="#{index.major}">
+        <!-- 错误提示信息 -->
+        <small id="userMajorHelp" class="form-text"></small>
     </div>
 
     <!--待添加验证码 -->
@@ -175,12 +193,15 @@
 <script src="/js/checkInput.js" type="text/javascript"></script>
 <script>
     var check = function () {
+        var userId = document.getElementById("userId").value;
+        console.log(userId);
+        /*
         var name = document.getElementById("userName").value;
         var password1 = document.getElementById("InputPassword").value;
         var password2 = document.getElementById("InputPassword2").value;
         var email = document.getElementById("InputEmail").value;
         if(name == "") {
-            document.getElementById("userNameHelp").innerText = "用户名不能为空！";
+            document.getElementById("userIdHelp").innerText = "用户名不能为空！";
         }
         if(email == "") {
             document.getElementById("emailHelp").innerText = "邮箱不能为空！";
@@ -197,33 +218,55 @@
         if(password1 !== password2) {
             document.getElementById("passwordHelp").innerText = "两次密码输入不相同！";
         }
-        if(chheckEmail(email)) {
-            $.ajax({
-                type: 'get',
-                url: '/api/checkEmail',
-                data: {
-                    "email": email
-                },
-                success: function (resultdata) {
-                    if(resultdata.success == false) {
-                        document.getElementById("emailHelp").innerText = "该账号已被注册，请尝试登陆！";
-                    } else {
-                        console.log(checkPassword(password1));
-                        console.log(checkPassword(password1) && password1 == password2);
-                        console.log("pwd1  " + password1);
-                        console.log("pwd2  " + password2);
-                        if(checkPassword(password1) && password1 == password2) {
-                            var form = document.getElementById("signin-form");
-                            form.submit();
-                        }
-                    }
-                }
+        if(chheckEmail(email) && checkEmailUseService(email) && checkUserId(userId)) {
+            if(checkPassword(password1) && password1 == password2) {
+                var form = document.getElementById("signin-form");
+                form.submit();
+            }
 
-            });
         } else {
             document.getElementById("emailHelp").innerText = "邮箱格式不正确！";
-        }
-    }
+        }*/
+        checkUserIdUseService(userId);
+    };
+
+    var checkEmailUseService = function (email) {
+        $.ajax({
+            type: 'get',
+            url: '/api/checkEmail',
+            data: {
+                "email": email
+            },
+            success: function (resultdata) {
+                if(resultdata.success == false) {
+                    document.getElementById("emailHelp").innerText = "该账号已被注册，请尝试登陆！";
+                    return false;
+                }  else {
+                    return true;
+                }
+            }
+        });
+    };
+
+    var checkUserIdUseService = function (userId) {
+        $.ajax({
+            type: 'get',
+            url: '/api/checkUserId',
+            data: {
+                "userId": userId
+            },
+            success: function (resultdata) {
+                console.log(resultdata);
+                if(resultdata.success == false) {
+                    document.getElementById("userIdHelp").innerText = resultdata.msg;
+                    return false;
+                }  else {
+                    document.getElementById("userIdHelp").innerText = resultdata.msg;
+                    return true;
+                }
+            }
+        });
+    };
 </script>
 </body>
 </html>

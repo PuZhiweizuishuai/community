@@ -101,6 +101,13 @@ public class StringUtil {
     }
 
     /**
+     * 验证用户 ID
+     * */
+    public static boolean checkUserId(String userId) {
+        return userId.matches("^\\w+$");
+    }
+
+    /**
      * 获取一个UUID
      * */
     public static String getUUID() {

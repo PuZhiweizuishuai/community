@@ -28,6 +28,14 @@ public interface UserMapper {
     User selectUserByEmail(String email);
 
     /**
+     * 通过 userId 查询学生信息
+     * @param userId 用户名
+     * @return 学生类
+     * */
+    @Select("select * from users where userId=#{userId}")
+    User selectUserByUserId(String userId);
+
+    /**
      * 通过用户 ID 删除用户信息
      * @param id 用户 ID
      * @return 1
@@ -40,8 +48,8 @@ public interface UserMapper {
      * @param user 新用户类
      * @return 1
      * */
-    @Insert("insert into users(userName, password, email, sex, age, birthday, school, creationTime, lastTime, headUrl) " +
-            "values(#{userName}, #{password}, #{email}, #{sex}, #{age}, #{birthday}, #{school}, #{creationTime}, #{lastTime}, #{headUrl})")
+    @Insert("insert into users(userId ,userName, password, email, sex, age, birthday, school, major, creationTime, lastTime, headUrl) " +
+            "values(#{userId}, #{userName}, #{password}, #{email}, #{sex}, #{age}, #{birthday}, #{school}, #{major}, #{creationTime}, #{lastTime}, #{headUrl})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertUser(User user);
 

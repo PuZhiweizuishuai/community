@@ -21,6 +21,14 @@ public interface UserService {
      * */
     User selectUserByEmail(String email);
 
+
+    /**
+     * 通过 userId 查询学生信息
+     * @param userId 用户名
+     * @return 学生类
+     * */
+    User selectUserByUserId(String userId);
+
     /**
      * 通过用户 ID 删除用户信息
      * @param id 用户 ID

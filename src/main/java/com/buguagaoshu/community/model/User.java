@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.model;
 
 import lombok.Data;
+import org.apache.ibatis.annotations.Param;
 import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.Email;
@@ -18,6 +19,11 @@ public class User {
     private long id = -1;
 
     @Length(max = 20, message = "用户名不能超过20个字符")
+    @NotNull(message = "不能为空")
+    @Pattern(regexp = "^\\w+$", message = "用户名只能是字母，数字，下划线")
+    private String userId;
+
+    @Length(max = 20, message = "昵称不能超过20个字符")
     @NotNull(message = "不能为空")
     private String userName;
 
@@ -41,9 +47,26 @@ public class User {
     @NotNull(message = "性别不能为空")
     private String sex;
     private String school;
+    private String major;
     private String creationTime;
     private String headUrl;
     private String lastTime;
+
+    /**
+     * 一句话介绍
+     * */
+    private String simpleSelfIntroduction;
+
+    /**
+     * 自我介绍
+     * */
+    private String selfIntroduction;
+
+    /**
+     * 爱好
+     * */
+    private String likes;
+
     private int power;
 
     /**

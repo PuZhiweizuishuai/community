@@ -9,11 +9,12 @@ show variables LIKE 'collation_%';
 --修改数据库编码属性
 ALTER DATABASE oj CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
---创建用户表
+
 --创建用户表
 CREATE TABLE users
 (
     id INT,
+    userID VARCHAR(20) NOT NULL,
     userName VARCHAR(20) NOT NULL,
     password VARCHAR(60) NOT NULL,
     email VARCHAR(30) NOT NULL,
@@ -21,13 +22,17 @@ CREATE TABLE users
     age int,
     birthday varchar(19),
     school varchar(20),
+    major varchar (20),
+    selfIntroduction varchar (50),
+    simpleSelfIntroduction varchar (100),
+    likes varchar (50),
     creationTime VARCHAR(19),
     lastTime VARCHAR(19),
     headUrl VARCHAR(30),
     PRIMARY KEY (id)
 );
 --
-ALTER TABLE community.users ADD UNIQUE (userName);
+ALTER TABLE community.users ADD UNIQUE (userId);
 --设置邮箱不重复
 ALTER TABLE community.users ADD UNIQUE (email);
 
@@ -35,6 +40,9 @@ ALTER TABLE community.users ADD UNIQUE (email);
 alter table users modify id int auto_increment;
 --设置主键从1000开始自增
 alter table users AUTO_INCREMENT=1000;
+
+alter table users add major varchar(20);
+alter table users add userId varchar(100) not null;
 
 --用户权限表
 create table userPermission

@@ -34,12 +34,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User selectUserByUserId(String userId) {
+        User user = userMapper.selectUserByUserId(userId);
+        if(user == null) {
+            return null;
+        }
+        user.clean();
+        return user;
+    }
+
+    @Override
     public int deleteUserById(long id) {
         return userMapper.deleteUserById(id);
     }
 
     /**
      * @return -1 邮箱重复
+     * @return -2 账号重复
      *  0 错误
      *  1 成功
      * */
@@ -47,6 +58,9 @@ public class UserServiceImpl implements UserService {
     public int insertUser(User user) {
         if(selectUserByEmail(user.getEmail()) != null) {
             return -1;
+        }
+        if(selectUserByUserId(user.getUserId()) != null) {
+            return -2;
         }
         // 加密密码
         user.setPassword(StringUtil.BCryptPassword(user.getPassword()));

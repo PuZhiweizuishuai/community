@@ -43,8 +43,11 @@ public class SignUpApiController {
         // 校验数据并返回错误信息
         HashMap<String, Object> infoMap = new HashMap<>(2);
         List<ObjectError> oes = errors.getAllErrors();
+        if(user.getUserId().isEmpty()) {
+            infoMap.put("userId", "账号不能为空！");
+        }
         if (user.getUserName().isEmpty()) {
-            infoMap.put("userName", "用户名不能为空！");
+            infoMap.put("userName", "昵称不能为空！");
         }
         if (user.getEmail().isEmpty()) {
             infoMap.put("email", "email不能为空！");
@@ -77,30 +80,19 @@ public class SignUpApiController {
         user.setLastTime(StringUtil.getNowTime());
         user.setAge(age);
 
+        int result = userService.insertUser(user);
         // 插入数据
-        if (userService.insertUser(user) == 1) {
+        if (result == 1) {
             // 写入权限信息
             UserPermission userPermission = new UserPermission(user.getId(),1,"0", StringUtil.getNowTime(), System.currentTimeMillis());
             userPermissionService.insertUserPermission(userPermission);
             return StringUtil.dealResultMessage(true, "注册成功！");
-        } else {
+        } else if (result == -1) {
             return StringUtil.dealResultMessage(false, "该邮箱已被注册，请重新输入，，或登陆");
-        }
-    }
-
-    /**
-     * 检查邮箱
-     */
-    @GetMapping("/api/checkEmail")
-    @ResponseBody
-    public HashMap<String, Object> checkEmail(String email) {
-        if(!StringUtil.checkEmail(email)) {
-            return StringUtil.dealResultMessage(false, "该邮箱格式错误！");
-        }
-        if (userService.selectUserByEmail(email) != null) {
-            return StringUtil.dealResultMessage(false, "该邮箱已被注册，请重新输入，或登陆");
+        } else if (result == -2) {
+            return StringUtil.dealResultMessage(false, "该账号已被注册，请跟换账号");
         } else {
-            return StringUtil.dealResultMessage(true, "该邮箱已可用");
+            return StringUtil.dealResultMessage(false, "系统异常，请稍后重试!");
         }
     }
 
