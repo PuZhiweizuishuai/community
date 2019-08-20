@@ -37,8 +37,13 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     @Override
     public int insertOnlineUser(OnlineUser user) {
         // TODO 加入踢下线功能
-
-        return onlineUserMapper.insertOnlineUser(user);
+        OnlineUser onlineUser = onlineUserMapper.selectOnlineUserById(user.getId());
+        if(onlineUser == null) {
+            return onlineUserMapper.insertOnlineUser(user);
+        } else {
+            onlineUserMapper.deleteOnlineUserById(user.getId());
+            return onlineUserMapper.insertOnlineUser(user);
+        }
     }
 
     @Override

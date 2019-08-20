@@ -16,7 +16,7 @@
     <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <style type="text/css">
         body {
-        // background-image: url("https://api.isoyu.com/bing_images.php");
+        / / background-image: url("https://api.isoyu.com/bing_images.php");
             background-color: #efefef;
         }
 
@@ -38,7 +38,8 @@
     <div class="Card">
         <div class="ProfileHeader-userCover">
             <div class="UserCoverEditor">
-                <div><label th:if="${session.user != null && session.user.getId() == user.getId()}" class="UploadPicture-wrapper" style="display:inline;">
+                <div><label th:if="${session.user != null && session.user.getId() == user.getId()}"
+                            class="UploadPicture-wrapper" style="display:inline;">
                     <input type="file" accept="image/png,image/jpeg" class="UploadPicture-input">
                     <button type="button"
                             class="Button UserCoverEditor-simpleEditButton DynamicColorButton DynamicColorButton--white">
@@ -64,87 +65,96 @@
             <div class="ProfileHeader-main">
 
                 <div class="UserAvatarEditor ProfileHeader-avatar" style="top: -25px;">
-                                <div class="UserAvatar" onmouseover="showAlterHead()" onmouseout="closeAlterHead()"><img class="Avatar Avatar--large UserAvatar-inner" width="160" height="160"
-                                                                                                                         th:src="'/' + ${user.getHeadUrl()}">
-                                </div>
-                                <label th:if="${session.user != null && session.user.getId() == user.getId()}"
-                                        class="UploadPicture-wrapper"><input type="file" accept="image/png,image/jpeg"
-                                                                             class="UploadPicture-input">
-                                    <div class="Mask UserAvatarEditor-mask Mask-hidden" id="alter-head">
-                                        <div class="Mask-mask Mask-mask--black UserAvatarEditor-maskInner"></div>
-                                        <div class="Mask-content">
-                                            <svg class="Zi Zi--Camera UserAvatarEditor-cameraIcon"
-                                                 fill="currentColor" viewBox="0 0 24 24" width="36" height="36">
-                                                <path
-                                                        d="M20.094 6S22 6 22 8v10.017S22 20 19 20H4.036S2 20 2 18V7.967S2 6 4 6h3s1-2 2-2h6c1 0 2 2 2 2h3.094zM12 16a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zm0 1.5a5 5 0 1 0-.001-10.001A5 5 0 0 0 12 17.5zm7.5-8a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"
-                                                        fill-rule="evenodd"></path>
-                                            </svg>
-                                            <div class="UserAvatarEditor-maskInnerText">修改我的头像</div>
-                                        </div>
-                                    </div>
-                                </label>
+                    <div class="UserAvatar" onmouseover="showAlterHead()" onmouseout="closeAlterHead()"><img
+                            class="Avatar Avatar--large UserAvatar-inner" width="160" height="160"
+                            th:src="'/' + ${user.getHeadUrl()}">
+                    </div>
+                    <label th:if="${session.user != null && session.user.getId() == user.getId()}"
+                           class="UploadPicture-wrapper"><input type="file" accept="image/png,image/jpeg"
+                                                                class="UploadPicture-input">
+                        <div class="Mask UserAvatarEditor-mask Mask-hidden" id="alter-head">
+                            <div class="Mask-mask Mask-mask--black UserAvatarEditor-maskInner"></div>
+                            <div class="Mask-content">
+                                <svg class="Zi Zi--Camera UserAvatarEditor-cameraIcon"
+                                     fill="currentColor" viewBox="0 0 24 24" width="36" height="36">
+                                    <path
+                                            d="M20.094 6S22 6 22 8v10.017S22 20 19 20H4.036S2 20 2 18V7.967S2 6 4 6h3s1-2 2-2h6c1 0 2 2 2 2h3.094zM12 16a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zm0 1.5a5 5 0 1 0-.001-10.001A5 5 0 0 0 12 17.5zm7.5-8a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"
+                                            fill-rule="evenodd"></path>
+                                </svg>
+                                <div class="UserAvatarEditor-maskInnerText">修改我的头像</div>
                             </div>
+                        </div>
+                    </label>
+                </div>
 
 
                 <div class="ProfileHeader-content">
-                                <div class="ProfileHeader-contentHead">
-                                    <h1 class="ProfileHeader-title"><span class="ProfileHeader-name" th:text="${user.getUserName()}">陕西颜值扛把子</span><span
-                                            class="ztext ProfileHeader-headline" th:text="${user.getSimpleSelfIntroduction()}">我与清华只差一个成绩优异</span></h1>
-                                    <div class="ProfileHeader-info" id="ProfileHeader-info">
-                                        <div class="ProfileHeader-infoItem">
-                                            <div class="ProfileHeader-iconWrapper">
-                                                <svg viewBox="0 0 20 18" class="Icon Icon--company" width="13" height="16"
-                                                     aria-hidden="true" style="height: 16px; width: 13px;"><title></title>
-                                                    <g>
-                                                        <path d="M15 3.998v-2C14.86.89 13.98 0 13 0H7C5.822 0 5.016.89 5 2v2l-3.02-.002c-1.098 0-1.97.89-1.97 2L0 16c0 1.11.882 2 1.98 2h16.033c1.1 0 1.98-.89 1.987-2V6c-.007-1.113-.884-2.002-1.982-2.002H15zM7 4V2.5s-.004-.5.5-.5h5c.5 0 .5.5.5.5V4H7z"></path>
-                                                    </g>
-                                                </svg>
-                                            </div>
-                                            <span th:text="${user.getSchool()}">家里蹲大学</span>
-                                            <div class="ProfileHeader-divider"></div>
-                                            <span th:text="${user.getMajor()}"></span>
-                                        </div>
-                                        <div class="ProfileHeader-infoItem">
-                                            <div class="ProfileHeader-iconWrapper">
-                                                <img th:if="${user.getSex() == '男'}" src="/image/icon/boy.svg" width="20" height="20"/>
-                                                <img th:if="${user.getSex() == '女'}" src="/image/icon/girl.svg" width="20" height="20"/>
-                                                <span th:if="${user.getSex() == '保密'}" >该用户未公开性别</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <div class="ProfileHeader-contentHead">
+                        <h1 class="ProfileHeader-title"><span class="ProfileHeader-name"
+                                                              th:text="${user.getUserName()}">陕西颜值扛把子</span><span
+                                class="ztext ProfileHeader-headline" th:text="${user.getSimpleSelfIntroduction()}">我与清华只差一个成绩优异</span>
+                        </h1>
+                        <div class="ProfileHeader-info" id="ProfileHeader-info">
+                            <div class="ProfileHeader-infoItem">
+                                <div class="ProfileHeader-iconWrapper">
+                                    <svg viewBox="0 0 20 18" class="Icon Icon--company" width="13" height="16"
+                                         aria-hidden="true" style="height: 16px; width: 13px;"><title></title>
+                                        <g>
+                                            <path d="M15 3.998v-2C14.86.89 13.98 0 13 0H7C5.822 0 5.016.89 5 2v2l-3.02-.002c-1.098 0-1.97.89-1.97 2L0 16c0 1.11.882 2 1.98 2h16.033c1.1 0 1.98-.89 1.987-2V6c-.007-1.113-.884-2.002-1.982-2.002H15zM7 4V2.5s-.004-.5.5-.5h5c.5 0 .5.5.5.5V4H7z"></path>
+                                        </g>
+                                    </svg>
                                 </div>
-                                <div class="ProfileHeader-contentBody" id="ProfileHeader-detail"
-                                     style="overflow: hidden; transition: height 300ms ease-out 0s; height: 171px;display: none;">
-                                    <div>
-                                        <div class="ProfileHeader-detail" >
-                                            <div class="ProfileHeader-detailItem"><span class="ProfileHeader-detailLabel">爱好</span>
-                                                <div class="ProfileHeader-detailValue" th:if="${user.getLikes()==null}">该用户暂未填写</div>
-                                                <div class="ProfileHeader-detailValue" th:if="${user.getLikes()!=null}" th:text="${user.getLikes()}"></div>
-                                            </div>
-
-
-
-                                            <div class="ProfileHeader-detailItem"><span
-                                                    class="ProfileHeader-detailLabel">个人简介</span>
-                                                <div class="ztext ProfileHeader-detailValue" th:if="${user.getSelfIntroduction()==null}">该用户暂未填写</div>
-                                                <div class="ProfileHeader-detailValue" th:if="${user.getSelfIntroduction()!=null}" th:text="${user.getSelfIntroduction()}"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="ProfileHeader-contentFooter">
-                                    <button type="button" id="show-ProfileHeader-detail-btn"
-                                            class="Button ProfileHeader-expandButton Button--plain" onclick="showDetail()">
-                                        显示详细资料
-                                    </button>
-                                    <div class="ProfileButtonGroup ProfileHeader-buttons" th:if="${session.user != null && session.user.getId() == user.getId()}">
-                                        <button type="button"
-                                                class="Button Button--blue">编辑个人资料
-                                        </button>
-                                    </div>
+                                <span th:text="${user.getSchool()}">家里蹲大学</span>
+                                <div class="ProfileHeader-divider"></div>
+                                <span th:text="${user.getMajor()}"></span>
+                            </div>
+                            <div class="ProfileHeader-infoItem">
+                                <div class="ProfileHeader-iconWrapper">
+                                    <img th:if="${user.getSex() == '男'}" src="/image/icon/boy.svg" width="20"
+                                         height="20"/>
+                                    <img th:if="${user.getSex() == '女'}" src="/image/icon/girl.svg" width="20"
+                                         height="20"/>
+                                    <span th:if="${user.getSex() == '保密'}">该用户未公开性别</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="ProfileHeader-contentBody" id="ProfileHeader-detail"
+                         style="overflow: hidden; transition: height 300ms ease-out 0s; height: 171px;display: none;">
+                        <div>
+                            <div class="ProfileHeader-detail">
+                                <div class="ProfileHeader-detailItem"><span class="ProfileHeader-detailLabel">爱好</span>
+                                    <div class="ProfileHeader-detailValue" th:if="${user.getLikes()==null}">该用户暂未填写
+                                    </div>
+                                    <div class="ProfileHeader-detailValue" th:if="${user.getLikes()!=null}"
+                                         th:text="${user.getLikes()}"></div>
+                                </div>
 
+
+                                <div class="ProfileHeader-detailItem"><span
+                                        class="ProfileHeader-detailLabel">个人简介</span>
+                                    <div class="ztext ProfileHeader-detailValue"
+                                         th:if="${user.getSelfIntroduction()==null}">该用户暂未填写
+                                    </div>
+                                    <div class="ProfileHeader-detailValue" th:if="${user.getSelfIntroduction()!=null}"
+                                         th:text="${user.getSelfIntroduction()}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ProfileHeader-contentFooter">
+                        <button type="button" id="show-ProfileHeader-detail-btn"
+                                class="Button ProfileHeader-expandButton Button--plain" onclick="showDetail()">
+                            显示详细资料
+                        </button>
+                        <div class="ProfileButtonGroup ProfileHeader-buttons"
+                             th:if="${session.user != null && session.user.getId() == user.getId()}">
+                            <button type="button"
+                                    class="Button Button--blue">编辑个人资料
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -172,7 +182,7 @@
                         <a class="nav-link" href="#">提问</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" >文章</a>
+                        <a class="nav-link" href="#">文章</a>
                     </li>
                 </ul>
                 <hr style="margin-top: 0%;">
@@ -184,11 +194,13 @@
             <div th:each="question : ${paginationDto.questions}">
                 <div class="media ml-3">
                     <div class="media-body">
-                        <h5 class="mt-0"><a class="link-to-text" href="#" th:text="${question.title}">中间对齐</a></h5>
-                        <p class="mb-1">Cras sit amet nibh libero</p>
+                        <h5 class="mt-0"><a class="link-to-text" target="_blank"  th:href="'/question/' + ${question.getQuestionId()}" th:text="${question.title}">中间对齐</a></h5>
+                        <!-- TODO 等待添加摘要 -->
+                        <!--<p class="mb-1">Cras sit amet nibh libero</p>-->
+
                         <p class="mb-0 small">
-                            <a class="issuse-question-class" href="#" th:text="${question.classification}">分类</a>
-                            <a class="issuse-question-people" href="#" th:text="${user.userName}">人名</a>
+                            <a class="issuse-question-class" target="_blank" href="#" th:text="${question.classification}">分类</a>
+                            <a class="issuse-question-people" target="_blank" href="#" th:text="${user.userName}">人名</a>
                             <span class="issuse-question-span">回复了问题
                                 •<span th:text="${question.likeCount}">人数</span><span>人关注</span>
                                 •<span th:text="${question.commentCount}">人数</span><span>个回复</span>
@@ -206,14 +218,17 @@
                 <ul class="pagination justify-content-end">
                     <!-- 返回首页 -->
                     <li class="page-item" th:if="${paginationDto.showFirstPage}">
-                        <a class="page-link" id="first-page-a" th:href="'/user/' + ${user.getUserId()}" aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
+                        <a class="page-link" id="first-page-a" th:href="'/user/' + ${user.getUserId()}"
+                           aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
                             <span aria-hidden="true">&laquo;&laquo;</span>
                             <span class="sr-only">Previous</span>
                         </a>
                     </li>
                     <!-- 上一页 -->
                     <li class="page-item" th:if="${paginationDto.showPrevious}">
-                        <a class="page-link" id="link-to-last-a" th:href="'/user/'+ ${user.getUserId()} + @{/(page=${paginationDto.nowPage} - 1)}" aria-label="Previous"
+                        <a class="page-link" id="link-to-last-a"
+                           th:href="'/user/'+ ${user.getUserId()} + @{/(page=${paginationDto.nowPage} - 1)}"
+                           aria-label="Previous"
                            onclick="addLocaleUrlForPage('link-to-last-a')">
                             <span aria-hidden="true">&laquo;</span>
                             <span class="sr-only">Previous</span>
@@ -221,18 +236,21 @@
                     </li>
 
 
-                    <li class="page-item" th:each="page : ${paginationDto.pages}" th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
-                        <a class="page-link" th:href="${'/user/'+user.getUserId()} + @{/(page=${page})}" th:text="${page}" th:id="${page}"
+                    <li class="page-item" th:each="page : ${paginationDto.pages}"
+                        th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
+                        <a class="page-link" th:href="${'/user/'+user.getUserId()} + @{/(page=${page})}"
+                           th:text="${page}" th:id="${page}"
                            th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
                             1
                         </a>
                     </li>
 
 
-
                     <!-- 下一页 -->
                     <li class="page-item" th:if="${paginationDto.showNext}">
-                        <a class="page-link" id="lind-to-next-a" th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.nowPage} + 1)}" aria-label="Next"
+                        <a class="page-link" id="lind-to-next-a"
+                           th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.nowPage} + 1)}"
+                           aria-label="Next"
                            onclick="addLocaleUrlForPage('lind-to-next-a')">
                             <span aria-hidden="true">&raquo;</span>
                             <span class="sr-only">Next</span>
@@ -240,7 +258,9 @@
                     </li>
                     <!-- 最后一页 -->
                     <li class="page-item" th:if="${paginationDto.showEndPage}">
-                        <a class="page-link" id="link-to-end-a" th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.totalPage})}" th:if="${paginationDto.showEndPage}"
+                        <a class="page-link" id="link-to-end-a"
+                           th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.totalPage})}"
+                           th:if="${paginationDto.showEndPage}"
                            aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
                             <span aria-hidden="true">&raquo;&raquo;</span>
                             <span class="sr-only">Next</span>
@@ -267,7 +287,7 @@
             <div class="card shadow-sm" style="background-color: white; border: 0px">
                 <div class="row" style="text-align: center;">
                     <br/>
-                    <div class="col mt-4" >
+                    <div class="col mt-4">
                         <p>关注了</p>
                         <div class="card-body mb-2">
                             <h5>100</h5>
@@ -301,17 +321,13 @@
 
 
 <!-- 页脚 -->
-<footer class="footer mt-auto py-3">
-    <div class="container">
-        <span class="text-muted">Copyright © 2019 · 不挂高数社区</span>
-    </div>
-</footer>
+<div th:insert="~{footer :: footer}"></div>
 
 <script src="/js/url.js" type="text/javascript"></script>
 <script>
     var userDetail = false;
     var showDetail = function () {
-        if(userDetail == false) {
+        if (userDetail == false) {
             $("#ProfileHeader-info").hide();
             $("#ProfileHeader-detail").fadeIn();
             document.getElementById("show-ProfileHeader-detail-btn").innerText = "收起详细资料";
@@ -324,14 +340,14 @@
     }
 
     var showAlterHead = function () {
-        if(document.getElementById("alter-head") == null) {
+        if (document.getElementById("alter-head") == null) {
             return;
         }
         document.getElementById("alter-head").className = "Mask UserAvatarEditor-mask";
     }
 
     var closeAlterHead = function () {
-        if(document.getElementById("alter-head") == null) {
+        if (document.getElementById("alter-head") == null) {
             return;
         }
         document.getElementById("alter-head").className = "Mask UserAvatarEditor-mask Mask-hidden";

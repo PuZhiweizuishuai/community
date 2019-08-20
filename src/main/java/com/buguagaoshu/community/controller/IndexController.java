@@ -66,8 +66,9 @@ public class IndexController {
                     }
                 }
             }
-
         }
+
+        model.addAttribute("offline", false);
         if(token != null) {
             OnlineUser onlineUser = onlineUserService.selectOnlineUserByToken(token);
             if(onlineUser != null) {
@@ -75,8 +76,10 @@ public class IndexController {
                 UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
                 user.setPower(userPermission.getPower());
                 request.getSession().setAttribute("user", user);
+            } else {
+                request.getSession().setAttribute("user", null);
+                model.addAttribute("offline", true);
             }
-
         }
 
         PaginationDto paginationDto = questionService.getSomeQuestionDto(page, size);

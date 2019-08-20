@@ -42,6 +42,7 @@ public class SignOutController {
                 if(cookie.getName().equals("token")) {
                     token = cookie.getValue();
                     if(token != null) {
+                        // TODO 删除在线用户
                         onlineUserService.deleteOnlineUserByToken(token);
                     }
                     cookie.setValue(null);

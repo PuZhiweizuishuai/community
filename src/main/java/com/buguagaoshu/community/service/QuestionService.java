@@ -4,7 +4,6 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
 
-import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -35,4 +34,11 @@ public interface QuestionService {
      * @return 问题列表
      * */
     PaginationDto getQuestionByUserId(String page, String size, long id);
+
+    /**
+     * 查找问题
+     * @param questionId 问题id
+     * @return 问题
+     * */
+    QuestionDto selectQuestionById(String questionId);
 }

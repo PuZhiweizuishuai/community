@@ -39,6 +39,28 @@ var addLocaleUrlForPage = function (aObjId) {
     }
 }
 
+var closeSignOut = function () {
+    $("#Sign-out-tips"). fadeOut();
+    delCookie("token");
+    location.reload();
+};
+
+function getCookie(name) {
+    var value = '; '+ document.cookie;
+    var parts = value.split('; ' + name + '=');
+    if(parts.length === 2) {
+        return parts.pop().split(';').shift();
+    }
+};
+
+function delCookie(name) {
+    var exp = new Date();
+    exp.setTime(exp.getTime() - 1);
+    var cval = getCookie(name);
+    if(cval != null)
+        document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+}
+
 // 发从登陆请求，测试用
 var sendSignInPost = function () {
     var email = document.forms["user"]["email"].value;

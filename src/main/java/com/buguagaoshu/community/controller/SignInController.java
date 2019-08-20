@@ -75,9 +75,9 @@ public class SignInController {
             // 写入权限
             UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
             user.setPower(userPermission.getPower());
-            // 写入在线表
+            // TODO 写入在线表
             onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), user.getPassword(), IpUtil.getIpAddr(request), StringUtil.getNowTime()));
-            //写入 cookie
+            // 写入 cookie
             response.addCookie(new Cookie("token", user.getPassword()));
 
             user.setPassword("保密");

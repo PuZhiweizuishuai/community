@@ -7,10 +7,10 @@
     <link rel="shortcut icon" th:href="@{/favicon.png}"/>
     <link rel="bookmark" th:href="@{/favicon.png}"/>
     <title th:text="#{index.title}">不挂高数社区</title>
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="css/index.css"/>
-    <script src="bootstrap/js/jquery-3.3.1.slim.min.js" type="text/javascript"></script>
-    <script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/index.css"/>
+    <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <style type="text/css">
         body {
         / / background-image: url("https://api.isoyu.com/bing_images.php");
@@ -71,11 +71,13 @@
                          src="image/head/boyhead.png"
                          style="max-width: 64px; height: auto; ">
                     <div class="media-body">
-                        <h5 class="mt-0"><a class="link-to-text" href="#" th:text="${question.title}">中间对齐</a></h5>
-                        <p class="mb-1">Cras sit amet nibh libero</p>
+                        <h5 class="mt-0"><a class="link-to-text" target="_blank" th:href="'/question/' + ${question.getQuestionId()}" th:text="${question.title}">中间对齐</a></h5>
+                        <!-- TODO 等待添加摘要 -->
+                        <!--<p class="mb-1">Cras sit amet nibh libero</p>-->
+
                         <p class="mb-0 small">
-                            <a class="issuse-question-class" href="#" th:text="${question.classification}">分类</a>
-                            <a class="issuse-question-people" href="#" th:text="${question.user.userName}">人名</a>
+                            <a class="issuse-question-class" target="_blank" href="#" th:text="${question.classification}">分类</a>
+                            <a class="issuse-question-people" target="_blank" th:href="'/user/'+ ${question.user.getUserId()}" th:text="${question.user.userName}">人名</a>
                             <span class="issuse-question-span">回复了问题
                                 •<span th:text="${question.likeCount}">人数</span><span>人关注</span>
                                 •<span th:text="${question.commentCount}">人数</span><span>个回复</span>
@@ -199,11 +201,9 @@
 
 
 <!-- 页脚 -->
-<footer class="footer mt-auto py-3">
-    <div class="container">
-        <span class="text-muted">Copyright © 2019 · 不挂高数社区</span>
-    </div>
-</footer>
+<div th:insert="~{footer :: footer}"></div>
+
+
 
 <script src="/js/url.js" type="text/javascript"></script>
 </body>

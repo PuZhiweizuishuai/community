@@ -22,6 +22,14 @@ public interface QuestionMapper {
     int createQuestion(Question question);
 
     /**
+     * 查找问题
+     * @param questionId 问题id
+     * @return 问题
+     * */
+    @Select("SELECT * FROM Questions where questionId=#{questionId}")
+    Question selectQuestionById(@Param("questionId") long questionId);
+
+    /**
      * TODO 优化分页
      * 获取问题列表
      * @param page 页码
