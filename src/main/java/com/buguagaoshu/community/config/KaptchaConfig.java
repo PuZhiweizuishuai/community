@@ -10,6 +10,7 @@ import java.util.Properties;
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-21 20:34
+ * Kaptcha 验证码配置文件
  */
 @Configuration
 public class KaptchaConfig {

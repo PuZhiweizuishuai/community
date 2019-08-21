@@ -39,3 +39,7 @@ TODO 目前亟待改进登陆退出判断
 
 [Lombok](https://www.projectlombok.org)
 
+[Kaptcha 验证码](https://github.com/penggle/kaptcha)
+
+[JJWT Java JWT](https://github.com/jwtk/jjwt)
+

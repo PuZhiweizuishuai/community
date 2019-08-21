@@ -19,6 +19,7 @@ import java.io.IOException;
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-21 20:36
+ * 返回相应的验证码
  */
 @Controller
 @RequestMapping("/captcha")
