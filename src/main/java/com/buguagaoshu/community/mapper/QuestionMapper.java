@@ -21,6 +21,13 @@ public interface QuestionMapper {
     @Options(useGeneratedKeys = true, keyProperty = "questionId")
     int createQuestion(Question question);
 
+
+
+    @Update("update Questions set title=#{title}, classification=#{classification}, description=#{description}, fileUrl=#{fileUrl}, tag=#{tag}, " +
+            "alterTime=#{alterTime} where questionId=#{questionId}")
+    int updateQuestion(Question question);
+
+
     /**
      * 查找问题
      * @param questionId 问题id

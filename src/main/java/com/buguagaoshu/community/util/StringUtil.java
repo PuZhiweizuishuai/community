@@ -136,6 +136,4 @@ public class StringUtil {
         }
         return stringBuffer.toString();
     }
-
-
 }

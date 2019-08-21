@@ -61,6 +61,15 @@ function delCookie(name) {
         document.cookie= name + "="+cval+";expires="+exp.toGMTString();
 }
 
+var signOut = function (aObjId) {
+    var l = GetQueryString('l');
+    var aObj = document.getElementById(aObjId);
+    if(l === 'en-US') {
+        aObj.href = aObj.href +  "&l=" + l;
+    }
+    delCookie("token");
+}
+
 // 发从登陆请求，测试用
 var sendSignInPost = function () {
     var email = document.forms["user"]["email"].value;

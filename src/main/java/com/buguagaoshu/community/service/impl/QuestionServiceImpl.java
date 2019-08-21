@@ -92,7 +92,11 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public int createQuestion(Question question) {
-        return questionMapper.createQuestion(question);
+        if(question.getQuestionId() == -1) {
+            return questionMapper.createQuestion(question);
+        } else {
+            return questionMapper.updateQuestion(question);
+        }
     }
 
     /**
@@ -159,5 +163,19 @@ public class QuestionServiceImpl implements QuestionService {
         BeanUtils.copyProperties(question, questionDto);
         questionDto.setUser(user);
         return questionDto;
+    }
+
+    @Override
+    public Question selectQuestionNotDtoById(String questionId) {
+        long id;
+        try {
+            id = Long.valueOf(questionId);
+        } catch (Exception e) {
+            id = -1;
+        }
+        if(id == -1) {
+            return null;
+        }
+        return questionMapper.selectQuestionById(id);
     }
 }

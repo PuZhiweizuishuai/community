@@ -1,7 +1,6 @@
 package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.dto.QuestionDto;
-import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;

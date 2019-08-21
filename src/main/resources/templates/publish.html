@@ -7,9 +7,9 @@
     <link rel="shortcut icon" th:href="@{/favicon.png}"/>
     <link rel="bookmark" th:href="@{/favicon.png}"/>
     <title th:text="#{index.writePost}">发布</title>
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"/>
-    <script src="bootstrap/js/jquery-3.3.1.slim.min.js" type="text/javascript"></script>
-    <script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
+    <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <style type="text/css">
         body {
         / / background-image: url("https://api.isoyu.com/bing_images.php");
@@ -35,25 +35,26 @@
     <div class="row">
         <div class="col-xl-9 mt-3 issue-right">
             <h2>
-                <img src="image/icon/publish.svg" width="45" height="45"/>
+                <img src="/image/icon/publish.svg" width="45" height="45"/>
                 [[#{publish.publish}]]
             </h2>
             <hr>
             <form action="/publish" method="post" name="question">
+
                 <!--问题标题--->
                 <div class="row">
                     <div class="col-9">
                         <div class="form-group">
                             <label for="issues-title">[[#{publish.issue.title}]]</label>
                             <input name="title" type="text" class="form-control" id="issues-title"
-                                   th:placeholder="#{publish.issue.Title}" th:value="${cacheTitleMsg}">
+                                   th:placeholder="#{publish.issue.Title}" th:value="${question.getTitle()}">
                             <small id="titleHelp" class="form-text" style="color: red" th:text="${titleMessage}"></small>
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label for="issues-class">&nbsp;</label>
-                            <select class="form-control" id="issues-class" name="classification">
+                            <select th:selected="${question.getClassification()}" class="form-control" id="issues-class" name="classification">
                                 <option value="null" style="display: none;" selected>
                                     [[#{publish.classification}]]
                                 </option>
@@ -70,10 +71,10 @@
                 <!--问题内容--->
                 <div class="form-group mt-2">
                     <label for="issues-text">[[#{publish.issue.text}]]</label>
-                    <textarea class="form-control" id="issues-text" name="description" rows="6" th:text="${cacheTextMsg}"></textarea>
+                    <textarea class="form-control" id="issues-text" name="description" rows="6" th:text="${question.getDescription()}"></textarea>
                     <small id="textHelp" class="form-text" style="color: red" th:text="${textMessage}"></small>
                 </div>
-
+                <input style="display:none;" name="questionId" th:value="${question.getQuestionId()}">
                 <!--上传附件--->
                 <div class="row">
                     <div class="col-5">
@@ -125,7 +126,7 @@
                             <label for="issues-tag">[[#{publish.issue.addTag}]]
                                 <!--添加标签：--></label>
                             <input type="text" class="form-control" id="issues-tag" name="tag"
-                                   th:placeholder="#{publish.issue.splitTag}">
+                                   th:value="${question.getTag()}" th:placeholder="#{publish.issue.splitTag}">
                             <small id="tagHelp" class="form-text" style="color: red" th:text="${tagMessage}"></small>
                         </div>
                     </div>
@@ -137,7 +138,9 @@
                 <!-- 验证码：-->
                 <div class="row mt-4">
                     <div class="col text-right">
-                        <img src="image/icon/message.svg" width="60" height="40"/>
+                        <a href="javascript:void(0);">
+                            <img src="/captcha/captchaImage" onclick="this.src='/captcha/captchaImage?'+Math.random()"/>
+                        </a>
                     </div>
                     <div class="form-group mr-3">
                         <input type="text" class="form-control" id="issues-CAPTCHA" name="CAPTCHA"
@@ -145,6 +148,7 @@
                         <small id="CAPTCHAHelp" class="form-text" style="color: red" th:text="${CAPTCHAMessage}"></small>
                     </div>
                 </div>
+
                 <!-- 提交 -->
                 <div class="form-group mt-2 text-right">
 
@@ -169,7 +173,8 @@
             <small class="text-muted">•<span style="font-weight: bold;">选择标签：</span>选择一个或者多个合适的标签，用逗号隔开，每个标签不超过10个字。
             </small>
             <br/><br/>
-            <small class="text-muted">•<span style="font-weight: bold;">最后：</span>友善发帖，灌水闲聊请选灌水分类。</small>
+            <small class="text-muted">•<span style="font-weight: bold;">最后：</span>友善发帖，并遵守国际相关法律法规，互联网并非法外之地。</small>
+            <div class="container mt-2 text-center"><img class="border w-100" src="/image/v2-c277d2ad52b61fcd3fa82577575efc4c_r.jpg"/></div>
             <br/><br/>
             <br/><br/>
             <div class="container" style="">
@@ -185,15 +190,15 @@
                 </ol>
                 <div class="carousel-inner">
                     <div class="carousel-item active">
-                        <a href=""><img class="d-block w-100" src="image/101-desktop-wallpaper.png"
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
                                         alt="First slide"></a>
                     </div>
                     <div class="carousel-item">
-                        <a href=""><img class="d-block w-100" src="image/101-desktop-wallpaper.png"
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
                                         alt="Second slide"></a>
                     </div>
                     <div class="carousel-item">
-                        <a href=""><img class="d-block w-100" src="image/101-desktop-wallpaper.png"
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
                                         alt="Third slide"></a>
                     </div>
                 </div>

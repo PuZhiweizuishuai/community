@@ -8,10 +8,12 @@ import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
+import com.google.code.kaptcha.Constants;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -54,11 +56,24 @@ public class SignInController {
 
 
     @RequestMapping(value = "/sign-in", method = RequestMethod.POST)
-    public String signInAndSkip(String email, String password, String remember,
+    public String signInAndSkip(String email, String password, String remember, String validateCode,
                                 Model model, HttpServletRequest request, HttpServletResponse response) {
         if(email == null && password == null) {
             model.addAttribute("emailMsg", "密码和邮箱不能为空");
         }
+        if(validateCode.isEmpty()) {
+            model.addAttribute("kaptchaMsg", "验证码不能为空！");
+            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
+        }
+        Session session = SecurityUtils.getSubject().getSession();
+        String code = validateCode.toLowerCase();
+        String v = (String) session.getAttribute(Constants.KAPTCHA_SESSION_KEY);
+        if(!code.equals(v)){
+            model.addAttribute("kaptchaMsg", "验证码错误！");
+            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
+        }
+
+
         boolean rememberMe = false;
         if(remember != null) {
             rememberMe = true;

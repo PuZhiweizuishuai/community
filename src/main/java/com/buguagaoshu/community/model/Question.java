@@ -8,7 +8,7 @@ import lombok.Data;
  */
 @Data
 public class Question {
-    private long questionId;
+    private long questionId = -1;
     private long userId;
     private String title;
     private String classification;

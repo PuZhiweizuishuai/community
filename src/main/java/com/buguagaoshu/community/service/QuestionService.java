@@ -38,7 +38,14 @@ public interface QuestionService {
     /**
      * 查找问题
      * @param questionId 问题id
-     * @return 问题
+     * @return 问题 DTO
      * */
     QuestionDto selectQuestionById(String questionId);
+
+    /**
+     * 查找问题
+     * @param questionId 问题id
+     * @return 问题
+     * */
+    Question selectQuestionNotDtoById(String questionId);
 }

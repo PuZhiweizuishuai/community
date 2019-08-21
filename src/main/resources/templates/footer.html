@@ -14,7 +14,7 @@
         </div>
     </footer>
     <!-- Modal -->
-    <div th:if="${offline != null && offline}" id="Sign-out-tips" class="modal fade show" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" style="display: block; padding-right: 16px;">
+    <div th:if="${session.checkOnline != null && session.checkOnline}" id="Sign-out-tips" class="modal fade show" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" style="display: block; padding-right: 16px;">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
