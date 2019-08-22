@@ -79,6 +79,14 @@
         </dependency>
 
         <dependency>
+            <groupId>org.wf</groupId>
+            <artifactId>EasyCaptcha</artifactId>
+            <version>1.5.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/libs/EasyCaptcha-1.5.0-RELEASE.jar</systemPath>
+        </dependency>
+
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
             <version>0.9.1</version>

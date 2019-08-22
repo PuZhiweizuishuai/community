@@ -4,16 +4,13 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
-import com.google.code.kaptcha.Constants;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
+import com.wf.captcha.utils.CaptchaUtil;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -68,7 +65,7 @@ public class PublishController {
         question.setAlterTime(StringUtil.getNowTime());
 
 
-        if(!check(question, CAPTCHA, model)) {
+        if(!check(question, CAPTCHA, model, request)) {
             return StringUtil.jumpWebLangeParameter("publish", false, request);
         }
 
@@ -92,9 +89,10 @@ public class PublishController {
         return StringUtil.jumpWebLangeParameter("/",true, request);
     }
 
-    private boolean check(Question question, String CAPTCHA ,Model model) {
-        if(!question.getTitle().isEmpty() && !question.getClassification().isEmpty() && checkEmpty(CAPTCHA)
+    private boolean check(Question question, String CAPTCHA ,Model model, HttpServletRequest request) {
+        if(!question.getTitle().isEmpty() && !question.getClassification().isEmpty() && CaptchaUtil.ver(CAPTCHA, request)
                 && !question.getDescription().isEmpty()) {
+            CaptchaUtil.clear(request);
             return true;
         }
         if(question.getTitle().isEmpty()) {
@@ -106,20 +104,11 @@ public class PublishController {
         if(question.getDescription().isEmpty()) {
             model.addAttribute("textMessage", "内容不能为空！");
         }
-        if(!checkEmpty(CAPTCHA)) {
-            model.addAttribute("CAPTCHAMessage","验证码错误");
+        if (!CaptchaUtil.ver(CAPTCHA, request)) {
+            CaptchaUtil.clear(request);
+            model.addAttribute("CAPTCHAMessage", "验证码错误！");
         }
         model.addAttribute("question", question);
         return false;
-    }
-
-    public boolean checkEmpty(String CAPTCHA) {
-        if(CAPTCHA.isEmpty()) {
-            return false;
-        }
-        Session session = SecurityUtils.getSubject().getSession();
-        CAPTCHA = CAPTCHA.toLowerCase();
-        String v = (String) session.getAttribute(Constants.KAPTCHA_SESSION_KEY);
-        return CAPTCHA.equals(v);
     }
 }

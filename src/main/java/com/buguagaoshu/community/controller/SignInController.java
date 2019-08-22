@@ -8,12 +8,10 @@ import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
-import com.google.code.kaptcha.Constants;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -21,7 +19,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-
+import com.wf.captcha.servlet.CaptchaServlet;
+import com.wf.captcha.utils.CaptchaUtil;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -65,13 +64,12 @@ public class SignInController {
             model.addAttribute("kaptchaMsg", "验证码不能为空！");
             return StringUtil.jumpWebLangeParameter("SignIn", false, request);
         }
-        Session session = SecurityUtils.getSubject().getSession();
-        String code = validateCode.toLowerCase();
-        String v = (String) session.getAttribute(Constants.KAPTCHA_SESSION_KEY);
-        if(!code.equals(v)){
+        if (!CaptchaUtil.ver(validateCode, request)) {
+            CaptchaUtil.clear(request);
             model.addAttribute("kaptchaMsg", "验证码错误！");
             return StringUtil.jumpWebLangeParameter("SignIn", false, request);
         }
+
 
 
         boolean rememberMe = false;
