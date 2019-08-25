@@ -1,9 +1,12 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.exception.CustomizeErrorCode;
+import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
+import com.buguagaoshu.community.service.SignInService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
@@ -24,6 +27,7 @@ import com.wf.captcha.utils.CaptchaUtil;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -38,11 +42,15 @@ public class SignInController {
 
     private final OnlineUserService onlineUserService;
 
+    private final SignInService signInService;
+
     @Autowired
-    public SignInController(UserService userService, UserPermissionService userPermissionService, OnlineUserService onlineUserService) {
+    public SignInController(UserService userService, UserPermissionService userPermissionService,
+                            OnlineUserService onlineUserService, SignInService signInService) {
         this.userService = userService;
         this.userPermissionService = userPermissionService;
         this.onlineUserService = onlineUserService;
+        this.signInService = signInService;
     }
 
     /**
@@ -57,56 +65,24 @@ public class SignInController {
     @RequestMapping(value = "/sign-in", method = RequestMethod.POST)
     public String signInAndSkip(String email, String password, String remember, String validateCode,
                                 Model model, HttpServletRequest request, HttpServletResponse response) {
-        if(email == null && password == null) {
-            model.addAttribute("emailMsg", "密码和邮箱不能为空");
-        }
-        if(validateCode.isEmpty()) {
-            model.addAttribute("kaptchaMsg", "验证码不能为空！");
-            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
-        }
-        if (!CaptchaUtil.ver(validateCode, request)) {
-            CaptchaUtil.clear(request);
-            model.addAttribute("kaptchaMsg", "验证码错误！");
-            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
-        }
-
-
-
-        boolean rememberMe = false;
-        if(remember != null) {
-            rememberMe = true;
-        }
-        // 获取 Subject
-        Subject subject = SecurityUtils.getSubject();
-        // 封装用户数据
-        UsernamePasswordToken token = new UsernamePasswordToken(email, password, rememberMe);
-        // 执行登陆方法
         try {
-            // 没有异常就是登陆成功
-            subject.login(token);
-            User user = (User) subject.getPrincipal();
-            // 写入权限
-            UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-            user.setPower(userPermission.getPower());
-            // TODO 写入在线表
-            onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), user.getPassword(), IpUtil.getIpAddr(request), StringUtil.getNowTime()));
+            HashMap<String, Object> signInMsg = signInService.signIn(email, password, remember, validateCode, request);
+            User user = (User) signInMsg.get("user");
+            request.getSession().setAttribute("user", user);
             // 写入 cookie
-            response.addCookie(new Cookie("token", user.getPassword()));
-
-            user.setPassword("保密");
-
-            // 更新登陆时间
-            userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
-            // 页面跳转
-            System.out.println(StringUtil.jumpWebLangeParameter("/", true, request));
+            response.addCookie(new Cookie("token", (String) signInMsg.get("token")));
             return StringUtil.jumpWebLangeParameter("/", true, request);
-        } catch (UnknownAccountException e) {
-            // UnknownAccountException 用户名不存在
-            model.addAttribute("emailMsg", "用户不存在，请检查邮箱！");
-            return StringUtil.jumpWebLangeParameter("SignIn", false, request);
-        } catch (IncorrectCredentialsException e2) {
-            // IncorrectCredentialsException 密码错误
-            model.addAttribute("pwdMsg", "密码错误！");
+        } catch (CustomizeException e) {
+            if(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR.getCode().equals(e.getCode())) {
+                CaptchaUtil.clear(request);
+                model.addAttribute("kaptchaMsg", "验证码错误！");
+            } else if(CustomizeErrorCode.SIGN_IN_EMAIL_ERROR.getCode().equals(e.getCode())) {
+                model.addAttribute("emailMsg", "用户不存在，请检查邮箱！");
+            } else if(CustomizeErrorCode.SIGN_IN_EMAIL_OR_PASSWORD_NULL.getCode().equals(e.getCode())) {
+                model.addAttribute("emailMsg", "密码和邮箱不能为空");
+            } else if(CustomizeErrorCode.SIGN_IN_PASSWORD_ERROR.getCode().equals(e.getCode())) {
+                model.addAttribute("pwdMsg", "密码错误！");
+            }
             return StringUtil.jumpWebLangeParameter("SignIn", false, request);
         }
     }

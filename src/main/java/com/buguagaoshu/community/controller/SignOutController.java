@@ -32,9 +32,6 @@ public class SignOutController {
      * */
     @RequestMapping(value = "sign-out", method = RequestMethod.GET)
     public String signOut(HttpServletRequest request) {
-        Subject subject = SecurityUtils.getSubject();
-
-        subject.logout();
         String token = null;
         if(request.getCookies() != null) {
             Cookie[] cookies = request.getCookies();

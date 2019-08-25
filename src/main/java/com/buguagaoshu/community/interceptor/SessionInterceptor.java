@@ -6,6 +6,7 @@ import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.JwtUtil;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +33,14 @@ public class SessionInterceptor implements HandlerInterceptor {
     @Autowired
     UserPermissionService userPermissionService;
 
+    @Autowired
+    JwtUtil jwtUtil;
+
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         /**
-         * TODO 待改进优化
+         * TODO 待改进优化, 对于 token 的使用
          * */
         String token = null;
         if(request.getCookies() != null) {
@@ -59,9 +63,6 @@ public class SessionInterceptor implements HandlerInterceptor {
                 user.setPower(userPermission.getPower());
                 request.getSession().setAttribute("user", user);
             } else {
-                // 强制退出
-                // Subject subject = SecurityUtils.getSubject();
-                // subject.logout();
                 request.getSession().removeAttribute("user");
                 request.getSession().setAttribute("checkOnline", true);
             }

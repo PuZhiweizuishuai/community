@@ -19,7 +19,8 @@
         <p class="lead">本程序员不想处理这个错误并向你抛去了白眼</p>
         <div class="container text-center"> <img id="img-error" src="/image/icon/error.gif" width="400" height="auto" onended="document.getElementById('img-error').src = document.getElementById('img-error').src"></div>
         <hr class="my-4">
-        <p>啊，我好累啊！</p>
+        <p>啊，我好累啊！真实的错误信息大概是下面这个吧！</p>
+        <p th:text="${message}"></p>
         <a class="btn btn-primary btn-lg" id="back-home" href="/" role="button" onclick="addLocaleUrl('back-home')">回到主页</a>
     </div>
 </div>

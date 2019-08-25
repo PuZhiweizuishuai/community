@@ -70,4 +70,12 @@ public interface QuestionMapper {
      * */
     @Select("SELECT COUNT(1) FROM Questions where userId=#{id}")
     int getUserQuestionCount(long id);
+
+
+    /**
+     * @param questionId 问题 id
+     * @return 阅读数加 1
+     * */
+    @Update("update Questions set viewCount=viewCount+1 where questionId=#{questionId}")
+    int updateQuestionViewCount(long questionId);
 }

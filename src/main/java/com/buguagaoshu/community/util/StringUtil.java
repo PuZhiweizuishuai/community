@@ -13,7 +13,7 @@ import java.util.UUID;
 public class StringUtil {
     /**
      * 密码加密
-     * */
+     */
     public static String BCryptPassword(String password) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         return bCryptPasswordEncoder.encode(password);
@@ -21,15 +21,31 @@ public class StringUtil {
 
     /**
      * 与数据库中的密码进行对比
-     * */
+     */
     public static boolean judgePassword(String rawPassword, String encodedPassword) {
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         return bCryptPasswordEncoder.matches(rawPassword, encodedPassword);
     }
 
+
+    /**
+     * 判断字符串是否为空
+     * */
+    public static boolean isEmpty(String str) {
+        if (str == null) {
+            return true;
+        } else {
+            if (str.equals("")) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
     /**
      * 验证密码格式
-     * */
+     */
     public static boolean checkPassword(String password) {
         String regx = "^([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){6,30}$";
         return password.matches(regx);
@@ -94,22 +110,22 @@ public class StringUtil {
 
     /**
      * 验证邮箱
-     * */
+     */
     public static boolean checkEmail(String email) {
-        String reg="^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
+        String reg = "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
         return email.matches(reg);
     }
 
     /**
      * 验证用户 ID
-     * */
+     */
     public static boolean checkUserId(String userId) {
         return userId.matches("^\\w+$");
     }
 
     /**
      * 获取一个UUID
-     * */
+     */
     public static String getUUID() {
         UUID uuid = UUID.randomUUID();
         return uuid.toString();
@@ -117,17 +133,18 @@ public class StringUtil {
 
     /**
      * 页面跳转的语言参数
-     * @param url 要跳转的页面
+     *
+     * @param url        要跳转的页面
      * @param isRedirect 是否重定向
-     * */
-    public static String jumpWebLangeParameter(String url , boolean isRedirect,
+     */
+    public static String jumpWebLangeParameter(String url, boolean isRedirect,
                                                HttpServletRequest request) {
         StringBuffer stringBuffer = new StringBuffer();
-        if(isRedirect) {
+        if (isRedirect) {
             stringBuffer.append("redirect:");
         }
         String l = request.getParameter("l");
-        if(l != null && l.equals("en-US")) {
+        if (l != null && l.equals("en-US")) {
 
             stringBuffer.append(url);
             stringBuffer.append("?l=en-US");

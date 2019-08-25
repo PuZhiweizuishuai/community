@@ -32,9 +32,9 @@ public class QuestionController {
         if(question == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+        // TODO 阅读数加1，此处待优化，如限定一个ip只能增加一次阅读数
+        questionService.updateQuestionViewCount(question.getQuestionId());
         model.addAttribute("question", question);
-
-
         return "question";
     }
 }

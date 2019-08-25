@@ -48,4 +48,11 @@ public interface QuestionService {
      * @return 问题
      * */
     Question selectQuestionNotDtoById(String questionId);
+
+    /**
+     * 阅读数加 1
+     * @param questionId 问题 id
+     * @return 阅读数加 1
+     * */
+    int updateQuestionViewCount(long questionId);
 }

@@ -58,8 +58,10 @@ public class PublishController {
         question.setClassification(classification);
         question.setDescription(description);
         question.setTag(tag);
-        Subject subject = SecurityUtils.getSubject();
-        User user = (User) subject.getPrincipal();
+
+        User user = (User) request.getSession().getAttribute("user");
+
+
         question.setUserId(user.getId());
         question.setCreateTime(StringUtil.getNowTime());
         question.setAlterTime(StringUtil.getNowTime());

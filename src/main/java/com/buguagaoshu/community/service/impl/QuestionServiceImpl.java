@@ -157,6 +157,7 @@ public class QuestionServiceImpl implements QuestionService {
         if(question == null) {
             return null;
         }
+
         User user = userService.selectUserById(question.getUserId());
         user.clean();
         QuestionDto questionDto = new QuestionDto();
@@ -177,5 +178,10 @@ public class QuestionServiceImpl implements QuestionService {
             return null;
         }
         return questionMapper.selectQuestionById(id);
+    }
+
+    @Override
+    public int updateQuestionViewCount(long questionId) {
+        return questionMapper.updateQuestionViewCount(questionId);
     }
 }

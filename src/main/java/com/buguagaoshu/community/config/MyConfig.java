@@ -2,6 +2,7 @@ package com.buguagaoshu.community.config;
 
 
 import com.buguagaoshu.community.component.MyLocaleResolver;
+import com.buguagaoshu.community.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.LocaleResolver;
@@ -19,5 +20,11 @@ public class MyConfig {
     @Bean
     public LocaleResolver localeResolver() {
         return new MyLocaleResolver();
+    }
+
+
+    @Bean
+    public JwtUtil jwtUtil() {
+        return new JwtUtil();
     }
 }
