@@ -33,13 +33,13 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
 
-    private int[] getPageAndsize(String page, String size, long id) {
-        int offset;
-        int sizeNumber;
+    private long[] getPageAndsize(String page, String size, long id) {
+        long offset;
+        long sizeNumber;
         // 使用 string 防止传入参数不是数字
         try {
-            offset = Integer.valueOf(page);
-            sizeNumber = Integer.valueOf(size);
+            offset = Long.valueOf(page);
+            sizeNumber = Long.valueOf(size);
         } catch (Exception e) {
             offset = 1;
             sizeNumber = 10;
@@ -49,14 +49,14 @@ public class QuestionServiceImpl implements QuestionService {
         if(sizeNumber > 20 || sizeNumber < 5) {
             sizeNumber = 10;
         }
-        int allQuestionCount;
+        long allQuestionCount;
         if(id == -1) {
             allQuestionCount = questionMapper.getQuestionCount();
         } else {
             allQuestionCount = questionMapper.getUserQuestionCount(id);
         }
 
-        int totalPage = 1;
+        long totalPage = 1;
 
         // 计算总页数
         if (allQuestionCount % sizeNumber == 0) {
@@ -76,8 +76,8 @@ public class QuestionServiceImpl implements QuestionService {
 
 
         // 计算分页公式 size * (page - 1)
-        int pageParam = sizeNumber * (offset - 1);
-        int[] param = new int[4];
+        long pageParam = sizeNumber * (offset - 1);
+        long[] param = new long[4];
         // 页码
         param[0] = pageParam;
         // 每页显示数
@@ -104,7 +104,7 @@ public class QuestionServiceImpl implements QuestionService {
      * */
     @Override
     public PaginationDto getSomeQuestionDto(String page, String size) {
-        int[] param = getPageAndsize(page, size, -1);
+        long[] param = getPageAndsize(page, size, -1);
         List<Question> questionList = questionMapper.getSomeQuestion(param[0], param[1]);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for(Question question : questionList) {
@@ -126,7 +126,7 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public PaginationDto getQuestionByUserId(String page, String size, long id) {
-        int[] param = getPageAndsize(page, size, id);
+        long[] param = getPageAndsize(page, size, id);
         List<Question> questionList = questionMapper.getQuestionByUserId(param[0], param[1], id);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for(Question question : questionList) {
@@ -183,5 +183,10 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public int updateQuestionViewCount(long questionId) {
         return questionMapper.updateQuestionViewCount(questionId);
+    }
+
+    @Override
+    public int updateQuestionCommentCount(Question question) {
+        return questionMapper.updateQuestionCommentCount(question);
     }
 }

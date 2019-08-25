@@ -77,9 +77,9 @@ CREATE TABLE Questions
     classification varchar (50),
     description text,
     fileUrl text,
-    viewCount int DEFAULT 1,
-    commentCount int DEFAULT 0,
-    likeCount int DEFAULT 0,
+    viewCount bigint DEFAULT 1,
+    commentCount bigint DEFAULT 0,
+    likeCount bigint DEFAULT 0,
     tag varchar(256),
     createTime varchar(19),
     alterTime varchar(19),
@@ -96,7 +96,6 @@ CREATE TABLE comment
     likeCount bigint DEFAULT 0,
     createTime varchar(19) NOT NULL,
     modifiedTime varchar(19) NOT NULL,
-    constraint comment_question_FK foreign key(parentId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
 );
 

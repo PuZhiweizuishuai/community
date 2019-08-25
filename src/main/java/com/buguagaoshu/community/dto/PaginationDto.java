@@ -17,12 +17,12 @@ public class PaginationDto {
     private boolean showFirstPage;
     private boolean showNext;
     private boolean showEndPage;
-    private int totalPage = 1;
-    private int currentPage;
-    private int nowPage = 1;
-    private List<Integer> pages = new ArrayList<>();
+    private long totalPage = 1;
+    private long currentPage;
+    private long nowPage = 1;
+    private List<Long> pages = new ArrayList<>();
 
-    public void setPagination(int totalPage, int page, int size) {
+    public void setPagination(long totalPage, long page, long size) {
         nowPage = page;
         this.totalPage = totalPage;
         // 判断页码显示

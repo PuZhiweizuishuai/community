@@ -55,4 +55,11 @@ public interface QuestionService {
      * @return 阅读数加 1
      * */
     int updateQuestionViewCount(long questionId);
+
+    /**
+     * 评论数加 1
+     * @param question 问题
+     * @return 评论数加 1
+     * */
+    int updateQuestionCommentCount(Question question);
 }

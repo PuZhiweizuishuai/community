@@ -21,8 +21,9 @@ public interface QuestionMapper {
     @Options(useGeneratedKeys = true, keyProperty = "questionId")
     int createQuestion(Question question);
 
-
-
+    /**
+     * 更新问题
+     * */
     @Update("update Questions set title=#{title}, classification=#{classification}, description=#{description}, fileUrl=#{fileUrl}, tag=#{tag}, " +
             "alterTime=#{alterTime} where questionId=#{questionId}")
     int updateQuestion(Question question);
@@ -44,7 +45,7 @@ public interface QuestionMapper {
      * @return 问题列表
      * */
     @Select("select * from Questions limit #{page}, #{size}")
-    List<Question> getSomeQuestion(@Param("page") int page, @Param("size") int size);
+    List<Question> getSomeQuestion(@Param("page") long page, @Param("size") long size);
 
 
     /**
@@ -56,26 +57,35 @@ public interface QuestionMapper {
      * @return 问题列表
      * */
     @Select("select * from Questions where userId=#{userId} limit #{page}, #{size}")
-    List<Question> getQuestionByUserId(@Param("page") int page, @Param("size") int size, @Param("userId") long id);
+    List<Question> getQuestionByUserId(@Param("page") long page, @Param("size") long size, @Param("userId") long id);
 
     /**
      * @return 返回问题总数
      * */
     @Select("SELECT COUNT(1) FROM Questions")
-    int getQuestionCount();
+    long getQuestionCount();
 
     /**
      * @param id 用户 id
      * @return 返回问题总数
      * */
     @Select("SELECT COUNT(1) FROM Questions where userId=#{id}")
-    int getUserQuestionCount(long id);
+    long getUserQuestionCount(long id);
 
 
     /**
+     * 阅读数加1
      * @param questionId 问题 id
      * @return 阅读数加 1
      * */
     @Update("update Questions set viewCount=viewCount+1 where questionId=#{questionId}")
     int updateQuestionViewCount(long questionId);
+
+    /**
+     * 评论数加 1
+     * @param question 问题
+     * @return 评论数加 1
+     * */
+    @Update("update Questions set commentCount=commentCount+#{commentCount} where questionId=#{questionId}")
+    int updateQuestionCommentCount(Question question);
 }
