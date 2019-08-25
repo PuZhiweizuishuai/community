@@ -38,6 +38,8 @@ TODO 目前亟待改进登陆退出判断
 [EasyCaptcha 验证码](https://github.com/whvcse/EasyCaptcha)
 注意：此工具和kaptcha有一样的问题，使用的Random方法有不安全，[CVE-2018-18531](http://www.cnnvd.org.cn/web/xxk/ldxqById.tag?CNNVD=CNNVD-201810-1111)对安全性要求较高的，建议下载源码后将Random方法更改为SecureRandom
 
+更新：最新版修复了这个问题
+
 [JJWT Java JWT](https://github.com/jwtk/jjwt)
 
 ## 命令使用
