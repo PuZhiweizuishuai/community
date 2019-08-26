@@ -12,8 +12,8 @@ import org.apache.ibatis.annotations.Select;
  */
 @Mapper
 public interface CommentMapper {
-    @Insert("insert into comment(parentId, type, commentator, content, likeCount, createTime, modifiedTime) " +
-            "values(#{parentId}, #{type}, #{commentator}, #{content}, #{likeCount}, #{createTime}, #{modifiedTime})")
+    @Insert("insert into comment(questionId ,parentId, type, commentator, content, likeCount, createTime, modifiedTime) " +
+            "values(#{questionId}, #{parentId}, #{type}, #{commentator}, #{content}, #{likeCount}, #{createTime}, #{modifiedTime})")
     @Options(useGeneratedKeys = true, keyProperty = "commentId")
     int insertComment(Comment comment);
 

@@ -10,6 +10,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -17,17 +18,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class CommentServiceImpl implements CommentService {
-    private final CommentMapper commentMapper;
-
-    private final QuestionMapper questionMapper;
+    @Autowired
+    CommentMapper commentMapper;
 
     @Autowired
-    public CommentServiceImpl(CommentMapper commentMapper, QuestionMapper questionMapper) {
-        this.commentMapper = commentMapper;
-        this.questionMapper = questionMapper;
-    }
+    QuestionMapper questionMapper;
 
+
+    /**
+     * @Transactional spring 事务注解
+     * */
     @Override
+    @Transactional(rollbackFor = CustomizeException.class)
     public int insertComment(Comment comment) {
         if (comment.getParentId() == 0) {
             throw new CustomizeException(CustomizeErrorCode.TARGET_PARAM_NOT_FOUND);
@@ -36,19 +38,23 @@ public class CommentServiceImpl implements CommentService {
             throw new CustomizeException(CustomizeErrorCode.TYPE_PARAM_WRONG);
         }
 
+        Question question = questionMapper.selectQuestionById(comment.getQuestionId());
         if (CommentTypeEnum.COMMENT.getType().equals(comment.getType())) {
             // 回复评论
             // TODO 可能有bug 待测试
+            if(question == null) {
+                throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+            }
             Comment dbComment = selectCommentByCommentId(comment.getParentId());
             if(dbComment == null) {
                 throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
             }
-
+            question.setCommentCount(1);
+            questionMapper.updateQuestionCommentCount(question);
             return commentMapper.insertComment(comment);
         } else {
             // 回复问题
-            Question question = questionMapper.selectQuestionById(comment.getParentId());
-            if(question == null) {
+            if(question == null || (comment.getQuestionId() != comment.getParentId())) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
             }
             question.setCommentCount(1);

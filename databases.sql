@@ -89,6 +89,7 @@ CREATE TABLE Questions
 CREATE TABLE comment
 (
     commentId bigint PRIMARY KEY AUTO_INCREMENT,
+    questionId bigint not null,
     parentId bigint NOT NULL,
     type int NOT NULL,
     commentator bigint NOT NULL,
@@ -96,12 +97,13 @@ CREATE TABLE comment
     likeCount bigint DEFAULT 0,
     createTime varchar(19) NOT NULL,
     modifiedTime varchar(19) NOT NULL,
+    constraint comment_user_FK foreign key(questionId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
 );
 
 --alter table Questions modify questionId bigint NOT NULL;
 --alter table users modify id bigint NOT NULL;
-select * from Questions limit 0, 5;
+--select * from Questions limit 0, 5;
 --alter table userPermission add updateTime varchar(19) not null ;
 --alter table userPermission change  column modifer modifier varchar(20)
 --insert into userPermission values (1,0);

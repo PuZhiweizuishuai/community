@@ -29,6 +29,7 @@ public class CommentController {
     @ResponseBody
     public Object post(@RequestBody CommentDto commentDto) {
         Comment comment = new Comment();
+        comment.setQuestionId(commentDto.getQuestionId());
         comment.setParentId(commentDto.getParentId());
         comment.setType(commentDto.getType());
         comment.setCommentator(commentDto.getCommentator());

@@ -14,7 +14,12 @@ public class Comment {
     private long commentId;
 
     /**
-     * 问题 id
+     * 评论所存在的问题
+     * */
+    private long questionId;
+
+    /**
+     * 评论目标 id
      * */
     private long parentId;
 
