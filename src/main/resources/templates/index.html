@@ -23,6 +23,12 @@
             border-right-color: #efefef;
         }
     </style>
+    <script type="text/javascript">
+        if(window.localStorage.getItem("closable") === "true") {
+            window.localStorage.removeItem("closable");
+            window.close();
+        }
+    </script>
 </head>
 <body>
 <!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->

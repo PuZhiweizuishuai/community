@@ -82,9 +82,9 @@ public interface QuestionMapper {
     int updateQuestionViewCount(long questionId);
 
     /**
-     * 评论数加 1
+     * 评论数加 n
      * @param question 问题
-     * @return 评论数加 1
+     * @return 评论数加 n
      * */
     @Update("update Questions set commentCount=commentCount+#{commentCount} where questionId=#{questionId}")
     int updateQuestionCommentCount(Question question);

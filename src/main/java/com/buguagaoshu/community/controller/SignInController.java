@@ -68,6 +68,7 @@ public class SignInController {
         try {
             HashMap<String, Object> signInMsg = signInService.signIn(email, password, remember, validateCode, request);
             User user = (User) signInMsg.get("user");
+            // 设置 session
             request.getSession().setAttribute("user", user);
             // 写入 cookie
             response.addCookie(new Cookie("token", (String) signInMsg.get("token")));

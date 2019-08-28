@@ -30,13 +30,22 @@
         .people-name:hover {
             color: #007bff;
         }
+
         .edit-a {
             font-size: 90%;
             font-weight: 400;
             color: #999;
         }
+
         .edit-a:hover {
-            text-decoration:none;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+        .question-comment {
+            border-bottom: solid 1px rgba(0,0,0,.1);
         }
     </style>
 </head>
@@ -59,8 +68,8 @@
                 <div class="row">
                     <div class="col-8">
                         <p class="mb-0 mt-2 small" style="color: #c6c5c1;">
-                            <a class="issuse-question-class" target="_blank" href="#" th:text="${question.classification}">分类</a>
-                            <span class="ml-3" style="color: #c6c5c1;">作者：</span><a target="_blank" class="people-name ml-0"
+                            <a class="issuse-question-class" href="#" th:text="${question.classification}">分类</a>
+                            <span class="ml-3" style="color: #c6c5c1;">作者：</span><a class="people-name ml-0"
                                                                                     th:href="'/user/'+ ${question.user.getUserId()}"
                                                                                     th:text="${question.user.getUserName()}">人名</a>&nbsp;|&nbsp;
                             发布于：<span th:text="${question.createTime}"></span>&nbsp;|&nbsp;
@@ -76,27 +85,107 @@
                 </div>
             </div>
             <hr>
-
+            <input type="hidden" id="questionId" th:value="${question.getQuestionId()}">
             <!-- 内容 -->
             <div class="container">
                 <div th:text="${question.description}"></div>
             </div>
             <hr/>
             <!-- 编辑 -->
-            <div class="container text-right" th:if="${session.user != null && session.user.getId() == question.user.getId()}">
-                <a class="edit-a" th:href="'/publish/' + ${question.getQuestionId()}"><img src="/image/icon/edit.svg" width="18" height="18">&nbsp;编&nbsp;辑</a>
+            <div class="container text-right"
+                 th:if="${session.user != null && session.user.getId() == question.user.getId()}">
+                <a class="edit-a" th:href="'/publish/' + ${question.getQuestionId()}"><img src="/image/icon/edit.svg"
+                                                                                           width="18" height="18">&nbsp;编&nbsp;辑</a>
             </div>
 
+            <!--回复导航-->
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <h4><span th:text="${question.commentCount}">16</span>个回复</h4>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-2"/>
+            <!-- 显示回复 -->
+            <div class="container">
+                <div class="media mt-4 question-comment"  th:each="comment : ${comments}">
+                    <img class="align-self-start mr-3" th:src="'/' + ${comment.user.getHeadUrl()}" width="40" height="40">
+                    <div class="media-body">
+                        <a class="mt-0 ml-0 issuse-question-people" th:href="${'/user/' + comment.user.getUserId()}"><span th:text="${comment.user.getUserName()}">顶部对齐</span></a>
+                        <p class="mt-2" th:text="${comment.getContent()}">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</p>
+                        <div class="row mt-2 mb-2">
+                            <div class="col">
+                                <button type="button" class="btn btn-outline-primary btn-sm">
+                                    <img src="/image/icon/clicklike.svg" width="auto" height="20">
+                                    <span class="badge badge-light" th:text="${comment.getLikeCount()}">0</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-dark btn-sm ml-2">
+                                    <img src="/image/icon/comment.svg" width="auto" height="20">
+                                    <span class="badge badge-light" th:text="${comment.getCommentCount()}">0</span>
+                                </button>
+                            </div>
+                            <div class="col text-right">
+                                <p th:text="${comment.getModifiedTime()}"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr/>
+            <!-- 评论区 -->
+            <div class="container">
+                <div class="form-group">
+                    <!-- 评论区上用户头像 -->
+                    <div class="media mb-2" th:if="${session.user != null}">
+                        <img class="align-self-center mr-3 img-fluid rounded-circle"
+                             th:src="'/' + ${session.user.getHeadUrl()}" width="40" height="40">
+                        <p class="mt-2"><a th:href="${'/user/' + session.user.getUserId()}"><span
+                                th:text="${session.user.getUserName()}"></span></a></p>
+                        <input type="hidden" id="userId" th:value="${session.user.getId()}">
+                    </div>
+                    <div class="mt-2 mb-2" th:if="${session.user == null}">评论</div>
+                    <!-- 评论内容 -->
+                    <textarea class="form-control" id="content" rows="6"></textarea>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col">
+                        <button type="button" class="btn btn-outline-secondary">上传附件</button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col text-right">
+                        <a href="javascript:void(0);">
+                            <img src="/captche/images" onclick="this.src='/captche/images?'+Math.random()"/>
+                        </a>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <input type="text" class="form-control mt-2" id="captcha" placeholder="验证码">
+                        </div>
+                    </div>
+                    <div class="col text-right">
+                        <button type="button" class="btn btn-success mt-2" onclick="sendComment()">提交</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- 右边 -->
         <div class="col">
             <br/>
             <br/>
             <h5>发起人</h5>
             <br/>
             <div class="container text-center">
-                <img class="rounded-circle" th:src="'/'+${question.user.getHeadUrl()}" alt="用户头像" width="60" height="60"/>
-                <a target="_blank" th:href="'/user/'+ ${question.user.getUserId()}"><p th:text="${question.user.getUserName()}"></p></a>
+                <img class="rounded-circle" th:src="'/'+${question.user.getHeadUrl()}" alt="用户头像" width="60"
+                     height="60"/>
+                <a th:href="'/user/'+ ${question.user.getUserId()}"><p th:text="${question.user.getUserName()}"></p></a>
             </div>
 
             <br/><br/>
@@ -153,5 +242,6 @@
 
 
 <script src="/js/url.js" type="text/javascript"></script>
+<script src="/js/comment.js" type="text/javascript"></script>
 </body>
 </html>

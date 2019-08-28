@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.service.impl;
 
+import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.enums.CommentTypeEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
@@ -7,10 +8,19 @@ import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
+import com.buguagaoshu.community.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -18,16 +28,24 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class CommentServiceImpl implements CommentService {
-    @Autowired
-    CommentMapper commentMapper;
+    private final CommentMapper commentMapper;
+
+    private final QuestionMapper questionMapper;
+
+    private final UserService userService;
 
     @Autowired
-    QuestionMapper questionMapper;
+    public CommentServiceImpl(CommentMapper commentMapper, QuestionMapper questionMapper,
+                              UserService userService) {
+        this.commentMapper = commentMapper;
+        this.questionMapper = questionMapper;
+        this.userService = userService;
+    }
 
 
     /**
      * @Transactional spring 事务注解
-     * */
+     */
     @Override
     @Transactional(rollbackFor = CustomizeException.class)
     public int insertComment(Comment comment) {
@@ -42,19 +60,23 @@ public class CommentServiceImpl implements CommentService {
         if (CommentTypeEnum.COMMENT.getType().equals(comment.getType())) {
             // 回复评论
             // TODO 可能有bug 待测试
-            if(question == null) {
+            if (question == null) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
             }
             Comment dbComment = selectCommentByCommentId(comment.getParentId());
-            if(dbComment == null) {
+            if (dbComment == null) {
                 throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
             }
+            // 评论评论数加 1
+            dbComment.setCommentCount(1);
+            commentMapper.updateCommentCount(dbComment);
+            // 问题评论数加 1
             question.setCommentCount(1);
             questionMapper.updateQuestionCommentCount(question);
             return commentMapper.insertComment(comment);
         } else {
             // 回复问题
-            if(question == null || (comment.getQuestionId() != comment.getParentId())) {
+            if (question == null || (comment.getQuestionId() != comment.getParentId())) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
             }
             question.setCommentCount(1);
@@ -69,7 +91,29 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public Comment selectCommentByParentId(long parentId) {
-        return commentMapper.selectCommentByParentId(parentId);
+    public List<CommentDto> getCommentDtoByQuestionIdForQuestion(long questionId) {
+        List<Comment> comments = commentMapper.getCommentDtoByQuestionId(questionId, 1);
+        if (comments.size() == 0) {
+            return new ArrayList<>();
+        }
+        // 获取该问题下去重的所有评论者
+        Set<Long> commentors = comments.stream().map(comment -> comment.getCommentator()).collect(Collectors.toSet());
+        List<User> users = new ArrayList<>();
+        for (Long userId : commentors) {
+            User user = userService.selectUserById(userId);
+            users.add(user);
+        }
+        // 获取 userMap
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user->user.getId(), user->user));
+
+        // 为评论添加作者信息
+        List<CommentDto> commentDtos = comments.stream().map(comment -> {
+            CommentDto commentDto = new CommentDto();
+            BeanUtils.copyProperties(comment, commentDto);
+            commentDto.setUser(userMap.get(comment.getCommentator()));
+            return commentDto;
+        }).collect(Collectors.toList());
+
+        return commentDtos;
     }
 }

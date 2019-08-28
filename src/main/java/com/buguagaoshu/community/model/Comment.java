@@ -43,6 +43,12 @@ public class Comment {
      * */
     private long likeCount;
 
+
+    /**
+     * 评论回复数
+     * */
+    private long commentCount;
+
     /**
      * 创建时间
      * */

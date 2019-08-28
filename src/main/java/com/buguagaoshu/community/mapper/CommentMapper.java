@@ -1,10 +1,9 @@
 package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Comment;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
+
+import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -12,8 +11,8 @@ import org.apache.ibatis.annotations.Select;
  */
 @Mapper
 public interface CommentMapper {
-    @Insert("insert into comment(questionId ,parentId, type, commentator, content, likeCount, createTime, modifiedTime) " +
-            "values(#{questionId}, #{parentId}, #{type}, #{commentator}, #{content}, #{likeCount}, #{createTime}, #{modifiedTime})")
+    @Insert("insert into comment(questionId ,parentId, type, commentator, content, likeCount, commentCount, createTime, modifiedTime) " +
+            "values(#{questionId}, #{parentId}, #{type}, #{commentator}, #{content}, #{likeCount},  #{commentCount}, #{createTime}, #{modifiedTime})")
     @Options(useGeneratedKeys = true, keyProperty = "commentId")
     int insertComment(Comment comment);
 
@@ -22,6 +21,10 @@ public interface CommentMapper {
     Comment selectCommentByCommentId(long commentId);
 
 
-    @Select("select * from comment where parentId=#{parentId}")
-    Comment selectCommentByParentId(long parentId);
+    @Select("select * from comment where questionId=#{questionId} AND type=#{type}")
+    List<Comment> getCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type);
+
+
+    @Update("update comment set commentCount=commentCount+#{commentCount} where commentId=#{commentId}")
+    int updateCommentCount(Comment comment);
 }

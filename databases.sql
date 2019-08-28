@@ -95,9 +95,10 @@ CREATE TABLE comment
     commentator bigint NOT NULL,
     content text NOT NULL,
     likeCount bigint DEFAULT 0,
+    commentCount bigint default 0,
     createTime varchar(19) NOT NULL,
     modifiedTime varchar(19) NOT NULL,
-    constraint comment_user_FK foreign key(questionId) references Questions(questionId),
+    constraint comments_user_FK foreign key(questionId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
 );
 
