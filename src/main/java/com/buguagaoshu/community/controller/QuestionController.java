@@ -2,6 +2,7 @@ package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.QuestionDto;
+import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
@@ -38,12 +39,15 @@ public class QuestionController {
         if(question == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+
+        List<Question> relevantQuestion = questionService.getRelevantQuestion(question);
         List<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(Long.valueOf(questionId));
         // TODO 阅读数加1，此处待优化，如限定一个ip只能增加一次阅读数
         questionService.updateQuestionViewCount(question.getQuestionId());
 
         model.addAttribute("question", question);
         model.addAttribute("comments", commentDtos);
+        model.addAttribute("relevantQuestion", relevantQuestion);
         return "question";
     }
 }

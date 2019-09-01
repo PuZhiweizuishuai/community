@@ -4,6 +4,8 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
 
+import java.util.List;
+
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -62,4 +64,12 @@ public interface QuestionService {
      * @return 评论数加 1
      * */
     int updateQuestionCommentCount(Question question);
+
+
+    /**
+     * 根据正则匹配相关问题
+     * @return 相关问题
+     * */
+    List<Question> getRelevantQuestion(QuestionDto questionDto);
+
 }

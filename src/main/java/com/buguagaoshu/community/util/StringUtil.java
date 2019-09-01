@@ -153,4 +153,25 @@ public class StringUtil {
         }
         return stringBuffer.toString();
     }
+
+    /**
+     * 返回查询相关问题的正则
+     * */
+    public static String sqlSelectRegexpForRelevantQuestion(String tag) {
+        String regex = ",|，";
+        String[] str = tag.split(regex);
+        if(str.length == 1) {
+            return tag;
+        }
+        StringBuffer stringBuffer = new StringBuffer();
+        int n = str.length;
+        for(int i = 0; ; i++) {
+            stringBuffer.append(str[i]);
+            if(i == n-1) {
+                break;
+            }
+            stringBuffer.append("|");
+        }
+        return stringBuffer.toString();
+    }
 }

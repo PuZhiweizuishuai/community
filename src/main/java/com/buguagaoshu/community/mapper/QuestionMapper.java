@@ -39,24 +39,24 @@ public interface QuestionMapper {
 
     /**
      * TODO 优化分页
-     * 获取问题列表
+     * 获取问题列表 倒序
      * @param page 页码
      * @param size 每页显示数量
      * @return 问题列表
      * */
-    @Select("select * from Questions limit #{page}, #{size}")
+    @Select("select * from Questions ORDER BY questionId DESC limit #{page}, #{size}")
     List<Question> getSomeQuestion(@Param("page") long page, @Param("size") long size);
 
 
     /**
      * TODO 优化分页
-     * 获取当前用户发布的问题列表
+     * 获取当前用户发布的问题列表 倒序
      * @param page 页码
      * @param size 每页显示数量
      * @param id 用户id
      * @return 问题列表
      * */
-    @Select("select * from Questions where userId=#{userId} limit #{page}, #{size}")
+    @Select("select * from Questions where userId=#{userId} ORDER BY questionId DESC limit #{page}, #{size}")
     List<Question> getQuestionByUserId(@Param("page") long page, @Param("size") long size, @Param("userId") long id);
 
     /**
@@ -88,4 +88,14 @@ public interface QuestionMapper {
      * */
     @Update("update Questions set commentCount=commentCount+#{commentCount} where questionId=#{questionId}")
     int updateQuestionCommentCount(Question question);
+
+    /**
+     * 根据正则匹配相关问题
+     * @param tag 标签
+     * @param questionId 当前问题id
+     * @param size 返回最大数量
+     * @return 相关问题
+     * */
+    @Select("select * from Questions where tag regexp #{tag} and questionId!=#{questionId} order by questionId desc limit #{size}")
+    List<Question> getRelevantQuestion(@Param("tag") String tag, @Param("questionId") long questionId, @Param("size") int size);
 }

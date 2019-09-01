@@ -7,6 +7,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.StringUtil;
 import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,5 +189,15 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public int updateQuestionCommentCount(Question question) {
         return questionMapper.updateQuestionCommentCount(question);
+    }
+
+    @Override
+    public List<Question> getRelevantQuestion(QuestionDto questionDto) {
+        if(questionDto.getTag() == null || questionDto.getTag().equals("")) {
+            return null;
+        }
+        List<Question> questionDtoList = questionMapper.getRelevantQuestion(
+                StringUtil.sqlSelectRegexpForRelevantQuestion(questionDto.getTag()), questionDto.getQuestionId(), 10);
+        return questionDtoList;
     }
 }

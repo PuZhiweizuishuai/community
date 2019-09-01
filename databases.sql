@@ -10,6 +10,8 @@ show variables LIKE 'collation_%';
 ALTER DATABASE community CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 
+-- TODO 修改时间为bigint 方便后期排序
+
 --创建用户表
 CREATE TABLE users
 (
