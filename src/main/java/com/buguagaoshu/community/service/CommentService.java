@@ -21,4 +21,10 @@ public interface CommentService {
      * @return 问题评论列表
      * */
     List<CommentDto> getCommentDtoByQuestionIdForQuestion(long questionId);
+
+
+    /**
+     * 返回二级评论
+     * */
+    List<CommentDto> getTwoLevelCommentByParent(String parentId, int type);
 }

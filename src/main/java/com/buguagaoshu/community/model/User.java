@@ -74,9 +74,5 @@ public class User {
      * */
     public void clean() {
         this.password = null;
-        this.email = null;
-        this.age = 0;
-        this.birthday = null;
-        this.lastTime = null;
     }
 }

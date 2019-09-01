@@ -29,4 +29,10 @@ public class CommentCreateDto {
      * 内容
      * */
     private String content;
+
+
+    /**
+     * 验证码
+     * */
+    private String captcha;
 }

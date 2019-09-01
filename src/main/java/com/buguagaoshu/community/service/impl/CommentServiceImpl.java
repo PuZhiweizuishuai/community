@@ -101,6 +101,40 @@ public class CommentServiceImpl implements CommentService {
         List<User> users = new ArrayList<>();
         for (Long userId : commentors) {
             User user = userService.selectUserById(userId);
+            user.clean();
+            users.add(user);
+        }
+        // 获取 userMap
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user->user.getId(), user->user));
+
+        // 为评论添加作者信息
+        List<CommentDto> commentDtos = comments.stream().map(comment -> {
+            CommentDto commentDto = new CommentDto();
+            BeanUtils.copyProperties(comment, commentDto);
+            commentDto.setUser(userMap.get(comment.getCommentator()));
+            return commentDto;
+        }).collect(Collectors.toList());
+
+        return commentDtos;
+    }
+
+    @Override
+    public List<CommentDto> getTwoLevelCommentByParent(String parentId, int type) {
+        Long id;
+        try {
+            id = Long.valueOf(parentId);
+        } catch (Exception e) {
+            throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
+        }
+        List<Comment> comments = commentMapper.getTwoLevelCommentByParent(id, type);
+        if (comments.size() == 0) {
+            throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
+        }
+        Set<Long> commentors = comments.stream().map(comment -> comment.getCommentator()).collect(Collectors.toSet());
+        List<User> users = new ArrayList<>();
+        for (Long userId : commentors) {
+            User user = userService.selectUserById(userId);
+            user.clean();
             users.add(user);
         }
         // 获取 userMap
