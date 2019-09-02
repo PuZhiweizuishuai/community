@@ -36,7 +36,7 @@ public class SignInServiceImpl implements SignInService {
 
     @Autowired
     public SignInServiceImpl(UserPermissionService userPermissionService, UserService userService,
-                               OnlineUserService onlineUserService, JwtUtil jwtUtil) {
+                             OnlineUserService onlineUserService, JwtUtil jwtUtil) {
         this.userPermissionService = userPermissionService;
         this.userService = userService;
         this.onlineUserService = onlineUserService;
@@ -45,23 +45,23 @@ public class SignInServiceImpl implements SignInService {
 
     @Override
     public HashMap<String, Object> signIn(String email, String password, String remember, String captcha, HttpServletRequest request) {
-        if(!CaptchaUtil.ver(captcha, request)) {
+        if (!CaptchaUtil.ver(captcha, request)) {
             // 清除失效的验证码
             CaptchaUtil.clear(request);
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
         }
-        if(StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
+        if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_EMAIL_OR_PASSWORD_NULL);
         }
         boolean rememberMe = false;
-        if(remember != null) {
+        if (remember != null) {
             rememberMe = true;
         }
         User user = userService.selectUserByEmail(email);
-        if(user != null) {
-            if(StringUtil.judgePassword(password, user.getPassword())) {
+        if (user != null) {
+            if (StringUtil.judgePassword(password, user.getPassword())) {
                 UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-                if(rememberMe) {
+                if (rememberMe) {
                     // token 有效期为七天
                     jwtUtil.setTtl(604800000);
                 }

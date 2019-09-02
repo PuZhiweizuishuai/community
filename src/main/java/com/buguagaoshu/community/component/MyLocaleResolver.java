@@ -15,8 +15,8 @@ public class MyLocaleResolver implements LocaleResolver {
     @Override
     public Locale resolveLocale(HttpServletRequest httpServletRequest) {
         String l = httpServletRequest.getParameter("l");
-        Locale local = new Locale("zh","CN");
-        if(l != null && l.equals("en-US")) {
+        Locale local = new Locale("zh", "CN");
+        if (l != null && l.equals("en-US")) {
             String[] split = l.split("-");
             local = new Locale(split[0], split[1]);
         }

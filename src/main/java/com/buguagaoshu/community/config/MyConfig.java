@@ -16,7 +16,7 @@ import org.springframework.web.servlet.LocaleResolver;
 public class MyConfig {
     /**
      * 将 MyLocaleResolver 添加到容器
-     * */
+     */
     @Bean
     public LocaleResolver localeResolver() {
         return new MyLocaleResolver();

@@ -45,6 +45,7 @@ public class CommentServiceImpl implements CommentService {
 
     /**
      * @Transactional spring 事务注解
+     * 插入评论
      */
     @Override
     @Transactional(rollbackFor = CustomizeException.class)
@@ -105,7 +106,7 @@ public class CommentServiceImpl implements CommentService {
             users.add(user);
         }
         // 获取 userMap
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user->user.getId(), user->user));
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
 
         // 为评论添加作者信息
         List<CommentDto> commentDtos = comments.stream().map(comment -> {
@@ -138,7 +139,7 @@ public class CommentServiceImpl implements CommentService {
             users.add(user);
         }
         // 获取 userMap
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user->user.getId(), user->user));
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
 
         // 为评论添加作者信息
         List<CommentDto> commentDtos = comments.stream().map(comment -> {

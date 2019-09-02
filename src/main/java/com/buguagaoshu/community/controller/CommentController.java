@@ -33,7 +33,7 @@ public class CommentController {
     @ResponseBody
     public Object post(@RequestBody CommentCreateDto commentDto, HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
-        if(user == null) {
+        if (user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NO_LOGIN);
         }
         Comment comment = new Comment();

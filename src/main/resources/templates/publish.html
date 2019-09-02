@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,8 @@
     <link rel="bookmark" th:href="@{/favicon.png}"/>
     <title th:text="#{index.writePost}">发布</title>
     <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="/css/editormd.min.css" />
+    <link rel="stylesheet" href="/css/editormd.min.css"/>
+    <link href="/css/bootstrap-tagsinput.css" rel="stylesheet">
     <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
     <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="/js/editormd.min.js"></script>
@@ -23,6 +24,23 @@
             border-right-style: solid;
             border-right-width: 1px;
             border-right-color: #efefef;
+        }
+        .bootstrap-tagsinput .label-info {
+            border-radius: 4px;
+            background-color: #1abc9c;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            overflow: hidden;
+            margin: 0 5px 5px 0;
+            padding: 6px 10px 6px 14px;
+            transition: .25s linear;
+        }
+        span.tag-hand:hover {
+            cursor: hand;
         }
     </style>
 </head>
@@ -51,23 +69,28 @@
                             <label for="issues-title">[[#{publish.issue.title}]]</label>
                             <input autocomplete="off" name="title" type="text" class="form-control" id="issues-title"
                                    th:placeholder="#{publish.issue.Title}" th:value="${question.getTitle()}">
-                            <small id="titleHelp" class="form-text" style="color: red" th:text="${titleMessage}"></small>
+                            <small id="titleHelp" class="form-text" style="color: red"
+                                   th:text="${titleMessage}"></small>
                         </div>
                     </div>
                     <div class="col">
                         <div class="form-group">
                             <label for="issues-class">&nbsp;</label>
-                            <select th:selected="${question.getClassification()}" class="form-control" id="issues-class" name="classification">
+                            <select th:selected="${question.getClassification()}" class="form-control" id="issues-class"
+                                    name="classification">
                                 <option value="null" style="display: none;" selected>
                                     [[#{publish.classification}]]
                                 </option>
-                                <option value="编程">[[#{publish.classification.program}]]</option>
-                                <option value="水">[[#{publish.classification.water}]]</option>
-                                <option>3</option>
-                                <option>4</option>
-                                <option>5</option>
+                                <option value="开发语言">开发语言</option>
+                                <option value="平台框架">平台框架</option>
+                                <option value="服务器">服务器</option>
+                                <option value="数据库缓存">数据库缓存</option>
+                                <option value="开发工具">开发工具</option>
+                                <option value="系统设备">系统设备</option>
+                                <option value="休闲灌水">休闲灌水</option>
                             </select>
-                            <small id="classHelp" class="form-text" style="color: red" th:text="${classMessage}"></small>
+                            <small id="classHelp" class="form-text" style="color: red"
+                                   th:text="${classMessage}"></small>
                         </div>
                     </div>
                 </div>
@@ -75,7 +98,8 @@
                 <!--问题内容--->
                 <div id="question-edit" class="form-group mt-2">
                     <label for="issues-text">[[#{publish.issue.text}]]</label>
-                    <textarea style="display: none;" id="issues-text" name="description" rows="6" th:text="${question.getDescription()}">
+                    <textarea style="display: none;" id="issues-text" name="description" rows="6"
+                              th:text="${question.getDescription()}">
                         ### 关于 Editor.md
 
 **Editor.md** 是一款开源的、可嵌入的 Markdown 在线编辑器（组件），基于 CodeMirror、jQuery 和 Marked 构建。
@@ -83,17 +107,19 @@
                 </div>
                 <small id="textHelp" class="form-text" style="color: red" th:text="${textMessage}"></small>
                 <script type="text/javascript">
-                    $(function() {
+                    $(function () {
                         var editor = editormd("question-edit", {
-                            width  : "100%",
-                            height : "400px",
-                            delay : 0,
+                            width: "100%",
+                            height: "400px",
+                            delay: 0,
+                            watch: false,
                             tex: true,
-                            flowChart : true,
+                            flowChart: true,
+                            autoFocus: false,
                             // saveHTMLToTextarea : true,
                             //emoji: true,
                             placeholder: "请输入问题描述",
-                            path   : "/js/lib/"
+                            path: "/js/lib/"
                         });
                     });
                 </script>
@@ -116,16 +142,19 @@
                         <p>&nbsp;</p>
                         <div class="container">
                             <!-- Button trigger modal -->
-                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModalCenter">
+                            <button type="button" class="btn btn-info" data-toggle="modal"
+                                    data-target="#exampleModalCenter">
                                 [[#{publish.issue.supportFileTitle}]]
                             </button>
 
                             <!-- Modal -->
-                            <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                            <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+                                 aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered" role="document">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="exampleModalCenterTitle">[[#{publish.issue.supportFileTitle}]]</h5>
+                                            <h5 class="modal-title" id="exampleModalCenterTitle">
+                                                [[#{publish.issue.supportFileTitle}]]</h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
@@ -134,7 +163,8 @@
 
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -145,17 +175,165 @@
 
                 <!-- 添加标签 -->
                 <div class="row mt-4">
-                    <div class="col-5">
-                        <div class="form-group">
-                            <label for="issues-tag">[[#{publish.issue.addTag}]]
-                                <!--添加标签：--></label>
-                            <input autocomplete="off" type="text" class="form-control" id="issues-tag" name="tag"
-                                   th:value="${question.getTag()}" th:placeholder="#{publish.issue.splitTag}">
-                            <small id="tagHelp" class="form-text" style="color: red" th:text="${tagMessage}"></small>
+                    <div class="container" onclick="showMayTag()">
+
+                        <label for="issues-tag">[[#{publish.issue.addTag}]]
+                            <!--添加标签：-->
+                        </label>
+
+                        <input id="issues-tag" name="tag" class="tagsinput" data-role="tagsinput" value=""
+                               th:value="${question.getTag()}" th:placeholder="#{publish.issue.splitTag}"
+                               style="height: 50%;" autocomplete="off" />
+
+                        <small id="tagHelp" class="form-text mb-2" style="color: red" th:text="${tagMessage}"></small>
+                        <div id="many-tag-show" style="display: none;">
+                            <nav>
+                                <div class="nav nav-tabs mb-2" id="nav-tab" role="tablist">
+                                    <a class="nav-item nav-link active" id="program-language-tab" data-toggle="tab" href="#program-language" role="tab" aria-controls="program-language" aria-selected="true">开发语言</a>
+                                    <a class="nav-item nav-link" id="frame-work-tab" data-toggle="tab" href="#frame-work" role="tab" aria-controls="frame-work" aria-selected="false">平台框架</a>
+                                    <a class="nav-item nav-link" id="server-tab" data-toggle="tab" href="#server" role="tab" aria-controls="server" aria-selected="false">服务器</a>
+                                    <a class="nav-item nav-link" id="database-tab" data-toggle="tab" href="#database" role="tab" aria-controls="database" aria-selected="false">数据库缓存</a>
+                                    <a class="nav-item nav-link" id="develop-tool-tab" data-toggle="tab" href="#develop-tool" role="tab" aria-controls="develop-tool" aria-selected="false">开发工具</a>
+                                    <a class="nav-item nav-link" id="system-tab" data-toggle="tab" href="#system" role="tab" aria-controls="system" aria-selected="false">系统设备</a>
+                                    <a class="nav-item nav-link" id="have-fun-tab" data-toggle="tab" href="#have-fun" role="tab" aria-controls="have-fun" aria-selected="false">休闲灌水</a>
+
+                                </div>
+                            </nav>
+                            <div class="tab-content" id="nav-tabContent">
+                                <!--开发语言-->
+                                <div class="tab-pane fade show active" id="program-language" role="tabpanel" aria-labelledby="program-language-tab">
+                                    <span class="badge btn btn-primary btn-sm mr-2 tag-hand" onclick="addTag('JavaScript')">
+                                        <span class="ml-1">JavaScript</span>
+                                     </span>
+                                    <span class="badge badge-primary mr-2 tag-hand" onclick="addTag('PHP')">
+                                        <span class="ml-1">PHP</span>
+                                     </span>
+                                    <span class="badge badge-secondary mr-2 tag-hand" onclick="addTag('Java')">
+                                        <img src="/image/icon/java.svg" height="10px">
+                                        <span class="ml-1">Java</span>
+                                     </span>
+                                    <span class="badge badge-info mr-2 tag-hand" onclick="addTag('HTML')">
+                                        <span class="ml-1">HTML</span>
+                                     </span>
+                                    <span class="badge badge-primary mr-2 tag-hand" onclick="addTag('CSS')">
+                                        <span class="ml-1">CSS</span>
+                                     </span>
+                                    <span class="badge badge-primary mr-2 tag-hand" onclick="addTag('Python')">
+                                        <span class="ml-1">Python</span>
+                                     </span>
+                                    <span class="badge badge-primary mr-2 tag-hand" onclick="addTag('C/C++')">
+                                        <span class="ml-1">C/C+</span>
+                                     </span>
+                                    <span class="badge badge-primary mr-2 tag-hand" onclick="addTag('C#')">
+                                        <span class="ml-1">C#</span>
+                                     </span>
+                                    <span class="badge badge-primary mr-2 tag-hand" onclick="addTag('Go')">
+                                        <span class="ml-1">Go</span>
+                                     </span>
+                                </div>
+                                <!--平台框架-->
+                                <div class="tab-pane fade" id="frame-work" role="tabpanel" aria-labelledby="frame-work-tab">
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Spring')">
+                                        <span class="ml-1">Spring</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Django')">
+                                        <span class="ml-1">Django</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Flask')">
+                                        <span class="ml-1">Flask</span>
+                                     </span>
+                                </div>
+                                <!--服务器-->
+                                <div class="tab-pane fade" id="server" role="tabpanel" aria-labelledby="server-tab">
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Linux')">
+                                        <span class="ml-1">Linux</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Nginx')">
+                                        <span class="ml-1">Nginx</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Docker')">
+                                        <span class="ml-1">Docker</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Ubuntu')">
+                                        <span class="ml-1">Ubuntu</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Centos')">
+                                        <span class="ml-1">Centos</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Apache')">
+                                        <span class="ml-1">Apache</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Windows Server')">
+                                        <span class="ml-1">Windows Server</span>
+                                     </span>
+                                </div>
+                                <!--数据缓存-->
+                                <div class="tab-pane fade" id="database" role="tabpanel" aria-labelledby="database-tab">
+                                    <span class="badge badge-info mr-2 tag-hand" onclick="addTag('MySql')">
+                                        <span class="ml-1">MySql</span>
+                                     </span>
+                                    <span class="badge badge-danger mr-2 tag-hand" onclick="addTag('redis')">
+                                        <span class="ml-1">redis</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('mongoDb')">
+                                        <span class="ml-1">mongoDb</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('noSql')">
+                                        <span class="ml-1">noSql</span>
+                                     </span>
+                                    <span class="badge badge-info mr-2 tag-hand" onclick="addTag('SqlLite')">
+                                        <span class="ml-1">SqlLite</span>
+                                     </span>
+                                </div>
+                                <!--开发工具-->
+                                <div class="tab-pane fade" id="develop-tool" role="tabpanel" aria-labelledby="develop-tool-tab">
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Git')">
+                                        <span class="ml-1">Git</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('VS Code')">
+                                        <span class="ml-1">VS Code</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Visual Studio')">
+                                        <span class="ml-1">Visual Studio</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Vim')">
+                                        <span class="ml-1">Vim</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('IDEA')">
+                                        <span class="ml-1">IDEA</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('eclipse')">
+                                        <span class="ml-1">eclipse</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('maven')">
+                                        <span class="ml-1">maven</span>
+                                     </span>
+                                </div>
+                                <!--系统设备-->
+                                <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Android')">
+                                        <span class="ml-1">Android</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('ios')">
+                                        <span class="ml-1">ios</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('Windows')">
+                                        <span class="ml-1">Windows</span>
+                                     </span>
+                                </div>
+                                <div class="tab-pane fade" id="have-fun" role="tabpanel" aria-labelledby="have-fun-tab">
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('体育')">
+                                        <span class="ml-1">体育</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('娱乐八卦')">
+                                        <span class="ml-1">娱乐八卦</span>
+                                     </span>
+                                    <span class="badge badge-success mr-2 tag-hand" onclick="addTag('闲聊')">
+                                        <span class="ml-1">闲聊</span>
+                                     </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col">
-                        <!--TODO显示标签-->
                     </div>
                 </div>
 
@@ -169,14 +347,15 @@
                     <div class="form-group mr-3">
                         <input type="text" autocomplete="off" class="form-control" id="issues-CAPTCHA" name="CAPTCHA"
                                th:placeholder="#{publish.issue.CAPTCHA}">
-                        <small id="CAPTCHAHelp" class="form-text" style="color: red" th:text="${CAPTCHAMessage}"></small>
+                        <small id="CAPTCHAHelp" class="form-text" style="color: red"
+                               th:text="${CAPTCHAMessage}"></small>
                     </div>
                 </div>
 
                 <!-- 提交 -->
                 <div class="form-group mt-2 text-right">
 
-                    <input type="submit" class="btn btn-success btn-lg" style="width: 200px"
+                    <input onkeydown="if(event.keyCode==13)return false;" type="submit" class="btn btn-success btn-lg" style="width: 200px"
                            th:value="#{publish.issue.submit}"/>
                 </div>
             </form>
@@ -198,7 +377,8 @@
             </small>
             <br/><br/>
             <small class="text-muted">•<span style="font-weight: bold;">最后：</span>友善发帖，并遵守国家相关法律法规，互联网并非法外之地。</small>
-            <div class="container mt-2 text-center"><img class="border w-100" src="/image/v2-c277d2ad52b61fcd3fa82577575efc4c_r.jpg"/></div>
+            <div class="container mt-2 text-center"><img class="border w-100"
+                                                         src="/image/v2-c277d2ad52b61fcd3fa82577575efc4c_r.jpg"/></div>
             <br/><br/>
             <br/><br/>
             <div class="container" style="">
@@ -240,10 +420,10 @@
 </div>
 <div class="container" style="height: 30px">
 </div>
-
 <!-- 页脚 -->
 <div th:insert="~{footer :: footer}"></div>
-
+<script src="/js/tag/bootstrap-tagsinput.min.js"></script>
 <script src="/js/url.js" type="text/javascript"></script>
+<script src="/js/publish.js" type="text/javascript"></script>
 </body>
 </html>

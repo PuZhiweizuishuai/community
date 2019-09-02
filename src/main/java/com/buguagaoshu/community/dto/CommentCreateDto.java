@@ -11,28 +11,28 @@ import lombok.Data;
 public class CommentCreateDto {
     /**
      * 评论所存在的问题
-     * */
+     */
     private long questionId;
 
     /**
      * 评论目标 id
-     * */
+     */
     private long parentId;
 
     /**
      * 评论类型
-     * */
+     */
     private int type;
 
 
     /**
      * 内容
-     * */
+     */
     private String content;
 
 
     /**
      * 验证码
-     * */
+     */
     private String captcha;
 }

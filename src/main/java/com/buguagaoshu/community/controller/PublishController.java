@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.TagCache;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.wf.captcha.utils.CaptchaUtil;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -27,14 +29,23 @@ public class PublishController {
     }
 
     @GetMapping("/publish")
-    public String getPublishPage(Model model) {
+    public String getPublishPage(Model model, HttpServletRequest request) {
+        /**
+         * TODO 简单验证，后期改为JWT 方便测试页面，先注释
+         * */
+//        User user = (User) request.getSession().getAttribute("user");
+//        if(user == null) {
+//            return StringUtil.jumpWebLangeParameter("/sign-in", true, request);
+//        }
+
         model.addAttribute("question", new Question());
+        // model.addAttribute("tags", TagCache.get());
         return "publish";
     }
 
     /**
      * 发帖
-     * */
+     */
     @PostMapping("/publish")
     public String publishPost(@RequestParam("title") String title,
                               @RequestParam("classification") String classification,
@@ -45,6 +56,10 @@ public class PublishController {
                               @RequestParam("CAPTCHA") String CAPTCHA,
                               HttpServletRequest request,
                               Model model) {
+        User user = (User) request.getSession().getAttribute("user");
+        if (user == null) {
+            return StringUtil.jumpWebLangeParameter("/SignIn", true, request);
+        }
         long id;
         try {
             id = Long.valueOf(questionId);
@@ -54,20 +69,15 @@ public class PublishController {
         Question question = new Question();
         question.setQuestionId(id);
         question.setTitle(title);
-
         question.setClassification(classification);
         question.setDescription(description);
         question.setTag(tag);
-
-        User user = (User) request.getSession().getAttribute("user");
-
-
         question.setUserId(user.getId());
         question.setCreateTime(StringUtil.getNowTime());
         question.setAlterTime(StringUtil.getNowTime());
 
 
-        if(!check(question, CAPTCHA, model, request)) {
+        if (!check(question, CAPTCHA, model, request)) {
             return StringUtil.jumpWebLangeParameter("publish", false, request);
         }
 
@@ -77,38 +87,42 @@ public class PublishController {
 
     /**
      * 编辑帖子
-     * */
+     */
     @GetMapping("/publish/{questionId}")
     public String editQuestion(@PathVariable("questionId") String questionId,
                                HttpServletRequest request, Model model) {
 
         User user = (User) request.getSession().getAttribute("user");
         Question question = questionService.selectQuestionNotDtoById(questionId);
-        if(user != null && question != null && user.getId() == question.getUserId()) {
+        if (user != null && question != null && user.getId() == question.getUserId()) {
             model.addAttribute("question", question);
-            return StringUtil.jumpWebLangeParameter("publish",false, request);
+            return StringUtil.jumpWebLangeParameter("publish", false, request);
         }
-        return StringUtil.jumpWebLangeParameter("/",true, request);
+        return StringUtil.jumpWebLangeParameter("/", true, request);
     }
 
-    private boolean check(Question question, String CAPTCHA ,Model model, HttpServletRequest request) {
-        if(!question.getTitle().isEmpty() && !question.getClassification().isEmpty() && CaptchaUtil.ver(CAPTCHA, request)
-                && !question.getDescription().isEmpty()) {
+    private boolean check(Question question, String CAPTCHA, Model model, HttpServletRequest request) {
+        boolean isTag = StringUtil.judgeTagNumber(question.getTag());
+        if (!question.getTitle().isEmpty() && !question.getClassification().isEmpty() && CaptchaUtil.ver(CAPTCHA, request)
+                && !question.getDescription().isEmpty() && isTag) {
             CaptchaUtil.clear(request);
             return true;
         }
-        if(question.getTitle().isEmpty()) {
+        if (question.getTitle().isEmpty()) {
             model.addAttribute("titleMessage", "标题不能为空！");
         }
-        if(question.getClassification().isEmpty()) {
+        if (question.getClassification().isEmpty()) {
             model.addAttribute("classMessage", "分类不能为空！");
         }
-        if(question.getDescription().isEmpty()) {
+        if (question.getDescription().isEmpty()) {
             model.addAttribute("textMessage", "内容不能为空！");
         }
         if (!CaptchaUtil.ver(CAPTCHA, request)) {
             CaptchaUtil.clear(request);
             model.addAttribute("CAPTCHAMessage", "验证码错误！");
+        }
+        if (isTag) {
+            model.addAttribute("tagMessage", "最多只能输入6个标签！");
         }
         model.addAttribute("question", question);
         return false;

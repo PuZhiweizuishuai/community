@@ -39,26 +39,26 @@ public class PaginationDto {
 
 
         // 是否展示上一页
-        if(page == 1) {
+        if (page == 1) {
             showPrevious = false;
         } else {
             showPrevious = true;
         }
         // 是否展示下一页
-        if(page == totalPage) {
+        if (page == totalPage) {
             showNext = false;
         } else {
             showNext = true;
         }
         // TODO 此处可优化判断逻辑，最后由前端完成
         // 是否展示第一页
-        if(pages.contains(1)) {
+        if (pages.contains(1)) {
             showFirstPage = false;
         } else {
             showFirstPage = true;
         }
         // 是否展示最后一页
-        if(pages.contains(totalPage)) {
+        if (pages.contains(totalPage)) {
             showEndPage = false;
         } else {
             showEndPage = true;

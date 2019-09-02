@@ -47,11 +47,11 @@ public class QuestionServiceImpl implements QuestionService {
         }
 
         // 控制页面显示问题数量
-        if(sizeNumber > 20 || sizeNumber < 5) {
+        if (sizeNumber > 20 || sizeNumber < 5) {
             sizeNumber = 10;
         }
         long allQuestionCount;
-        if(id == -1) {
+        if (id == -1) {
             allQuestionCount = questionMapper.getQuestionCount();
         } else {
             allQuestionCount = questionMapper.getUserQuestionCount(id);
@@ -67,11 +67,11 @@ public class QuestionServiceImpl implements QuestionService {
         }
 
         // 容错处理，防止用户手动输入过大的数
-        if(offset >= totalPage) {
+        if (offset >= totalPage) {
             offset = totalPage;
         }
         // 防止传入参数为负
-        if(offset <= 0) {
+        if (offset <= 0) {
             offset = 1;
         }
 
@@ -93,7 +93,7 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public int createQuestion(Question question) {
-        if(question.getQuestionId() == -1) {
+        if (question.getQuestionId() == -1) {
             return questionMapper.createQuestion(question);
         } else {
             return questionMapper.updateQuestion(question);
@@ -102,13 +102,13 @@ public class QuestionServiceImpl implements QuestionService {
 
     /**
      * TODO 优化查询，考虑使用多表级联
-     * */
+     */
     @Override
     public PaginationDto getSomeQuestionDto(String page, String size) {
         long[] param = getPageAndsize(page, size, -1);
         List<Question> questionList = questionMapper.getSomeQuestion(param[0], param[1]);
         List<QuestionDto> questionDtoList = new ArrayList<>();
-        for(Question question : questionList) {
+        for (Question question : questionList) {
             User user = userService.selectUserById(question.getUserId());
             // TODO 此处只需要头像地址就好，后期需要优化
             // 保护隐私
@@ -130,7 +130,7 @@ public class QuestionServiceImpl implements QuestionService {
         long[] param = getPageAndsize(page, size, id);
         List<Question> questionList = questionMapper.getQuestionByUserId(param[0], param[1], id);
         List<QuestionDto> questionDtoList = new ArrayList<>();
-        for(Question question : questionList) {
+        for (Question question : questionList) {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
             questionDtoList.add(questionDto);
@@ -150,12 +150,12 @@ public class QuestionServiceImpl implements QuestionService {
         } catch (Exception e) {
             id = -1;
         }
-        if(id == -1) {
+        if (id == -1) {
             return null;
         }
 
         Question question = questionMapper.selectQuestionById(id);
-        if(question == null) {
+        if (question == null) {
             return null;
         }
 
@@ -175,7 +175,7 @@ public class QuestionServiceImpl implements QuestionService {
         } catch (Exception e) {
             id = -1;
         }
-        if(id == -1) {
+        if (id == -1) {
             return null;
         }
         return questionMapper.selectQuestionById(id);
@@ -193,7 +193,7 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public List<Question> getRelevantQuestion(QuestionDto questionDto) {
-        if(questionDto.getTag() == null || questionDto.getTag().equals("")) {
+        if (questionDto.getTag() == null || questionDto.getTag().equals("")) {
             return null;
         }
         List<Question> questionDtoList = questionMapper.getRelevantQuestion(

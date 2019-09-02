@@ -7,13 +7,15 @@ package com.buguagaoshu.community.exception;
 public interface ICustomizeErrorCode {
     /**
      * 返回错误信息
+     *
      * @return 错误信息
-     * */
-    String getMessage() ;
+     */
+    String getMessage();
 
     /**
      * 返回错误代码
+     *
      * @return 错误代码
-     * */
+     */
     Integer getCode();
 }

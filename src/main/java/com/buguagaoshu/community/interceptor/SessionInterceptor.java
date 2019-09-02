@@ -63,7 +63,7 @@ public class SessionInterceptor implements HandlerInterceptor {
             try {
                 Claims claims = jwtUtil.parseJWT(token);
                 User suser = (User) request.getSession().getAttribute("user");
-                if(suser == null) {
+                if (suser == null) {
                     User user = userService.selectUserById(Long.valueOf(claims.getSubject()));
                     UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
                     user.setPower(userPermission.getPower());

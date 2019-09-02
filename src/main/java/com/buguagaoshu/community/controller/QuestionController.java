@@ -36,7 +36,7 @@ public class QuestionController {
                               Model model,
                               HttpServletRequest request) {
         QuestionDto question = questionService.selectQuestionById(questionId);
-        if(question == null) {
+        if (question == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
 

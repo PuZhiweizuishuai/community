@@ -54,18 +54,12 @@
                 </li>
 
                 <!-- 消息提醒待添加 -->
-                <li class="nav-item dropdown" th:if="${session.user != null}">
-                    <a class="nav-link" href="#"
-                       role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <li class="nav-item" th:if="${session.user != null}">
+                    <a class="nav-link" th:href="${'/message/' + session.user.getUserId()}"
+                       >
                         <img src="/image/icon/message.svg" width="28" height="28"/>
                         [[#{index.message}]] <span class="badge badge-light">9</span>
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="#" th:text="#{index.myhome}">我的主页</a>
-                        <a class="dropdown-item" href="#" th:text="#{index.setting}">设置</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#" th:text="#{index.signout}">退出登陆</a>
-                    </div>
                 </li>
 
                 <!-- 发起 -->

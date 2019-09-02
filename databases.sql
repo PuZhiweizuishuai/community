@@ -104,6 +104,25 @@ CREATE TABLE comment
     constraint comment_user_FK foreign key(commentator) references users(id)
 );
 
+-- 通知表
+-- id 通知 id
+-- notifier 通知发起人
+-- receiver 通知接收人
+-- outerId 通知产生的地址，帖子或回复
+-- type 消息类型 点赞or回复
+create table notification
+(
+    id bigint PRIMARY KEY AUTO_INCREMENT,
+    notifier bigint not null ,
+    receiver bigint not null ,
+    outerId bigint not null ,
+    type int not null ,
+    createTime bigint not null ,
+    status int default 0,
+    constraint notification_user_FK foreign key(notifier) references users(id),
+    constraint notification_receiver_user_FK foreign key(receiver) references users(id)
+);
+
 --alter table Questions modify questionId bigint NOT NULL;
 --alter table users modify id bigint NOT NULL;
 --select * from Questions limit 0, 5;

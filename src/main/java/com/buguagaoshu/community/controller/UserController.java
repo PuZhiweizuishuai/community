@@ -40,11 +40,11 @@ public class UserController {
                               @RequestParam(value = "size", defaultValue = "10") String size,
                               Model model,
                               HttpServletRequest request) {
-        if(userId == null) {
+        if (userId == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
         User user = userService.selectUserByUserId(userId);
-        if(user != null) {
+        if (user != null) {
             model.addAttribute("user", user);
             PaginationDto paginationDto = questionService.getQuestionByUserId(page, size, user.getId());
             model.addAttribute("paginationDto", paginationDto);

@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User selectUserByUserId(String userId) {
         User user = userMapper.selectUserByUserId(userId);
-        if(user == null) {
+        if (user == null) {
             return null;
         }
         user.clean();
@@ -49,17 +49,16 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * @return -1 邮箱重复
      * @return -2 账号重复
-     *  0 错误
-     *  1 成功
-     * */
+     * 0 错误
+     * 1 成功
+     */
     @Override
     public int insertUser(User user) {
-        if(selectUserByEmail(user.getEmail()) != null) {
+        if (selectUserByEmail(user.getEmail()) != null) {
             return -1;
         }
-        if(selectUserByUserId(user.getUserId()) != null) {
+        if (selectUserByUserId(user.getUserId()) != null) {
             return -2;
         }
         // 加密密码
@@ -74,10 +73,10 @@ public class UserServiceImpl implements UserService {
 
     /**
      * @return -1 邮箱重复
-     * */
+     */
     @Override
     public int updateUserEmailById(long id, String newEmail) {
-        if(selectUserByEmail(newEmail) != null) {
+        if (selectUserByEmail(newEmail) != null) {
             return -1;
         }
         return userMapper.updateUserEmailById(id, newEmail);

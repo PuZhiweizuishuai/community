@@ -22,14 +22,14 @@ public interface CommentMapper {
 
     /**
      * 查找一级评论列表
-     * */
+     */
     @Select("select * from comment where questionId=#{questionId} AND type=#{type}")
     List<Comment> getCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type);
 
 
     /**
      * 查找二级评论列表
-     * */
+     */
     @Select("select * from comment where parentId=#{parentId} AND type=#{type}")
     List<Comment> getTwoLevelCommentByParent(@Param("parentId") long parentId, @Param("type") int type);
 

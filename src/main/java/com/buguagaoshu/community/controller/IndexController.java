@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * 首页控制类
+ *
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create 2019-08-12 16:06
  */
@@ -26,7 +27,6 @@ public class IndexController {
     public IndexController(QuestionService questionService) {
         this.questionService = questionService;
     }
-
 
 
     @GetMapping(value = {"/", "index"})

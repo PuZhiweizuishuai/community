@@ -8,12 +8,12 @@ package com.buguagaoshu.community.enums;
 public enum CommentTypeEnum {
     /**
      * 问题
-     * */
+     */
     QUESTION(1),
 
     /**
      * 回复
-     * */
+     */
     COMMENT(2);
     private Integer type;
 

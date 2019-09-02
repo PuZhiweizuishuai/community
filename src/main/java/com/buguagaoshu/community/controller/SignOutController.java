@@ -29,16 +29,16 @@ public class SignOutController {
     /**
      * TODO 需要优化的退出方法
      * 暂时实现的退出方法
-     * */
+     */
     @RequestMapping(value = "sign-out", method = RequestMethod.GET)
     public String signOut(HttpServletRequest request) {
         String token = null;
-        if(request.getCookies() != null) {
+        if (request.getCookies() != null) {
             Cookie[] cookies = request.getCookies();
-            for(Cookie cookie : cookies) {
-                if(cookie.getName().equals("token")) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("token")) {
                     token = cookie.getValue();
-                    if(token != null) {
+                    if (token != null) {
                         // TODO 删除在线用户
                         onlineUserService.deleteOnlineUserByToken(token);
                     }
