@@ -74,12 +74,13 @@ function showSecondComment(e) {
     if(collapse) {
         // 折叠
         comment.collapse('hide');
-
         e.removeAttribute("data-collapse");
         e.classList.remove("active");
         //commentBody.empty();
 
     } else {
+        console.log("id    "  + id);
+        console.log(commentBody.children().length);
         $.getJSON("/api/twoLevelComment/" + id, function (data) {
             if(commentBody.children().length != 1) {
                 comment.collapse('show');
@@ -138,13 +139,30 @@ function showSecondComment(e) {
                     })));
                     commentBody.prepend(c);
                 });
-                comment.collapse('show');
-                e.setAttribute("data-collapse", "show");
-                e.classList.add("active");
             }
+            comment.collapse('show');
+            e.setAttribute("data-collapse", "show");
+            e.classList.add("active");
         });
+
+        comment.collapse('show');
+        e.setAttribute("data-collapse", "show");
+        e.classList.add("active");
+
     }
     // comment.collapse('toggle');
 
     // console.log(id);
+}
+
+
+function showCommentMarkdown(e) {
+    console.log(e.id);
+    $(function () {
+        var testView = editormd.markdownToHTML(e.id, {
+            // markdown : "[TOC]\n### Hello world!\n## Heading 2", // Also, you can dynamic set Markdown text
+            // htmlDecode : true,  // Enable / disable HTML tag encode.
+            // htmlDecode : "style,script,iframe",  // Note: If enabled, you should filter some dangerous HTML tags for website security.
+        });
+    });
 }
