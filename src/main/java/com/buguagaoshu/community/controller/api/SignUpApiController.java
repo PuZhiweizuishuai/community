@@ -129,15 +129,18 @@ public class SignUpApiController {
     /**
      * 更新头像
      */
-    @PatchMapping("/api/update/HeadUrl/{id}")
-    public HashMap<String, Object> updateHeadUrlById(@PathVariable("id") long id, String url) {
-        int result = userService.updateUserHeadUrlById(id, url);
-        if (result == 1) {
-            return StringUtil.dealResultMessage(true, "修改成功！");
-        } else {
-            return StringUtil.dealResultMessage(false, "修改失败！请重试。");
-        }
-    }
+//    @PatchMapping("/api/update/HeadUrl/{id}")
+//    public HashMap<String, Object> updateHeadUrlById(@PathVariable("id") long id, String url) {
+//
+//
+//
+//        int result = userService.updateUserHeadUrlById(id, url);
+//        if (result == 1) {
+//            return StringUtil.dealResultMessage(true, "修改成功！");
+//        } else {
+//            return StringUtil.dealResultMessage(false, "修改失败！请重试。");
+//        }
+//    }
 
     /**
      * 更新邮箱

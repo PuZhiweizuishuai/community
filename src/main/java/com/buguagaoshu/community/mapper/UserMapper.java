@@ -105,6 +105,6 @@ public interface UserMapper {
      * @param headUrl 新头像地址
      * @return 1 成功
      */
-    @Update("update users set headUrl=#{headUrl} where userId=#{id}")
+    @Update("update users set headUrl=#{headUrl} where id=#{id}")
     int updateUserHeadUrlById(@Param("id") long id, @Param("headUrl") String headUrl);
 }

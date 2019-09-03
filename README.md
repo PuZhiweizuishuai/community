@@ -8,7 +8,7 @@
 
 TODO 目前亟待改进登陆退出判断
 
-已完成登陆注册,发帖，回复评论，markdown编辑，消息通知等
+已完成登陆注册,发帖，回复评论，markdown编辑，消息通知，图片上传等
 
 部分权限验证
 
@@ -33,18 +33,22 @@ TODO 目前亟待改进登陆退出判断
 [BootStrap4 中文文档](http://bs4.ntp.org.cn/)
 
 ## 工具
-[markdown edit](https://pandao.github.io/editor.md/)
+在线 markdown 编辑器 [markdown edit](https://pandao.github.io/editor.md/)
 
-[Tempus Dominus](https://tempusdominus.github.io/bootstrap-4/)
+JavaScript剪裁图片工具 [cropperjs](https://github.com/fengyuanchen/cropperjs)
 
-[Lombok](https://www.projectlombok.org)
+JavaScript定位引擎 [popper.js](https://github.com/FezVrasta/popper.js)
 
-[EasyCaptcha 验证码](https://github.com/whvcse/EasyCaptcha)
+BootStrap 日历选择插件 [Tempus Dominus](https://tempusdominus.github.io/bootstrap-4/)
+
+节省多余的Java代码 [Lombok](https://www.projectlombok.org)
+
+后端生成验证码的工具包 [EasyCaptcha 验证码](https://github.com/whvcse/EasyCaptcha)
 注意：此工具和kaptcha有一样的问题，使用的Random方法有不安全，[CVE-2018-18531](http://www.cnnvd.org.cn/web/xxk/ldxqById.tag?CNNVD=CNNVD-201810-1111)对安全性要求较高的，建议下载源码后将Random方法更改为SecureRandom
 
 更新：最新版修复了这个问题
 
-[JJWT Java JWT](https://github.com/jwtk/jjwt)
+JWT验证工具 [JJWT Java JWT](https://github.com/jwtk/jjwt)
 
 ## 命令使用
 查看某种语言代码行数

@@ -30,7 +30,7 @@ CREATE TABLE users
     likes varchar (50),
     creationTime VARCHAR(19),
     lastTime VARCHAR(19),
-    headUrl VARCHAR(30),
+    headUrl VARCHAR(300),
     PRIMARY KEY (id)
 );
 --
