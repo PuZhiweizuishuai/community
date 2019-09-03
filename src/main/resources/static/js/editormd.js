@@ -3365,7 +3365,7 @@
 
     // Emoji graphics files url path
     editormd.emoji     = {
-        path  : "https://www.webpagefx.com/tools/emoji-cheat-sheet/graphics/emojis/",
+        path  : "/js/plugins/emoji-dialog/emoji/",
         ext   : ".png"
     };
 
