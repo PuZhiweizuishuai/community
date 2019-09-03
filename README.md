@@ -8,13 +8,15 @@
 
 TODO 目前亟待改进登陆退出判断
 
-已完成登陆注册
+已完成登陆注册,发帖，回复评论，markdown编辑，消息通知等
 
 部分权限验证
 
 ## 快速运行
 
 在 IDEA 中导入此项目，如果 getter 和 setter 飘红，则需要安装 IDEA 得到 Lombok 插件
+
+可以直接使用 maven package 打包 jar包运行
 
 
 ## 资料

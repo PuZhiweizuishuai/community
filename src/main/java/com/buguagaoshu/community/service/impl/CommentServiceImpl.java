@@ -2,11 +2,15 @@ package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.enums.CommentTypeEnum;
+import com.buguagaoshu.community.enums.NotificationStatusEnum;
+import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.CommentMapper;
+import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Comment;
+import com.buguagaoshu.community.model.Notification;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
@@ -34,12 +38,16 @@ public class CommentServiceImpl implements CommentService {
 
     private final UserService userService;
 
+    private final NotificationMapper notificationMapper;
+
+
     @Autowired
     public CommentServiceImpl(CommentMapper commentMapper, QuestionMapper questionMapper,
-                              UserService userService) {
+                              UserService userService, NotificationMapper notificationMapper) {
         this.commentMapper = commentMapper;
         this.questionMapper = questionMapper;
         this.userService = userService;
+        this.notificationMapper = notificationMapper;
     }
 
 
@@ -68,6 +76,11 @@ public class CommentServiceImpl implements CommentService {
             if (dbComment == null) {
                 throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
             }
+            // 创建通知
+            // TODO 考虑传入评论ID
+            createNotification(comment, dbComment.getCommentator(), "","",
+                    NotificationTypeEnum.REPLY_COMMENT, question.getQuestionId());
+
             // 评论评论数加 1
             dbComment.setCommentCount(1);
             commentMapper.updateCommentCount(dbComment);
@@ -80,6 +93,8 @@ public class CommentServiceImpl implements CommentService {
             if (question == null || (comment.getQuestionId() != comment.getParentId())) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
             }
+            createNotification(comment, question.getUserId(), "", "",
+                    NotificationTypeEnum.REPLY_QUESTION, question.getQuestionId());
             question.setCommentCount(1);
             questionMapper.updateQuestionCommentCount(question);
             return commentMapper.insertComment(comment);
@@ -150,5 +165,32 @@ public class CommentServiceImpl implements CommentService {
         }).collect(Collectors.toList());
 
         return commentDtos;
+    }
+
+    /**
+     * 创建通知
+     * */
+    private void createNotification(Comment comment, Long receiver, String notifierName,
+                                    String outerTitle, NotificationTypeEnum notificationType,
+                                    Long outerId) {
+        if(receiver == comment.getCommentator()) {
+            return;
+        }
+        Notification notification = new Notification();
+
+        // 消息创建时间
+        notification.setCreateTime(System.currentTimeMillis());
+        // 消息类型
+        notification.setType(notificationType.getType());
+        // 通知产生点
+        notification.setOuterId(outerId);
+        // 通知发起人
+        notification.setNotifier(comment.getCommentator());
+        // 通知状态
+        notification.setStatus(NotificationStatusEnum.UNREAD.getStatus());
+        // 通知接收人
+        notification.setReceiver(receiver);
+
+        notificationMapper.insertNotification(notification);
     }
 }

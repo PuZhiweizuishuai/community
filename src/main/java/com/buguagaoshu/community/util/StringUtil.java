@@ -72,6 +72,14 @@ public class StringUtil {
     }
 
     /**
+     * 格式化时间
+     * */
+    public static String foematTime(long data) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return simpleDateFormat.format(data);
+    }
+
+    /**
      * 根据生日，计算年龄
      *
      * @param birthday 格式化的生日字符串

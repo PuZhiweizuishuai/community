@@ -111,7 +111,7 @@ public class PublishController {
         if (question.getTitle().isEmpty()) {
             model.addAttribute("titleMessage", "标题不能为空！");
         }
-        if (question.getClassification().isEmpty()) {
+        if (question.getClassification() == null && question.getClassification().equals("null")) {
             model.addAttribute("classMessage", "分类不能为空！");
         }
         if (question.getDescription().isEmpty()) {

@@ -41,5 +41,5 @@ public class Notification {
     /**
      * 通知状态
      */
-    private long status;
+    private int status;
 }

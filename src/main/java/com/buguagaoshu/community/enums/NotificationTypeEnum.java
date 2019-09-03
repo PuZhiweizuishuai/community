@@ -14,7 +14,7 @@ public enum NotificationTypeEnum {
     /**
      * 回复了评论
      * */
-    REPLY_COMMENT(2, "回复了评论"),
+    REPLY_COMMENT(2, "回复了你在问题"),
 
     /**
      * 点赞了问题
@@ -24,7 +24,12 @@ public enum NotificationTypeEnum {
     /**
      * 点赞了评论
      * */
-    LIKE_COMMENT(4, "点赞了评论");
+    LIKE_COMMENT(4, "点赞了评论"),
+
+    /**
+     * 系统消息
+     * */
+    SYSTEM_NOTIFICATION(5, "系统消息");
 
 
     private int type;

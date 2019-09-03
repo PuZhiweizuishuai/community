@@ -11,8 +11,8 @@ import java.util.List;
  * 返回页码信息
  */
 @Data
-public class PaginationDto {
-    private List<QuestionDto> questions;
+public class PaginationDto<T> {
+    private List<T> data;
     private boolean showPrevious;
     private boolean showFirstPage;
     private boolean showNext;

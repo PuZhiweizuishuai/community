@@ -25,7 +25,7 @@ public interface QuestionService {
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
-    PaginationDto getSomeQuestionDto(String page, String size);
+    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size);
 
 
     /**
@@ -35,7 +35,7 @@ public interface QuestionService {
      * @param id 用户id
      * @return 问题列表
      * */
-    PaginationDto getQuestionByUserId(String page, String size, long id);
+    PaginationDto<QuestionDto> getQuestionByUserId(String page, String size, long id);
 
     /**
      * 查找问题

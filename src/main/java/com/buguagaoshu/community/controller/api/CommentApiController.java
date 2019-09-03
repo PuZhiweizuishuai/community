@@ -8,6 +8,7 @@ import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.util.StringUtil;
+import com.wf.captcha.utils.CaptchaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,11 +32,17 @@ public class CommentApiController {
 
 
     @PostMapping("/api/comment")
-    public ResultDTO insertComment(@RequestBody CommentCreateDto commentDto, String captcha,
+    public ResultDTO insertComment(@RequestBody CommentCreateDto commentDto,
                                    HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
         if(user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NO_LOGIN);
+        }
+        // 检查验证码
+        if (!CaptchaUtil.ver(commentDto.getCaptcha(), request)) {
+            // 清除失效的验证码
+            CaptchaUtil.clear(request);
+            return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
         }
         if(commentDto == null || commentDto.getContent() == null || commentDto.getContent().equals("")) {
             return ResultDTO.errorOf(CustomizeErrorCode.CONTENT_IS_EMPTY);

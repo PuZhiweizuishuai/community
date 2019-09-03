@@ -7,6 +7,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 import org.springframework.beans.BeanUtils;
@@ -34,63 +35,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
 
-    private long[] getPageAndsize(String page, String size, long id) {
-        long offset;
-        long sizeNumber;
-        // 使用 string 防止传入参数不是数字
-        try {
-            offset = Long.valueOf(page);
-            sizeNumber = Long.valueOf(size);
-        } catch (Exception e) {
-            offset = 1;
-            sizeNumber = 10;
-        }
-
-        // 控制页面显示问题数量
-        if (sizeNumber > 20 || sizeNumber < 5) {
-            sizeNumber = 10;
-        }
-        long allQuestionCount;
-        if (id == -1) {
-            allQuestionCount = questionMapper.getQuestionCount();
-        } else {
-            allQuestionCount = questionMapper.getUserQuestionCount(id);
-        }
-
-        long totalPage = 1;
-
-        // 计算总页数
-        if (allQuestionCount % sizeNumber == 0) {
-            totalPage = allQuestionCount / sizeNumber;
-        } else {
-            totalPage = (allQuestionCount / sizeNumber) + 1;
-        }
-
-        // 容错处理，防止用户手动输入过大的数
-        if (offset >= totalPage) {
-            offset = totalPage;
-        }
-        // 防止传入参数为负
-        if (offset <= 0) {
-            offset = 1;
-        }
-
-
-        // 计算分页公式 size * (page - 1)
-        long pageParam = sizeNumber * (offset - 1);
-        long[] param = new long[4];
-        // 页码
-        param[0] = pageParam;
-        // 每页显示数
-        param[1] = sizeNumber;
-        // 总页数
-        param[2] = totalPage;
-        // 当前页
-        param[3] = offset;
-        return param;
-    }
-
-
     @Override
     public int createQuestion(Question question) {
         if (question.getQuestionId() == -1) {
@@ -104,8 +48,13 @@ public class QuestionServiceImpl implements QuestionService {
      * TODO 优化查询，考虑使用多表级联
      */
     @Override
-    public PaginationDto getSomeQuestionDto(String page, String size) {
-        long[] param = getPageAndsize(page, size, -1);
+    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size) {
+        // 获取所有的问题数
+        long allQuestionCount = questionMapper.getQuestionCount();
+
+        // 计算分页参数
+        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+
         List<Question> questionList = questionMapper.getSomeQuestion(param[0], param[1]);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
@@ -119,15 +68,16 @@ public class QuestionServiceImpl implements QuestionService {
             questionDtoList.add(questionDto);
         }
 
-        PaginationDto paginationDto = new PaginationDto();
-        paginationDto.setQuestions(questionDtoList);
+        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(questionDtoList);
         paginationDto.setPagination(param[2], param[3], param[1]);
         return paginationDto;
     }
 
     @Override
-    public PaginationDto getQuestionByUserId(String page, String size, long id) {
-        long[] param = getPageAndsize(page, size, id);
+    public PaginationDto<QuestionDto> getQuestionByUserId(String page, String size, long id) {
+        long allQuestionCount = questionMapper.getUserQuestionCount(id);
+        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
         List<Question> questionList = questionMapper.getQuestionByUserId(param[0], param[1], id);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
@@ -135,8 +85,8 @@ public class QuestionServiceImpl implements QuestionService {
             BeanUtils.copyProperties(question, questionDto);
             questionDtoList.add(questionDto);
         }
-        PaginationDto paginationDto = new PaginationDto();
-        paginationDto.setQuestions(questionDtoList);
+        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(questionDtoList);
         paginationDto.setPagination(param[2], param[3], param[1]);
         return paginationDto;
 

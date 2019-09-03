@@ -51,7 +51,7 @@ function sendComments(questionId, parentId, content, type, captcha) {
             if(response.code == 200) {
                 drowComment(response);
             } else {
-                alert(response.msg);
+                alert(response.message);
             }
         },
         dataType: "json"

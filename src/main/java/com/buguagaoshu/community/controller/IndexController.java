@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.dto.PaginationDto;
+import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -34,7 +35,7 @@ public class IndexController {
                         @RequestParam(value = "page", defaultValue = "1") String page,
                         @RequestParam(value = "size", defaultValue = "10") String size) {
 
-        PaginationDto paginationDto = questionService.getSomeQuestionDto(page, size);
+        PaginationDto<QuestionDto> paginationDto = questionService.getSomeQuestionDto(page, size);
         model.addAttribute("paginationDto", paginationDto);
         return "index";
     }

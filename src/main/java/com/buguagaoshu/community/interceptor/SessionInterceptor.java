@@ -3,6 +3,7 @@ package com.buguagaoshu.community.interceptor;
 import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
+import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
@@ -12,6 +13,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -35,11 +37,18 @@ public class SessionInterceptor implements HandlerInterceptor {
     UserPermissionService userPermissionService;
 
     @Autowired
+    NotificationService notificationService;
+
+    @Autowired
     JwtUtil jwtUtil;
 
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        User user = (User) request.getSession().getAttribute("user");
+        if (user != null) {
+            request.getSession().setAttribute("notificationCount", notificationService.getAllNotificationNumber(user.getId()));
+        }
         /**
          * TODO 待改进优化, 对于 token 的使用
          * */
@@ -64,10 +73,10 @@ public class SessionInterceptor implements HandlerInterceptor {
                 Claims claims = jwtUtil.parseJWT(token);
                 User suser = (User) request.getSession().getAttribute("user");
                 if (suser == null) {
-                    User user = userService.selectUserById(Long.valueOf(claims.getSubject()));
+                    User users = userService.selectUserById(Long.valueOf(claims.getSubject()));
                     UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
                     user.setPower(userPermission.getPower());
-                    request.getSession().setAttribute("user", user);
+                    request.getSession().setAttribute("user", users);
                 }
             } catch (Exception e) {
                 request.getSession().removeAttribute("user");

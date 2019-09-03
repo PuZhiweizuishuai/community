@@ -5,7 +5,11 @@ import com.buguagaoshu.community.component.MyLocaleResolver;
 import com.buguagaoshu.community.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.ui.Model;
 import org.springframework.web.servlet.LocaleResolver;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -27,4 +31,5 @@ public class MyConfig {
     public JwtUtil jwtUtil() {
         return new JwtUtil();
     }
+
 }

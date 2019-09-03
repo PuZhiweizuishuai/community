@@ -71,7 +71,7 @@
                 <hr style="margin-top: 0%;">
             </div>
             <!-- 帖子 -->
-            <div th:each="question : ${paginationDto.questions}">
+            <div th:each="question : ${paginationDto.data}">
                 <div class="media">
                     <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${question.user.headUrl}"
                          src="image/head/boyhead.png"

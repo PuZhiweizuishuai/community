@@ -58,7 +58,7 @@
                     <a class="nav-link" th:href="${'/message/' + session.user.getUserId()}"
                        >
                         <img src="/image/icon/message.svg" width="28" height="28"/>
-                        [[#{index.message}]] <span class="badge badge-light">9</span>
+                        [[#{index.message}]] <span class="badge badge-light" th:text="${session.notificationCount}">0</span>
                     </a>
                 </li>
 
