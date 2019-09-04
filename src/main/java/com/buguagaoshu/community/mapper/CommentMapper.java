@@ -23,8 +23,12 @@ public interface CommentMapper {
     /**
      * 查找一级评论列表
      */
-    @Select("select * from comment where questionId=#{questionId} AND type=#{type}")
-    List<Comment> getCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type);
+    @Select("select * from comment where questionId=#{questionId} AND type=#{type} limit #{page}, #{size}")
+    List<Comment> getCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type, @Param("page") long page, @Param("size") long size);
+
+
+    @Select("select COUNT(1) from comment where questionId=#{questionId} AND type=#{type}")
+    long getCommentNumber(@Param("questionId") long questionId, @Param("type") int type);
 
 
     /**

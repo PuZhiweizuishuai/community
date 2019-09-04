@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.dto.CommentDto;
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.enums.CommentTypeEnum;
 import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
@@ -15,6 +16,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.NumberUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -107,10 +109,21 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentDto> getCommentDtoByQuestionIdForQuestion(long questionId) {
-        List<Comment> comments = commentMapper.getCommentDtoByQuestionId(questionId, 1);
+    public PaginationDto<CommentDto> getCommentDtoByQuestionIdForQuestion(String questionId, String page, String size) {
+        long qId;
+        try {
+            qId = Long.valueOf(questionId);
+        } catch (Exception e) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+        long allCommentNumber = commentMapper.getCommentNumber(qId, 1);
+        // 计算分页参数
+        long[] param = NumberUtils.getPageAndSize(page, size, allCommentNumber);
+
+        List<Comment> comments = commentMapper.getCommentDtoByQuestionId(qId, 1, param[0], param[1]);
+
         if (comments.size() == 0) {
-            return new ArrayList<>();
+            return null;
         }
         // 获取该问题下去重的所有评论者
         Set<Long> commentors = comments.stream().map(comment -> comment.getCommentator()).collect(Collectors.toSet());
@@ -120,6 +133,7 @@ public class CommentServiceImpl implements CommentService {
             user.clean();
             users.add(user);
         }
+
         // 获取 userMap
         Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
 
@@ -131,7 +145,10 @@ public class CommentServiceImpl implements CommentService {
             return commentDto;
         }).collect(Collectors.toList());
 
-        return commentDtos;
+        PaginationDto<CommentDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(commentDtos);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        return paginationDto;
     }
 
     @Override

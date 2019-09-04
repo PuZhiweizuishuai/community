@@ -154,8 +154,8 @@
             </div>
             <hr class="mt-2"/>
             <!-- 显示回复 -->
-            <div class="container">
-                <div class="media mt-4 question-comment" th:each="comment : ${comments}">
+            <div class="container" th:if="${comments != null}">
+                <div class="media mt-4 question-comment" th:each="comment : ${comments.data}">
                     <img class="align-self-start mr-3" th:src="'/' + ${comment.user.getHeadUrl()}" width="40"
                          height="40">
                     <div class="media-body">
@@ -229,6 +229,68 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div th:if="${comments == null}" class="content mt-5 mb-5">
+                <h5>还没有人回复这个问题，快来抢沙发把！</h5>
+            </div>
+
+            <!--页码-->
+            <div class="container mt-4 mb-2" th:if="${comments != null}">
+                <nav aria-label="Page navigation example" th:if="${comments.totalPage} != 0">
+                    <ul class="pagination justify-content-end">
+                        <!-- 返回首页 -->
+                        <li class="page-item" th:if="${comments.showFirstPage}">
+                            <a class="page-link" id="first-page-a" th:href="'/question/' + ${question.getQuestionId()}"
+                               aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+                        <!-- 上一页 -->
+                        <li class="page-item" th:if="${comments.showPrevious}">
+                            <a class="page-link" id="link-to-last-a"
+                               th:href="'/question/'+ ${question.getQuestionId()} + @{/(page=${comments.nowPage} - 1)}"
+                               aria-label="Previous"
+                               onclick="addLocaleUrlForPage('link-to-last-a')">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+
+
+                        <li class="page-item" th:each="page : ${comments.pages}"
+                            th:class="${comments.nowPage == page}? 'page-item active' : 'page-item'">
+                            <a class="page-link" th:href="${'/question/'+question.getQuestionId()} + @{/(page=${page})}"
+                               th:text="${page}" th:id="${page}"
+                               th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
+                                1
+                            </a>
+                        </li>
+
+
+                        <!-- 下一页 -->
+                        <li class="page-item" th:if="${comments.showNext}">
+                            <a class="page-link" id="lind-to-next-a"
+                               th:href="'/question/'+${question.getQuestionId()} + @{/(page=${comments.nowPage} + 1)}"
+                               aria-label="Next"
+                               onclick="addLocaleUrlForPage('lind-to-next-a')">
+                                <span aria-hidden="true">&raquo;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                        <!-- 最后一页 -->
+                        <li class="page-item" th:if="${comments.showEndPage}">
+                            <a class="page-link" id="link-to-end-a"
+                               th:href="'/question/'+${question.getQuestionId()} + @{/(page=${comments.totalPage})}"
+                               th:if="${comments.showEndPage}"
+                               aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
 
             <hr/>

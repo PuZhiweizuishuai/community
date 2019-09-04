@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.service;
 
 import com.buguagaoshu.community.dto.CommentDto;
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.Comment;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public interface CommentService {
      * @param questionId 问题 id
      * @return 问题评论列表
      * */
-    List<CommentDto> getCommentDtoByQuestionIdForQuestion(long questionId);
+    PaginationDto<CommentDto> getCommentDtoByQuestionIdForQuestion(String questionId, String page, String size);
 
 
     /**
