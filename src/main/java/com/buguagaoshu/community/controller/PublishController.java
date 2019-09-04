@@ -34,7 +34,7 @@ public class PublishController {
          * TODO 简单验证，后期改为JWT 方便测试页面，先注释
          * */
         User user = (User) request.getSession().getAttribute("user");
-        if(user == null) {
+        if (user == null) {
             return StringUtil.jumpWebLangeParameter("/sign-in", true, request);
         }
 
@@ -77,6 +77,8 @@ public class PublishController {
         question.setAlterTime(System.currentTimeMillis());
 
 
+        //System.out.println(check(question, CAPTCHA, model, request));
+
         if (!check(question, CAPTCHA, model, request)) {
             return StringUtil.jumpWebLangeParameter("publish", false, request);
         }
@@ -102,26 +104,32 @@ public class PublishController {
     }
 
     private boolean check(Question question, String CAPTCHA, Model model, HttpServletRequest request) {
+
         boolean isTag = StringUtil.judgeTagNumber(question.getTag());
-        if (!question.getTitle().isEmpty() && !question.getClassification().isEmpty() && CaptchaUtil.ver(CAPTCHA, request)
-                && !question.getDescription().isEmpty() && isTag) {
+        if (question.getTitle() != null && !question.getTitle().equals("")
+                && question.getClassification() != null && !question.getClassification().equals("null")
+                && CaptchaUtil.ver(CAPTCHA, request)
+                && question.getDescription() != null && !question.getDescription().equals("") && isTag) {
             CaptchaUtil.clear(request);
             return true;
         }
-        if (question.getTitle().isEmpty()) {
+
+
+
+        if (question.getTitle() == null || question.getTitle().equals("")) {
             model.addAttribute("titleMessage", "标题不能为空！");
         }
-        if (question.getClassification() == null && question.getClassification().equals("null")) {
+        if (question.getClassification() == null || question.getClassification().equals("null")) {
             model.addAttribute("classMessage", "分类不能为空！");
         }
-        if (question.getDescription().isEmpty()) {
+        if (question.getDescription() == null || question.getDescription().equals("")) {
             model.addAttribute("textMessage", "内容不能为空！");
         }
         if (!CaptchaUtil.ver(CAPTCHA, request)) {
             CaptchaUtil.clear(request);
             model.addAttribute("CAPTCHAMessage", "验证码错误！");
         }
-        if (isTag) {
+        if (!isTag) {
             model.addAttribute("tagMessage", "最多只能输入6个标签！");
         }
         model.addAttribute("question", question);

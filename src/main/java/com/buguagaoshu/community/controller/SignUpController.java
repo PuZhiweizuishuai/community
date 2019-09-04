@@ -18,7 +18,7 @@ public class SignUpController {
     public String signUp(HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
         if(user == null) {
-            return "SignIn";
+            return "SignUp";
         }
         return StringUtil.jumpWebLangeParameter("/", true, request);
     }

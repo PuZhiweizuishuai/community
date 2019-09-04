@@ -34,14 +34,15 @@
                 </li>
 
                 <!-- 搜索 -->
-                <form class="form-inline my-2 my-lg-0 mx-2">
+                <p class="form-inline my-2 my-lg-0 mx-2">
                     <input class="form-control mr-sm-2" id="input-search" type="search" name="search"
                            th:placeholder="#{index.search.placeholder}"
                            aria-label="Search">
+
                     <button onclick="if($('#input-search').val() != ''){window.location.href='/search/'+$('#input-search').val()}" class="btn btn-outline-success my-2 my-sm-0" id="search-button"
                             type="button" th:text="#{index.search}">搜索
                     </button>
-                </form>
+                </p>
             </ul>
 
             <ul class="navbar-nav justify-content-end">
