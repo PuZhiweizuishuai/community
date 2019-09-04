@@ -84,8 +84,8 @@ CREATE TABLE Questions
     commentCount bigint DEFAULT 0,
     likeCount bigint DEFAULT 0,
     tag varchar(256),
-    createTime varchar(19),
-    alterTime varchar(19),
+    createTime bigint,
+    alterTime bigint,
     constraint user_question_FK foreign key(userId) references users(id)
 );
 
@@ -99,8 +99,8 @@ CREATE TABLE comment
     content text NOT NULL,
     likeCount bigint DEFAULT 0,
     commentCount bigint default 0,
-    createTime varchar(19) NOT NULL,
-    modifiedTime varchar(19) NOT NULL,
+    createTime bigint NOT NULL,
+    alterTime bigint NOT NULL,
     constraint comments_user_FK foreign key(questionId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
 );

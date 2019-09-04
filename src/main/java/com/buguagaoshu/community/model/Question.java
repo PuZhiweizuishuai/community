@@ -18,6 +18,6 @@ public class Question {
     private long commentCount;
     private long likeCount;
     private String tag;
-    private String createTime;
-    private String alterTime;
+    private long createTime;
+    private long alterTime;
 }

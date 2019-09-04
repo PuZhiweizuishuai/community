@@ -73,8 +73,8 @@ public class PublishController {
         question.setDescription(description);
         question.setTag(tag);
         question.setUserId(user.getId());
-        question.setCreateTime(StringUtil.getNowTime());
-        question.setAlterTime(StringUtil.getNowTime());
+        question.setCreateTime(System.currentTimeMillis());
+        question.setAlterTime(System.currentTimeMillis());
 
 
         if (!check(question, CAPTCHA, model, request)) {

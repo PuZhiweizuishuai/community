@@ -115,10 +115,10 @@ public interface QuestionMapper {
      * @param size 数量
      * @return 搜索结果
      * */
-    @Select("select * from Questions where title regexp #{search} order by questionId desc limit #{page}, #{size}")
+    @Select("select * from Questions where title regexp #{search} or tag regexp #{search} order by questionId desc limit #{page}, #{size}")
     List<Question> searchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size);
 
 
-    @Select("select COUNT(*) from Questions where title regexp #{search}")
+    @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search}")
     long searchQuestionCount(@Param("search") String search);
 }

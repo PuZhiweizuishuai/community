@@ -67,6 +67,8 @@ public class QuestionServiceImpl implements QuestionService {
             user.clean();
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
+            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
+            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
             questionDto.setUser(user);
             questionDtoList.add(questionDto);
         }
@@ -86,6 +88,8 @@ public class QuestionServiceImpl implements QuestionService {
         for (Question question : questionList) {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
+            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
+            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
             questionDtoList.add(questionDto);
         }
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
@@ -116,6 +120,8 @@ public class QuestionServiceImpl implements QuestionService {
         user.clean();
         QuestionDto questionDto = new QuestionDto();
         BeanUtils.copyProperties(question, questionDto);
+        questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
+        questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
         questionDto.setUser(user);
         return questionDto;
     }
@@ -174,6 +180,8 @@ public class QuestionServiceImpl implements QuestionService {
         List<QuestionDto> questionDtos = questionList.stream().map(question -> {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
+            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
+            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
             questionDto.setUser(userMap.get(question.getUserId()));
             return questionDto;
         }).collect(Collectors.toList());

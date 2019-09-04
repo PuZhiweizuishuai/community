@@ -42,8 +42,8 @@ public class CommentController {
         comment.setType(commentDto.getType());
         comment.setCommentator(user.getId());
         comment.setContent(commentDto.getContent());
-        comment.setCreateTime(StringUtil.getNowTime());
-        comment.setModifiedTime(StringUtil.getNowTime());
+        comment.setCreateTime(System.currentTimeMillis());
+        comment.setModifiedTime(System.currentTimeMillis());
         commentService.insertComment(comment);
         return ResultDTO.okOf(comment);
     }

@@ -52,10 +52,10 @@ public class Comment {
     /**
      * 创建时间
      * */
-    private String createTime;
+    private long createTime;
 
     /**
      * 修改时间
      * */
-    private String modifiedTime;
+    private long modifiedTime;
 }

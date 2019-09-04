@@ -17,6 +17,7 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
+import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,7 +83,6 @@ public class CommentServiceImpl implements CommentService {
             // TODO 考虑传入评论ID
             createNotification(comment, dbComment.getCommentator(), "","",
                     NotificationTypeEnum.REPLY_COMMENT, question.getQuestionId());
-
             // 评论评论数加 1
             dbComment.setCommentCount(1);
             commentMapper.updateCommentCount(dbComment);
@@ -141,6 +141,9 @@ public class CommentServiceImpl implements CommentService {
         List<CommentDto> commentDtos = comments.stream().map(comment -> {
             CommentDto commentDto = new CommentDto();
             BeanUtils.copyProperties(comment, commentDto);
+
+            commentDto.setCreateTime(StringUtil.foematTime(comment.getCommentator()));
+            commentDto.setModifiedTime(StringUtil.foematTime(comment.getModifiedTime()));
             commentDto.setUser(userMap.get(comment.getCommentator()));
             return commentDto;
         }).collect(Collectors.toList());
@@ -178,6 +181,8 @@ public class CommentServiceImpl implements CommentService {
             CommentDto commentDto = new CommentDto();
             BeanUtils.copyProperties(comment, commentDto);
             commentDto.setUser(userMap.get(comment.getCommentator()));
+            commentDto.setCreateTime(StringUtil.foematTime(comment.getCommentator()));
+            commentDto.setModifiedTime(StringUtil.foematTime(comment.getModifiedTime()));
             return commentDto;
         }).collect(Collectors.toList());
 
