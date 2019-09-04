@@ -13,8 +13,8 @@ var addLocaleUrl = function (aObjId) {
     console.log(page);
     //根据id获取超链接,设置href属性
     var aObj = document.getElementById(aObjId);
-    if(l === 'en-US') {
-        aObj.href = aObj.href +  "?l=" + l;
+    if (l === 'en-US') {
+        aObj.href = aObj.href + "?l=" + l;
     }
 };
 
@@ -24,31 +24,30 @@ var addPageNumberForLanguage = function (aObjId) {
     console.log(page);
     //根据id获取超链接,设置href属性
     var aObj = document.getElementById(aObjId);
-    if(page != null) {
+    if (page != null) {
         aObj.href = aObj.href + "&page=" + page;
     }
 }
 
 
-
 var addLocaleUrlForPage = function (aObjId) {
     var l = GetQueryString('l');
     var aObj = document.getElementById(aObjId);
-    if(l === 'en-US') {
-        aObj.href = aObj.href +  "&l=" + l;
+    if (l === 'en-US') {
+        aObj.href = aObj.href + "&l=" + l;
     }
 }
 
 var closeSignOut = function () {
-    $("#Sign-out-tips"). fadeOut();
+    $("#Sign-out-tips").fadeOut();
     delCookie("token");
     location.reload();
 };
 
 function getCookie(name) {
-    var value = '; '+ document.cookie;
+    var value = '; ' + document.cookie;
     var parts = value.split('; ' + name + '=');
-    if(parts.length === 2) {
+    if (parts.length === 2) {
         return parts.pop().split(';').shift();
     }
 };
@@ -57,15 +56,15 @@ function delCookie(name) {
     var exp = new Date();
     exp.setTime(exp.getTime() - 1);
     var cval = getCookie(name);
-    if(cval != null)
-        document.cookie= name + "="+cval+";expires="+exp.toGMTString();
+    if (cval != null)
+        document.cookie = name + "=" + cval + ";expires=" + exp.toGMTString();
 }
 
 var signOut = function (aObjId) {
     var l = GetQueryString('l');
     var aObj = document.getElementById(aObjId);
-    if(l === 'en-US') {
-        aObj.href = aObj.href +  "&l=" + l;
+    if (l === 'en-US') {
+        aObj.href = aObj.href + "&l=" + l;
     }
     delCookie("token");
 }
@@ -90,3 +89,5 @@ var sendSignInPost = function () {
 
     });
 }
+
+

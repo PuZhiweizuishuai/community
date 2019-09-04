@@ -1,11 +1,15 @@
 package com.buguagaoshu.community.service.impl;
 
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -95,5 +99,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public int updateUserHeadUrlById(long id, String headUrl) {
         return userMapper.updateUserHeadUrlById(id, headUrl);
+    }
+
+    @Override
+    public PaginationDto<User> searchUser(String search, String page, String size) {
+        long allUserCount = userMapper.searchUserCount(search);
+        long[] param = NumberUtils.getPageAndSize(page, size, allUserCount);
+        List<User> userList = userMapper.searchUser(search, param[0], param[1]);
+        for(User user : userList) {
+            user.clean();
+        }
+        PaginationDto<User> paginationDto = new PaginationDto<>();
+        paginationDto.setData(userList);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+
+        paginationDto.setAllCount(allUserCount);
+        return paginationDto;
     }
 }

@@ -47,31 +47,31 @@
                 <div class="row">
                     <div class="col">
                         <h4>
-                            <img src="image/icon/found.svg" width="35" height="35"/>
-                            发现
+                            <img src="/image/icon/search.svg" width="35" height="35"/>
+                            搜索结果
                         </h4>
                     </div>
                     <div class="col-7">
                         <ul class="nav justify-content-end">
                             <li class="nav-item">
-                                <a class="nav-link" href="#">最新</a>
+                                <a class="nav-link" th:href="${'/search/'+paginationDto.search}">问题</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">推荐</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">热门</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" style="color: red;">消灭零回复</a>
+                                <a class="nav-link" th:href="${'/search/' + paginationDto.search} + '/user'">用户</a>
                             </li>
                         </ul>
                     </div>
                 </div>
                 <hr style="margin-top: 0%;">
             </div>
+            <div class="content mt-2 mb-2">共找到 &nbsp; <span th:text="${paginationDto.allCount}"></span> &nbsp; 条与
+                &nbsp;  <span th:text="${paginationDto.search}"></span>&nbsp;
+                相关问题
+                <hr/>
+            </div>
+
             <!-- 帖子 -->
-            <div th:each="question : ${paginationDto.data}">
+            <div th:if="${paginationDto != null}" th:each="question : ${paginationDto.data}">
                 <div class="media">
                     <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${question.user.headUrl}"
                          src="image/head/boyhead.png"
@@ -82,8 +82,8 @@
                         <!--<p class="mb-1">Cras sit amet nibh libero</p>-->
 
                         <p class="mb-0 small">
-                            <a class="issuse-question-class" target="_blank" href="#" th:text="${question.classification}">分类</a>
-                            <a class="issuse-question-people" target="_blank" th:href="'/user/'+ ${question.user.getUserId()}" th:text="${question.user.userName}">人名</a>
+                            <a class="issuse-question-class" href="#" th:text="${question.classification}">分类</a>
+                            <a class="issuse-question-people" th:href="'/user/'+ ${question.user.getUserId()}" th:text="${question.user.userName}">人名</a>
                             <span class="issuse-question-span">是作者
                                 •<span th:text="${question.likeCount}">人数</span><span>人关注</span>
                                 •<span th:text="${question.commentCount}">人数</span><span>个回复</span>
@@ -97,45 +97,53 @@
             </div>
 
             <!-- 页码 -->
-            <nav aria-label="Page navigation example">
+            <nav aria-label="Page navigation example" th:if="${paginationDto.totalPage} != 0">
                 <ul class="pagination justify-content-end">
                     <!-- 返回首页 -->
                     <li class="page-item" th:if="${paginationDto.showFirstPage}">
-                        <a class="page-link" id="first-page-a" href="/" aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
+                        <a class="page-link" id="first-page-a" th:href="'/search/' + ${paginationDto.search}"
+                           aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
                             <span aria-hidden="true">&laquo;&laquo;</span>
                             <span class="sr-only">Previous</span>
                         </a>
                     </li>
                     <!-- 上一页 -->
                     <li class="page-item" th:if="${paginationDto.showPrevious}">
-                        <a class="page-link" id="link-to-last-a" th:href='@{/(page=${paginationDto.nowPage} - 1)}' aria-label="Previous"
-                        onclick="addLocaleUrlForPage('link-to-last-a')">
+                        <a class="page-link" id="link-to-last-a"
+                           th:href="'/search/'+ ${paginationDto.search} + @{/(page=${paginationDto.nowPage} - 1)}"
+                           aria-label="Previous"
+                           onclick="addLocaleUrlForPage('link-to-last-a')">
                             <span aria-hidden="true">&laquo;</span>
                             <span class="sr-only">Previous</span>
                         </a>
                     </li>
 
 
-                    <li class="page-item" th:each="page : ${paginationDto.pages}" th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
-                        <a class="page-link" th:href="@{/(page=${page})}" th:text="${page}" th:id="${page}"
+                    <li class="page-item" th:each="page : ${paginationDto.pages}"
+                        th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
+                        <a class="page-link" th:href="${'/search/'+ paginationDto.search} + @{/(page=${page})}"
+                           th:text="${page}" th:id="${page}"
                            th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
                             1
                         </a>
                     </li>
 
 
-
                     <!-- 下一页 -->
                     <li class="page-item" th:if="${paginationDto.showNext}">
-                        <a class="page-link" id="lind-to-next-a" th:href='@{/(page=${paginationDto.nowPage} + 1)}' aria-label="Next"
-                            onclick="addLocaleUrlForPage('lind-to-next-a')">
+                        <a class="page-link" id="lind-to-next-a"
+                           th:href="'/search/'+${paginationDto.nowPage} + @{/(page=${paginationDto.nowPage} + 1)}"
+                           aria-label="Next"
+                           onclick="addLocaleUrlForPage('lind-to-next-a')">
                             <span aria-hidden="true">&raquo;</span>
                             <span class="sr-only">Next</span>
                         </a>
                     </li>
                     <!-- 最后一页 -->
                     <li class="page-item" th:if="${paginationDto.showEndPage}">
-                        <a class="page-link" id="link-to-end-a" th:href='@{/(page=${paginationDto.totalPage})}' th:if="${paginationDto.showEndPage}"
+                        <a class="page-link" id="link-to-end-a"
+                           th:href="'/search/'+${paginationDto.nowPage} + @{/(page=${paginationDto.totalPage})}"
+                           th:if="${paginationDto.showEndPage}"
                            aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
                             <span aria-hidden="true">&raquo;&raquo;</span>
                             <span class="sr-only">Next</span>
@@ -148,7 +156,24 @@
         <!-- 右边 -->
         <div class="col">
             <br/>
-            <p><a class="link-to-text" href="#"><span style="color: red">New!</span>&nbsp;新闻</a></p>
+            <h5>相关用户</h5>
+            <br/>
+            <div th:if="${userpaginationDto != null}" th:each="user : ${userpaginationDto.data}">
+                <div class="media">
+                    <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${user.getHeadUrl()}"
+                         src="image/head/boyhead.png"
+                         style="max-width: 64px; height: auto; ">
+                    <div class="media-body">
+                        <h5 class="mt-0"><a class="link-to-text" th:href="'/user/' + ${user.getUserId()}" th:text="${user.getUserName()}">中间对齐</a></h5>
+                        <!-- TODO 等待添加摘要 -->
+                        <p>用户ID：<span th:text="${user.getUserId()}"></span></p>
+                    </div>
+                </div>
+                <hr/>
+            </div>
+            <div class="content" th:if="${userpaginationDto.allCount > 5}">
+                <a th:href="${'/search/' + paginationDto.search + '/user'}">点击查看更多相关用户</a>
+            </div>
             <!-- 图片轮播 -->
             <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
                 <ol class="carousel-indicators">
@@ -180,25 +205,6 @@
                 </a>
             </div>
             <br/>
-            <h5>热门话题</h5>
-
-            <small class="text-muted">•<span style="font-weight: bold;">问题标题：</span>请用<span
-                    style="color: red; font-weight: bold;">精简</span>的语言描述您发布的问题，不超过25字。
-            </small>
-            <br/><br/>
-            <small class="text-muted">•<span style="font-weight: bold;">问题补充：</span>详细补充您的问题内容，并确保问题描述清晰直观,
-                并提供一些相关的资料。
-            </small>
-            <br/><br/>
-            <small class="text-muted">•<span style="font-weight: bold;">选择标签：</span>选择一个或者多个合适的标签，用逗号隔开，每个标签不超过10个字。
-            </small>
-            <br/><br/>
-            <small class="text-muted">•<span style="font-weight: bold;">最后：</span>友善发帖，灌水闲聊请选灌水分类。</small>
-            <br/><br/>
-            <br/><br/>
-            <div class="container" style="">
-                广告位招租
-            </div>
         </div>
     </div>
     <div class="container" style="height: 30px">
@@ -208,6 +214,7 @@
 
 <!-- 页脚 -->
 <div th:insert="~{footer :: footer}"></div>
+
 
 
 <script src="/js/url.js" type="text/javascript"></script>

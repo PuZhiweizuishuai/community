@@ -46,15 +46,16 @@ public class CommunityApplicationTests {
         //System.out.println(questionMapper.selectQuestionById(2).getTitle());
         //System.out.println(questionMapper.getSomeQuestion(1,5).size());
         //System.out.println(userMapper.updateUserData(1,"社会主义接班人","男","吉林师范大学","计算机科学与技术","毛金明牛逼","毛金明牛逼", "毛金明牛逼"));
-        User newUser = new User();
-        newUser.setId(1);
-        newUser.setSex("男");
-        newUser.setSchool("吉林师范大学");
-        newUser.setMajor("计算机科学与技术");
-        newUser.setSimpleSelfIntroduction("毛金明牛逼");
-        newUser.setSelfIntroduction("毛金明牛逼");
-        newUser.setLikes("毛金明牛逼");
-        userMapper.updateUserData(newUser);
+//        User newUser = new User();
+//        newUser.setId(1);
+//        newUser.setSex("男");
+//        newUser.setSchool("吉林师范大学");
+//        newUser.setMajor("计算机科学与技术");
+//        newUser.setSimpleSelfIntroduction("毛金明牛逼");
+//        newUser.setSelfIntroduction("毛金明牛逼");
+//        newUser.setLikes("毛金明牛逼");
+//        userMapper.updateUserData(newUser);
+        System.out.println(userMapper.searchUser("puzhiwei", 0 , 10));
     }
 
 }

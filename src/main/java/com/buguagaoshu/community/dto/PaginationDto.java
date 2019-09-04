@@ -20,6 +20,8 @@ public class PaginationDto<T> {
     private long totalPage = 1;
     private long currentPage;
     private long nowPage = 1;
+    private long allCount;
+    private String search;
     private List<Long> pages = new ArrayList<>();
 
     public void setPagination(long totalPage, long page, long size) {

@@ -4,6 +4,8 @@ import com.buguagaoshu.community.model.User;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-13 13:16
@@ -161,4 +163,12 @@ public interface UserMapper {
     @Update("update users set userTopPhotoUrl=#{userTopPhotoUrl} where id=#{id}")
     int updateUserTopPhotoUrl(@Param("id") long id, @Param("userTopPhotoUrl") String userTopPhotoUrl);
 
+
+
+    @Select("select * from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search} order by id desc limit #{page}, #{size}")
+    List<User> searchUser(@Param("search") String search, @Param("page") long page, @Param("size") long size);
+
+
+    @Select("select COUNT(*) from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search}")
+    Long searchUserCount(@Param("search") String search);
 }

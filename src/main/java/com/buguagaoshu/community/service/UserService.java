@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.service;
 
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.User;
 
 /**
@@ -93,5 +94,8 @@ public interface UserService {
      * @return 1 成功
      */
     int updateUserHeadUrlById(long id, String headUrl);
+
+
+    PaginationDto<User> searchUser(String search, String page, String size);
 
 }

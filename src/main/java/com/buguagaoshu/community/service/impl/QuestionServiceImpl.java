@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -149,5 +152,36 @@ public class QuestionServiceImpl implements QuestionService {
         List<Question> questionDtoList = questionMapper.getRelevantQuestion(
                 StringUtil.sqlSelectRegexpForRelevantQuestion(questionDto.getTag()), questionDto.getQuestionId(), 10);
         return questionDtoList;
+    }
+
+    @Override
+    public PaginationDto<QuestionDto> searchQuestion(String search, String page, String size) {
+        long allQuestionCount = questionMapper.searchQuestionCount(search);
+        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+        List<Question> questionList = questionMapper.searchQuestion(search, param[0], param[1]);
+
+
+        Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());
+
+        List<User> users = new ArrayList<>();
+        for(Long id : usersId) {
+            User user = userService.selectUserById(id);
+            user.clean();
+            users.add(user);
+        }
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
+
+        List<QuestionDto> questionDtos = questionList.stream().map(question -> {
+            QuestionDto questionDto = new QuestionDto();
+            BeanUtils.copyProperties(question, questionDto);
+            questionDto.setUser(userMap.get(question.getUserId()));
+            return questionDto;
+        }).collect(Collectors.toList());
+
+        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(questionDtos);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(allQuestionCount);
+        return paginationDto;
     }
 }

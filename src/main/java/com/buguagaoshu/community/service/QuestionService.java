@@ -72,4 +72,8 @@ public interface QuestionService {
      * */
     List<Question> getRelevantQuestion(QuestionDto questionDto);
 
+
+
+    PaginationDto<QuestionDto> searchQuestion(String search, String page, String size);
+
 }

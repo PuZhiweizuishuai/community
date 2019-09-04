@@ -105,4 +105,20 @@ public interface QuestionMapper {
      */
     @Select("select * from Questions where tag regexp #{tag} and questionId!=#{questionId} order by questionId desc limit #{size}")
     List<Question> getRelevantQuestion(@Param("tag") String tag, @Param("questionId") long questionId, @Param("size") int size);
+
+
+    /**
+     * 根据正则实现简单的搜索功能
+     *
+     * @param search 搜索参数
+     * @param page 页码
+     * @param size 数量
+     * @return 搜索结果
+     * */
+    @Select("select * from Questions where title regexp #{search} order by questionId desc limit #{page}, #{size}")
+    List<Question> searchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size);
+
+
+    @Select("select COUNT(*) from Questions where title regexp #{search}")
+    long searchQuestionCount(@Param("search") String search);
 }
