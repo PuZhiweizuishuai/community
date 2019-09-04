@@ -156,7 +156,7 @@
             <!-- 显示回复 -->
             <div class="container" th:if="${comments != null}">
                 <div class="media mt-4 question-comment" th:each="comment : ${comments.data}">
-                    <img class="align-self-start mr-3" th:src="'/' + ${comment.user.getHeadUrl()}" width="40"
+                    <img class="rounded-circle align-self-start mr-3" th:src="${comment.user.getHeadUrl()}" width="40"
                          height="40">
                     <div class="media-body">
                         <a class="mt-0 ml-0 issuse-question-people"
@@ -300,7 +300,7 @@
                     <!-- 评论区上用户头像 -->
                     <div class="media mb-2" th:if="${session.user != null}">
                         <img class="align-self-center mr-3 img-fluid rounded-circle"
-                             th:src="'/' + ${session.user.getHeadUrl()}" width="40" height="40">
+                             th:src="${session.user.getHeadUrl()}" width="40" height="40">
                         <p class="mt-2"><a th:href="${'/user/' + session.user.getUserId()}"><span
                                 th:text="${session.user.getUserName()}"></span></a></p>
                         <input type="hidden" id="userId" th:value="${session.user.getId()}">
@@ -362,7 +362,7 @@
             <h5>发起人</h5>
             <br/>
             <div class="container text-center">
-                <img class="rounded-circle" th:src="'/'+${question.user.getHeadUrl()}" alt="用户头像" width="60"
+                <img class="rounded-circle" th:src="${question.user.getHeadUrl()}" alt="用户头像" width="60"
                      height="60"/>
                 <a th:href="'/user/'+ ${question.user.getUserId()}"><p th:text="${question.user.getUserName()}"></p></a>
             </div>

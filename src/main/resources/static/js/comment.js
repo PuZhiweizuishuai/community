@@ -91,8 +91,8 @@ function showSecondComment(e) {
                     var c = $("<div/>",{
                         "class": "media mt-3 mr-2 ml-2"
                     }).append($("<img/>",{
-                        "class": "align-self-start mr-3",
-                        "src": "/" + userComment.user.headUrl,
+                        "class": "align-self-start mr-3 rounded-circle",
+                        "src": userComment.user.headUrl,
                         "width": 35,
                         "height": 35
                     })).append($("<div/>", {

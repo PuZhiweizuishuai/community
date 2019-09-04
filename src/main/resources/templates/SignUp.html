@@ -84,7 +84,7 @@
 </head>
 <body class="text-center">
 
-<form class="form-signin" id="signin-form" action="/api/register" method="post" name="user">
+<form class="form-signin" id="signin-form">
     <img class="mb-4" src="favicon.png" alt="" width="50%" height="50%">
     <h1 class="h3 mb-3 font-weight-normal" th:text="#{index.signup.welocme}">Please sign up</h1>
 
@@ -99,35 +99,35 @@
 
     <!-- z账号 -->
     <div class="form-group">
-        <input type="text" name="userId" class="form-control" id="userId" th:placeholder="#{index.userId}">
+        <input type="text" onblur="checkUserIdUseService($('#userId').val())" onclick="closeError()" name="userId" class="form-control" id="userId" th:placeholder="#{index.userId}">
         <!-- 错误提示信息 -->
         <small id="userIdHelp" class="form-text">20个字符以内,可以是字母或数字(注册后不可更改！)</small>
     </div>
 
     <!-- 昵称 -->
     <div class="form-group">
-        <input type="text" name="userName" class="form-control" id="userName" th:placeholder="#{index.userName}">
+        <input type="text" name="userName" onclick="closeError()" class="form-control" id="userName" th:placeholder="#{index.userName}">
         <!-- 错误提示信息 -->
         <small id="userNameHelp" class="form-text">20个字符以内，可以是汉字</small>
     </div>
 
     <!-- 邮箱 -->
     <div class="form-group">
-        <input type="text" name="email" class="form-control" id="InputEmail" th:placeholder="#{index.Enteremail}">
+        <input type="text" name="email" onblur="checkEmailUseService($('#InputEmail').val())" onclick="closeError()" class="form-control" id="InputEmail" th:placeholder="#{index.Enteremail}">
         <!-- 错误提示信息 -->
         <small id="emailHelp" class="form-text"></small>
     </div>
 
     <!-- 密码 -->
     <div class="form-group">
-        <input type="password" name="password" class="form-control" id="InputPassword"
+        <input type="password" onclick="closeError()" name="password" class="form-control" id="InputPassword"
                th:placeholder="#{index.Password}">
         <small id="passwordMessage" class="form-text">6~30个字符，可以是字母数字或其它特殊字符</small>
     </div>
 
     <!-- 密码 -->
     <div class="form-group">
-        <input type="password" name="password2" class="form-control" id="InputPassword2"
+        <input type="password" name="password2" onclick="closeError()" class="form-control" id="InputPassword2"
                th:placeholder="#{index.Password2}">
         <!-- 错误提示信息 -->
         <small id="passwordHelp" class="form-text"></small>
@@ -150,7 +150,7 @@
     <!-- 生日 -->
     <div class="form-group">
         <div class="input-group date" id="datetimepicker4" data-target-input="nearest">
-            <input name="birthday" type="text" th:placeholder="#{index.birthday}" class="form-control datetimepicker-input" data-target="#datetimepicker4"/>
+            <input onclick="closeError()" name="birthday" id="birthday" type="text" th:placeholder="#{index.birthday}" class="form-control datetimepicker-input" data-target="#datetimepicker4"/>
             <div class="input-group-append" data-target="#datetimepicker4" data-toggle="datetimepicker">
                 <div class="input-group-text"><img src="image/calendar.svg" width="30px" height="30px" alt="点我选择日期"/></div>
             </div>
@@ -167,7 +167,7 @@
 
     <!-- 学校 -->
     <div class="form-group">
-        <input type="text" name="school" class="form-control" id="userSchool" aria-describedby="userSchoolHelp"
+        <input type="text" onclick="closeError()" name="school" class="form-control" id="userSchool" aria-describedby="userSchoolHelp"
                th:placeholder="#{index.school}">
         <!-- 错误提示信息 -->
         <small id="userSchoolHelp" class="form-text"></small>
@@ -175,7 +175,7 @@
 
     <!-- 专业 -->
     <div class="form-group">
-        <input type="text" name="major" class="form-control" id="userMajor" aria-describedby="userMajorHelp"
+        <input type="text" onclick="closeError()" name="major" class="form-control" id="userMajor" aria-describedby="userMajorHelp"
                th:placeholder="#{index.major}">
         <!-- 错误提示信息 -->
         <small id="userMajorHelp" class="form-text"></small>
@@ -184,14 +184,17 @@
     <!--验证码 -->
     <div class="form-group">
         <a href="javascript:void(0);">
-            <img src="/captche/images" onclick="this.src='/captche/images?'+Math.random()"/>
+            <img id="image-captcha" src="/captche/images" onclick="this.src='/captche/images?'+Math.random()"/>
         </a>
-        <input autocomplete="off" type="text" th:placeholder="#{publish.issue.CAPTCHA}" name="validateCode" id="validateCode" class="form-control" required="required"/>
+        <input onclick="closeError()" autocomplete="off" type="text" th:placeholder="#{publish.issue.CAPTCHA}" name="validateCode" id="validateCode" class="form-control" required="required"/>
         <small id="validateCodeMessage" class="form-text text-muted" th:text="${kaptchaMsg}"></small>
 
     </div>
+    <div style="display:none;" id="error-message" class="alert alert-danger" role="alert">
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit" th:text="#{index.signup}">注册</button>
+    </div>
+
+    <button class="btn btn-lg btn-primary btn-block" type="button" th:text="#{index.signup}" onclick="signUp()">注册</button>
 
 
     <p class="mt-5 mb-3 text-muted">&copy; 2019-2019</p>
@@ -200,43 +203,88 @@
 <script src="/js/url.js" type="text/javascript"></script>
 <script src="/js/checkInput.js" type="text/javascript"></script>
 <script>
-    var check = function () {
-        var userId = document.getElementById("userId").value;
-        console.log(userId);
-        /*
-        var name = document.getElementById("userName").value;
-        var password1 = document.getElementById("InputPassword").value;
-        var password2 = document.getElementById("InputPassword2").value;
-        var email = document.getElementById("InputEmail").value;
-        if(name == "") {
-            document.getElementById("userIdHelp").innerText = "用户名不能为空！";
-        }
-        if(email == "") {
-            document.getElementById("emailHelp").innerText = "邮箱不能为空！";
-        }
-        if(password1 == "") {
-            document.getElementById("passwordMessage").innerText = "密码不能为空！";
-        }
-        if(password2 == "") {
-            document.getElementById("passwordHelp").innerText = "密码不能为空！";
-        }
-        if(checkPassword(password1)) {
-            document.getElementById("passwordMessage").innerText = "密码格式错误";
-        }
-        if(password1 !== password2) {
-            document.getElementById("passwordHelp").innerText = "两次密码输入不相同！";
-        }
-        if(chheckEmail(email) && checkEmailUseService(email) && checkUserId(userId)) {
-            if(checkPassword(password1) && password1 == password2) {
-                var form = document.getElementById("signin-form");
-                form.submit();
-            }
+    var signUp = function () {
+        var userId = $("#userId").val();
+        var userName = $("#userName").val();
+        var sex = getRadioButtonCheckedValue('sex');
+        var InputEmail = $("#InputEmail").val();
+        var InputPassword = $("#InputPassword").val();
+        var InputPassword2 = $("#InputPassword").val();
+        var birthday = $("#birthday").val();
+        var userSchool = $("#userSchool").val();
+        var userMajor = $("#userMajor").val();
+        var validateCode = $("#validateCode").val();
 
-        } else {
-            document.getElementById("emailHelp").innerText = "邮箱格式不正确！";
-        }*/
-        checkUserIdUseService(userId);
+        if(userId == "") {
+            document.getElementById("userIdHelp").innerText = "用户ID不能为空";
+            return;
+        }
+        if(userName == "") {
+            document.getElementById("userNameHelp").innerText = "昵称不能为空";
+            return;
+        }
+
+        if(InputEmail == "") {
+            document.getElementById("emailHelp").innerText = "邮箱不能为空";
+            return;
+        }
+
+        if(InputPassword == "" || InputPassword2 == "") {
+            document.getElementById("passwordHelp").innerText = "密码不能为空";
+            return;
+        }
+        if(InputPassword != InputPassword2) {
+            document.getElementById("passwordHelp").innerText = "两次密码不相同";
+            return;
+        }
+        if(validateCode == "") {
+            document.getElementById("validateCodeMessage").innerText = "验证码不能为空";
+            return;
+        }
+        if(checkEmailUseService(InputEmail) == false) {
+            document.getElementById("error-message").innerText = "该邮箱已被注册，请更换邮箱或尝试登陆！";
+            $("#error-message").show();
+            return;
+        }
+        if(checkUserIdUseService(userId) == false) {
+            document.getElementById("error-message").innerText = "该账号已被注册，请更换账号！";
+            $("#error-message").show();
+            return
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '/api/register',
+            data: {
+                "userId":userId,
+                "userName": userName,
+                "email": InputEmail,
+                "password": InputPassword,
+                "sex": sex,
+                "birthday": birthday,
+                "school": userSchool,
+                "major": userMajor,
+                "validateCode": validateCode
+            },
+            success: function (resultdata) {
+                console.log(resultdata);
+                if(resultdata.success == false) {
+                    document.getElementById("image-captcha").src = '/captche/images?'+Math.random();
+                    document.getElementById("error-message").innerText = resultdata.msg;
+                    $("#error-message").show();
+                }  else {
+                    alert("注册成功，即将为你跳转到首页！");
+                    window.location.reload("/");
+                }
+            }
+        });
+        //checkUserIdUseService(userId);
     };
+
+
+    function closeError() {
+        $("#error-message").hide();
+    }
 
     var checkEmailUseService = function (email) {
         $.ajax({
@@ -250,6 +298,7 @@
                     document.getElementById("emailHelp").innerText = "该账号已被注册，请尝试登陆！";
                     return false;
                 }  else {
+                    document.getElementById("emailHelp").innerText = "该账账号可用！";
                     return true;
                 }
             }
@@ -275,6 +324,16 @@
             }
         });
     };
+
+    function getRadioButtonCheckedValue(tagNameAttr){
+        var radio_tag = document.getElementsByName(tagNameAttr);
+        for(var i=0;i<radio_tag.length;i++){
+            if(radio_tag[i].checked){
+                var checkvalue = radio_tag[i].value;
+                return checkvalue;
+            }
+        }
+    }
 </script>
 </body>
 </html>

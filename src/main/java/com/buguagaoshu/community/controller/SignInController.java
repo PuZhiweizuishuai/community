@@ -58,8 +58,12 @@ public class SignInController {
      * 返回登陆视图
      */
     @GetMapping("/sign-in")
-    public String signIn() {
-        return "SignIn";
+    public String signIn(HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute("user");
+        if(user == null) {
+            return "SignIn";
+        }
+        return StringUtil.jumpWebLangeParameter("/", true, request);
     }
 
 

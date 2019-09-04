@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/cropper.css">
     <link rel="stylesheet" href="/css/headMain.css">
+    <style type="text/css">
+        body{
+            background-color: transparent;
+        }
+        -webkit-scrollbar{
+            width: 2px;
+            background: none;
+        }
+    </style>
 </head>
 <body>
 <!-- Content -->
@@ -13,7 +22,7 @@
         <div class="col-5">
             <!-- <h3>Demo:</h3> -->
             <div class="img-container">
-                <img id="image" src="images/picture.jpg" alt="Picture">
+                <img id="image" th:src="${session.user.getHeadUrl()}" alt="Picture">
             </div>
         </div>
         <div class="col-5">
@@ -21,6 +30,9 @@
             <div class="docs-preview clearfix">
                 <div class="img-preview preview-lg"></div>
             </div>
+            <br/>
+            <h5>修改指南</h5>
+            <p>点击上传图片选择图片，最后点击上传头像完成修改！</p>
         </div>
     </div>
     <div class="row">
@@ -133,6 +145,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

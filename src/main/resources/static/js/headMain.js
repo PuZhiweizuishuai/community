@@ -154,6 +154,7 @@ $(function () {
               console.log(ret);
               if(ret.success == 1){
                 alert(ret.message);
+                  window.location.replace("/setting");
               }else{
                 alert(ret.message);
               }

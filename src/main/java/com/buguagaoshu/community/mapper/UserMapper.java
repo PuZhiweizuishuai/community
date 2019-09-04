@@ -53,8 +53,8 @@ public interface UserMapper {
      * @param user 新用户类
      * @return 1
      */
-    @Insert("insert into users(userId ,userName, password, email, sex, age, birthday, school, major, creationTime, lastTime, headUrl) " +
-            "values(#{userId}, #{userName}, #{password}, #{email}, #{sex}, #{age}, #{birthday}, #{school}, #{major}, #{creationTime}, #{lastTime}, #{headUrl})")
+    @Insert("insert into users(userId ,userName, password, email, sex, age, birthday, school, major, creationTime, lastTime, headUrl, userTopPhotoUrl) " +
+            "values(#{userId}, #{userName}, #{password}, #{email}, #{sex}, #{age}, #{birthday}, #{school}, #{major}, #{creationTime}, #{lastTime}, #{headUrl}, #{userTopPhotoUrl})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertUser(User user);
 
@@ -107,4 +107,58 @@ public interface UserMapper {
      */
     @Update("update users set headUrl=#{headUrl} where id=#{id}")
     int updateUserHeadUrlById(@Param("id") long id, @Param("headUrl") String headUrl);
+
+
+    /**
+     * 通过 id 更改用户性别
+     *
+     * @param id  用户 ID
+     * @param sex 性别
+     * @return 1 成功
+     */
+    @Update("update users set sex=#{sex} where id=#{id}")
+    int updateUserSexById(@Param("id") long id, @Param("sex") String sex);
+
+    /**
+     * 通过 id 更改用户学校
+     *
+     * @param id     用户 ID
+     * @param school 学校
+     * @return 1 成功
+     */
+    @Update("update users set school=#{school} where id=#{id}")
+    int updateUserSchoolById(@Param("id") long id, @Param("school") String school);
+
+
+    /**
+     * 通过 id 更改用户专业
+     *
+     * @param id    用户 ID
+     * @param major 专业
+     * @return 1 成功
+     */
+    @Update("update users set major=#{major} where id=#{id}")
+    int updateUserMajorById(@Param("id") long id, @Param("major") String major);
+
+
+    /**
+     * 通过 id 更改用户简介
+     *
+     * @param id               用户 ID
+     * @param selfIntroduction 专业
+     * @return 1 成功
+     */
+    @Update("update users set selfIntroduction=#{selfIntroduction} where id=#{id}")
+    int updateUserSelfIntroductionById(@Param("id") long id, @Param("selfIntroduction") String selfIntroduction);
+
+
+    @Update("update users set userName=#{userName}, sex=#{sex}, school=#{school}, major=#{major}, simpleSelfIntroduction=#{simpleSelfIntroduction}, " +
+            "selfIntroduction=#{selfIntroduction}, likes=#{likes} where id=#{id}")
+    int updateUserData(User user);
+
+
+
+    @Update("update users set userTopPhotoUrl=#{userTopPhotoUrl} where id=#{id}")
+    int updateUserTopPhotoUrl(@Param("id") long id, @Param("userTopPhotoUrl") String userTopPhotoUrl);
+
 }

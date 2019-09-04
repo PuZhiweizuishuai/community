@@ -2,6 +2,7 @@ package com.buguagaoshu.community.controller.api;
 
 import com.alibaba.fastjson.JSONObject;
 import com.buguagaoshu.community.dto.FileDTO;
+import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.util.ImageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -29,14 +29,18 @@ public class FileApiController {
 
     private final ResourceLoader resourceLoader;
 
+    private final UserMapper userMapper;
+
+
     @Autowired
-    public FileApiController(ResourceLoader resourceLoader) {
+    public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper) {
         this.resourceLoader = resourceLoader;
+        this.userMapper = userMapper;
     }
 
     @PostMapping(value = "/api/file/image/upload")
-    public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile file,
-                         HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile file, String type,
+                         HttpServletRequest request) throws Exception {
         User user = (User) request.getSession().getAttribute("user");
         if(user == null) {
             return new FileDTO(0, "未登陆用户禁止上传图片","");
@@ -59,6 +63,12 @@ public class FileApiController {
         try {
             // 保存图片
             Files.copy(file.getInputStream(), Paths.get(path, name));
+
+            if(type != null && type.equals("top")) {
+                userMapper.updateUserTopPhotoUrl(user.getId(), pathName);
+                user.setUserTopPhotoUrl(pathName);
+                request.getSession().setAttribute("user", user);
+            }
 
             JSONObject res = new JSONObject();
             res.put("url", pathName);

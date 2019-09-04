@@ -26,11 +26,12 @@ CREATE TABLE users
     school varchar(20),
     major varchar (20),
     selfIntroduction varchar (50),
-    simpleSelfIntroduction varchar (100),
+    simpleSelfIntroduction varchar (500),
     likes varchar (50),
     creationTime VARCHAR(19),
     lastTime VARCHAR(19),
     headUrl VARCHAR(300),
+    userTopPhotoUrl varchar (300),
     PRIMARY KEY (id)
 );
 --

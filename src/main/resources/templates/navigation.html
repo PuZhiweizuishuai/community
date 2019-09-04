@@ -83,12 +83,12 @@
                 <li class="nav-item dropdown" th:if="${session.user != null}">
                     <a class="nav-link dropdown-toggle" href="#"
                        role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <img th:src="${'/' + session.user.getHeadUrl()}" width="30" height="30" class="d-inline-block align-top" alt="">
+                        <img th:src="${session.user.getHeadUrl()}" width="30" height="30" class="d-inline-block align-top" alt="">
                         [[${session.user.getUserName()}]]
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" th:href="'/user/' + ${session.user.getUserId()}" th:text="#{index.myhome}">我的主页</a>
-                        <a class="dropdown-item" href="#" th:text="#{index.setting}">设置</a>
+                        <a class="dropdown-item" href="/setting" th:text="#{index.setting}">设置</a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="/sign-out" id="sign-out-a" onclick="signOut('sign-out-a')"
                            th:text="#{index.signout}">退出登陆</a>

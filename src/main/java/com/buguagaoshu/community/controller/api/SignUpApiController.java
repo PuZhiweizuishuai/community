@@ -5,12 +5,14 @@ import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
+import com.wf.captcha.utils.CaptchaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +41,12 @@ public class SignUpApiController {
      */
     @PostMapping("/api/register")
     @ResponseBody
-    public HashMap<String, Object> userSignUp(@Valid User user, Errors errors) {
+    public HashMap<String, Object> userSignUp(@Valid User user, String validateCode, Errors errors, HttpServletRequest request) {
+        if (!CaptchaUtil.ver(validateCode, request)) {
+            CaptchaUtil.clear(request);
+            return StringUtil.dealResultMessage(false, "验证码错误！");
+        }
+
         // 校验数据并返回错误信息
         HashMap<String, Object> infoMap = new HashMap<>(2);
         List<ObjectError> oes = errors.getAllErrors();
@@ -67,15 +74,20 @@ public class SignUpApiController {
             }
             return infoMap;
         }
-        int age = StringUtil.getAge(user.getBirthday());
-        if (age == -1) {
-            infoMap.put("birthday", "生日输入超出当前日期！");
+        int age = 0;
+        if(user.getBirthday() != null) {
+            age = StringUtil.getAge(user.getBirthday());
+            if (age == -1) {
+                infoMap.put("birthday", "生日输入超出当前日期！");
+            }
         }
+
         if (infoMap.size() != 0) {
             return infoMap;
         }
         // 补全数据
         setDefaultHeadUrl(user);
+        user.setUserTopPhotoUrl("/image/101-desktop-wallpaper.png");
         user.setCreationTime(StringUtil.getNowTime());
         user.setLastTime(StringUtil.getNowTime());
         user.setAge(age);
@@ -96,34 +108,7 @@ public class SignUpApiController {
         }
     }
 
-    /**
-     * 更新密码
-     * */
-    @PatchMapping("/api/update/password/{id}")
-    public HashMap<String, Object> updatePassword(@PathVariable("id") long id, String oldPassword, String newPassword) {
-        if (oldPassword.equals(newPassword)) {
-            return StringUtil.dealResultMessage(false, "两次输入密码相同！");
-        }
-        if (StringUtil.checkPassword(newPassword)) {
-            User user = userService.selectUserById(id);
-            if (user != null) {
-                if (StringUtil.judgePassword(oldPassword, user.getPassword())) {
-                    if (userService.updateUserPasswordById(id, newPassword) == 1) {
-                        return StringUtil.dealResultMessage(true, "修改成功！");
-                    } else {
-                        return StringUtil.dealResultMessage(false, "修改失败，请稍后重试！");
-                    }
 
-                } else {
-                    return StringUtil.dealResultMessage(false, "原密码错误！");
-                }
-            } else {
-                return StringUtil.dealResultMessage(false, "用户不存在！");
-            }
-        } else {
-            return StringUtil.dealResultMessage(false, "密码格式错误！");
-        }
-    }
 
 
     /**
@@ -207,11 +192,11 @@ public class SignUpApiController {
      */
     private void setDefaultHeadUrl(User user) {
         if (user.getSex().equals("男")) {
-            user.setHeadUrl("image/head/boyhead.png");
+            user.setHeadUrl("/image/head/boyhead.png");
         } else if (user.getSex().equals("女")) {
-            user.setHeadUrl("image/head/girlhead.png");
+            user.setHeadUrl("/image/head/girlhead.png");
         } else {
-            user.setHeadUrl("image/head/nohead.png");
+            user.setHeadUrl("/image/head/nohead.png");
         }
     }
 }

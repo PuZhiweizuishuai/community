@@ -1,7 +1,11 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -11,8 +15,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class SignUpController {
     @GetMapping("/sign-up")
-    public String signUp() {
-        return "SignUp";
+    public String signUp(HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute("user");
+        if(user == null) {
+            return "SignIn";
+        }
+        return StringUtil.jumpWebLangeParameter("/", true, request);
     }
 
     public String getSignUp() {

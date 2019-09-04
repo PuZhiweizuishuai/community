@@ -51,6 +51,7 @@ public class User {
     private String creationTime;
     private String headUrl;
     private String lastTime;
+    private String userTopPhotoUrl;
 
     /**
      * 一句话介绍

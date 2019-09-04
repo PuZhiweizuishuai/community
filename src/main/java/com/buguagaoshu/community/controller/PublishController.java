@@ -33,10 +33,10 @@ public class PublishController {
         /**
          * TODO 简单验证，后期改为JWT 方便测试页面，先注释
          * */
-//        User user = (User) request.getSession().getAttribute("user");
-//        if(user == null) {
-//            return StringUtil.jumpWebLangeParameter("/sign-in", true, request);
-//        }
+        User user = (User) request.getSession().getAttribute("user");
+        if(user == null) {
+            return StringUtil.jumpWebLangeParameter("/sign-in", true, request);
+        }
 
         model.addAttribute("question", new Question());
         // model.addAttribute("tags", TagCache.get());
