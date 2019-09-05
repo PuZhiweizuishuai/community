@@ -20,4 +20,9 @@ public class Question {
     private String tag;
     private long createTime;
     private long alterTime;
+
+    /**
+     * 状态，删除 或 没删除
+     * */
+    private int status;
 }

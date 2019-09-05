@@ -7,6 +7,7 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.Base64MultipartFile;
 import com.buguagaoshu.community.util.StringUtil;
 import com.wf.captcha.utils.CaptchaUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
@@ -28,6 +29,7 @@ import java.util.UUID;
  * create          2019-09-03 22:35
  */
 @RestController
+@Slf4j
 public class UserUpdateApiController {
     @Value("${File.ROOT.PATH}")
     private String ROOT;
@@ -74,9 +76,10 @@ public class UserUpdateApiController {
             userService.updateUserHeadUrlById(user.getId(), pathName);
             user.setHeadUrl(pathName);
             request.getSession().setAttribute("user", user);
+
             return new FileDTO(1, "上传成功", pathName);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("头像文件保存失败：{}", e.getMessage());
             return new FileDTO(0, "上传失败，请重试", "");
         }
 
@@ -94,6 +97,7 @@ public class UserUpdateApiController {
             String path = ROOT + "/" + userId + "/image/head/";
             return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
         } catch (Exception e) {
+            log.error("图片文件获取失败:  {}",e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
@@ -118,7 +122,7 @@ public class UserUpdateApiController {
             }
             return new Base64MultipartFile(b, baseStrs[0], fileName);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("图片文件转换:  {}",e.getMessage());
             return null;
         }
     }

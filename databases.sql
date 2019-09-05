@@ -86,6 +86,7 @@ CREATE TABLE Questions
     tag varchar(256),
     createTime bigint,
     alterTime bigint,
+    status int default 1,
     constraint user_question_FK foreign key(userId) references users(id)
 );
 
@@ -101,6 +102,7 @@ CREATE TABLE comment
     commentCount bigint default 0,
     createTime bigint NOT NULL,
     alterTime bigint NOT NULL,
+    status int default 1,
     constraint comments_user_FK foreign key(questionId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
 );

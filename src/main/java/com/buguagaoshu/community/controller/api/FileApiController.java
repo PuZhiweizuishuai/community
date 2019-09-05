@@ -5,6 +5,7 @@ import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.util.ImageUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
@@ -23,6 +24,7 @@ import java.nio.file.Paths;
  * 文件上传
  */
 @RestController
+@Slf4j
 public class FileApiController {
     @Value("${File.ROOT.PATH}")
     private String ROOT;
@@ -76,7 +78,7 @@ public class FileApiController {
             res.put("message", "success");
             return res;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("文件保存失败：  {}",e.getMessage());
             return new FileDTO(0,"上传失败，请重试", "");
         }
     }
@@ -89,6 +91,7 @@ public class FileApiController {
             String path = ROOT + "/" + userId + "/image/";
             return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
         } catch (Exception e) {
+            log.error("图片文件获取失败:  {}",e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

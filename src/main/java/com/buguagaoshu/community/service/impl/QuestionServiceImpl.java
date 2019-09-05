@@ -53,12 +53,12 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size) {
         // 获取所有的问题数
-        long allQuestionCount = questionMapper.getQuestionCount();
+        long allQuestionCount = questionMapper.getQuestionCount(1);
 
         // 计算分页参数
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
 
-        List<Question> questionList = questionMapper.getSomeQuestion(param[0], param[1]);
+        List<Question> questionList = questionMapper.getSomeQuestion(param[0], param[1], 1);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
             User user = userService.selectUserById(question.getUserId());
@@ -81,9 +81,9 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public PaginationDto<QuestionDto> getQuestionByUserId(String page, String size, long id) {
-        long allQuestionCount = questionMapper.getUserQuestionCount(id);
+        long allQuestionCount = questionMapper.getUserQuestionCount(id, 1);
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-        List<Question> questionList = questionMapper.getQuestionByUserId(param[0], param[1], id);
+        List<Question> questionList = questionMapper.getQuestionByUserId(param[0], param[1], id, 1);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
             QuestionDto questionDto = new QuestionDto();
@@ -111,7 +111,7 @@ public class QuestionServiceImpl implements QuestionService {
             return null;
         }
 
-        Question question = questionMapper.selectQuestionById(id);
+        Question question = questionMapper.selectQuestionById(id, 1);
         if (question == null) {
             return null;
         }
@@ -137,7 +137,7 @@ public class QuestionServiceImpl implements QuestionService {
         if (id == -1) {
             return null;
         }
-        return questionMapper.selectQuestionById(id);
+        return questionMapper.selectQuestionById(id, 1);
     }
 
     @Override
@@ -156,15 +156,15 @@ public class QuestionServiceImpl implements QuestionService {
             return null;
         }
         List<Question> questionDtoList = questionMapper.getRelevantQuestion(
-                StringUtil.sqlSelectRegexpForRelevantQuestion(questionDto.getTag()), questionDto.getQuestionId(), 10);
+                StringUtil.sqlSelectRegexpForRelevantQuestion(questionDto.getTag()), questionDto.getQuestionId(), 10, 1);
         return questionDtoList;
     }
 
     @Override
     public PaginationDto<QuestionDto> searchQuestion(String search, String page, String size) {
-        long allQuestionCount = questionMapper.searchQuestionCount(search);
+        long allQuestionCount = questionMapper.searchQuestionCount(search, 1);
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-        List<Question> questionList = questionMapper.searchQuestion(search, param[0], param[1]);
+        List<Question> questionList = questionMapper.searchQuestion(search, param[0], param[1], 1);
 
 
         Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());

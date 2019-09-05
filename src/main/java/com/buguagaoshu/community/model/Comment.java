@@ -58,4 +58,9 @@ public class Comment {
      * 修改时间
      * */
     private long modifiedTime;
+
+    /**
+     * 状态，删除 或 没删除
+     * */
+    private int status;
 }

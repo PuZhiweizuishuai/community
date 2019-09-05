@@ -68,7 +68,7 @@ public class CommentServiceImpl implements CommentService {
             throw new CustomizeException(CustomizeErrorCode.TYPE_PARAM_WRONG);
         }
 
-        Question question = questionMapper.selectQuestionById(comment.getQuestionId());
+        Question question = questionMapper.selectQuestionById(comment.getQuestionId(), 1);
         if (CommentTypeEnum.COMMENT.getType().equals(comment.getType())) {
             // 回复评论
             // TODO 可能有bug 待测试
@@ -105,7 +105,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Comment selectCommentByCommentId(long commentId) {
-        return commentMapper.selectCommentByCommentId(commentId);
+        return commentMapper.selectCommentByCommentId(commentId, 1);
     }
 
     @Override
@@ -116,11 +116,11 @@ public class CommentServiceImpl implements CommentService {
         } catch (Exception e) {
             throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
         }
-        long allCommentNumber = commentMapper.getCommentNumber(qId, 1);
+        long allCommentNumber = commentMapper.getCommentNumber(qId, 1, 1);
         // 计算分页参数
         long[] param = NumberUtils.getPageAndSize(page, size, allCommentNumber);
 
-        List<Comment> comments = commentMapper.getCommentDtoByQuestionId(qId, 1, param[0], param[1]);
+        List<Comment> comments = commentMapper.getCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
 
         if (comments.size() == 0) {
             return null;
@@ -162,7 +162,7 @@ public class CommentServiceImpl implements CommentService {
         } catch (Exception e) {
             throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
         }
-        List<Comment> comments = commentMapper.getTwoLevelCommentByParent(id, type);
+        List<Comment> comments = commentMapper.getTwoLevelCommentByParent(id, type, 1);
         if (comments.size() == 0) {
             throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
         }

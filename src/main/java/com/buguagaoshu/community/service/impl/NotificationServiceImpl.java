@@ -90,7 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
             notificationDTO.setNotifierName(userMap.get(notification.getNotifier()).getUserName());
 
             //TODO 目测可以优化
-            notificationDTO.setOuterTitle(questionMapper.selectQuestionById(notification.getOuterId()).getTitle());
+            notificationDTO.setOuterTitle(questionMapper.selectQuestionById(notification.getOuterId(), 1).getTitle());
             notificationDTO.setOuterid(notification.getOuterId());
             notificationDTO.setTypeName(NotificationTypeEnum.nameOfType(notification.getType()));
             notificationDTO.setType(notification.getType());
