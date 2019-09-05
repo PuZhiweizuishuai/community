@@ -25,7 +25,7 @@ public interface QuestionService {
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
-    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size);
+    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, String sort);
 
 
     /**
@@ -73,7 +73,18 @@ public interface QuestionService {
     List<Question> getRelevantQuestion(QuestionDto questionDto);
 
 
-
+    /**
+     * 搜索问题
+     * @param search 搜索关键字
+     * @param page 页码
+     * @param size 大小
+     * @return 结果
+     * */
     PaginationDto<QuestionDto> searchQuestion(String search, String page, String size);
 
+
+    /**
+     * 获取问题列表
+     * */
+    List<Question> getQuestionListForTag(long page, long size);
 }

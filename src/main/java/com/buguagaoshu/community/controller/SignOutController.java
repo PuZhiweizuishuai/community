@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.apache.shiro.SecurityUtils;
@@ -32,6 +33,7 @@ public class SignOutController {
      */
     @RequestMapping(value = "sign-out", method = RequestMethod.GET)
     public String signOut(HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute("user");
         String token = null;
         if (request.getCookies() != null) {
             Cookie[] cookies = request.getCookies();
@@ -40,7 +42,7 @@ public class SignOutController {
                     token = cookie.getValue();
                     if (token != null) {
                         // TODO 删除在线用户
-                        onlineUserService.deleteOnlineUserByToken(token);
+                        onlineUserService.deleteOnlineUserById(user.getId());
                     }
                     cookie.setValue(null);
                     break;

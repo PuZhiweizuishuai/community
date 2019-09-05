@@ -83,6 +83,9 @@ public class CommentServiceImpl implements CommentService {
             // TODO 考虑传入评论ID
             createNotification(comment, dbComment.getCommentator(), "","",
                     NotificationTypeEnum.REPLY_COMMENT, question.getQuestionId());
+
+            // 修改帖子修改时间
+            questionMapper.alterQuestionAlterTime(System.currentTimeMillis(), comment.getQuestionId());
             // 评论评论数加 1
             dbComment.setCommentCount(1);
             commentMapper.updateCommentCount(dbComment);
@@ -97,6 +100,8 @@ public class CommentServiceImpl implements CommentService {
             }
             createNotification(comment, question.getUserId(), "", "",
                     NotificationTypeEnum.REPLY_QUESTION, question.getQuestionId());
+            // 修改帖子修改时间
+            questionMapper.alterQuestionAlterTime(System.currentTimeMillis(), comment.getQuestionId());
             question.setCommentCount(1);
             questionMapper.updateQuestionCommentCount(question);
             return commentMapper.insertComment(comment);

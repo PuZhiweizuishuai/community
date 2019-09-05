@@ -31,6 +31,8 @@ public class QuestionServiceImpl implements QuestionService {
 
     private final UserService userService;
 
+    private long[] param;
+
     @Autowired
     public QuestionServiceImpl(QuestionMapper questionMapper, UserService userService) {
         this.questionMapper = questionMapper;
@@ -38,11 +40,50 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
 
+    private List<Question> getQuestionList(String page, String size, String tag, String sort) {
+        long allQuestionCount;
+        List<Question> questionList;
+        if (tag == null || tag.equals("")) {
+            // 零回复的帖子
+            if (sort != null && sort.equals("no")) {
+                allQuestionCount = questionMapper.selectQuestionUseCommentCountNumber(1);
+                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                questionList = questionMapper.selectQuestionUseCommentCount(param[0], param[1], 1);
+            } else {
+                // 正常的排序
+                allQuestionCount = questionMapper.getQuestionCount(1);
+                // 计算分页参数
+                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                questionList = questionMapper.getSomeQuestion(param[0], param[1], 1);
+            }
+        } else {
+            // 带标签
+            if(sort != null && sort.equals("no")) {
+                // 带排序
+                allQuestionCount = questionMapper.selectQuestionUseCommentCountBySearchNumber(tag, 1);
+                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                questionList = questionMapper.selectQuestionUseCommentCountBySearch(tag, param[0], param[1], 1);
+
+            } else {
+                // 不带排序
+                allQuestionCount = questionMapper.searchQuestionCount(tag, 1);
+                // 计算分页参数
+                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                questionList = questionMapper.searchQuestion(tag, param[0], param[1], 1);
+            }
+        }
+        return questionList;
+    }
+
+
     @Override
     public int createQuestion(Question question) {
         if (question.getQuestionId() == -1) {
+            question.setCreateTime(System.currentTimeMillis());
+            question.setAlterTime(System.currentTimeMillis());
             return questionMapper.createQuestion(question);
         } else {
+            question.setAlterTime(System.currentTimeMillis());
             return questionMapper.updateQuestion(question);
         }
     }
@@ -51,14 +92,9 @@ public class QuestionServiceImpl implements QuestionService {
      * TODO 优化查询，考虑使用多表级联
      */
     @Override
-    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size) {
-        // 获取所有的问题数
-        long allQuestionCount = questionMapper.getQuestionCount(1);
+    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, String sort) {
+        List<Question> questionList = getQuestionList(page, size, tag, sort);
 
-        // 计算分页参数
-        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-
-        List<Question> questionList = questionMapper.getSomeQuestion(param[0], param[1], 1);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
             User user = userService.selectUserById(question.getUserId());
@@ -170,7 +206,7 @@ public class QuestionServiceImpl implements QuestionService {
         Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());
 
         List<User> users = new ArrayList<>();
-        for(Long id : usersId) {
+        for (Long id : usersId) {
             User user = userService.selectUserById(id);
             user.clean();
             users.add(user);
@@ -191,5 +227,10 @@ public class QuestionServiceImpl implements QuestionService {
         paginationDto.setPagination(param[2], param[3], param[1]);
         paginationDto.setAllCount(allQuestionCount);
         return paginationDto;
+    }
+
+    @Override
+    public List<Question> getQuestionListForTag(long page, long size) {
+        return questionMapper.getSomeQuestion(page, size, 1);
     }
 }

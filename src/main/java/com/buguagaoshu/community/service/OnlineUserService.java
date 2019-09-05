@@ -46,4 +46,9 @@ public interface OnlineUserService {
      * @return 结果
      * */
     int deleteOnlineUserByToken(String token);
+
+    /**
+     * 删除到期用户
+     * */
+    int deleteExpireTimeUser(long expireTime);
 }

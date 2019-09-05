@@ -48,6 +48,7 @@ public class SessionInterceptor implements HandlerInterceptor {
         User user = (User) request.getSession().getAttribute("user");
         if (user != null) {
             request.getSession().setAttribute("notificationCount", notificationService.getAllNotificationNumber(user.getId()));
+            return true;
         }
         /**
          * TODO 待改进优化, 对于 token 的使用
@@ -64,6 +65,7 @@ public class SessionInterceptor implements HandlerInterceptor {
                 }
             }
         }
+
         /**
          * TODO 优化登陆逻辑
          * */
@@ -73,12 +75,11 @@ public class SessionInterceptor implements HandlerInterceptor {
                 Claims claims = jwtUtil.parseJWT(token);
                 User suser = (User) request.getSession().getAttribute("user");
                 if (suser == null) {
-                    User users = userService.selectUserById(Long.valueOf(claims.getSubject()));
-                    UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-                    user.setPower(userPermission.getPower());
+                    User users = userService.selectUserById(Long.valueOf(claims.getId()));
                     request.getSession().setAttribute("user", users);
                 }
             } catch (Exception e) {
+                onlineUserService.deleteOnlineUserByToken(token);
                 request.getSession().removeAttribute("user");
             }
 

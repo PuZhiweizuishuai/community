@@ -17,17 +17,20 @@ public class OnlineUser {
 
     private String ip;
 
-    private String time;
+    private long time;
+
+    private long expireTime;
 
     public OnlineUser() {
 
     }
 
-    public OnlineUser(long id, String userName, String token, String ip, String time) {
+    public OnlineUser(long id, String userName, String token, String ip, long time, long expireTime) {
         this.id = id;
         this.userName = userName;
         this.token = token;
         this.ip = ip;
         this.time = time;
+        this.expireTime = expireTime;
     }
 }

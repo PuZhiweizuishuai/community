@@ -40,7 +40,7 @@ public interface OnlineUserMapper {
      * @param user 在线用户
      * @return 结果
      */
-    @Insert("insert into onlineUser values (#{id}, #{userName}, #{token}, #{ip}, #{time})")
+    @Insert("insert into onlineUser values (#{id}, #{userName}, #{token}, #{ip}, #{time}, #{expireTime})")
     int insertOnlineUser(OnlineUser user);
 
     /**
@@ -60,4 +60,11 @@ public interface OnlineUserMapper {
      */
     @Delete("delete from onlineUser where token=#{token}")
     int deleteOnlineUserByToken(@Param("token") String token);
+
+
+    /**
+     * 删除到期用户
+     * */
+    @Delete("delete from onlineUser where expireTime <= #{expireTime}")
+    int deleteExpireTimeUser(long expireTime);
 }

@@ -66,7 +66,8 @@ create table onlineUser
     userName VARCHAR(20) NOT NULL,
     token varchar (300) not null ,
     ip varchar (128) not null ,
-    time varchar (19) not null ,
+    time bigint not null ,
+    expireTime bigint default 0,
     PRIMARY KEY (id),
     constraint onlineUser_FK foreign key(id) references users(id)
 );
@@ -90,6 +91,7 @@ CREATE TABLE Questions
     constraint user_question_FK foreign key(userId) references users(id)
 );
 
+-- 评论表
 CREATE TABLE comment
 (
     commentId bigint PRIMARY KEY AUTO_INCREMENT,

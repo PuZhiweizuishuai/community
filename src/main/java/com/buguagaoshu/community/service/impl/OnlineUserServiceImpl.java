@@ -55,4 +55,9 @@ public class OnlineUserServiceImpl implements OnlineUserService {
     public int deleteOnlineUserByToken(String token) {
         return onlineUserMapper.deleteOnlineUserByToken(token);
     }
+
+    @Override
+    public int deleteExpireTimeUser(long expireTime) {
+        return onlineUserMapper.deleteExpireTimeUser(expireTime);
+    }
 }

@@ -34,6 +34,7 @@ public interface QuestionMapper {
      * 查找问题
      *
      * @param questionId 问题id
+     * @param status 状态
      * @return 问题
      */
     @Select("SELECT * FROM Questions where questionId=#{questionId} AND status=#{status}")
@@ -47,7 +48,7 @@ public interface QuestionMapper {
      * @param size 每页显示数量
      * @return 问题列表
      */
-    @Select("select * from Questions where status=#{status} ORDER BY questionId DESC limit #{page}, #{size}")
+    @Select("select * from Questions where status=#{status} ORDER BY alterTime DESC limit #{page}, #{size}")
     List<Question> getSomeQuestion(@Param("page") long page, @Param("size") long size, @Param("status") int status);
 
 
@@ -113,12 +114,58 @@ public interface QuestionMapper {
      * @param search 搜索参数
      * @param page 页码
      * @param size 数量
+     * @param status 状态
      * @return 搜索结果
      * */
     @Select("select * from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} order by questionId desc limit #{page}, #{size}")
     List<Question> searchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
 
+    /**
+     * 返回正则搜索的数量
+     * */
     @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search} and status=#{status}")
     long searchQuestionCount(@Param("search") String search, @Param("status") int status);
+
+
+    /**
+     * 修改帖子时间
+     * */
+    @Update("update Questions set alterTime=#{alterTime} where questionId=#{questionId}")
+    int alterQuestionAlterTime(@Param("alterTime") long alterTime, @Param("questionId") long questionId);
+
+
+    /**
+     * TODO 优化分页
+     * 获取问题列表 倒序
+     *
+     * @param page 页码
+     * @param size 每页显示数量
+     * @return 问题列表
+     */
+    @Select("select * from Questions where status=#{status} AND commentCount=0 ORDER BY questionId DESC limit #{page}, #{size}")
+    List<Question> selectQuestionUseCommentCount(@Param("page") long page, @Param("size") long size, @Param("status") int status);
+
+    @Select("select COUNT(*) from Questions where status=#{status} AND commentCount=0")
+    long selectQuestionUseCommentCountNumber(@Param("status") int status);
+
+
+    /**
+     * 根据正则实现简单的搜索功能
+     *
+     * @param search 搜索参数
+     * @param page 页码
+     * @param size 数量
+     * @param status 状态
+     * @return 搜索结果
+     * */
+    @Select("select * from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
+    List<Question> selectQuestionUseCommentCountBySearch(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
+
+
+    /**
+     * 返回正则搜索的数量
+     * */
+    @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0")
+    long selectQuestionUseCommentCountBySearchNumber(@Param("search") String search, @Param("status") int status);
 }
