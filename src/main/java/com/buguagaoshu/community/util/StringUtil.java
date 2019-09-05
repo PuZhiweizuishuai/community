@@ -91,27 +91,31 @@ public class StringUtil {
         String nowTime = simpleDateFormat.format(now);
         String[] userBirthday = birthday.split("-");
         String[] nowDay = nowTime.split("-");
-        int age = Integer.valueOf(nowDay[0]) - Integer.valueOf(userBirthday[0]);
-        if (age > 0) {
-            return age;
-        } else if (age == 0) {
-            int month = Integer.valueOf(nowDay[1]) - Integer.valueOf(userBirthday[1]);
-            if (month > 0) {
-                return 0;
-            } else if (month == 0) {
-                int day = Integer.valueOf(nowDay[2]) - Integer.valueOf(userBirthday[2]);
-                if (day > 0) {
+        try {
+            int age = Integer.valueOf(nowDay[0]) - Integer.valueOf(userBirthday[0]);
+            if (age > 0) {
+                return age;
+            } else if (age == 0) {
+                int month = Integer.valueOf(nowDay[1]) - Integer.valueOf(userBirthday[1]);
+                if (month > 0) {
                     return 0;
-                } else if (day == 0) {
-                    return 0;
+                } else if (month == 0) {
+                    int day = Integer.valueOf(nowDay[2]) - Integer.valueOf(userBirthday[2]);
+                    if (day > 0) {
+                        return 0;
+                    } else if (day == 0) {
+                        return 0;
+                    } else {
+                        return -1;
+                    }
                 } else {
                     return -1;
                 }
+
             } else {
                 return -1;
             }
-
-        } else {
+        } catch (Exception e) {
             return -1;
         }
     }

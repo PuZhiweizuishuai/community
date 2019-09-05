@@ -6,6 +6,7 @@ import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import com.wf.captcha.utils.CaptchaUtil;
+import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
@@ -14,8 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 注册控制
@@ -41,58 +44,40 @@ public class SignUpApiController {
      */
     @PostMapping("/api/register")
     @ResponseBody
-    public HashMap<String, Object> userSignUp(@Valid User user, String validateCode, Errors errors, HttpServletRequest request) {
+    public HashMap<String, Object> userSignUp(@Valid User user, String validateCode, HttpServletRequest request) {
         if (!CaptchaUtil.ver(validateCode, request)) {
             CaptchaUtil.clear(request);
             return StringUtil.dealResultMessage(false, "验证码错误！");
         }
 
-        // 校验数据并返回错误信息
-        HashMap<String, Object> infoMap = new HashMap<>(2);
-        List<ObjectError> oes = errors.getAllErrors();
-        if(user.getUserId().isEmpty()) {
-            infoMap.put("userId", "账号不能为空！");
+        if(user.getUserId() == null || user.getUserId().equals("") || !StringUtil.checkUserId(user.getUserId())) {
+            return StringUtil.dealResultMessage(false, "用户ID不能为空！或用户ID格式不正确!");
         }
-        if (user.getUserName().isEmpty()) {
-            infoMap.put("userName", "昵称不能为空！");
+        if(user.getUserName() == null || user.getUserName().equals("")) {
+            return StringUtil.dealResultMessage(false, "昵称不能为空！");
         }
-        if (user.getEmail().isEmpty()) {
-            infoMap.put("email", "email不能为空！");
+        if(user.getEmail() == null || user.getEmail().equals("") || !StringUtil.checkEmail(user.getEmail())) {
+            return StringUtil.dealResultMessage(false, "邮箱不能为空。或邮箱格式不正确");
         }
-        if (oes.size() != 0) {
-            for (ObjectError oe : oes) {
-                String key = null;
-                String msg = null;
-                if (oe instanceof FieldError) {
-                    FieldError fe = (FieldError) oe;
-                    key = fe.getField();
-                } else {
-                    key = oe.getObjectName();
-                }
-                msg = oe.getDefaultMessage();
-                infoMap.put(key, msg);
+        if(user.getPassword() == null || user.getPassword().equals("") || !StringUtil.checkPassword(user.getPassword())) {
+            return StringUtil.dealResultMessage(false, "密码不能为空！或密码格式不正确");
+        }
+        if(user.getBirthday() != null || !user.getBirthday().equals("")) {
+            int age = StringUtil.getAge(user.getBirthday());
+            if(age == -1) {
+                return StringUtil.dealResultMessage(false, "生日格式不正确");
             }
-            return infoMap;
-        }
-        int age = 0;
-        if(user.getBirthday() != null) {
-            age = StringUtil.getAge(user.getBirthday());
-            if (age == -1) {
-                infoMap.put("birthday", "生日输入超出当前日期！");
-            }
+            user.setAge(age);
         }
 
-        if (infoMap.size() != 0) {
-            return infoMap;
-        }
         // 补全数据
         setDefaultHeadUrl(user);
         user.setUserTopPhotoUrl("/image/101-desktop-wallpaper.png");
         user.setCreationTime(StringUtil.getNowTime());
         user.setLastTime(StringUtil.getNowTime());
-        user.setAge(age);
 
         int result = userService.insertUser(user);
+        System.out.println(result);
         // 插入数据
         if (result == 1) {
             // 写入权限信息
@@ -191,6 +176,11 @@ public class SignUpApiController {
      * 补全默认头像信息
      */
     private void setDefaultHeadUrl(User user) {
+        if(user.getSex() == null || user.getSex().equals("")) {
+            user.setSex("保密");
+            user.setHeadUrl("/image/head/nohead.png");
+            return;
+        }
         if (user.getSex().equals("男")) {
             user.setHeadUrl("/image/head/boyhead.png");
         } else if (user.getSex().equals("女")) {

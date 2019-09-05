@@ -5,6 +5,7 @@ import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
+import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 import org.apache.ibatis.annotations.Param;
@@ -28,6 +29,9 @@ public class CommunityApplicationTests {
     QuestionMapper questionMapper;
 
     @Autowired
+    UserService userService;
+
+    @Autowired
     UserMapper userMapper;
 
     @Test
@@ -41,7 +45,7 @@ public class CommunityApplicationTests {
         System.out.println("pwd2  " + pwd4 + "   " + pwd4.length());
         System.out.println(StringUtil.judgePassword(pwd2, pwd3));*/
         //System.out.println(StringUtil.getUUID());
-       //System.out.println(size);
+        //System.out.println(size);
         //System.out.println(questionService.selectQuestionById("1").getTitle());
         //System.out.println(questionMapper.selectQuestionById(2).getTitle());
         //System.out.println(questionMapper.getSomeQuestion(1,5).size());
@@ -55,7 +59,14 @@ public class CommunityApplicationTests {
 //        newUser.setSelfIntroduction("毛金明牛逼");
 //        newUser.setLikes("毛金明牛逼");
 //        userMapper.updateUserData(newUser);
-        System.out.println(userMapper.searchUser("puzhiwei", 0 , 10));
+        //System.out.println(userMapper.searchUser("puzhiwei", 0 , 10));
+            User user = new User();
+            user.setUserId("qwerqwe");
+            user.setUserName("qwer");
+            user.setEmail("qq@qq.com");
+            user.setPassword("123456");
+            user.setSex("男");
+            System.out.println(StringUtil.getAge("qwee"));
     }
 
 }

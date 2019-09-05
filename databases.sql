@@ -128,6 +128,17 @@ create table notification
     constraint notification_receiver_user_FK foreign key(receiver) references users(id)
 );
 
+-- 管理表,负责数据记录
+create table admin
+(
+    adminId bigint primary key AUTO_INCREMENT,
+    time bigint not null,
+    questionCount bigint default 0,
+    userCount bigint default 0,
+    userAddCount bigint default 0,
+    questionAddCount bigint default 0
+);
+
 --alter table Questions modify questionId bigint NOT NULL;
 --alter table users modify id bigint NOT NULL;
 --select * from Questions limit 0, 5;

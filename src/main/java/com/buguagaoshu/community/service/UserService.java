@@ -98,4 +98,10 @@ public interface UserService {
 
     PaginationDto<User> searchUser(String search, String page, String size);
 
+
+    PaginationDto<User> getUserList(String page, String size);
+
+
+    long getAlluserCount();
+
 }

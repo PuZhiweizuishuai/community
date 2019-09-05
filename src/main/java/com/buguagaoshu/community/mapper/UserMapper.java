@@ -34,11 +34,11 @@ public interface UserMapper {
     /**
      * 通过 userId 查询学生信息
      *
-     * @param userId 用户名
+     * @param userID 用户名
      * @return 学生类
      */
-    @Select("select * from users where userId=#{userId}")
-    User selectUserByUserId(String userId);
+    @Select("select * from users where userID=#{userID}")
+    User selectUserByUserId(@Param("userID") String userID);
 
     /**
      * 通过用户 ID 删除用户信息
@@ -171,4 +171,12 @@ public interface UserMapper {
 
     @Select("select COUNT(*) from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search}")
     Long searchUserCount(@Param("search") String search);
+
+
+    @Select("select * from users order by id desc limit #{page}, #{size}")
+    List<User> getUserList(@Param("page") long page, @Param("size") long size);
+
+
+    @Select("select COUNT(*) from users;")
+    long getAlluserCount();
 }

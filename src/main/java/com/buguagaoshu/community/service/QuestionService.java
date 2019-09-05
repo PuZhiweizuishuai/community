@@ -87,4 +87,9 @@ public interface QuestionService {
      * 获取问题列表
      * */
     List<Question> getQuestionListForTag(long page, long size);
+
+
+    long getAllQuestionCount();
+
+    PaginationDto<QuestionDto> getAllQuestionList(String page, String size);
 }

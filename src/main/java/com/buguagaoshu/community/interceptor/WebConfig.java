@@ -13,15 +13,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     private final SessionInterceptor sessionInterceptor;
 
+    private final AdminInterceptor adminInterceptor;
+
     @Autowired
-    public WebConfig(SessionInterceptor sessionInterceptor) {
+    public WebConfig(SessionInterceptor sessionInterceptor, AdminInterceptor adminInterceptor) {
         this.sessionInterceptor = sessionInterceptor;
+        this.adminInterceptor = adminInterceptor;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(sessionInterceptor).
-                addPathPatterns("/","/user/**","/publish","/question/**","/search/**")
-                .excludePathPatterns("/admin/**");
+                addPathPatterns("/","/user/**","/publish","/question/**","/search/**");
+        registry.addInterceptor(adminInterceptor).addPathPatterns("/admin/**").excludePathPatterns("/admin", "/admin/login");
     }
 }

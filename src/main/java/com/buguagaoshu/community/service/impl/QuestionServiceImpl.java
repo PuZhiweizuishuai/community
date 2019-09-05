@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class QuestionServiceImpl implements QuestionService {
             }
         } else {
             // 带标签
-            if(sort != null && sort.equals("no")) {
+            if (sort != null && sort.equals("no")) {
                 // 带排序
                 allQuestionCount = questionMapper.selectQuestionUseCommentCountBySearchNumber(tag, 1);
                 param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
@@ -118,7 +119,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public PaginationDto<QuestionDto> getQuestionByUserId(String page, String size, long id) {
         long allQuestionCount = questionMapper.getUserQuestionCount(id, 1);
-        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+        param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
         List<Question> questionList = questionMapper.getQuestionByUserId(param[0], param[1], id, 1);
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
@@ -232,5 +233,41 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public List<Question> getQuestionListForTag(long page, long size) {
         return questionMapper.getSomeQuestion(page, size, 1);
+    }
+
+    @Override
+    public long getAllQuestionCount() {
+        return questionMapper.getAllQuestionCount();
+    }
+
+    @Override
+    public PaginationDto<QuestionDto> getAllQuestionList(String page, String size) {
+        long allQuestionCount = questionMapper.getAllQuestionCount();
+        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+        List<Question> questionList = questionMapper.getAllQuestionList(param[0], param[1]);
+        Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());
+
+        List<User> users = new ArrayList<>();
+        for (Long id : usersId) {
+            User user = userService.selectUserById(id);
+            user.clean();
+            users.add(user);
+        }
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
+
+        List<QuestionDto> questionDtos = questionList.stream().map(question -> {
+            QuestionDto questionDto = new QuestionDto();
+            BeanUtils.copyProperties(question, questionDto);
+            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
+            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
+            questionDto.setUser(userMap.get(question.getUserId()));
+            return questionDto;
+        }).collect(Collectors.toList());
+
+        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(questionDtos);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(allQuestionCount);
+        return paginationDto;
     }
 }

@@ -21,5 +21,6 @@ public class QuestionDto {
     private String tag;
     private String createTime;
     private String alterTime;
+    private int status;
     private User user;
 }

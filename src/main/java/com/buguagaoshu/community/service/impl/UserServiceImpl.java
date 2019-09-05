@@ -3,6 +3,8 @@ package com.buguagaoshu.community.service.impl;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.mapper.UserMapper;
+import com.buguagaoshu.community.model.UserPermission;
+import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
@@ -22,9 +24,13 @@ public class UserServiceImpl implements UserService {
      */
     private final UserMapper userMapper;
 
+
+    private final UserPermissionService userPermissionService;
+
     @Autowired
-    public UserServiceImpl(UserMapper userMapper) {
+    public UserServiceImpl(UserMapper userMapper, UserPermissionService userPermissionService) {
         this.userMapper = userMapper;
+        this.userPermissionService = userPermissionService;
     }
 
     @Override
@@ -115,5 +121,28 @@ public class UserServiceImpl implements UserService {
 
         paginationDto.setAllCount(allUserCount);
         return paginationDto;
+    }
+
+    @Override
+    public PaginationDto<User> getUserList(String page, String size) {
+        long allUserCount = userMapper.getAlluserCount();
+        long[] param = NumberUtils.getPageAndSize(page, size, allUserCount);
+        List<User> userList = userMapper.getUserList(param[0], param[1]);
+        for(User user : userList) {
+            UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
+            user.setPower(userPermission.getPower());
+            user.clean();
+        }
+        PaginationDto<User> paginationDto = new PaginationDto<>();
+        paginationDto.setData(userList);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+
+        paginationDto.setAllCount(allUserCount);
+        return paginationDto;
+    }
+
+    @Override
+    public long getAlluserCount() {
+        return userMapper.getAlluserCount();
     }
 }

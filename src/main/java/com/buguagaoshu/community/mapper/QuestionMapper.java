@@ -61,7 +61,7 @@ public interface QuestionMapper {
      * @param id   用户id
      * @return 问题列表
      */
-    @Select("select * from Questions where userId=#{userId} AND status=#{status} ORDER BY questionId DESC limit #{page}, #{size}")
+    @Select("select * from Questions where userId=#{userId} AND status=#{status} ORDER BY questionId DESC  limit #{page}, #{size}")
     List<Question> getQuestionByUserId(@Param("page") long page, @Param("size") long size, @Param("userId") long id, @Param("status") int status);
 
     /**
@@ -75,7 +75,7 @@ public interface QuestionMapper {
      * @return 返回问题总数
      */
     @Select("SELECT COUNT(1) FROM Questions where userId=#{id} AND status=#{status}")
-    long getUserQuestionCount(long id, @Param("status") int status);
+    long getUserQuestionCount(@Param("id") long id, @Param("status") int status);
 
 
     /**
@@ -168,4 +168,19 @@ public interface QuestionMapper {
      * */
     @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0")
     long selectQuestionUseCommentCountBySearchNumber(@Param("search") String search, @Param("status") int status);
+
+
+    @Select("select COUNT(*) from Questions")
+    long getAllQuestionCount();
+
+    /**
+     * TODO 优化分页
+     * 获取问题列表 倒序
+     *
+     * @param page 页码
+     * @param size 每页显示数量
+     * @return 问题列表
+     */
+    @Select("select * from Questions ORDER BY questionId DESC limit #{page}, #{size}")
+    List<Question> getAllQuestionList(@Param("page") long page, @Param("size") long size);
 }
