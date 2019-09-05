@@ -22,6 +22,8 @@ TODO 目前亟待改进登陆退出判断
 ## 资料
 [spring 入门指南](https://spring.io/guides)
 
+[spring boot 日志](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-logging.html)
+
 [spring thymeleafk快速指南](https://spring.io/guides/gs/serving-web-content/)
 
 [mybatis 文档](http://www.mybatis.org/mybatis-3/zh/index.html)

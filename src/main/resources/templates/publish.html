@@ -127,13 +127,13 @@
                 </script>
 
                 <input type="hidden" name="questionId" th:value="${question.getQuestionId()}">
-                <!--上传附件--->
+                <!--TODO 待完成上传附件--->
                 <div class="row">
                     <div class="col-5">
                         <div class="form-group mb-3">
                             <p>[[#{publish.issue.updatefile}]]</p>
                             <div class="custom-file">
-                                <input type="file" class="custom-file-input" id="issues-file" name="issuesFile">
+                                <input onclick="alert('正在施工中！！！')" type="button" class="custom-file-input" id="issues-file" name="issuesFile">
                                 <label class="custom-file-label"
                                        for="issues-file">[[#{publish.issue.chooseFile}]]</label>
                             </div>
