@@ -92,4 +92,7 @@ public interface QuestionService {
     long getAllQuestionCount();
 
     PaginationDto<QuestionDto> getAllQuestionList(String page, String size);
+
+
+    PaginationDto<QuestionDto> searchAllQuestionList(String search ,String page, String size);
 }

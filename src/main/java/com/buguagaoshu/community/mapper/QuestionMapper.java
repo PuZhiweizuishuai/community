@@ -151,7 +151,7 @@ public interface QuestionMapper {
 
 
     /**
-     * 根据正则实现简单的搜索功能
+     * 根据正则搜索零回复
      *
      * @param search 搜索参数
      * @param page 页码
@@ -183,4 +183,23 @@ public interface QuestionMapper {
      */
     @Select("select * from Questions ORDER BY questionId DESC limit #{page}, #{size}")
     List<Question> getAllQuestionList(@Param("page") long page, @Param("size") long size);
+
+
+    /**
+     * 根据正则搜索所有状态的问题
+     *
+     * @param search 搜索参数
+     * @param page 页码
+     * @param size 数量
+     * @return 搜索结果
+     * */
+    @Select("select * from Questions where title regexp #{search} or tag regexp #{search} order by questionId desc limit #{page}, #{size}")
+    List<Question> searchAllQuestionList(@Param("search") String search, @Param("page") long page, @Param("size") long size);
+
+
+    /**
+     * 返回正则搜索的数量
+     * */
+    @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search}")
+    long searchAllQuestionListCount(@Param("search") String search);
 }

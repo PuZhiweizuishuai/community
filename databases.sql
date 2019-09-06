@@ -44,8 +44,6 @@ alter table users modify id bigint auto_increment;
 --设置主键从1000开始自增
 alter table users AUTO_INCREMENT=1000;
 
-alter table users add major varchar(20);
-alter table users add userId varchar(100) not null;
 
 --用户权限表
 create table userPermission

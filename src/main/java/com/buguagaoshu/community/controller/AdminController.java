@@ -4,9 +4,6 @@ import com.buguagaoshu.community.dto.AdminDataDTO;
 import com.buguagaoshu.community.dto.AdminPageDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
-import com.buguagaoshu.community.mapper.AdminDataMapper;
-import com.buguagaoshu.community.mapper.UserMapper;
-import com.buguagaoshu.community.model.AdminData;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.AdminDataService;
 import com.buguagaoshu.community.service.OnlineUserService;
@@ -18,14 +15,16 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-09-05 19:02
  */
 @Controller
 public class AdminController {
-    private AdminPageDto adminPageDto = new AdminPageDto();
-
     final
     AdminDataService adminDataService;
 
@@ -46,9 +45,7 @@ public class AdminController {
         this.userService = userService;
         this.onlineUserService = onlineUserService;
         this.adminDataService = adminDataService;
-        adminPageDto.setUserNumber(userService.getAlluserCount());
-        adminPageDto.setQuestionNumber(questionService.getAllQuestionCount());
-        adminPageDto.setOnlineUser(onlineUserService.selectOnlineUserCount());
+
     }
 
     @GetMapping("/admin")
@@ -61,8 +58,13 @@ public class AdminController {
     public String getIndexPage(@RequestParam(value = "page", defaultValue = "1") String page,
                                @RequestParam(value = "size", defaultValue = "10") String size,
                                Model model) {
+        AdminPageDto adminPageDto = new AdminPageDto();
+        adminPageDto.setUserNumber(userService.getAlluserCount());
+        adminPageDto.setQuestionNumber(questionService.getAllQuestionCount());
+        adminPageDto.setOnlineUser(onlineUserService.selectOnlineUserCount());
         PaginationDto<AdminDataDTO> paginationDto = adminDataService.selectAdminData(page, size);
         model.addAttribute(adminPageDto);
+        System.out.println(adminPageDto.getOnlineUser());
         model.addAttribute("paginationDto", paginationDto);
         return "/admin/main";
     }
@@ -72,7 +74,6 @@ public class AdminController {
                                    @RequestParam(value = "size", defaultValue = "10") String size,
                                    Model model) {
         PaginationDto<User> paginationDto = userService.getUserList(page, size);
-        model.addAttribute(adminPageDto);
         model.addAttribute("paginationDto", paginationDto);
         return "/admin/user";
     }
@@ -82,8 +83,48 @@ public class AdminController {
                                        @RequestParam(value = "size", defaultValue = "10") String size,
                                        Model model) {
         PaginationDto<QuestionDto> paginationDto = questionService.getAllQuestionList(page, size);
-        model.addAttribute(adminPageDto);
         model.addAttribute("paginationDto", paginationDto);
         return "/admin/question";
+    }
+
+    @GetMapping("/admin/signOut")
+    public String adminSignOut(HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute("admin");
+        if(user != null) {
+            request.getSession().removeAttribute("admin");
+            return "redirect:/admin/index";
+        }
+        return "redirect:/admin/index";
+    }
+
+    @GetMapping("/admin/search")
+    public String search(@RequestParam(value = "page", defaultValue = "1") String page,
+                         @RequestParam(value = "type" , defaultValue = "question") String type,
+                         @RequestParam(value = "size", defaultValue = "10") String size,
+                         @RequestParam(value = "search", required = false) String search,
+                         Model model) {
+        PaginationDto<QuestionDto> questionDtoPaginationDto = null;
+        PaginationDto<User> userPaginationDto = null;
+        if(search == null || search.equals("")) {
+            model.addAttribute("search", search);
+            model.addAttribute("type", type);
+            model.addAttribute("questions", questionDtoPaginationDto);
+            model.addAttribute("users", userPaginationDto);
+            return "/admin/search";
+        }
+        String tempSearch = search;
+        String[] searchs = search.split(" ");
+        search = Arrays.stream(searchs).collect(Collectors.joining("|"));
+        if(type.equals("question")) {
+            questionDtoPaginationDto = questionService.searchAllQuestionList(search, page, size);
+            model.addAttribute("questions", questionDtoPaginationDto);
+        } else {
+            userPaginationDto = userService.searchUser(search, page, size);
+            model.addAttribute("users", userPaginationDto);
+        }
+
+        model.addAttribute("search", search);
+        model.addAttribute("type", type);
+        return "/admin/search";
     }
 }

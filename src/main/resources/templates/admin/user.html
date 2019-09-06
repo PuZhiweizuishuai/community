@@ -19,7 +19,7 @@
     <script src="/js/jquery-3.4.1.min.js"></script>
 </head>
 
-<body onload="showTime()">
+<body>
 <!-- Sidenav -->
 
 <nav class="navbar navbar-vertical fixed-left navbar-expand-md navbar-light bg-white" id="sidenav-main">
@@ -49,10 +49,10 @@
                     </div>
 
                     <div class="dropdown-divider"></div>
-                    <button class="dropdown-item">
+                    <a href="/admin/signOut" class="dropdown-item">
                         <i class="ni ni-user-run"></i>
                         <span>退出</span>
-                    </button>
+                    </a>
                 </div>
             </li>
         </ul>
@@ -76,9 +76,9 @@
                 </div>
             </div>
             <!-- Form -->
-            <form class="mt-4 mb-3 d-md-none">
+            <form class="mt-4 mb-3 d-md-none" action="/admin/search" method="get">
                 <div class="input-group input-group-rounded input-group-merge">
-                    <input type="search" class="form-control form-control-rounded form-control-prepended" placeholder="搜索用户或问题" aria-label="Search">
+                    <input name="search" type="search" class="form-control form-control-rounded form-control-prepended" placeholder="搜索用户或问题" aria-label="Search">
                     <div class="input-group-prepend">
                         <div class="input-group-text">
                             <span class="fa fa-search"></span>
@@ -126,13 +126,13 @@
             <!-- Brand -->
             <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="#">用户列表</a>
             <!-- Form -->
-            <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
+            <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto" action="/admin/search" method="get">
                 <div class="form-group mb-0">
                     <div class="input-group input-group-alternative">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                         </div>
-                        <input class="form-control" placeholder="搜索用户或问题" type="text">
+                        <input name="search" class="form-control" placeholder="搜索用户或问题" type="text">
                     </div>
                 </div>
             </form>
@@ -157,10 +157,10 @@
 
 
                         <div class="dropdown-divider" id="logout"></div>
-                        <button class="dropdown-item" onclick="logoutForSystem()">
+                        <a href="/admin/signOut" class="dropdown-item">
                             <i class="ni ni-user-run"></i>
                             <span>退出</span>
-                        </button>
+                        </a>
                     </div>
                 </li>
             </ul>
@@ -171,95 +171,7 @@
         <div class="container-fluid">
             <div class="header-body">
                 <!-- Card stats -->
-                <div class="row">
-                    <div id="for-Admin-User" class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">总问题数</h5>
-                                        <span class="h2 font-weight-bold mb-0" id="class_number" th:text="${adminPageDto.questionNumber}">350,897</span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
-                                            <i class="fas fa-chart-bar"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"></span>
-                                    <span class="text-nowrap"></span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">当前在线用户</h5>
-                                        <span class="h2 font-weight-bold mb-0" th:text="${adminPageDto.onlineUser}">2,356</span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
-                                            <i class="fas fa-chart-pie"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-danger mr-2">&nbsp;</span>
-                                    <span class="text-nowrap">&nbsp;</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="for-Admin-User-1" class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">总用户数</h5>
-                                        <span class="h2 font-weight-bold mb-0" id="now_user_number" th:text="${adminPageDto.userNumber}">924</span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-warning mr-2"></span>
-                                    <span class="text-nowrap"></span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">当前时间</h5>
-                                        <span class="h2 font-weight-bold mb-0" id="now_time"></span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-info text-white rounded-circle shadow">
-                                            <i class="ni ni-time-alarm"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"></span>
-                                    <span class="text-nowrap"></span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -314,13 +226,16 @@
 
                                 </td>
                                 <td class="text-right" >
-                                    <span th:text="${user.getPower()}"></span>
+                                    <span th:if="${user.getPower() == 1}">普通用户</span>
+                                    <span th:if="${user.getPower() == 0}" style="font-weight: bold; font-size: 20px">管理员</span>
+                                    <span th:if="${user.getPower() == 2}" style="color: #ffe375; font-weight: bold; font-size: 20px">VIP用户</span>
                                     <div class="dropdown">
                                         <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             <i class="fas fa-ellipsis-v"></i>
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow" x-placement="top-end" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(32px, -2px, 0px);">
                                             <button th:data-id="${user.getId()}" class="dropdown-item">设置为管理员</button>
+                                            <button th:data-id="${user.getId()}" class="dropdown-item">设置为VIP</button>
                                             <button th:data-id="${user.getId()}" class="dropdown-item">重置密码</button>
                                         </div>
                                     </div>

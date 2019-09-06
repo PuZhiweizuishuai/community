@@ -5,7 +5,9 @@ import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.QuestionService;
+import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
@@ -32,12 +34,15 @@ public class QuestionServiceImpl implements QuestionService {
 
     private final UserService userService;
 
+    private final UserPermissionService userPermissionService;
+
     private long[] param;
 
     @Autowired
-    public QuestionServiceImpl(QuestionMapper questionMapper, UserService userService) {
+    public QuestionServiceImpl(QuestionMapper questionMapper, UserService userService, UserPermissionService userPermissionService) {
         this.questionMapper = questionMapper;
         this.userService = userService;
+        this.userPermissionService = userPermissionService;
     }
 
 
@@ -204,30 +209,7 @@ public class QuestionServiceImpl implements QuestionService {
         List<Question> questionList = questionMapper.searchQuestion(search, param[0], param[1], 1);
 
 
-        Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());
-
-        List<User> users = new ArrayList<>();
-        for (Long id : usersId) {
-            User user = userService.selectUserById(id);
-            user.clean();
-            users.add(user);
-        }
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
-
-        List<QuestionDto> questionDtos = questionList.stream().map(question -> {
-            QuestionDto questionDto = new QuestionDto();
-            BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
-            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
-            questionDto.setUser(userMap.get(question.getUserId()));
-            return questionDto;
-        }).collect(Collectors.toList());
-
-        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
-        paginationDto.setData(questionDtos);
-        paginationDto.setPagination(param[2], param[3], param[1]);
-        paginationDto.setAllCount(allQuestionCount);
-        return paginationDto;
+        return paginationDto(questionList, allQuestionCount, param);
     }
 
     @Override
@@ -245,11 +227,27 @@ public class QuestionServiceImpl implements QuestionService {
         long allQuestionCount = questionMapper.getAllQuestionCount();
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
         List<Question> questionList = questionMapper.getAllQuestionList(param[0], param[1]);
-        Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());
+        return paginationDto(questionList, allQuestionCount, param);
+    }
 
+    @Override
+    public PaginationDto<QuestionDto> searchAllQuestionList(String search, String page, String size) {
+        long allQuestionCount = questionMapper.searchAllQuestionListCount(search);
+        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+        List<Question> questionList = questionMapper.searchAllQuestionList(search, param[0], param[1]);
+        return paginationDto(questionList, allQuestionCount, param);
+
+
+    }
+
+
+    public PaginationDto<QuestionDto> paginationDto(List<Question> questionList, long allQuestionCount, long[] param) {
+        Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());
         List<User> users = new ArrayList<>();
         for (Long id : usersId) {
             User user = userService.selectUserById(id);
+            UserPermission userPermission = userPermissionService.selectUserPermissionById(id);
+            user.setPower(userPermission.getPower());
             user.clean();
             users.add(user);
         }

@@ -49,10 +49,10 @@
                     </div>
 
                     <div class="dropdown-divider"></div>
-                    <button class="dropdown-item">
+                    <a href="/admin/signOut" class="dropdown-item">
                         <i class="ni ni-user-run"></i>
                         <span>退出</span>
-                    </button>
+                    </a>
                 </div>
             </li>
         </ul>
@@ -76,9 +76,9 @@
                 </div>
             </div>
             <!-- Form -->
-            <form class="mt-4 mb-3 d-md-none">
+            <form class="mt-4 mb-3 d-md-none" action="/admin/search" method="get">
                 <div class="input-group input-group-rounded input-group-merge">
-                    <input type="search" class="form-control form-control-rounded form-control-prepended" placeholder="搜索用户或问题" aria-label="Search">
+                    <input name="search" type="search" class="form-control form-control-rounded form-control-prepended" placeholder="搜索用户或问题" aria-label="Search">
                     <div class="input-group-prepend">
                         <div class="input-group-text">
                             <span class="fa fa-search"></span>
@@ -127,13 +127,13 @@
             <!-- Brand -->
             <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="#">数据变化趋势</a>
             <!-- Form -->
-            <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto">
+            <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto" action="/admin/search" method="get">
                 <div class="form-group mb-0">
                     <div class="input-group input-group-alternative">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                         </div>
-                        <input class="form-control" placeholder="搜索用户或问题" type="text">
+                        <input name="search" class="form-control" placeholder="搜索用户或问题" type="text">
                     </div>
                 </div>
             </form>
@@ -158,10 +158,10 @@
 
 
                         <div class="dropdown-divider" id="logout"></div>
-                        <button class="dropdown-item" onclick="logoutForSystem()">
+                        <a href="/admin/signOut" class="dropdown-item">
                             <i class="ni ni-user-run"></i>
                             <span>退出</span>
-                        </button>
+                        </a>
                     </div>
                 </li>
             </ul>
@@ -412,10 +412,7 @@
 <script src="/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Argon JS -->
 <script src="/assets/js/argon.js?v=1.0.0"></script>
-<script src="/resources/js/jquery.cookie.js"></script>
-<script src="/resources/js/getClassAndOrg.js"></script>
 <script>
-    getClassScheduleList();
     /*获取当前时间*/
     function showTime() {
         //创建Date对象

@@ -113,6 +113,8 @@ public class UserServiceImpl implements UserService {
         long[] param = NumberUtils.getPageAndSize(page, size, allUserCount);
         List<User> userList = userMapper.searchUser(search, param[0], param[1]);
         for(User user : userList) {
+            UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
+            user.setPower(userPermission.getPower());
             user.clean();
         }
         PaginationDto<User> paginationDto = new PaginationDto<>();
