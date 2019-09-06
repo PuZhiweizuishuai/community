@@ -67,6 +67,7 @@ public class SignInServiceImpl implements SignInService {
                 }
                 String token = jwtUtil.createJWT(user.getId(), user.getUserId(), user.getUserName(), email, userPermission.getPower());
                 onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), token, IpUtil.getIpAddr(request), System.currentTimeMillis(), System.currentTimeMillis()+jwtUtil.getTtl()));
+                user.setPower(userPermission.getPower());
                 HashMap<String, Object> hashMap = new HashMap<>(3);
                 hashMap.put("success", true);
                 hashMap.put("token", token);

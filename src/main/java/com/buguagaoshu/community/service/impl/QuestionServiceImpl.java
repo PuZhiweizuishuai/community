@@ -153,13 +153,15 @@ public class QuestionServiceImpl implements QuestionService {
             return null;
         }
 
-        Question question = questionMapper.selectQuestionById(id, 1);
+        Question question = questionMapper.getQuestionIgnoreStatus(id);
         if (question == null) {
             return null;
         }
 
         User user = userService.selectUserById(question.getUserId());
         user.clean();
+        UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
+        user.setPower(userPermission.getPower());
         QuestionDto questionDto = new QuestionDto();
         BeanUtils.copyProperties(question, questionDto);
         questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));

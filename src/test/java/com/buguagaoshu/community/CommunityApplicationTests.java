@@ -60,13 +60,8 @@ public class CommunityApplicationTests {
 //        newUser.setLikes("毛金明牛逼");
 //        userMapper.updateUserData(newUser);
         //System.out.println(userMapper.searchUser("puzhiwei", 0 , 10));
-            User user = new User();
-            user.setUserId("qwerqwe");
-            user.setUserName("qwer");
-            user.setEmail("qq@qq.com");
-            user.setPassword("123456");
-            user.setSex("男");
-            System.out.println(StringUtil.getAge("qwee"));
+
+            System.out.println(StringUtil.judgePassword("123456", userMapper.selectUserById(1001).getPassword()));
     }
 
 }

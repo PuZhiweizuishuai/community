@@ -94,6 +94,7 @@
                         <img th:src="${session.user.getHeadUrl()}" width="30" height="30"
                              class="d-inline-block align-top" alt="">
                         [[${session.user.getUserName()}]]
+                        <span class="badge badge-warning" th:if="${session.user.getPower() == 2}">VIP</span>
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" th:href="'/user/' + ${session.user.getUserId()}"

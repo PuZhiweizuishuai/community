@@ -2,6 +2,7 @@ package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Question;
 import org.apache.ibatis.annotations.*;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -202,4 +203,12 @@ public interface QuestionMapper {
      * */
     @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search}")
     long searchAllQuestionListCount(@Param("search") String search);
+
+
+    @Select("SELECT * FROM Questions where questionId=#{questionId}")
+    Question getQuestionIgnoreStatus(long questionId);
+
+
+    @Update("update Questions set status=#{status} where questionId=#{questionId}")
+    int alterStatus(@Param("questionId") long questionId, @Param("status") int status);
 }

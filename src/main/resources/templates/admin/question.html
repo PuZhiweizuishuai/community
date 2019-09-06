@@ -232,8 +232,8 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow" x-placement="top-end" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(32px, -2px, 0px);">
-                                            <button th:if="${question.status==1}" th:data-id="${question.getQuestionId()}" class="dropdown-item">设置为不可见即删除</button>
-                                            <button th:if="${question.status==0}" th:data-id="${question.getQuestionId()}" class="dropdown-item">设置为可见</button>
+                                            <button th:if="${question.status==1}" th:data-id="${question.getQuestionId()}" class="dropdown-item" onclick="sendDeleteQuestion(this)">设置为不可见即删除</button>
+                                            <button th:if="${question.status==0}" th:data-id="${question.getQuestionId()}" class="dropdown-item" onclick="sendRecoveryQuestion(this)">设置为可见</button>
                                         </div>
                                     </div>
                                 </td>
@@ -338,52 +338,6 @@
 <script src="/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Argon JS -->
 <script src="/assets/js/argon.js?v=1.0.0"></script>
-<script>
-    /*获取当前时间*/
-    function showTime() {
-        //创建Date对象
-        var today = new Date();
-        //分别取出年、月、日、时、分、秒
-        var year = today.getFullYear();
-        var month = today.getMonth() + 1;
-        var day = today.getDate();
-        var hours = today.getHours();
-        var minutes = today.getMinutes();
-        var seconds = today.getSeconds();
-        //如果是单个数，则前面补0
-        month = month < 10 ? "0" + month : month;
-        day = day < 10 ? "0" + day : day;
-        hours = hours < 10 ? "0" + hours : hours;
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        //构建要输出的字符串
-        var str = hours + ":" + minutes + ":" + seconds;
-
-        //获取id=result的对象
-        var obj = document.getElementById("now_time");
-        //将str的内容写入到id=result的<div>中去
-        obj.innerHTML = str;
-        //延时器
-        window.setTimeout("showTime()", 100);
-    };
-
-    // 退出登陆
-    var logoutForSystem = function(){
-        $.ajax({
-            type : 'post',//指定request的类型
-            url : '../logout',//目标地址
-            success : function(){
-                if($.cookie("RememberMe") === "false") {
-                    $.cookie("userName", null);
-                    $.cookie("userPwd", null);
-                }
-                window.location.href = "../";
-
-            }
-        });
-    };
-</script>
+<script src="/js/admin.js"></script>
 </body>
-
 </html>

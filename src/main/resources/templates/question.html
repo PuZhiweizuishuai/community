@@ -88,7 +88,10 @@
                             <a class="issuse-question-class" href="#" th:text="${question.classification}">分类</a>
                             <span class="ml-3" style="color: #c6c5c1;">作者：</span><a class="people-name ml-0"
                                                                                     th:href="'/user/'+ ${question.user.getUserId()}"
-                                                                                    th:text="${question.user.getUserName()}">人名</a>&nbsp;|&nbsp;
+                                                                                    >
+                            <span th:text="${question.user.getUserName()}"></span>
+                            <span class="badge badge-warning" th:if="${question.user.getPower() == 2}">VIP</span>
+                        </a>&nbsp;|&nbsp;
                             发布于：<span th:text="${question.createTime}"></span>&nbsp;|&nbsp;
                             阅读数：<span th:text="${question.viewCount}"></span>
                         </p>
@@ -162,6 +165,8 @@
                         <a class="mt-0 ml-0 issuse-question-people"
                            th:href="${'/user/' + comment.user.getUserId()}"><span
                                 th:text="${comment.user.getUserName()}">顶部对齐</span>
+                            <span class="badge badge-primary" th:if="${comment.user.getUserId() == question.user.getUserId()}">楼主</span>
+                            <span class="badge badge-warning" th:if="${comment.user.getPower() == 2}">VIP</span>
                         </a>
                         <div th:id="${'comment-show-' + comment.getCommentId()}" class="comment-show-md mt-2">
                             <textarea style="display: none" th:text="${comment.getContent()}"></textarea>
@@ -301,8 +306,12 @@
                     <div class="media mb-2" th:if="${session.user != null}">
                         <img class="align-self-center mr-3 img-fluid rounded-circle"
                              th:src="${session.user.getHeadUrl()}" width="40" height="40">
-                        <p class="mt-2"><a th:href="${'/user/' + session.user.getUserId()}"><span
-                                th:text="${session.user.getUserName()}"></span></a></p>
+                        <p class="mt-2"><a th:href="${'/user/' + session.user.getUserId()}">
+                            <span th:text="${session.user.getUserName()}">
+
+                        </span>
+                            <span class="badge badge-warning" th:if="${session.user.getPower() == 2}">VIP</span>
+                        </a></p>
                         <input type="hidden" id="userId" th:value="${session.user.getId()}">
                     </div>
                     <div class="mt-2 mb-2" th:if="${session.user == null}">评论</div>
@@ -364,7 +373,13 @@
             <div class="container text-center">
                 <img class="rounded-circle" th:src="${question.user.getHeadUrl()}" alt="用户头像" width="60"
                      height="60"/>
-                <a th:href="'/user/'+ ${question.user.getUserId()}"><p th:text="${question.user.getUserName()}"></p></a>
+                <a th:href="'/user/'+ ${question.user.getUserId()}">
+                    <p>
+                        <span  th:text="${question.user.getUserName()}"></span>
+                        <span class="badge badge-warning" th:if="${question.user.getPower() == 2}">VIP</span>
+                    </p>
+
+                </a>
             </div>
             <hr/>
             <br/>

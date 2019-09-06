@@ -46,7 +46,7 @@ public interface UserPermissionMapper {
      * @return 结果
      */
     @Update("update userPermission set power=#{power},modifier=#{modifier},updateTime=#{updateTime} where id=#{id}")
-    int updateUserPermissionById(@Param("id") long id, int power, String modifier, String updateTime);
+    int updateUserPermissionById(@Param("id") long id, @Param("power") int power, @Param("modifier") String modifier, @Param("updateTime") String updateTime);
 
     /**
      * 修改vip到期时间
@@ -56,5 +56,5 @@ public interface UserPermissionMapper {
      * @return 结果
      */
     @Update("update userPermission set power=#{power},modifier=#{modifier},updateTime=#{updateTime},dueTime=#{dueTime} where id=#{id}")
-    int updateDueTime(@Param("id") long id, int power, String modifier, String updateTime, long dueTime);
+    int updateDueTime(@Param("id") long id, @Param("power") int power,  @Param("modifier") String modifier, @Param("updateTime") String updateTime,  @Param("dueTime") long dueTime);
 }

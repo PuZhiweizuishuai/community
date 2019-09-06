@@ -10,11 +10,9 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
-import com.buguagaoshu.community.model.Comment;
-import com.buguagaoshu.community.model.Notification;
-import com.buguagaoshu.community.model.Question;
-import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.*;
 import com.buguagaoshu.community.service.CommentService;
+import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
@@ -43,14 +41,17 @@ public class CommentServiceImpl implements CommentService {
 
     private final NotificationMapper notificationMapper;
 
+    private final UserPermissionService userPermissionService;
+
 
     @Autowired
     public CommentServiceImpl(CommentMapper commentMapper, QuestionMapper questionMapper,
-                              UserService userService, NotificationMapper notificationMapper) {
+                              UserService userService, NotificationMapper notificationMapper, UserPermissionService userPermissionService) {
         this.commentMapper = commentMapper;
         this.questionMapper = questionMapper;
         this.userService = userService;
         this.notificationMapper = notificationMapper;
+        this.userPermissionService = userPermissionService;
     }
 
 
@@ -135,6 +136,8 @@ public class CommentServiceImpl implements CommentService {
         List<User> users = new ArrayList<>();
         for (Long userId : commentors) {
             User user = userService.selectUserById(userId);
+            UserPermission userPermission = userPermissionService.selectUserPermissionById(userId);
+            user.setPower(userPermission.getPower());
             user.clean();
             users.add(user);
         }
@@ -175,6 +178,8 @@ public class CommentServiceImpl implements CommentService {
         List<User> users = new ArrayList<>();
         for (Long userId : commentors) {
             User user = userService.selectUserById(userId);
+            UserPermission userPermission = userPermissionService.selectUserPermissionById(userId);
+            user.setPower(userPermission.getPower());
             user.clean();
             users.add(user);
         }

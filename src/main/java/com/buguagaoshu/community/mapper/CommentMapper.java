@@ -40,4 +40,8 @@ public interface CommentMapper {
 
     @Update("update comment set commentCount=commentCount+#{commentCount} where commentId=#{commentId}")
     int updateCommentCount(Comment comment);
+
+
+    @Select("select * from comment where questionId=#{questionId} AND status=#{status}")
+    List<Comment> getAllComment(@Param("questionId") long questionId, @Param("status") int status);
 }

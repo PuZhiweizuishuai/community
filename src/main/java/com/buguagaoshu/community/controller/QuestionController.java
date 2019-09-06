@@ -4,6 +4,7 @@ import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
@@ -42,6 +43,19 @@ public class QuestionController {
         QuestionDto question = questionService.selectQuestionById(questionId);
         if (question == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
+        }
+        if(question.getStatus() == 0) {
+            User user = (User) request.getSession().getAttribute("admin");
+            if(user == null) {
+                model.addAttribute("message", "这个问题已经被删除了！如需恢复，请联系管理员！");
+                return StringUtil.jumpWebLangeParameter("/error", false, request);
+            }
+            List<Question> relevantQuestion = questionService.getRelevantQuestion(question);
+            PaginationDto<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(questionId, page, size);
+            model.addAttribute("question", question);
+            model.addAttribute("comments", commentDtos);
+            model.addAttribute("relevantQuestion", relevantQuestion);
+            return "question";
         }
 
         List<Question> relevantQuestion = questionService.getRelevantQuestion(question);
