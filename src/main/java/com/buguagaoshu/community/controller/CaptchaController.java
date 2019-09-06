@@ -1,8 +1,10 @@
 package com.buguagaoshu.community.controller;
 
+import com.wf.captcha.utils.CaptchaUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import com.wf.captcha.utils.CaptchaUtil;
+
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,8 +15,9 @@ import javax.servlet.http.HttpServletResponse;
  * 输出验证码
  */
 @Controller
+@Slf4j
 public class CaptchaController {
-    @GetMapping("/captche/images")
+    @GetMapping(value = "/captche/images")
     public void captcha(HttpServletRequest request, HttpServletResponse response) throws Exception {
         CaptchaUtil.out(request, response);
     }
