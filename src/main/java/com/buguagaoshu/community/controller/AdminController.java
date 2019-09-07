@@ -51,7 +51,7 @@ public class AdminController {
 
     @GetMapping("/admin")
     public String getAdminPage() {
-        return "/admin/index";
+        return "admin/index";
     }
 
 
@@ -65,9 +65,8 @@ public class AdminController {
         adminPageDto.setOnlineUser(onlineUserService.selectOnlineUserCount());
         PaginationDto<AdminDataDTO> paginationDto = adminDataService.selectAdminData(page, size);
         model.addAttribute(adminPageDto);
-        System.out.println(adminPageDto.getOnlineUser());
         model.addAttribute("paginationDto", paginationDto);
-        return "/admin/main";
+        return "admin/main";
     }
 
     @GetMapping("/admin/user")
@@ -76,7 +75,7 @@ public class AdminController {
                                    Model model) {
         PaginationDto<User> paginationDto = userService.getUserList(page, size);
         model.addAttribute("paginationDto", paginationDto);
-        return "/admin/user";
+        return "admin/user";
     }
 
     @GetMapping("/admin/question")
@@ -87,7 +86,7 @@ public class AdminController {
         // TODO 等待添加分类查找
         PaginationDto<QuestionDto> paginationDto = questionService.getAllQuestionList(page, size);
         model.addAttribute("paginationDto", paginationDto);
-        return "/admin/question";
+        return "admin/question";
     }
 
     @GetMapping("/admin/signOut")
@@ -95,9 +94,9 @@ public class AdminController {
         User user = (User) request.getSession().getAttribute("admin");
         if(user != null) {
             request.getSession().removeAttribute("admin");
-            return "redirect:/admin/index";
+            return "redirect:admin/index";
         }
-        return "redirect:/admin/index";
+        return "redirect:admin/index";
     }
 
     @GetMapping("/admin/search")
@@ -113,7 +112,7 @@ public class AdminController {
             model.addAttribute("type", type);
             model.addAttribute("questions", questionDtoPaginationDto);
             model.addAttribute("users", userPaginationDto);
-            return "/admin/search";
+            return "admin/search";
         }
         String tempSearch = search;
         String[] searchs = search.split(" ");
@@ -135,6 +134,6 @@ public class AdminController {
 
         model.addAttribute("search", search);
         model.addAttribute("type", type);
-        return "/admin/search";
+        return "admin/search";
     }
 }
