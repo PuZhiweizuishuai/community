@@ -60,6 +60,8 @@ java -jar community-0.0.1-SNAPSHOT.jar
 
 ## 页面展示
 
+![主页](https://gitee.com/puzhiweizuishuai/community/blob/master/images/home.jpg "主页")
+
 ## application.properties 配置文件介绍
 
 **# 数据库驱动**
