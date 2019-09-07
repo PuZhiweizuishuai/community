@@ -1,5 +1,11 @@
 # 不挂高数社区（名字可以随便改的）
 
+## 参考项目
+
+[](http://www.mawen.co)
+
+[community](https://github.com/codedrinker/community)
+
 ## 介绍
 
 目前还是MVC模式，开发完成后可能会考虑前后端分离
@@ -28,9 +34,13 @@
 
 ## 快速运行
 环境准备
+
 Java版本： Java 8 及以上
+
 maven: 3
+
 数据库： MySQL 或者 MariaDB 或者 H2 （使用H2数据库需要在pom文件中添加H5依赖）
+
 ```xml
         <dependency>
             <groupId>com.h2database</groupId>
@@ -52,9 +62,9 @@ java -jar community-0.0.1-SNAPSHOT.jar
 ```
 即可
 
-** 注意：第一个管理员账号需要在创建完数据库运行项目注册第一个账户后，手动将数据库的权限表power列数据该为0 **
+**注意：第一个管理员账号需要在创建完数据库运行项目注册第一个账户后，手动将数据库的权限表power列数据该为0**
 
-第一次运行如果没有修改配置文件中上传图片保存路径与日志路径的化，系统会默认在程序运行的目录下创建file文件夹和log文件夹，分别保存图片文件和日志文件！
+**第一次运行如果没有修改配置文件中上传图片保存路径与日志路径的化，系统会默认在程序运行的目录下创建file文件夹和log文件夹，分别保存图片文件和日志文件！**
 
 也可以在 IDEA 中导入此项目，如果 getter 和 setter 飘红，则需要安装 IDEA 得到 Lombok 插件
 
