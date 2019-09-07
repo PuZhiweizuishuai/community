@@ -29,6 +29,7 @@
 ## 快速运行
 环境准备
 Java版本： Java 8 及以上
+maven: 3
 数据库： MySQL 或者 MariaDB 或者 H2 （使用H2数据库需要在pom文件中添加H5依赖）
 ```xml
         <dependency>
@@ -37,11 +38,15 @@ Java版本： Java 8 及以上
             <version>1.4.199</version>
         </dependency>
 ```
-如果要自己打包，则还需要 Maven 环境
 
 使用 database.sql 脚本创建数据库
 进入 REALEAS 文件下配置 application.properties 
-运行
+
+运行打包命令
+```bash
+mvn clena package
+```
+运行项目
 ```bash
 java -jar community-0.0.1-SNAPSHOT.jar
 ```
@@ -53,7 +58,7 @@ java -jar community-0.0.1-SNAPSHOT.jar
 
 也可以在 IDEA 中导入此项目，如果 getter 和 setter 飘红，则需要安装 IDEA 得到 Lombok 插件
 
-也可以直接使用 maven package 打包 jar包运行
+## 页面展示
 
 ## application.properties 配置文件介绍
 
