@@ -60,6 +60,8 @@ java -jar community-0.0.1-SNAPSHOT.jar
 
 ## 页面展示
 
+(ps：如果图片不显示，请到images文件夹下查看)
+
 主页
 
 ![主页](https://github.com/PuZhiweizuishuai/community/blob/master/images/home.jpg "主页")
