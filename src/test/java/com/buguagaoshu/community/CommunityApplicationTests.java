@@ -1,5 +1,6 @@
 package com.buguagaoshu.community;
 
+import com.buguagaoshu.community.enums.QuestionSortType;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.Question;
@@ -60,8 +61,7 @@ public class CommunityApplicationTests {
 //        newUser.setLikes("毛金明牛逼");
 //        userMapper.updateUserData(newUser);
         //System.out.println(userMapper.searchUser("puzhiwei", 0 , 10));
-
-            System.out.println(StringUtil.judgePassword("123456", userMapper.selectUserById(1001).getPassword()));
+        System.out.println(questionService.getSomeQuestionDto("0","10",null,QuestionSortType.NEW_QUESTION.getType(),1));
     }
 
 }

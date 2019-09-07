@@ -198,6 +198,7 @@
                             <thead class="thead-light">
                             <tr th:if="${type == 'question'}">
                                 <th scope="col">问题ID</th>
+                                <th scope="col">分类</th>
                                 <th scope="col">用户标题</th>
                                 <th scope="col">发帖人</th>
                                 <th scope="col">发帖人ID</th>
@@ -224,6 +225,11 @@
                                         </a>
                                     </div>
                                 </th>
+                                <td >
+                                    <a th:href="${'/question/' + question.getQuestionId()}">
+                                        <span th:text="${question.classification}"></span>
+                                    </a>
+                                </td>
                                 <td >
                                     <a th:href="${'/question/' + question.getQuestionId()}">
                                         <span th:text="${question.title}"></span>

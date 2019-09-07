@@ -5,6 +5,7 @@ import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,12 +40,18 @@ public class SearchController {
                                 @RequestParam(value = "page", defaultValue = "1") String page,
                                 @RequestParam(value = "size", defaultValue = "10") String size,
                                 Model model) {
-        if(search == null || search.equals("")) {
+        if(StringUtils.isBlank(search)) {
             return "search";
         }
         String tempSearch = search;
         String[] searchs = search.split(" ");
-        search = Arrays.stream(searchs).collect(Collectors.joining("|"));
+        search = Arrays
+                .stream(searchs)
+                .filter(StringUtils::isNotBlank)
+                .map(t -> t.replace("+", "").replace("*", "").replace("?", ""))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining("|"));
+
 
         PaginationDto<QuestionDto> paginationDto = questionService.searchQuestion(search, page, size);
         PaginationDto<User> userpaginationDto = userService.searchUser(search, page, "5");
@@ -59,12 +66,19 @@ public class SearchController {
                                     @RequestParam(value = "page", defaultValue = "1") String page,
                                     @RequestParam(value = "size", defaultValue = "10") String size,
                                     Model model) {
-        if(search == null || search.equals("")) {
+        if(StringUtils.isBlank(search)) {
             return "searchUser";
         }
         String tempSearch = search;
         String[] searchs = search.split(" ");
-        search = Arrays.stream(searchs).collect(Collectors.joining("|"));
+
+        search = Arrays
+                .stream(searchs)
+                .filter(StringUtils::isNotBlank)
+                .map(t -> t.replace("+", "").replace("*", "").replace("?", ""))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining("|"));
+
         PaginationDto<User> paginationDto = userService.searchUser(search, page, size);
         paginationDto.setSearch(tempSearch);
         model.addAttribute("paginationDto", paginationDto);

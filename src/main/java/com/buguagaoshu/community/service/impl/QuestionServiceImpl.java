@@ -2,6 +2,8 @@ package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
+import com.buguagaoshu.community.enums.QuestionClassType;
+import com.buguagaoshu.community.enums.QuestionSortType;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
@@ -12,6 +14,7 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,36 +49,67 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
 
-    private List<Question> getQuestionList(String page, String size, String tag, String sort) {
+    /**
+     * 根据传入参数，返回相对应的问题列表
+     * 这段写的太烂了，连我自己都想吐槽
+     */
+    private List<Question> getQuestionList(String page, String size, String tag, Integer sort, Integer classification) {
         long allQuestionCount;
         List<Question> questionList;
-        if (tag == null || tag.equals("")) {
-            // 零回复的帖子
-            if (sort != null && sort.equals("no")) {
-                allQuestionCount = questionMapper.selectQuestionUseCommentCountNumber(1);
-                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-                questionList = questionMapper.selectQuestionUseCommentCount(param[0], param[1], 1);
+        if (StringUtils.isBlank(tag)) {
+            // 无标签，零回复
+            if (sort == QuestionSortType.NO_COMMENT.getType()) {
+                // 有分类
+                if(classification != QuestionClassType.ALL.getType()) {
+                    allQuestionCount = questionMapper.selectQuestionUseCommentCountCountC(QuestionClassType.getNameStr(classification),1);
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.selectQuestionUseCommentC(QuestionClassType.getNameStr(classification), param[0], param[1], 1);
+                } else {
+                    allQuestionCount = questionMapper.selectQuestionUseCommentCountNumber(1);
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.selectQuestionUseCommentCount(param[0], param[1], 1);
+                }
             } else {
-                // 正常的排序
-                allQuestionCount = questionMapper.getQuestionCount(1);
-                // 计算分页参数
-                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-                questionList = questionMapper.getSomeQuestion(param[0], param[1], 1);
+                // 有分类
+                if(classification != QuestionClassType.ALL.getType()) {
+                    allQuestionCount = questionMapper.getQuestionListUseClassCountC(QuestionClassType.getNameStr(classification), 1);
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.getQuestionListUseClassC(QuestionClassType.getNameStr(classification), param[0], param[1], 1);
+                } else {
+                    // 正常的排序
+                    allQuestionCount = questionMapper.getQuestionCount(1);
+                    // 计算分页参数
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.getSomeQuestion(param[0], param[1], 1);
+                }
             }
         } else {
             // 带标签
-            if (sort != null && sort.equals("no")) {
+            if (sort == QuestionSortType.NO_COMMENT.getType()) {
                 // 带排序
-                allQuestionCount = questionMapper.selectQuestionUseCommentCountBySearchNumber(tag, 1);
-                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-                questionList = questionMapper.selectQuestionUseCommentCountBySearch(tag, param[0], param[1], 1);
+                if(classification != QuestionClassType.ALL.getType()) {
+                    allQuestionCount = questionMapper.selectQuestionUseCommentCountBySearchNumberC(tag, QuestionClassType.getNameStr(classification), 1);
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.selectQuestionUseCommentCountBySearchC(tag, QuestionClassType.getNameStr(classification), param[0], param[1], 1);
 
+                } else {
+                    allQuestionCount = questionMapper.selectQuestionUseCommentCountBySearchNumber(tag, 1);
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.selectQuestionUseCommentCountBySearch(tag, param[0], param[1], 1);
+                }
             } else {
                 // 不带排序
-                allQuestionCount = questionMapper.searchQuestionCount(tag, 1);
-                // 计算分页参数
-                param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-                questionList = questionMapper.searchQuestion(tag, param[0], param[1], 1);
+                if(classification != QuestionClassType.ALL.getType()) {
+                    allQuestionCount = questionMapper.searchQuestionCountC(tag, QuestionClassType.getNameStr(classification), 1);
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.searchQuestionC(tag, QuestionClassType.getNameStr(classification), param[0], param[1], 1);
+
+                } else {
+                    allQuestionCount = questionMapper.searchQuestionCount(tag, 1);
+                    // 计算分页参数
+                    param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
+                    questionList = questionMapper.searchQuestion(tag, param[0], param[1], 1);
+                }
             }
         }
         return questionList;
@@ -98,8 +132,9 @@ public class QuestionServiceImpl implements QuestionService {
      * TODO 优化查询，考虑使用多表级联
      */
     @Override
-    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, String sort) {
-        List<Question> questionList = getQuestionList(page, size, tag, sort);
+    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort, Integer classification) {
+
+        List<Question> questionList = getQuestionList(page, size, tag, sort, classification);
 
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
@@ -117,6 +152,9 @@ public class QuestionServiceImpl implements QuestionService {
 
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
         paginationDto.setData(questionDtoList);
+        if(param[2] == 0) {
+            param[2] = 1;
+        }
         paginationDto.setPagination(param[2], param[3], param[1]);
         return paginationDto;
     }

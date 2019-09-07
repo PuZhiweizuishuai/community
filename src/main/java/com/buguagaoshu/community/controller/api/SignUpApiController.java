@@ -6,6 +6,7 @@ import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import com.wf.captcha.utils.CaptchaUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
@@ -50,21 +51,21 @@ public class SignUpApiController {
             return StringUtil.dealResultMessage(false, "验证码错误！");
         }
 
-        if(user.getUserId() == null || user.getUserId().equals("") || !StringUtil.checkUserId(user.getUserId())) {
+        if (StringUtils.isBlank(user.getUserId()) || !StringUtil.checkUserId(user.getUserId())) {
             return StringUtil.dealResultMessage(false, "用户ID不能为空！或用户ID格式不正确!");
         }
-        if(user.getUserName() == null || user.getUserName().equals("")) {
-            return StringUtil.dealResultMessage(false, "昵称不能为空！");
+        if (StringUtils.isBlank(user.getUserName()) || user.getUserName().length() > 20) {
+            return StringUtil.dealResultMessage(false, "昵称不能为空！或昵称超出规定长度!");
         }
-        if(user.getEmail() == null || user.getEmail().equals("") || !StringUtil.checkEmail(user.getEmail())) {
+        if (StringUtils.isBlank(user.getEmail()) || !StringUtil.checkEmail(user.getEmail())) {
             return StringUtil.dealResultMessage(false, "邮箱不能为空。或邮箱格式不正确");
         }
-        if(user.getPassword() == null || user.getPassword().equals("") || !StringUtil.checkPassword(user.getPassword())) {
+        if (StringUtils.isBlank(user.getPassword()) || !StringUtil.checkPassword(user.getPassword())) {
             return StringUtil.dealResultMessage(false, "密码不能为空！或密码格式不正确");
         }
-        if(user.getBirthday() != null || !user.getBirthday().equals("")) {
+        if (user.getBirthday() != null || !user.getBirthday().equals("")) {
             int age = StringUtil.getAge(user.getBirthday());
-            if(age == -1) {
+            if (age == -1) {
                 return StringUtil.dealResultMessage(false, "生日格式不正确");
             }
             user.setAge(age);
@@ -81,7 +82,7 @@ public class SignUpApiController {
         // 插入数据
         if (result == 1) {
             // 写入权限信息
-            UserPermission userPermission = new UserPermission(user.getId(),1,"0", StringUtil.getNowTime(), System.currentTimeMillis());
+            UserPermission userPermission = new UserPermission(user.getId(), 1, "0", StringUtil.getNowTime(), System.currentTimeMillis());
             userPermissionService.insertUserPermission(userPermission);
             return StringUtil.dealResultMessage(true, "注册成功！");
         } else if (result == -1) {
@@ -93,24 +94,6 @@ public class SignUpApiController {
         }
     }
 
-
-
-
-    /**
-     * 更新头像
-     */
-//    @PatchMapping("/api/update/HeadUrl/{id}")
-//    public HashMap<String, Object> updateHeadUrlById(@PathVariable("id") long id, String url) {
-//
-//
-//
-//        int result = userService.updateUserHeadUrlById(id, url);
-//        if (result == 1) {
-//            return StringUtil.dealResultMessage(true, "修改成功！");
-//        } else {
-//            return StringUtil.dealResultMessage(false, "修改失败！请重试。");
-//        }
-//    }
 
     /**
      * 更新邮箱
@@ -143,20 +126,20 @@ public class SignUpApiController {
 
     /**
      * 更新用户名
-     * */
+     */
     @PatchMapping("/api/update/userName/{id}")
     public HashMap<String, Object> updateUserName(@PathVariable("id") long id, String newName, String password) {
-        if(newName.length() > 20) {
+        if (newName.length() > 20) {
             return StringUtil.dealResultMessage(false, "用户名过长！超过了20个字符！");
         }
         User user = userService.selectUserById(id);
-        if(user != null) {
+        if (user != null) {
             if (newName.equals(user.getUserName())) {
                 return StringUtil.dealResultMessage(false, "与旧用户名相同，无需修改!");
             }
-            if(StringUtil.judgePassword(password, user.getPassword())) {
+            if (StringUtil.judgePassword(password, user.getPassword())) {
                 int result = userService.updateUserNameById(id, newName);
-                if(result == 1) {
+                if (result == 1) {
                     return StringUtil.dealResultMessage(true, "修改成功！");
                 } else {
                     return StringUtil.dealResultMessage(false, "修改失败，请重试");
@@ -171,12 +154,11 @@ public class SignUpApiController {
     }
 
 
-
     /**
      * 补全默认头像信息
      */
     private void setDefaultHeadUrl(User user) {
-        if(user.getSex() == null || user.getSex().equals("")) {
+        if (user.getSex() == null || user.getSex().equals("")) {
             user.setSex("保密");
             user.setHeadUrl("/image/head/nohead.png");
             return;

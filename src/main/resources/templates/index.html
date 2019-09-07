@@ -22,9 +22,25 @@
             border-right-width: 1px;
             border-right-color: #efefef;
         }
+
         a:hover {
             text-decoration: none;
         }
+        .my-nav {
+            background-color: #efefef;
+            color: black;
+            border-radius: 10px;
+        }
+
+        .my-nav-active {
+            background: #494a4b;
+            color: white;
+        }
+        .my-nav:hover {
+            background-color:#494a4b;
+            color: white;
+        }
+
     </style>
     <script type="text/javascript">
         if (window.localStorage.getItem("closable") === "true") {
@@ -38,6 +54,33 @@
 <div th:insert="~{navigation :: navbar}"></div>
 
 
+<div class="container" style="height: 30px">
+</div>
+<div class="container" style="padding-left: 0">
+    <ul class="nav nav-pills">
+        <li class="nav-item my-nav">
+            <a class="nav-link my-nav my-nav-active" th:class="${class == '0'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=0)}">全部</a>
+        </li>
+        <li class="nav-item my-nav ml-2">
+            <a class="nav-link my-nav" th:class="${class == '1'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=1)}">提问</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '2'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=2)}">讨论</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '3'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=3)}">分享</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '4'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=4)}">建议</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '5'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=5)}">Bug</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '6'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="@{/(tag=${tag},sort=${sort},class=6)}">灌水</a>
+        </li>
+    </ul>
+</div>
 <div class="container" style="height: 30px">
 </div>
 <!-- 帖子列表显示 -->
@@ -57,7 +100,7 @@
                     <div class="col-7">
                         <ul class="nav justify-content-end">
                             <li class="nav-item">
-                                <a class="nav-link active" id="new-nav" href="/">最新</a>
+                                <a class="nav-link active" id="new-nav" th:href="@{/(tag=${tag},sort=3,class=${class})}">最新</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" onclick="alert('正在施工中！！！')">推荐</a>
@@ -66,13 +109,14 @@
                                 <a class="nav-link" href="#" onclick="alert('没错还在施工中！！！')">热门</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="no-nav" href="/?sort=no" style="color: red;">消灭零回复</a>
+                                <a class="nav-link" id="no-nav" th:href="@{/(tag=${tag},sort=0,class=${class})}" style="color: red;">消灭零回复</a>
                             </li>
                         </ul>
                     </div>
                 </div>
                 <hr style="margin-top: 0%;">
             </div>
+
             <!-- 帖子 -->
             <div th:each="question : ${paginationDto.data}">
                 <div class="media">
@@ -103,13 +147,13 @@
                 </div>
                 <hr/>
             </div>
-
             <!-- 页码 -->
             <nav aria-label="Page navigation example">
                 <ul class="pagination justify-content-end">
                     <!-- 返回首页 -->
                     <li class="page-item" th:if="${paginationDto.showFirstPage}">
-                        <a class="page-link" id="first-page-a" th:href="@{/(page=1,tag=${tag},sort=${sort})}" aria-label="Previous"
+                        <a class="page-link" id="first-page-a" th:href="@{/(page=1,tag=${tag},sort=${sort},class=${class})}"
+                           aria-label="Previous"
                            onclick="addLocaleUrlForPage('first-page-a')">
                             <span aria-hidden="true">&laquo;&laquo;</span>
                             <span class="sr-only">Previous</span>
@@ -117,7 +161,8 @@
                     </li>
                     <!-- 上一页 -->
                     <li class="page-item" th:if="${paginationDto.showPrevious}">
-                        <a class="page-link" id="link-to-last-a" th:href="@{/(page=${paginationDto.nowPage - 1},tag=${tag},sort=${sort})}"
+                        <a class="page-link" id="link-to-last-a"
+                           th:href="@{/(page=${paginationDto.nowPage - 1},tag=${tag},sort=${sort},class=${class})}"
                            aria-label="Previous"
                            onclick="addLocaleUrlForPage('link-to-last-a')">
                             <span aria-hidden="true">&laquo;</span>
@@ -128,7 +173,8 @@
 
                     <li class="page-item" th:each="page : ${paginationDto.pages}"
                         th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
-                        <a class="page-link" th:href="@{/(page=${page},tag=${tag},sort=${sort})}" th:text="${page}" th:id="${page}"
+                        <a class="page-link" th:href="@{/(page=${page},tag=${tag},sort=${sort},class=${class})}" th:text="${page}"
+                           th:id="${page}"
                            th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
                             1
                         </a>
@@ -137,7 +183,8 @@
 
                     <!-- 下一页 -->
                     <li class="page-item" th:if="${paginationDto.showNext}">
-                        <a class="page-link" id="lind-to-next-a" th:href="@{/(page=${paginationDto.nowPage +1 },tag=${tag},sort=${sort})}"
+                        <a class="page-link" id="lind-to-next-a"
+                           th:href="@{/(page=${paginationDto.nowPage +1 },tag=${tag},sort=${sort},class=${class})}"
                            aria-label="Next"
                            onclick="addLocaleUrlForPage('lind-to-next-a')">
                             <span aria-hidden="true">&raquo;</span>
@@ -146,7 +193,8 @@
                     </li>
                     <!-- 最后一页 -->
                     <li class="page-item" th:if="${paginationDto.showEndPage}">
-                        <a class="page-link" id="link-to-end-a" th:if="${paginationDto.showEndPage}" th:href="@{/(page=${pagination.totalPage},tag=${tag},sort=${sort})}"
+                        <a class="page-link" id="link-to-end-a" th:if="${paginationDto.showEndPage}"
+                           th:href="@{/(page=${pagination.totalPage},tag=${tag},sort=${sort},class=${class})}"
                            aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
                             <span aria-hidden="true">&raquo;&raquo;</span>
                             <span class="sr-only">Next</span>
@@ -196,7 +244,7 @@
             <h5 class="mb-2">热门话题</h5>
 
             <div class="content" th:each="tag : ${hots}">
-                <a th:href="@{/(page=1,tag=${tag},sort=${sort})}" >
+                <a th:href="@{/(page=1,tag=${tag},sort=${sort})}">
                     <p class="mt-2" th:text="${tag}"></p>
                 </a>
             </div>

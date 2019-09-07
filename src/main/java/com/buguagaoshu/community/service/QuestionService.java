@@ -25,7 +25,7 @@ public interface QuestionService {
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
-    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, String sort);
+    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort, Integer classification);
 
 
     /**

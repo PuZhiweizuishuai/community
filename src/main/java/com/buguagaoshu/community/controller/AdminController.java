@@ -9,6 +9,7 @@ import com.buguagaoshu.community.service.AdminDataService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -105,7 +106,7 @@ public class AdminController {
                          Model model) {
         PaginationDto<QuestionDto> questionDtoPaginationDto = null;
         PaginationDto<User> userPaginationDto = null;
-        if(search == null || search.equals("")) {
+        if(StringUtils.isBlank(search)) {
             model.addAttribute("search", search);
             model.addAttribute("type", type);
             model.addAttribute("questions", questionDtoPaginationDto);
@@ -114,7 +115,14 @@ public class AdminController {
         }
         String tempSearch = search;
         String[] searchs = search.split(" ");
-        search = Arrays.stream(searchs).collect(Collectors.joining("|"));
+
+        search = Arrays
+                .stream(searchs)
+                .filter(StringUtils::isNotBlank)
+                .map(t -> t.replace("+", "").replace("*", "").replace("?", ""))
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining("|"));
+
         if(type.equals("question")) {
             questionDtoPaginationDto = questionService.searchAllQuestionList(search, page, size);
             model.addAttribute("questions", questionDtoPaginationDto);
