@@ -60,7 +60,37 @@ java -jar community-0.0.1-SNAPSHOT.jar
 
 ## 页面展示
 
-![主页](https://gitee.com/puzhiweizuishuai/community/blob/master/images/home.jpg "主页")
+主页
+
+![主页](https://github.com/PuZhiweizuishuai/community/blob/master/images/home.jpg "主页")
+
+用户首页
+
+![用户首页](https://github.com/PuZhiweizuishuai/community/blob/master/images/userHome.jpg "用户首页")
+
+用户信息修改页
+
+![用户信息修改页](https://github.com/PuZhiweizuishuai/community/blob/master/images/userchange.jpg "用户信息修改页")
+
+
+问题展示页
+
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/questionPage.jpg)
+
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/questionPage2.jpg)
+
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/questionPage3.jpg)
+
+消息提醒页
+
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/message.jpg)
+
+管理员页面
+
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/adminPage.jpg)
+
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/adminPage%20(2).jpg)
+
 
 ## application.properties 配置文件介绍
 
