@@ -207,7 +207,7 @@
                                     </div>
                                 </th>
                                 <td >
-                                    <a th:href="${'/question/' + question.getQuestionId()}">
+                                    <a th:href="${'/question?class=' + question.classification}">
                                         <span th:text="${question.classification}"></span>
                                     </a>
                                 </td>

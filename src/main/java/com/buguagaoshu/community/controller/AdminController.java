@@ -82,7 +82,9 @@ public class AdminController {
     @GetMapping("/admin/question")
     public String getAdminQuestionPage(@RequestParam(value = "page", defaultValue = "1") String page,
                                        @RequestParam(value = "size", defaultValue = "10") String size,
+                                       @RequestParam(value = "class", required = false) String classification,
                                        Model model) {
+        // TODO 等待添加分类查找
         PaginationDto<QuestionDto> paginationDto = questionService.getAllQuestionList(page, size);
         model.addAttribute("paginationDto", paginationDto);
         return "/admin/question";

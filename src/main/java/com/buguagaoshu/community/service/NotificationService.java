@@ -15,6 +15,13 @@ public interface NotificationService {
      * */
     long getAllNotificationNumber(long id);
 
+
+    /**
+     * 获取该用户的所有未读通知
+     * */
+    long getAllNotificationNoReadNumber(long id);
+
+
     /**
      * 返回通知列表
      * @param page 页码
@@ -22,7 +29,7 @@ public interface NotificationService {
      * @param id 用户id
      * @return 通知
      * */
-    PaginationDto<NotificationDTO> getAllNotification(String page, String size, long id);
+    PaginationDto<NotificationDTO> getAllNotification(String page, String size, long id, String type);
 
 
     /**

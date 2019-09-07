@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.dto.NotificationDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
+import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.UserService;
@@ -26,10 +27,13 @@ public class MessageController {
 
     private final NotificationService notificationService;
 
+    private final NotificationMapper notificationMapper;
+
     @Autowired
-    public MessageController(UserService userService, NotificationService notificationService) {
+    public MessageController(UserService userService, NotificationService notificationService, NotificationMapper notificationMapper) {
         this.userService = userService;
         this.notificationService = notificationService;
+        this.notificationMapper = notificationMapper;
     }
     /**
      * 负责跳转到个人信息页面
@@ -38,8 +42,8 @@ public class MessageController {
     public String getMessagePage(@PathVariable("userId") String userId,
                                  @RequestParam(value = "page", defaultValue = "1") String page,
                                  @RequestParam(value = "size", defaultValue = "10") String size,
+                                 @RequestParam(value = "type", defaultValue = "0") String type,
                                  Model model, HttpServletRequest request) {
-
         User user = (User) request.getSession().getAttribute("user");
         if(user == null) {
             return StringUtil.jumpWebLangeParameter("/sign-in", true, request);
@@ -47,11 +51,12 @@ public class MessageController {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
         model.addAttribute("user", user);
-        PaginationDto<NotificationDTO> paginationDto = notificationService.getAllNotification(page, size, user.getId());
+        PaginationDto<NotificationDTO> paginationDto = notificationService.getAllNotification(page, size, user.getId(), type);
         model.addAttribute("notifications", paginationDto);
 
-        model.addAttribute("commentCount", notificationService.getNotificationAndTypeNumber(user.getId(), NotificationTypeEnum.REPLY_QUESTION.getType()) +
-        notificationService.getNotificationAndTypeNumber(user.getId(), NotificationTypeEnum.REPLY_COMMENT.getType()));
+        model.addAttribute("commentCount", notificationMapper.getNoReadCommentCount(user.getId()));
+        model.addAttribute("likeCount", notificationMapper.getNoReadLikeCount(user.getId()));
+        model.addAttribute("systemCount", notificationMapper.getNoReadSystemCount(user.getId()));
         return "userMessage";
     }
 
@@ -66,13 +71,16 @@ public class MessageController {
         if(!user.getUserId().equals(userId)) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+
         NotificationDTO notificationDTO = notificationService.readNotification(id, user);
+
         if(notificationDTO.getReceiver() == user.getId()) {
             return StringUtil.jumpWebLangeParameter("/question/" + notificationDTO.getOuterid(), true, request);
         } else {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
     }
+
 
     /**
      * 一键已读

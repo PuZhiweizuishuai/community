@@ -78,9 +78,10 @@ public class AdminQuestionApiController {
         }
         // 创建通知
         if (admin != null) {
+            createNotification(question, admin, question.getUserId(), NotificationTypeEnum.SYSTEM_DELETE_QUESTION);
             List<Comment> comments = commentMapper.getAllComment(questionId, 1);
             for (Comment comment : comments) {
-                createNotification(question, admin, comment.getCommentator());
+                createNotification(question, admin, comment.getCommentator(), NotificationTypeEnum.SYSTEM_DELETE_COMMENT);
             }
             questionMapper.alterStatus(questionId, 0);
             log.info("管理员 {} 删除了问题 {}", admin.getId(), questionId);
@@ -92,9 +93,12 @@ public class AdminQuestionApiController {
             return StringUtil.dealResultMessage(false, " 权限不足！");
         }
         if (question.getUserId() == user.getId()) {
+
+            createNotification(question, admin, question.getUserId(), NotificationTypeEnum.SYSTEM_DELETE_QUESTION);
+
             List<Comment> comments = commentMapper.getAllComment(questionId, 1);
             for (Comment comment : comments) {
-                createNotification(question, admin, comment.getCommentator());
+                createNotification(question, admin, comment.getCommentator(), NotificationTypeEnum.SYSTEM_DELETE_COMMENT);
             }
             questionMapper.alterStatus(questionId, 0);
             log.info("用户 {} 删除了问题 {}", user.getId(), questionId);
@@ -120,6 +124,14 @@ public class AdminQuestionApiController {
         if (question == null) {
             return StringUtil.dealResultMessage(false, "问题不存在！ ");
         }
+
+        // 恢复通知
+        createNotification(question, admin, question.getUserId(), NotificationTypeEnum.SYSTEM_RESET_QUESTION);
+        List<Comment> comments = commentMapper.getAllComment(questionId, 1);
+        for (Comment comment : comments) {
+            createNotification(question, admin, comment.getCommentator(), NotificationTypeEnum.SYSTEM_RESET_COMMENT);
+        }
+
         questionMapper.alterStatus(questionId, 1);
         log.info("管理员 {} 恢复了问题 {}", admin.getId(), questionId);
         return StringUtil.dealResultMessage(true, "恢复成功！");
@@ -168,14 +180,14 @@ public class AdminQuestionApiController {
     /**
      * 创建通知
      */
-    private void createNotification(Question question, User admin, Long receiver) {
+    private void createNotification(Question question, User admin, Long receiver, NotificationTypeEnum notificationTypeEnum) {
         if (question.getUserId() == admin.getId()) {
             return;
         }
         Notification notification = new Notification();
         // 消息创建时间
         notification.setCreateTime(System.currentTimeMillis());
-        notification.setType(NotificationTypeEnum.SYSTEM_NOTIFICATION.getType());
+        notification.setType(notificationTypeEnum.getType());
         // 通知产生点
         notification.setOuterId(question.getQuestionId());
         // 通知发起人

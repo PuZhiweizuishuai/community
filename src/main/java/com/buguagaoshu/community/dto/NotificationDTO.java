@@ -29,4 +29,9 @@ public class NotificationDTO {
     private String typeName;
 
     private int type;
+
+
+    private long commentCount;
+    private long likeCount;
+    private long systemCount;
 }

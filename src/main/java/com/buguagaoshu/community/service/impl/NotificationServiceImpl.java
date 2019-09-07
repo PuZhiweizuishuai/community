@@ -9,6 +9,7 @@ import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.Notification;
+import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.util.NumberUtils;
@@ -52,16 +53,40 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public PaginationDto<NotificationDTO> getAllNotification(String page, String size, long id) {
-        // 获取当前所有通知数
-        long allNotification = notificationMapper.getAllNotificationNumber(id);
+    public long getAllNotificationNoReadNumber(long id) {
+        if (id <= 0) {
+            return 0;
+        }
+        return notificationMapper.getAllNotificationNoReadNumber(id);
+    }
 
-        // 计算分页参数
-        long[] param = NumberUtils.getPageAndSize(page, size, allNotification);
-
-        List<Notification> notifications = notificationMapper.getAllNotification(param[0], param[1], id);
-
-
+    @Override
+    public PaginationDto<NotificationDTO> getAllNotification(String page, String size, long id, String type) {
+        Integer types = null;
+        try {
+            types = Integer.valueOf(type);
+        } catch (Exception e) {
+            types = 1;
+        }
+        long allNotification;
+        long[] param;
+        List<Notification> notifications = null;
+        // 获取回复通知
+        if (types == 5) {
+            allNotification = notificationMapper.getAllSystemCount(id);
+            param = NumberUtils.getPageAndSize(page, size, allNotification);
+            notifications = notificationMapper.getAllSystemNotification(param[0], param[1], id);
+        } else if (types == 3) {
+            allNotification = notificationMapper.getAllLikeCount(id);
+            param = NumberUtils.getPageAndSize(page, size, allNotification);
+            notifications = notificationMapper.getAllLikeNotification(param[0], param[1], id);
+        } else {
+            // 获取所有回复数
+            allNotification = notificationMapper.getAllCommentCount(id);
+            // 计算分页参数
+            param = NumberUtils.getPageAndSize(page, size, allNotification);
+            notifications = notificationMapper.getAllCommentNotification(param[0], param[1], id);
+        }
 
         if (notifications.size() == 0) {
             return null;
@@ -73,11 +98,11 @@ public class NotificationServiceImpl implements NotificationService {
 
 
         List<User> users = new ArrayList<>();
-        for(Long userId : disUserIds) {
+        for (Long userId : disUserIds) {
             User user = userMapper.selectUserById(userId);
             users.add(user);
         }
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(u->u.getId(), u->u));
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(u -> u.getId(), u -> u));
 
         for (Notification notification : notifications) {
             NotificationDTO notificationDTO = new NotificationDTO();
@@ -89,8 +114,9 @@ public class NotificationServiceImpl implements NotificationService {
             notificationDTO.setNotifierId(userMap.get(notification.getNotifier()).getUserId());
             notificationDTO.setNotifierName(userMap.get(notification.getNotifier()).getUserName());
 
+            Question question = questionMapper.getQuestionIgnoreStatus(notification.getOuterId());
             //TODO 目测可以优化
-            notificationDTO.setOuterTitle(questionMapper.selectQuestionById(notification.getOuterId(), 1).getTitle());
+            notificationDTO.setOuterTitle(question.getTitle());
             notificationDTO.setOuterid(notification.getOuterId());
             notificationDTO.setTypeName(NotificationTypeEnum.nameOfType(notification.getType()));
             notificationDTO.setType(notification.getType());
@@ -113,13 +139,13 @@ public class NotificationServiceImpl implements NotificationService {
             return null;
         }
         Notification notification = notificationMapper.selectNotificationById(id);
-        if(notification == null) {
+        if (notification == null) {
             throw new CustomizeException(CustomizeErrorCode.NOTIFICATION_NOT_FOUND);
         }
-        if(notification.getReceiver() != user.getId()) {
+        if (notification.getReceiver() != user.getId()) {
             throw new CustomizeException(CustomizeErrorCode.READ_NOTIFICATION_FAIL);
         }
-        if(notification.getStatus() == 0) {
+        if (notification.getStatus() == 0) {
             notificationMapper.readNotification(id);
         }
         NotificationDTO notificationDTO = new NotificationDTO();

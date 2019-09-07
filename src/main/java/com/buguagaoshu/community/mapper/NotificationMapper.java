@@ -22,10 +22,57 @@ public interface NotificationMapper {
     int insertNotification(Notification notification);
 
     /**
-     * 获取该用户当前所有通知数
+     * 获取该用户当前所有未读通知数
      * */
     @Select("select COUNT(1) from notification where receiver=#{receiver} and status=0")
+    long getAllNotificationNoReadNumber(long receiver);
+
+
+    /**
+     * 获取该用户当前所有通知数
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver}")
     long getAllNotificationNumber(long receiver);
+
+    /**
+     * 获取该用户当前回复数量
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver} and type<=2 and status=0")
+    long getNoReadCommentCount(long receiver);
+
+
+    /**
+     * 获取该用户当前点赞数量
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver} and (type=3 or type=4) and status=0")
+    long getNoReadLikeCount(long receiver);
+
+    /**
+     * 获取该用户当前所有系统通知数
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver} and type>=5 and status=0")
+    long getNoReadSystemCount(long receiver);
+
+
+    /**
+     * 获取该用户当前回复数量
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver} and type<=2 ")
+    long getAllCommentCount(long receiver);
+
+
+    /**
+     * 获取该用户当前点赞数量
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver} and (type=3 or type=4)")
+    long getAllLikeCount(long receiver);
+
+    /**
+     * 获取该用户当前所有系统通知数
+     * */
+    @Select("select COUNT(1) from notification where receiver=#{receiver} and type>=5")
+    long getAllSystemCount(long receiver);
+
 
     /**
      *获取某种通知的数量
@@ -37,8 +84,23 @@ public interface NotificationMapper {
     /**
      * 返回消息通知列表
      * */
-    @Select("select * from notification where receiver=#{receiver} ORDER BY id DESC limit #{page}, #{size}")
-    List<Notification> getAllNotification(@Param("page") long page, @Param("size") long size, @Param("receiver") long receiver);
+    @Select("select * from notification where receiver=#{receiver} and type<=2 ORDER BY id DESC limit #{page}, #{size}")
+    List<Notification> getAllCommentNotification(@Param("page") long page, @Param("size") long size, @Param("receiver") long receiver);
+
+
+    /**
+     * 返回所有点赞列表
+     * */
+    @Select("select * from notification where receiver=#{receiver} and (type=3 or type=4) ORDER BY id DESC limit #{page}, #{size}")
+    List<Notification> getAllLikeNotification(@Param("page") long page, @Param("size") long size, @Param("receiver") long receiver);
+
+
+    /**
+     * 返回所有系统消息列表
+     * */
+    @Select("select * from notification where receiver=#{receiver} and type>=5  ORDER BY id DESC limit #{page}, #{size}")
+    List<Notification> getAllSystemNotification(@Param("page") long page, @Param("size") long size, @Param("receiver") long receiver);
+
 
 
     @Select("select * from notification where id=#{id}")

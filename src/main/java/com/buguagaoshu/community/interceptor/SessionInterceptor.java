@@ -47,7 +47,7 @@ public class SessionInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         User user = (User) request.getSession().getAttribute("user");
         if (user != null) {
-            request.getSession().setAttribute("notificationCount", notificationService.getAllNotificationNumber(user.getId()));
+            request.getSession().setAttribute("notificationCount", notificationService.getAllNotificationNoReadNumber(user.getId()));
             return true;
         }
         /**
