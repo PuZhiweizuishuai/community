@@ -61,7 +61,7 @@ public class CommunityApplicationTests {
 //        newUser.setLikes("毛金明牛逼");
 //        userMapper.updateUserData(newUser);
         //System.out.println(userMapper.searchUser("puzhiwei", 0 , 10));
-        System.out.println(questionService.getSomeQuestionDto("0","10",null,QuestionSortType.NEW_QUESTION.getType(),1));
+        System.out.println(questionService.getSomeQuestionDto("0","10","java",QuestionSortType.NEW_QUESTION.getType(),1));
     }
 
 }

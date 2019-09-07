@@ -103,7 +103,6 @@ public class QuestionServiceImpl implements QuestionService {
                     allQuestionCount = questionMapper.searchQuestionCountC(tag, QuestionClassType.getNameStr(classification), 1);
                     param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
                     questionList = questionMapper.searchQuestionC(tag, QuestionClassType.getNameStr(classification), param[0], param[1], 1);
-
                 } else {
                     allQuestionCount = questionMapper.searchQuestionCount(tag, 1);
                     // 计算分页参数

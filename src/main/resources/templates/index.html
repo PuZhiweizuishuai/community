@@ -94,7 +94,12 @@
                     <div class="col">
                         <h4>
                             <img src="image/icon/found.svg" width="35" height="35"/>
-                            发现
+                            <span th:if="${tag != null}" th:text="${tag}">
+
+                            </span>
+                            <span th:if="${tag==null || tag == ''}">发现</span>
+                            <span th:if="${sort == '0'}" style="font-size: 15px">(零回复)</span>
+                            <span th:if="${sort == '3'}" style="font-size: 15px">(最新)</span>
                         </h4>
                     </div>
                     <div class="col-7">
@@ -103,10 +108,7 @@
                                 <a class="nav-link active" id="new-nav" th:href="@{/(tag=${tag},sort=3,class=${class})}">最新</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="alert('正在施工中！！！')">推荐</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="alert('没错还在施工中！！！')">热门</a>
+                                <a class="nav-link" href="#" onclick="alert('正在施工中！！！')">热门</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" id="no-nav" th:href="@{/(tag=${tag},sort=0,class=${class})}" style="color: red;">消灭零回复</a>

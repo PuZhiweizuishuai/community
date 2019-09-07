@@ -284,7 +284,7 @@ public interface QuestionMapper {
      * @param status 状态
      * @return 搜索结果
      * */
-    @Select("select * from Questions where classification=#{classification} AND title regexp #{search} or tag regexp #{search} and status=#{status} order by questionId desc limit #{page}, #{size}")
+    @Select("select * from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status} order by questionId desc limit #{page}, #{size}")
     List<Question> searchQuestionC(@Param("search") String search, @Param("classification") String classification, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
 
@@ -295,7 +295,7 @@ public interface QuestionMapper {
      * @param status 状态
      * @return  返回正则搜索的数量
      * */
-    @Select("select COUNT(*) from Questions where classification=#{classification} AND title regexp #{search} or tag regexp #{search} and status=#{status}")
+    @Select("select COUNT(*) from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status}")
     long searchQuestionCountC(@Param("search") String search, @Param("classification") String classification, @Param("status") int status);
 
 
@@ -308,14 +308,14 @@ public interface QuestionMapper {
      * @param status 状态
      * @return 搜索结果
      * */
-    @Select("select * from Questions where classification=#{classification} AND title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
+    @Select("select * from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
     List<Question> selectQuestionUseCommentCountBySearchC(@Param("search") String search, @Param("classification") String classification, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
 
     /**
      * 查找当前分类且和标签下零回复问题数量
      * */
-    @Select("select COUNT(*) from Questions where classification=#{classification} AND title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0")
+    @Select("select COUNT(*) from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0")
     long selectQuestionUseCommentCountBySearchNumberC(@Param("search") String search, @Param("classification") String classification, @Param("status") int status);
 
 
