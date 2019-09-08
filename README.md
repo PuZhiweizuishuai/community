@@ -240,4 +240,8 @@ service 服务层
 util 各种工具
 
 
-
+```html
+<video class="container" id="video" controls="" preload="none">
+<source id="mp4" src="/file/admin/video/pd48.mp4" type="video/mp4">
+</video>
+```
