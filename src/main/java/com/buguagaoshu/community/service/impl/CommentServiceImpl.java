@@ -16,6 +16,7 @@ import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  * create          2019-08-25 19:19
  */
 @Service
+@Slf4j
 public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
 
@@ -150,7 +152,7 @@ public class CommentServiceImpl implements CommentService {
             CommentDto commentDto = new CommentDto();
             BeanUtils.copyProperties(comment, commentDto);
 
-            commentDto.setCreateTime(StringUtil.foematTime(comment.getCommentator()));
+            commentDto.setCreateTime(StringUtil.foematTime(comment.getCreateTime()));
             commentDto.setModifiedTime(StringUtil.foematTime(comment.getModifiedTime()));
             commentDto.setUser(userMap.get(comment.getCommentator()));
             return commentDto;
@@ -172,7 +174,7 @@ public class CommentServiceImpl implements CommentService {
         }
         List<Comment> comments = commentMapper.getTwoLevelCommentByParent(id, type, 1);
         if (comments.size() == 0) {
-            throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
+            throw new CustomizeException(CustomizeErrorCode.COMMENT_NO_COMMENT);
         }
         Set<Long> commentors = comments.stream().map(comment -> comment.getCommentator()).collect(Collectors.toSet());
         List<User> users = new ArrayList<>();
@@ -191,7 +193,7 @@ public class CommentServiceImpl implements CommentService {
             CommentDto commentDto = new CommentDto();
             BeanUtils.copyProperties(comment, commentDto);
             commentDto.setUser(userMap.get(comment.getCommentator()));
-            commentDto.setCreateTime(StringUtil.foematTime(comment.getCommentator()));
+            commentDto.setCreateTime(StringUtil.foematTime(comment.getCreateTime()));
             commentDto.setModifiedTime(StringUtil.foematTime(comment.getModifiedTime()));
             return commentDto;
         }).collect(Collectors.toList());

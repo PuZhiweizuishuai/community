@@ -7,6 +7,7 @@ import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
  * 评论控制
  */
 @RestController
+@Slf4j
 public class CommentController {
     private final CommentService commentService;
 
@@ -36,6 +38,7 @@ public class CommentController {
         if (user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NO_LOGIN);
         }
+        log.info("用户 {} 开始评论！", user.getId());
         Comment comment = new Comment();
         comment.setQuestionId(commentDto.getQuestionId());
         comment.setParentId(commentDto.getParentId());
@@ -45,6 +48,7 @@ public class CommentController {
         comment.setCreateTime(System.currentTimeMillis());
         comment.setModifiedTime(System.currentTimeMillis());
         commentService.insertComment(comment);
+        log.info("用户 {} 发布了评论！", user.getId());
         return ResultDTO.okOf(comment);
     }
 }

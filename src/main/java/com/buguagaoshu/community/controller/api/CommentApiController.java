@@ -9,12 +9,14 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.util.StringUtil;
 import com.wf.captcha.utils.CaptchaUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+import static com.buguagaoshu.community.dto.ResultDTO.errorOf;
 import static com.buguagaoshu.community.dto.ResultDTO.okOf;
 
 /**
@@ -22,6 +24,7 @@ import static com.buguagaoshu.community.dto.ResultDTO.okOf;
  * create          2019-08-31 14:22
  */
 @RestController
+@Slf4j
 public class CommentApiController {
     private final CommentService commentService;
 
@@ -55,7 +58,12 @@ public class CommentApiController {
         comment.setContent(commentDto.getContent());
         comment.setCreateTime(System.currentTimeMillis());
         comment.setModifiedTime(System.currentTimeMillis());
-        commentService.insertComment(comment);
+        try {
+            commentService.insertComment(comment);
+        } catch (Exception e) {
+            log.info("插入评论异常：{}", e.getMessage());
+            return errorOf(CustomizeErrorCode.SYS_ERROR);
+        }
         return okOf(comment);
     }
 

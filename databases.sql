@@ -101,7 +101,7 @@ CREATE TABLE comment
     likeCount bigint DEFAULT 0,
     commentCount bigint default 0,
     createTime bigint NOT NULL,
-    alterTime bigint NOT NULL,
+    modifiedTime bigint NOT NULL,
     status int default 1,
     constraint comments_user_FK foreign key(questionId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
