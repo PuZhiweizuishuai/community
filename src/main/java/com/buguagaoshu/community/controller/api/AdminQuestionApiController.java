@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.cache.IndexTopQuestion;
 import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.mapper.CommentMapper;
@@ -29,24 +30,22 @@ import java.util.Map;
 @RestController
 @Slf4j
 public class AdminQuestionApiController {
-    final QuestionMapper questionMapper;
+    private final QuestionMapper questionMapper;
 
-    final
-    UserService userService;
+    private final UserService userService;
 
-    final
-    NotificationMapper notificationMapper;
+    private final NotificationMapper notificationMapper;
 
-    final
-    CommentMapper commentMapper;
+    private final CommentMapper commentMapper;
 
-    final
-    UserPermissionService userPermissionService;
+    private final UserPermissionService userPermissionService;
+
+    private final IndexTopQuestion indexTopQuestion;
 
 
     @Autowired
     public AdminQuestionApiController(UserService userService, QuestionMapper questionMapper, NotificationMapper notificationMapper, CommentMapper commentMapper,
-                                      UserPermissionService userPermissionService) {
+                                      UserPermissionService userPermissionService, IndexTopQuestion indexTopQuestion) {
         this.userService = userService;
         this.questionMapper = questionMapper;
 
@@ -54,6 +53,7 @@ public class AdminQuestionApiController {
         this.commentMapper = commentMapper;
 
         this.userPermissionService = userPermissionService;
+        this.indexTopQuestion = indexTopQuestion;
     }
 
 
@@ -175,6 +175,57 @@ public class AdminQuestionApiController {
             return StringUtil.dealResultMessage(true, "重置成功！");
         }
         return StringUtil.dealResultMessage(false,"重置失败，请重试！");
+    }
+
+
+    @PostMapping("/api/admin/settingTopQuestion")
+    public Map<String, Object> settingTopQuestion(Long id1, Long id2, Long id3 ,HttpServletRequest request) {
+        User admin = (User) request.getSession().getAttribute("admin");
+        if (admin == null) {
+            return StringUtil.dealResultMessage(false, "请先登陆！");
+        }
+        if(id1 != null && id1 < 0) {
+            return StringUtil.dealResultMessage(false, "输入的第一个问题ID小于0");
+        }
+        if(id2 != null && id2 < 0) {
+            return StringUtil.dealResultMessage(false, "输入的第二个问题ID小于0");
+        }
+        if(id3 != null && id3 < 0) {
+            return StringUtil.dealResultMessage(false, "输入的第三个问题ID小于0");
+        }
+
+
+
+        if(id1 != null && id2 != null && id3 != null) {
+            Long[] questionID = {id1, id2, id3};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        } else if(id1 != null && id2 != null) {
+            Long[] questionID = {id1, id2};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        } else if(id1 != null && id3 != null) {
+            Long[] questionID = {id1, id3};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        } else if(id2 != null && id3 != null) {
+            Long[] questionID = {id2, id3};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        } else if(id1 != null) {
+            Long[] questionID = {id1};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        } else if(id2 != null) {
+            Long[] questionID = {id2};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        } else if(id3 != null) {
+            Long[] questionID = {id3};
+            indexTopQuestion.setTopQuestion(questionID);
+            return StringUtil.dealResultMessage(true, "置顶成功!");
+        }
+        return StringUtil.dealResultMessage(false, "没有输入任何数字！");
     }
 
     /**

@@ -73,3 +73,43 @@ function resetPassword(e) {
         }
     })
 }
+
+function settingIndexTopQuestion() {
+    var questionId1 = $("#question-Id-1").val();
+    var questionId2 = $("#question-Id-2").val();
+    var qusetionId3 = $("#question-Id-3").val();
+
+    if(questionId1 != '' && questionId1 < 0) {
+        document.getElementById("question-id-warning").style.display = "inline";
+        document.getElementById("question-id-warning").innerText = "输入框1的问题ID不能为负数"
+    }
+
+    if(questionId2 != '' && questionId2 < 0) {
+        document.getElementById("question-id-warning").style.display = "inline";
+        document.getElementById("question-id-warning").innerText = "输入框2的问题ID不能为负数"
+    }
+
+    if(qusetionId3 != '' && qusetionId3 < 0) {
+        document.getElementById("question-id-warning").style.display = "inline";
+        document.getElementById("question-id-warning").innerText = "输入框3的问题ID不能为负数"
+    }
+
+    $.ajax({
+        type: 'post',
+        url: '/api/admin/settingTopQuestion',
+        data: {
+            'id1' : questionId1,
+            'id2' : questionId2,
+            'id3' : qusetionId3
+        },
+        success: function (resultdata) {
+            if (resultdata.success) {
+                alert(resultdata.msg)
+            } else {
+                alert(resultdata.msg);
+            }
+        }
+    })
+
+
+}

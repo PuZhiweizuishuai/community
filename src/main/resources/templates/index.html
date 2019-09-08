@@ -118,7 +118,39 @@
                 </div>
                 <hr style="margin-top: 0%;">
             </div>
+            <!--置顶帖-->
+            <div th:if="${TopQuestion != null}" th:each="question : ${TopQuestion}">
+                <div class="media">
+                    <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${question.user.headUrl}"
+                         src="image/head/boyhead.png"
+                         style="max-width: 64px; height: auto; ">
+                    <div class="media-body">
+                        <h5 class="mt-0"><a class="link-to-text" target="_blank"
+                                            th:href="'/question/' + ${question.getQuestionId()}"
+                                            th:text="${question.title}">中间对齐</a>
+                            <span class="badge badge-primary">置顶</span>
+                        </h5>
+                        <!-- TODO 等待添加摘要 -->
+                        <!--<p class="mb-1">Cras sit amet nibh libero</p>-->
 
+                        <p class="mb-0 small">
+                            <!--TODO 链接待修改-->
+                            <a class="issuse-question-class" href="#"
+                               th:text="${question.classification}">分类</a>
+                            <a class="issuse-question-people" target="_blank"
+                               th:href="'/user/'+ ${question.user.getUserId()}"
+                               th:text="${question.user.userName}">人名</a>
+                            <span class="issuse-question-span">是作者
+                                •<span th:text="${question.likeCount}">人数</span><span>人关注</span>
+                                •<span th:text="${question.commentCount}">人数</span><span>个回复</span>
+                                •<span th:text="${question.viewCount}">人数</span><span>次浏览</span>
+                                •<span>最新回复时间：</span><span th:text="${question.alterTime}">人数</span>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                <hr/>
+            </div>
             <!-- 帖子 -->
             <div th:each="question : ${paginationDto.data}">
                 <div class="media">

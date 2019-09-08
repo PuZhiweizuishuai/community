@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>不挂高数管理页-用户</title>
+    <title>不挂高数管理页-控制</title>
     <!-- Favicon -->
     <link rel="shortcut icon" href="/favicon.png"/>
     <link rel="bookmark" href="/favicon.png"/>
@@ -98,7 +98,7 @@
                         <i class="ni ni-bullet-list-67 text-red"></i> 问题信息
                     </a>
                 </li>
-                <li class="nav-item active">
+                <li class="nav-item">
                     <a class="nav-link" href="/admin/user">
                         <i class="ni ni-single-02 text-yellow"></i> 用户信息
                     </a>
@@ -108,7 +108,7 @@
                         <i class="ni ni-planet text-blue"></i> 搜索
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item active">
                     <a class="nav-link" href="/admin/controller">
                         <i class="ni ni-key-25 text-info"></i> 社区设置
                     </a>
@@ -129,7 +129,7 @@
     <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
         <div class="container-fluid">
             <!-- Brand -->
-            <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="#">用户列表</a>
+            <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="#">控制面板</a>
             <!-- Form -->
             <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto" action="/admin/search" method="get">
                 <div class="form-group mb-0">
@@ -187,124 +187,82 @@
             <div class="col">
                 <div class="card shadow">
                     <div class="card-header border-0">
-                        <h3 class="mb-0">所有用户</h3>
+                        <h3 class="mb-0">控制面板</h3>
                     </div>
-                    <div class="table-responsive" id="classTable">
-                        <table class="table align-items-center table-flush">
-                            <thead class="thead-light">
-                            <tr>
-                                <th scope="col">用户头像</th>
-                                <th scope="col">用户ID</th>
-                                <th scope="col">用户账号</th>
-                                <th scope="col">用户邮箱</th>
-                                <th scope="col">用户昵称</th>
-                                <th scope="col">加入时间</th>
-                                <th scope="col">用户权限</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="user:${paginationDto.data}">
-                                <th scope="row">
-                                    <div class="media align-items-center">
-                                        <a th:href="${'/user/' + user.getUserId()}" class="avatar rounded-circle mr-3">
-                                            <img alt="用户头像" th:src="${user.getHeadUrl()}">
-                                        </a>
-                                    </div>
-                                </th>
-                                <td >
-                                    <a th:href="${'/user/' + user.getUserId()}">
-                                        <span th:text="${user.getId()}"></span>
-                                    </a>
-                                </td>
-                                <td>
-                                    <a th:href="${'/user/' + user.getUserId()}">
-                                        <span class="badge badge-dot mr-4" th:text="${user.getUserId()}"></span>
-                                    </a>
-                                </td>
-                                <td th:text="${user.getEmail()}">
+                    <ul class="nav nav-pills mb-3 ml-3" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true">
+                                设置首页问题置顶
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false">
+                                系统设置
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false">
+                                其他设置
+                            </a>
+                        </li>
+                    </ul>
+                    <hr/>
+                    <div class="tab-content" id="pills-tabContent">
+                        <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                            <div class="row">
+                                <div class="col">
+                                    <h4 class="ml-3">说明：</h4>
+                                    <h5 class="ml-3">
+                                        最多可设置三个置顶问题，将问题ID输入到右边输入框点确认即可。
+                                        <br/>
+                                        如果不需要设置那么多的置顶问题，将输入框留空即可。
+                                        <br/>
+                                        如果要取消全部置顶，则请在右边输入框中将所有数字填 0 后点确定即可！
+                                    </h5>
+                                </div>
+                                <div class="col-8">
+                                    <div class="container w-75">
+                                        <div class="form-group mb-3">
+                                            <div class="input-group input-group-alternative">
+                                                <div class="input-group-prepend">
 
-                                </td>
-                                <td th:text="${user.getUserName()}">
+                                                </div>
+                                                <input class="form-control" id="question-Id-1" placeholder="置顶问题1的问题ID" type="number">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group input-group-alternative">
+                                                <div class="input-group-prepend">
 
-                                </td>
-                                <td th:text="${user.getCreationTime()}">
+                                                </div>
+                                                <input class="form-control" id="question-Id-2" placeholder="置顶问题2的问题ID" type="number">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="input-group input-group-alternative">
+                                                <div class="input-group-prepend">
+                                                </div>
+                                                <input class="form-control" id="question-Id-3" placeholder="置顶问题2的问题ID" type="number">
+                                            </div>
+                                        </div>
+                                        <div id="question-id-warning" class="alert alert-warning" role="alert" style="display: none;">
 
-                                </td>
-                                <td class="text-right" >
-                                    <span th:if="${user.getPower() == 1}">普通用户</span>
-                                    <span th:if="${user.getPower() == 0}" style="font-weight: bold; font-size: 20px">管理员</span>
-                                    <span th:if="${user.getPower() == 2}" style="color: #ffe375; font-weight: bold; font-size: 20px">VIP用户</span>
-                                    <div class="dropdown">
-                                        <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow" x-placement="top-end" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(32px, -2px, 0px);">
-                                            <button th:data-id="${user.getId()}" class="dropdown-item" onclick="sendUserPower(this, 0)">设置为管理员</button>
-                                            <button th:data-id="${user.getId()}" class="dropdown-item" onclick="sendUserPower(this, 2)">设置为VIP</button>
-                                            <button th:data-id="${user.getId()}" class="dropdown-item" onclick="sendUserPower(this, 1)">恢复普通用户</button>
-                                            <button th:data-id="${user.getId()}" class="dropdown-item" onclick="resetPassword(this)">重置密码</button>
+                                        </div>
+                                        <div class="text-center">
+                                            <button type="button" class="btn btn-primary my-4" onclick="settingIndexTopQuestion()">确认设置</button>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="card-footer py-4">
-                        <nav aria-label="Page navigation example" th:if="${paginationDto.totalPage} != 0">
-                            <ul class="pagination justify-content-end">
-                                <!-- 返回首页 -->
-                                <li class="page-item" th:if="${paginationDto.showFirstPage}">
-                                    <a class="page-link" id="first-page-a" href="/admin/user"
-                                       aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
-                                        <span aria-hidden="true">&laquo;&laquo;</span>
-                                        <span class="sr-only">Previous</span>
-                                    </a>
-                                </li>
-                                <!-- 上一页 -->
-                                <li class="page-item" th:if="${paginationDto.showPrevious}">
-                                    <a class="page-link" id="link-to-last-a"
-                                       th:href="'/admin/user' + @{/(page=${paginationDto.nowPage} - 1)}"
-                                       aria-label="Previous"
-                                       onclick="addLocaleUrlForPage('link-to-last-a')">
-                                        <span aria-hidden="true">&laquo;</span>
-                                        <span class="sr-only">Previous</span>
-                                    </a>
-                                </li>
+                                </div>
+                            </div>
 
 
-                                <li class="page-item" th:each="page : ${paginationDto.pages}"
-                                    th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
-                                    <a class="page-link" th:href="${'/admin/user?page='+page}"
-                                       th:text="${page}" th:id="${page}"
-                                       th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
-                                        1
-                                    </a>
-                                </li>
-
-
-                                <!-- 下一页 -->
-                                <li class="page-item" th:if="${paginationDto.showNext}">
-                                    <a class="page-link" id="lind-to-next-a"
-                                       th:href="'/admin/user/' + @{/(page=${paginationDto.nowPage} + 1)}"
-                                       aria-label="Next"
-                                       onclick="addLocaleUrlForPage('lind-to-next-a')">
-                                        <span aria-hidden="true">&raquo;</span>
-                                        <span class="sr-only">Next</span>
-                                    </a>
-                                </li>
-                                <!-- 最后一页 -->
-                                <li class="page-item" th:if="${paginationDto.showEndPage}">
-                                    <a class="page-link" id="link-to-end-a"
-                                       th:href="'/admin/user/' + @{/(page=${paginationDto.totalPage})}"
-                                       th:if="${paginationDto.showEndPage}"
-                                       aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
-                                        <span aria-hidden="true">&raquo;&raquo;</span>
-                                        <span class="sr-only">Next</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
+                        </div>
+                        <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                            待开发
+                        </div>
+                        <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                            待开发
+                        </div>
                     </div>
                 </div>
             </div>

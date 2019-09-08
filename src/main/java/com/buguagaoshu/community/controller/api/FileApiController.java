@@ -85,13 +85,41 @@ public class FileApiController {
 
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/image/{filename:.+}", produces = "image/png")
     @ResponseBody
-    public ResponseEntity<?> getFile(@PathVariable("filename") String filename,
+    public ResponseEntity<?> getImage(@PathVariable("filename") String filename,
                                      @PathVariable("userId") String userId) {
         try {
             String path = ROOT + "/" + userId + "/image/";
             return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
         } catch (Exception e) {
             log.error("图片文件获取失败:  {}",e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
+    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/video/{filename:.+}", produces = "video/mpeg4")
+    @ResponseBody
+    public ResponseEntity<?> getVideo(@PathVariable("filename") String filename,
+                                     @PathVariable("userId") String userId) {
+        try {
+            String path = ROOT + "/" + userId + "/video/";
+            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
+        } catch (Exception e) {
+            log.error("视频文件获取失败:  {}",e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
+    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/file/{filename:.+}")
+    @ResponseBody
+    public ResponseEntity<?> getFile(@PathVariable("filename") String filename,
+                                      @PathVariable("userId") String userId) {
+        try {
+            String path = ROOT + "/" + userId + "/file/";
+            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
+        } catch (Exception e) {
+            log.error("文件获取失败:  {}",e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

@@ -94,9 +94,9 @@ public class AdminController {
         User user = (User) request.getSession().getAttribute("admin");
         if(user != null) {
             request.getSession().removeAttribute("admin");
-            return "redirect:admin/index";
+            return "redirect:/admin/index";
         }
-        return "redirect:admin/index";
+        return "redirect:/admin/index";
     }
 
     @GetMapping("/admin/search")
@@ -135,5 +135,11 @@ public class AdminController {
         model.addAttribute("search", search);
         model.addAttribute("type", type);
         return "admin/search";
+    }
+
+
+    @GetMapping("/admin/controller")
+    public String getAdminControllerPage() {
+        return "admin/controller";
     }
 }
