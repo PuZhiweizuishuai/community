@@ -103,6 +103,7 @@ java -jar community-0.0.1-SNAPSHOT.jar
 
 ![](https://github.com/PuZhiweizuishuai/community/blob/master/images/adminPage%20(2).jpg)
 
+![](https://github.com/PuZhiweizuishuai/community/blob/master/images/adminPage%20(3).jpg)
 
 ## application.properties 配置文件介绍
 
