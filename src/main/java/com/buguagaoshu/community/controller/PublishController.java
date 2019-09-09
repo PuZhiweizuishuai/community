@@ -39,7 +39,6 @@ public class PublishController {
         }
 
         model.addAttribute("question", new Question());
-        // model.addAttribute("tags", TagCache.get());
         return "publish";
     }
 
@@ -73,9 +72,6 @@ public class PublishController {
         question.setDescription(description);
         question.setTag(tag);
         question.setUserId(user.getId());
-
-
-        //System.out.println(check(question, CAPTCHA, model, request));
 
         if (!check(question, CAPTCHA, model, request)) {
             return StringUtil.jumpWebLangeParameter("publish", false, request);

@@ -11,11 +11,11 @@
 目前还是MVC模式，开发完成后可能会考虑前后端分离
 
 
-已完成登陆注册,发帖，回复评论，markdown编辑，消息通知，图片上传,个人界信息编辑，热门话题，问题与用户的搜索，以及后台管理（在主页输入url /admin 进入）
+已完成登陆注册,发帖，回复评论，markdown编辑，消息通知，图片上传,个人界信息编辑，热门话题，问题与用户的搜索，以及后台管理（在主页输入url /admin 进入）设置首页置顶问题
 
 部分权限验证
 
-待完成点赞，热门帖子，推荐帖子，文件上传，找回密码。
+待完成点赞，热门帖子，文件上传，找回密码，删除未使用图片
 
 后端使用 Spring boot 和  mybatis 开发
 
@@ -240,8 +240,3 @@ service 服务层
 util 各种工具
 
 
-```html
-<video class="container" id="video" controls="" preload="none">
-<source id="mp4" src="/file/admin/video/pd48.mp4" type="video/mp4">
-</video>
-```

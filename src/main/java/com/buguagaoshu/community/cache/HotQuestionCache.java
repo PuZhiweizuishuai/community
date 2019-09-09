@@ -6,4 +6,5 @@ package com.buguagaoshu.community.cache;
  * 热门问题
  */
 public class HotQuestionCache {
+
 }

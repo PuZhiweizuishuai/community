@@ -22,7 +22,7 @@ public enum CustomizeErrorCode implements ICustomizeErrorCode {
     NOTIFICATION_NOT_FOUND(2009, "消息莫非是不翼而飞了？"),
     FILE_UPLOAD_FAIL(2010, "图片上传失败"),
     INVALID_INPUT(2011, "非法输入"),
-    INVALID_OPERATION(2012, "兄弟，是不是走错房间了？"),;
+    INVALID_OPERATION(2012, "你正在尝试修改不属于你的问题！"),;
 
     @Override
     public String getMessage() {

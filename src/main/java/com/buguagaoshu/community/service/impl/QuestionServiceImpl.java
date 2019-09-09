@@ -4,6 +4,8 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.QuestionClassType;
 import com.buguagaoshu.community.enums.QuestionSortType;
+import com.buguagaoshu.community.exception.CustomizeErrorCode;
+import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
@@ -14,6 +16,7 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
  * create          2019-08-15 15:51
  */
 @Service
+@Slf4j
 public class QuestionServiceImpl implements QuestionService {
     private final QuestionMapper questionMapper;
 
@@ -122,6 +126,13 @@ public class QuestionServiceImpl implements QuestionService {
             question.setAlterTime(System.currentTimeMillis());
             return questionMapper.createQuestion(question);
         } else {
+            Question oldQuestion = questionMapper.selectQuestionById(question.getQuestionId(), 1);
+            // 防止用户修改不属于自己的问题
+            // 另一方面防止用户修改自己的问题时，改错问题
+            if(oldQuestion == null ||oldQuestion.getUserId() != question.getUserId() || oldQuestion.getCreateTime() != question.getCreateTime()) {
+                log.info("有人尝试非法修改，修改被拦截！");
+                throw new CustomizeException(CustomizeErrorCode.INVALID_OPERATION);
+            }
             question.setAlterTime(System.currentTimeMillis());
             return questionMapper.updateQuestion(question);
         }

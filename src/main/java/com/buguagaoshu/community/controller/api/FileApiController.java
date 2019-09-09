@@ -57,11 +57,11 @@ public class FileApiController {
         String pathName = "/" + path + name;
         File dest = new File(path);
         //判断文件父目录是否存在
-        if(!dest.exists()){
-            dest.mkdirs();
+        if(!dest.exists() && !dest.mkdirs()){
+            return new FileDTO(0,"上传失败，请重试", "");
         }
 
-
+        // TODO 思考如何标记未使用图片
         try {
             // 保存图片
             Files.copy(file.getInputStream(), Paths.get(path, name));
