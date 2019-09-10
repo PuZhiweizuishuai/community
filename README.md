@@ -33,6 +33,15 @@
 
 
 ## 快速运行
+
+你可以选择到releases中下载直接运行或这自己打包。
+
+不管怎样，你都需要先使用 database.sql 脚本创建数据库
+
+与配置 application.properties 
+
+以下为打包方法
+
 环境准备
 
 Java版本： Java 8 及以上
@@ -48,9 +57,8 @@ maven: 3
             <version>1.4.199</version>
         </dependency>
 ```
-
 使用 database.sql 脚本创建数据库
-进入 REALEAS 文件下配置 application.properties 
+配置 application.properties
 
 运行打包命令
 ```bash
