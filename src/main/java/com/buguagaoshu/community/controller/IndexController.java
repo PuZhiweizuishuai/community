@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.IndexTopQuestion;
 import com.buguagaoshu.community.dto.PaginationDto;
@@ -33,11 +34,14 @@ public class IndexController {
 
     private final IndexTopQuestion indexTopQuestion;
 
+    private final HotQuestionCache hotQuestionCache;
+
     @Autowired
-    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion) {
+    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache) {
         this.questionService = questionService;
         this.hotTagCache = hotTagCache;
         this.indexTopQuestion = indexTopQuestion;
+        this.hotQuestionCache = hotQuestionCache;
     }
 
 
@@ -63,12 +67,11 @@ public class IndexController {
         }
         // 首页置顶问题显示
         if (page.equals("1") && (tag == null || tag.equals("")) && sort.equals("3") && classification.equals("0")) {
-            // Long[] question = new Long[]{23L};
-            // indexTopQuestion.setTopQuestion(question);
             model.addAttribute("TopQuestion", indexTopQuestion.getTopQuestion());
         }
 
         PaginationDto<QuestionDto> paginationDto = questionService.getSomeQuestionDto(page, size, tag, s, c);
+        model.addAttribute("hotQuestions", hotQuestionCache.getHotQuestionDTOList());
         model.addAttribute("paginationDto", paginationDto);
         model.addAttribute("hots", hots);
         model.addAttribute("tag", tag);

@@ -40,6 +40,15 @@
             background-color:#494a4b;
             color: white;
         }
+        .hot-tag {
+            background-color: #99cfff;
+        }
+        .hot-tag:hover{
+            background-color: #23527c;
+        }
+        .hot-question {
+            padding: 5px;
+        }
 
     </style>
     <script type="text/javascript">
@@ -107,9 +116,9 @@
                             <li class="nav-item">
                                 <a class="nav-link active" id="new-nav" th:href="@{/(tag=${tag},sort=3,class=${class})}">最新</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="alert('正在施工中！！！')">热门</a>
-                            </li>
+                            <!--<li class="nav-item">-->
+                                <!--<a class="nav-link" href="#" onclick="alert('正在施工中！！！')">热门</a>-->
+                            <!--</li>-->
                             <li class="nav-item">
                                 <a class="nav-link" id="no-nav" th:href="@{/(tag=${tag},sort=0,class=${class})}" style="color: red;">消灭零回复</a>
                             </li>
@@ -277,14 +286,32 @@
                 </a>
             </div>
             <br/>
-            <h5 class="mb-2">热门话题</h5>
+            <h5 class="mb-2">
+                <img class="mr-2" src="/image/icon/hot-tag.svg" width="20px" height="20px">
+                热门标签
+            </h5>
 
-            <div class="content" th:each="tag : ${hots}">
-                <a th:href="@{/(page=1,tag=${tag},sort=${sort})}">
-                    <p class="mt-2" th:text="${tag}"></p>
-                </a>
+            <div class="content">
+                <span th:each="tag : ${hots}">
+                    <a class="mb-2" th:href="@{/(page=1,tag=${tag},sort=${sort})}">
+                        <span class="badge badge-primary hot-tag" th:text="${tag}">Primary</span>
+                    </a>
+                </span>
             </div>
-
+            <hr/>
+            <h5 class="mb-2">
+                <img class="mr-2" src="/image/icon/hot-question.svg" width="20px" height="20px">
+                热门问题
+            </h5>
+            <div class="container mt-2" style="padding: 0px;">
+                <div class="list-group">
+                    <a th:each="hotQuestion : ${hotQuestions}" th:href="${'/question/' + hotQuestion.getQuestionId()}" class="list-group-item list-group-item-action hot-question">
+                        <span th:if="${hotQuestionStat.index < 3}" class="badge badge-danger" th:text="${hotQuestionStat.index+1}">Danger</span>
+                        <span th:if="${hotQuestionStat.index >= 3}" class="badge badge-secondary" th:text="${hotQuestionStat.index+1}">Danger</span>
+                        <span class="ml-2" th:text="${hotQuestion.title}"></span>
+                    </a>
+                </div>
+            </div>
 
             <br/><br/>
             <p><a class="link-to-text" href="#"><span style="color: red">New!</span>&nbsp;新闻</a></p>

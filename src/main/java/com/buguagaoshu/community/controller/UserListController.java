@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.HotUserCache;
 import com.buguagaoshu.community.dto.PaginationDto;
@@ -25,11 +26,14 @@ public class UserListController {
 
     private final HotTagCache hotTagCache;
 
+    private final HotQuestionCache hotQuestionCache;
+
     @Autowired
-    public UserListController(UserService userService, HotUserCache hotUserCache, HotTagCache hotTagCache) {
+    public UserListController(UserService userService, HotUserCache hotUserCache, HotTagCache hotTagCache, HotQuestionCache hotQuestionCache) {
         this.userService = userService;
         this.hotUserCache = hotUserCache;
         this.hotTagCache = hotTagCache;
+        this.hotQuestionCache = hotQuestionCache;
     }
 
 
@@ -48,6 +52,7 @@ public class UserListController {
         }
         List<String> hots = hotTagCache.getHots();
         PaginationDto<User> userPaginationDto = userService.getUserList(page, size);
+        model.addAttribute("hotQuestions", hotQuestionCache.getHotQuestionDTOList());
         model.addAttribute("newUser", userPaginationDto);
         model.addAttribute("hots", hots);
         model.addAttribute("class", type);

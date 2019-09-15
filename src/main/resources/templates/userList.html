@@ -42,6 +42,17 @@
         }
 
     </style>
+    <style type="text/css">
+        .hot-tag {
+            background-color: #99cfff;
+        }
+        .hot-tag:hover{
+            background-color: #23527c;
+        }
+        .hot-question {
+            padding: 5px;
+        }
+    </style>
     <script type="text/javascript">
         if (window.localStorage.getItem("closable") === "true") {
             window.localStorage.removeItem("closable");
@@ -97,7 +108,7 @@
                                         <span class="mb-2">获赞数：</span><span th:text="${user.likeCount}"></span>
                                     </p>
                                     <p class="mb-1">
-                                        <button type="button" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
+                                        <button type="button"  style="font-size: 10px" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
                                             关注 <span class="badge badge-light" th:text="${user.followCount}">4</span>
                                         </button>
                                     </p>
@@ -138,8 +149,8 @@
                                     <span th:if="${user.getSimpleSelfIntroduction()==null}">该用户暂未填写！</span>
                                     <span th:text="${user.getSimpleSelfIntroduction()}"></span>
                                 </p>
-                                <p class="mb-1">
-                                    <button type="button" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
+                                <p class="mb-1" >
+                                    <button type="button" style="font-size: 10px" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
                                         关注
                                     </button>
                                 </p>
@@ -242,14 +253,32 @@
                 </a>
             </div>
             <br/>
-            <h5 class="mb-2">热门话题</h5>
+            <h5 class="mb-2">
+                <img class="mr-2" src="/image/icon/hot-tag.svg" width="20px" height="20px">
+                热门话题
+            </h5>
 
-            <div class="content" th:each="tag : ${hots}">
-                <a th:href="@{/(page=1,tag=${tag},sort=${sort})}">
-                    <p class="mt-2" th:text="${tag}"></p>
-                </a>
+            <div class="content">
+                <span th:each="tag : ${hots}">
+                    <a class="mb-2" th:href="@{/(page=1,tag=${tag},sort=${sort})}">
+                        <span class="badge badge-primary hot-tag" th:text="${tag}">Primary</span>
+                    </a>
+                </span>
             </div>
-
+            <hr/>
+            <h5 class="mb-2">
+                <img class="mr-2" src="/image/icon/hot-question.svg" width="20px" height="20px">
+                热门问题
+            </h5>
+            <div class="container mt-2" style="padding: 0px;">
+                <div class="list-group">
+                    <a th:each="hotQuestion : ${hotQuestions}" th:href="${'/question/' + hotQuestion.getQuestionId()}" class="list-group-item list-group-item-action hot-question">
+                        <span th:if="${hotQuestionStat.index < 3}" class="badge badge-danger" th:text="${hotQuestionStat.index+1}">Danger</span>
+                        <span th:if="${hotQuestionStat.index >= 3}" class="badge badge-secondary" th:text="${hotQuestionStat.index+1}">Danger</span>
+                        <span class="ml-2" th:text="${hotQuestion.title}"></span>
+                    </a>
+                </div>
+            </div>
 
             <br/><br/>
             <p><a class="link-to-text" href="#"><span style="color: red">New!</span>&nbsp;新闻</a></p>

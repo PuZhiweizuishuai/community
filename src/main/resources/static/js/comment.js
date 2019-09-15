@@ -11,9 +11,6 @@ function twoLevelComment(e) {
     var questionId = $("#questionId").val();
     var content = $("#second-content-" + parentId).val();
     var captcha = $("#second-captcha-" + parentId).val();
-    console.log(parentId);
-    console.log(content);
-    console.log(captcha);
     sendComments(questionId, parentId, content, 2, captcha);
 }
 
@@ -150,19 +147,4 @@ function showSecondComment(e) {
         e.classList.add("active");
 
     }
-    // comment.collapse('toggle');
-
-    // console.log(id);
-}
-
-
-function showCommentMarkdown(e) {
-    console.log(e.id);
-    $(function () {
-        var testView = editormd.markdownToHTML(e.id, {
-            // markdown : "[TOC]\n### Hello world!\n## Heading 2", // Also, you can dynamic set Markdown text
-            // htmlDecode : true,  // Enable / disable HTML tag encode.
-            // htmlDecode : "style,script,iframe",  // Note: If enabled, you should filter some dangerous HTML tags for website security.
-        });
-    });
 }
