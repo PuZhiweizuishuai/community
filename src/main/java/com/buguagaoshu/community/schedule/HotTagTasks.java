@@ -23,11 +23,16 @@ import java.util.Map;
 @Slf4j
 @Component
 public class HotTagTasks {
-    @Autowired
+    final
     QuestionService questionService;
 
+    private final HotTagCache hotTagCache;
+
     @Autowired
-    private HotTagCache hotTagCache;
+    public HotTagTasks(QuestionService questionService, HotTagCache hotTagCache) {
+        this.questionService = questionService;
+        this.hotTagCache = hotTagCache;
+    }
 
     /**
      * 热门话题每三小时更新一次

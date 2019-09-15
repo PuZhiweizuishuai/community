@@ -95,4 +95,13 @@ public interface QuestionService {
 
 
     PaginationDto<QuestionDto> searchAllQuestionList(String search ,String page, String size);
+
+
+    /**
+     * 带状态的计算该用户发布的问题数量
+     * @param id 用户 id
+     * @param status 状态
+     * @return 返回问题总数
+     */
+    long getUserQuestionCount(long id, int status);
 }

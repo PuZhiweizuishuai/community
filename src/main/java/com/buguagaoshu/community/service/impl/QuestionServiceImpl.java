@@ -290,6 +290,11 @@ public class QuestionServiceImpl implements QuestionService {
 
     }
 
+    @Override
+    public long getUserQuestionCount(long id, int status) {
+        return questionMapper.getUserQuestionCount(id, status);
+    }
+
 
     public PaginationDto<QuestionDto> paginationDto(List<Question> questionList, long allQuestionCount, long[] param) {
         Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());

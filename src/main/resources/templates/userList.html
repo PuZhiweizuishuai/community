@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" th:href="@{/favicon.png}"/>
+    <link rel="bookmark" th:href="@{/favicon.png}"/>
+    <title th:text="#{index.title}">不挂高数社区</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/index.css"/>
+    <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <style type="text/css">
+        body {
+        / / background-image: url("https://api.isoyu.com/bing_images.php");
+            background-color: #efefef;
+        }
+
+        .issue-right {
+            border-right-style: solid;
+            border-right-width: 1px;
+            border-right-color: #efefef;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+        .my-nav {
+            background-color: #efefef;
+            color: black;
+            border-radius: 10px;
+        }
+
+        .my-nav-active {
+            background: #494a4b;
+            color: white;
+        }
+        .my-nav:hover {
+            background-color:#494a4b;
+            color: white;
+        }
+
+    </style>
+    <script type="text/javascript">
+        if (window.localStorage.getItem("closable") === "true") {
+            window.localStorage.removeItem("closable");
+            window.close();
+        }
+    </script>
+</head>
+<body>
+<!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->
+<div th:insert="~{navigation :: navbar}"></div>
+
+
+<div class="container" style="height: 30px">
+</div>
+</div>
+<!-- 帖子列表显示 -->
+<div class="container shadow-sm" style="background-color: white;">
+    <div class="row">
+        <!-- 左边 -->
+        <div class="col-xl-9 mt-3 issue-right">
+            <!--活跃用户-->
+            <div th:if="${page=='1'}">
+                <div class="container">
+                    <h4>
+                        <img src="/image/icon/hotuser.svg" alt="活跃用户" width="35" height="35"/>
+                        活跃用户
+                    </h4>
+                    <hr style="margin-top: 0%;">
+                </div>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-5" th:each="user : ${hotUser}">
+                            <div class="media">
+                                <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}"><img
+                                        class="align-self-center mr-3 img-fluid rounded-circle" th:src="${user.getHeadUrl()}"
+                                        src="image/head/boyhead.png"
+                                        style="max-width: 64px; height: auto; "></a>
+                                <div class="media-body">
+                                    <h5 class="mt-0">
+                                        <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}">
+                                            <span th:text="${user.getUserName()}"></span>
+                                            <span class="badge badge-warning" th:if="${user.getPower() == 2}">VIP</span>
+                                        </a>
+
+                                    </h5>
+                                    <p class="mb-1">
+                                        <span>简介：</span>
+                                        <span th:if="${user.getSimpleSelfIntroduction()==null}">该用户暂未填写！</span>
+                                        <span th:text="${user.getSimpleSelfIntroduction()}"></span>
+                                    </p>
+                                    <p class="mb-1" style="font-size: 15px;">
+                                        <span>问题数：</span><span th:text="${user.questionCount}"></span>
+                                        <span class="mb-2">获赞数：</span><span th:text="${user.likeCount}"></span>
+                                    </p>
+                                    <p class="mb-1">
+                                        <button type="button" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
+                                            关注 <span class="badge badge-light" th:text="${user.followCount}">4</span>
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!--新用户-->
+            <div class="container">
+                <h4>
+                    <img src="/image/icon/newUser.svg" alt="新用户" width="35" height="35"/>
+                    最新加入
+                </h4>
+                <hr style="margin-top: 0%;">
+            </div>
+            <div class="container">
+                <div class="row" >
+                    <div class="col-5 mt-4" th:each="user : ${newUser.data}">
+                        <div class="media">
+                            <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}"><img
+                                    class="align-self-center mr-3 img-fluid rounded-circle" th:src="${user.getHeadUrl()}"
+                                    src="image/head/boyhead.png"
+                                    style="max-width: 64px; height: auto; "></a>
+                            <div class="media-body">
+                                <h5 class="mt-0">
+                                    <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}">
+                                        <span th:text="${user.getUserName()}"></span>
+                                        <span class="badge badge-warning" th:if="${user.getPower() == 2}">VIP</span>
+                                    </a>
+
+                                </h5>
+                                <p class="mb-1">
+                                    <span>简介：</span>
+                                    <span th:if="${user.getSimpleSelfIntroduction()==null}">该用户暂未填写！</span>
+                                    <span th:text="${user.getSimpleSelfIntroduction()}"></span>
+                                </p>
+                                <p class="mb-1">
+                                    <button type="button" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
+                                        关注
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 页码 -->
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-end">
+                    <!-- 返回首页 -->
+                    <li class="page-item" th:if="${newUser.showFirstPage}">
+                        <a class="page-link" id="first-page-a" th:href="'/user'+@{/(page=1,class=${class})}"
+                           aria-label="Previous"
+                           onclick="addLocaleUrlForPage('first-page-a')">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
+                    <!-- 上一页 -->
+                    <li class="page-item" th:if="${newUser.showPrevious}">
+                        <a class="page-link" id="link-to-last-a"
+                           th:href="'/user'+@{/(page=${newUser.nowPage - 1},class=${class})}"
+                           aria-label="Previous"
+                           onclick="addLocaleUrlForPage('link-to-last-a')">
+                            <span aria-hidden="true">&laquo;</span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
+
+
+                    <li class="page-item" th:each="page : ${newUser.pages}"
+                        th:class="${newUser.nowPage == page}? 'page-item active' : 'page-item'">
+                        <a class="page-link" th:href="'/user'+@{/(page=${page},class=${class})}" th:text="${page}"
+                           th:id="${page}"
+                           th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
+                            1
+                        </a>
+                    </li>
+
+
+                    <!-- 下一页 -->
+                    <li class="page-item" th:if="${newUser.showNext}">
+                        <a class="page-link" id="lind-to-next-a"
+                           th:href="'/user'+@{/(page=${newUser.nowPage +1 },class=${class})}"
+                           aria-label="Next"
+                           onclick="addLocaleUrlForPage('lind-to-next-a')">
+                            <span aria-hidden="true">&raquo;</span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                    </li>
+                    <!-- 最后一页 -->
+                    <li class="page-item" th:if="${newUser.showEndPage}">
+                        <a class="page-link" id="link-to-end-a" th:if="${newUser.showEndPage}"
+                           th:href="'/user'+@{/(page=${newUser.totalPage},class=${class})}"
+                           aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- 右边 -->
+        <div class="col">
+            <br/>
+            <p>
+                广告位招租
+            </p>
+            <!-- 图片轮播 -->
+            <div id="Advertisement" class="carousel slide" data-ride="carousel">
+                <ol class="carousel-indicators">
+                    <li data-target="#Advertisement" data-slide-to="0" class="active"></li>
+                    <li data-target="#Advertisement" data-slide-to="1"></li>
+                    <li data-target="#Advertisement" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="First slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Second slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Third slide"></a>
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#Advertisement" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#Advertisement" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+            <br/>
+            <h5 class="mb-2">热门话题</h5>
+
+            <div class="content" th:each="tag : ${hots}">
+                <a th:href="@{/(page=1,tag=${tag},sort=${sort})}">
+                    <p class="mt-2" th:text="${tag}"></p>
+                </a>
+            </div>
+
+
+            <br/><br/>
+            <p><a class="link-to-text" href="#"><span style="color: red">New!</span>&nbsp;新闻</a></p>
+            <!-- 图片轮播 -->
+            <div id="news-carousel" class="carousel slide" data-ride="carousel">
+                <ol class="carousel-indicators">
+                    <li data-target="#news-carousel" data-slide-to="0" class="active"></li>
+                    <li data-target="#news-carousel" data-slide-to="1"></li>
+                    <li data-target="#news-carousel" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="First slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Second slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Third slide"></a>
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#news-carousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#news-carousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="height: 30px">
+    </div>
+</div>
+
+
+<!-- 页脚 -->
+<div th:insert="~{footer :: footer}"></div>
+<script>
+    function addBottom() {
+        document.getElementById("new-nav").style.
+    }
+</script>
+
+<script src="/js/url.js" type="text/javascript"></script>
+</body>
+</html>

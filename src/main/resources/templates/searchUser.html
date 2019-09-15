@@ -70,7 +70,7 @@
                 <hr/>
             </div>
 
-            <!-- 帖子 -->
+            <!-- 用户 -->
             <div th:if="${paginationDto != null}" th:each="user : ${paginationDto.data}">
                 <div class="media">
                     <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}"><img
@@ -82,7 +82,7 @@
                                             th:text="${user.getUserName()}">中间对齐
 
                         </a>
-                            <span class="ml-4" style="font-size: 15px">用户ID：<span th:text="${user.getUserId()}"></span></span>
+                            <span class="ml-4" style="font-size: 15px">用户邮箱：<span th:text="${user.getEmail()}"></span></span>
                         </h5>
                         <p class="mb-1" th:text="${user.getSimpleSelfIntroduction()}"></p>
                         <p class="mb-1" th:text="${user.getSelfIntroduction()}">Cras sit amet nibh libero</p>
