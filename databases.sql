@@ -31,7 +31,7 @@ CREATE TABLE users
     creationTime VARCHAR(19),
     lastTime VARCHAR(19),
     headUrl VARCHAR(300),
-    userTopPhotoUrl varchar (300)
+    userTopPhotoUrl varchar (300),
     PRIMARY KEY (id)
 );
 --
