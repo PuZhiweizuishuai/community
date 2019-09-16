@@ -166,7 +166,7 @@ public class UserUpdateApiController {
         if(simpleSelfIntroduction != null && simpleSelfIntroduction.length() >= 50) {
             return StringUtil.dealResultMessage(false, "个性签名超出限定长度");
         }
-        if(selfIntroduction != null && selfIntroduction.length() >= 50) {
+        if(selfIntroduction != null && selfIntroduction.length() >= 500) {
             return StringUtil.dealResultMessage(false, "简介超出限定长度");
         }
         user.setSimpleSelfIntroduction(simpleSelfIntroduction);
