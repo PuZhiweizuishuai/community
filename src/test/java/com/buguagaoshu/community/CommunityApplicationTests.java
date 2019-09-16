@@ -43,8 +43,8 @@ public class CommunityApplicationTests {
 
     @Test
     public void contextLoads() {
-        System.out.println(notificationService.getAllNotification("0","10",1000,"5"));
-
+        //System.out.println(notificationService.getAllNotification("0","10",1000,"5"));
+        System.out.println(StringUtil.foematTime(1568610590229L));
     }
 
 }

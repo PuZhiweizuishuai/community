@@ -52,6 +52,7 @@ public class PublishController {
                               //@RequestParam("issuesFile") MultipartFile file,
                               @RequestParam("tag") String tag,
                               @RequestParam(value = "questionId", defaultValue = "-1") String questionId,
+                              @RequestParam(value = "createTime", defaultValue = "0") String createTime,
                               @RequestParam("CAPTCHA") String CAPTCHA,
                               HttpServletRequest request,
                               Model model) {
@@ -65,6 +66,12 @@ public class PublishController {
         } catch (Exception e) {
             id = -1;
         }
+        long time;
+        try {
+            time = Long.valueOf(createTime);
+        } catch (Exception e) {
+            time = 0;
+        }
         Question question = new Question();
         question.setQuestionId(id);
         question.setTitle(title);
@@ -72,6 +79,7 @@ public class PublishController {
         question.setDescription(description);
         question.setTag(tag);
         question.setUserId(user.getId());
+        question.setCreateTime(time);
 
         if (!check(question, CAPTCHA, model, request)) {
             return StringUtil.jumpWebLangeParameter("publish", false, request);
@@ -107,8 +115,6 @@ public class PublishController {
             CaptchaUtil.clear(request);
             return true;
         }
-
-
 
         if (question.getTitle() == null || question.getTitle().equals("")) {
             model.addAttribute("titleMessage", "标题不能为空！");
