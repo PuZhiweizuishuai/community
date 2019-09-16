@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" th:href="@{/favicon.png}"/>
+    <link rel="bookmark" th:href="@{/favicon.png}"/>
+    <title th:text="#{index.title}">不挂高数社区</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/index.css"/>
+    <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <style type="text/css">
+        body {
+        / / background-image: url("https://api.isoyu.com/bing_images.php");
+            background-color: #efefef;
+        }
+
+        .issue-right {
+            border-right-style: solid;
+            border-right-width: 1px;
+            border-right-color: #efefef;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+        .my-nav {
+            background-color: #efefef;
+            color: black;
+            border-radius: 10px;
+        }
+
+        .my-nav-active {
+            background: #494a4b;
+            color: white;
+        }
+        .my-nav:hover {
+            background-color:#494a4b;
+            color: white;
+        }
+
+    </style>
+    <style type="text/css">
+        .hot-tag {
+            background-color: #99cfff;
+        }
+        .hot-tag:hover{
+            background-color: #23527c;
+        }
+        .hot-question {
+            padding: 5px;
+        }
+    </style>
+    <script type="text/javascript">
+        if (window.localStorage.getItem("closable") === "true") {
+            window.localStorage.removeItem("closable");
+            window.close();
+        }
+    </script>
+</head>
+<body>
+<!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->
+<div th:insert="~{navigation :: navbar}"></div>
+
+
+<div class="container" style="height: 30px">
+</div>
+</div>
+<!-- 帖子列表显示 -->
+<div class="container shadow-sm" style="background-color: white;">
+    <div class="row">
+        <!-- 左边 -->
+        <div class="col-xl-9 mt-3 issue-right">
+            <h1>正在努力施工中！</h1>
+        </div>
+
+        <!-- 右边 -->
+        <div class="col">
+            <br/>
+            <p>
+                广告位招租
+            </p>
+            <!-- 图片轮播 -->
+            <div id="Advertisement" class="carousel slide" data-ride="carousel">
+                <ol class="carousel-indicators">
+                    <li data-target="#Advertisement" data-slide-to="0" class="active"></li>
+                    <li data-target="#Advertisement" data-slide-to="1"></li>
+                    <li data-target="#Advertisement" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="First slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Second slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Third slide"></a>
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#Advertisement" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#Advertisement" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+            <br/>
+            <h5 class="mb-2">
+                <img class="mr-2" src="/image/icon/hot-tag.svg" width="20px" height="20px">
+                热门话题
+            </h5>
+
+            <div class="content">
+                <span th:each="tag : ${hots}">
+                    <a class="mb-2" th:href="@{/(page=1,tag=${tag},sort=${sort})}">
+                        <span class="badge badge-primary hot-tag" th:text="${tag}">Primary</span>
+                    </a>
+                </span>
+            </div>
+            <hr/>
+            <h5 class="mb-2">
+                <img class="mr-2" src="/image/icon/hot-question.svg" width="20px" height="20px">
+                热门问题
+            </h5>
+            <div class="container mt-2" style="padding: 0px;">
+                <div class="list-group">
+                    <a th:each="hotQuestion : ${hotQuestions}" th:href="${'/question/' + hotQuestion.getQuestionId()}" class="list-group-item list-group-item-action hot-question">
+                        <span th:if="${hotQuestionStat.index < 3}" class="badge badge-danger" th:text="${hotQuestionStat.index+1}">Danger</span>
+                        <span th:if="${hotQuestionStat.index >= 3}" class="badge badge-secondary" th:text="${hotQuestionStat.index+1}">Danger</span>
+                        <span class="ml-2" th:text="${hotQuestion.title}"></span>
+                    </a>
+                </div>
+            </div>
+
+            <br/><br/>
+            <p><a class="link-to-text" href="#"><span style="color: red">New!</span>&nbsp;新闻</a></p>
+            <!-- 图片轮播 -->
+            <div id="news-carousel" class="carousel slide" data-ride="carousel">
+                <ol class="carousel-indicators">
+                    <li data-target="#news-carousel" data-slide-to="0" class="active"></li>
+                    <li data-target="#news-carousel" data-slide-to="1"></li>
+                    <li data-target="#news-carousel" data-slide-to="2"></li>
+                </ol>
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="First slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Second slide"></a>
+                    </div>
+                    <div class="carousel-item">
+                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
+                                        alt="Third slide"></a>
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#news-carousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#news-carousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="height: 30px">
+    </div>
+</div>
+
+
+<!-- 页脚 -->
+<div th:insert="~{footer :: footer}"></div>
+<script src="/js/url.js" type="text/javascript"></script>
+</body>
+</html>
