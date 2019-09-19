@@ -205,6 +205,11 @@
                                 其他设置
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="pills-advertisement-tab" data-toggle="pill" href="#pills-advertisement" role="tab" aria-controls="pills-advertisement" aria-selected="false">
+                                广告投放
+                            </a>
+                        </li>
                     </ul>
                     <hr/>
                     <div class="tab-content" id="pills-tabContent">
@@ -258,10 +263,20 @@
 
                         </div>
                         <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
-                            待开发
+                            即将上线
                         </div>
                         <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
-                            待开发
+                            <div class="row ml-2">
+                                <button type="button" class="btn btn-primary" onclick="updateHotUser()">立即重新计算热门用户</button>
+                                <button type="button" class="btn btn-primary" onclick="updateHotTag()">立即重新计算热门标签</button>
+                                <button type="button" class="btn btn-primary" onclick="updateHotQuestion()">立即重新计算热门问题</button>
+                            </div>
+                            <div class="container" style="height: 30px">
+
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="pills-advertisement" role="tabpanel" aria-labelledby="pills-advertisement-tab">
+                            即将上线
                         </div>
                     </div>
                 </div>

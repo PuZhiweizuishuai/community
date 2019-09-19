@@ -32,8 +32,8 @@ public class HotQuestionTasks {
         this.hotQuestionCache = hotQuestionCache;
     }
 
-    @Scheduled(fixedRate = 10800000)
-    public void HotQuestionCurrentTime() {
+    @Scheduled(fixedRate = 3600000)
+    public void hotQuestionCurrentTime() {
         long offset = 0;
         // 暴力循环最新的一百条提问计算热门话题
         long limit = 100;

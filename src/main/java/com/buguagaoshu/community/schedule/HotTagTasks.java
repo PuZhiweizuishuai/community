@@ -1,8 +1,6 @@
 package com.buguagaoshu.community.schedule;
 
 import com.buguagaoshu.community.cache.HotTagCache;
-import com.buguagaoshu.community.dto.QuestionDto;
-import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.QuestionService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +33,9 @@ public class HotTagTasks {
     }
 
     /**
-     * 热门话题每三小时更新一次
+     * 热门话题每一小时更新一次
      * */
-    @Scheduled(fixedRate = 10800000)
+    @Scheduled(fixedRate = 3600000)
     public void hotTagsCurrentTime() {
         long offset = 0;
         // 暴力循环最新的一百条提问计算热门话题

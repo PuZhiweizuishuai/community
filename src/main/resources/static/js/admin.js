@@ -113,3 +113,45 @@ function settingIndexTopQuestion() {
 
 
 }
+
+function updateHotTag() {
+    $.ajax({
+        type: 'get',
+        url: '/api/admin/updateHotTag',
+        success: function (resultdata) {
+            if (resultdata.success) {
+                alert(resultdata.msg)
+            } else {
+                alert(resultdata.msg);
+            }
+        }
+    })
+}
+
+function updateHotQuestion() {
+    $.ajax({
+        type: 'get',
+        url: '/api/admin/updateHotQuestion',
+        success: function (resultdata) {
+            if (resultdata.success) {
+                alert(resultdata.msg)
+            } else {
+                alert(resultdata.msg);
+            }
+        }
+    })
+}
+
+function updateHotUser() {
+    $.ajax({
+        type: 'get',
+        url: '/api/admin/updateHotUser',
+        success: function (resultdata) {
+            if (resultdata.success) {
+                alert(resultdata.msg)
+            } else {
+                alert(resultdata.msg);
+            }
+        }
+    })
+}

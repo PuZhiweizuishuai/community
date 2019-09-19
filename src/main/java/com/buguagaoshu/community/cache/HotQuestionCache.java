@@ -20,6 +20,7 @@ public class HotQuestionCache {
     List<HotQuestionDTO> hotQuestionDTOList = new ArrayList<>();
 
     public void updateHotQuestion(List<HotQuestionDTO> hotQuestionDTOList) {
+        this.hotQuestionDTOList.clear();
         // 计算热门的十个问题
         int i = 0, max = 10;
         Collections.sort(hotQuestionDTOList);

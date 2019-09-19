@@ -42,7 +42,7 @@ public class HotUserTasks {
     }
 
     @Scheduled(fixedRate = 10800000)
-    private void hotUserCurrentTime() {
+    public void hotUserCurrentTime() {
         long offset = 0;
         long limit = 100;
         log.info("开始计算活跃用户！");

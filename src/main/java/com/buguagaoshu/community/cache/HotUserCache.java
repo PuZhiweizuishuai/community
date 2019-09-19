@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -21,6 +22,7 @@ public class HotUserCache {
 
     public void updateUserDtoList(List<UserDto> userDtoList) {
         int max = 50;
+        this.userDtoList.clear();
         // Collections.sort(userDtoList);
         // this.userDtoList = userDtoList;
         PriorityQueue<UserDto> priorityQueue = new PriorityQueue<>(max);

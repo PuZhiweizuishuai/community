@@ -454,7 +454,6 @@
         var list = document.getElementsByClassName("comment-show-md");
         var length = list.length;
         for (var i = 0; i < length; i++) {
-            console.log(list[i].id);
             editormd.markdownToHTML(list[i].id, {
                 htmlDecode      : "style,script,iframe",
                 tex: true,  // 默认不解析
