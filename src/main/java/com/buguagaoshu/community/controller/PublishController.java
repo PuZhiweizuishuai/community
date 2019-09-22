@@ -1,12 +1,9 @@
 package com.buguagaoshu.community.controller;
 
-import com.buguagaoshu.community.cache.TagCache;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

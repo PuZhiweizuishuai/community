@@ -1,19 +1,14 @@
 package com.buguagaoshu.community.interceptor;
 
-import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.User;
-import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.JwtUtil;
 import io.jsonwebtoken.Claims;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 

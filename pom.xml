@@ -32,12 +32,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
-        <!-- Apache Shiro 安全框架 -->
-        <dependency>
-            <groupId>org.apache.shiro</groupId>
-            <artifactId>shiro-spring</artifactId>
-            <version>1.4.1</version>
-        </dependency>
         <!-- mybatis 框架 -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
@@ -80,13 +74,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.github.penggle</groupId>
-            <artifactId>kaptcha</artifactId>
-            <version>2.3.2</version>
-        </dependency>
-
         <dependency>
             <groupId>org.wf</groupId>
             <artifactId>EasyCaptcha</artifactId>
@@ -105,6 +92,11 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
             <version>0.9.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session-jdbc</artifactId>
         </dependency>
     </dependencies>
 

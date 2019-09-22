@@ -22,8 +22,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class CommunityApplicationTests {
-    @Value("${index.page.size}")
-    private String size;
+    @Value("${jwt.key}")
+    private String key;
 
     @Autowired
     private QuestionService questionService;
@@ -43,8 +43,8 @@ public class CommunityApplicationTests {
 
     @Test
     public void contextLoads() {
-        //System.out.println(notificationService.getAllNotification("0","10",1000,"5"));
-        System.out.println(StringUtil.foematTime(1568610590229L));
+
+        System.out.println(key);
     }
 
 }

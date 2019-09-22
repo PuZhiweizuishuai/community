@@ -113,79 +113,6 @@ java -jar community-0.0.1-SNAPSHOT.jar
 
 ![](https://github.com/PuZhiweizuishuai/community/blob/master/images/adminPage%20(3).jpg)
 
-## application.properties 配置文件介绍
-
-**# 数据库驱动**
-
-spring.datasource.driver-class-name=com.mysql.jdbc.Driver
-
-**数据库连接地址**
-
-spring.datasource.url=jdbc:mysql://192.168.147.129:3306/community?useUnicode=true&characterEncoding=UTF-8
-
-**# 数据库账号**
-
-spring.datasource.username=
- 
-**# 数据库密码**
-spring.datasource.password=
-
-**# 运行端口号**
-
-server.port=8080
-
-**# 阿里巴巴数据库连接池简单配置**
-
-spring.datasource.type=com.alibaba.druid.pool.DruidDataSource
-
-**# 文件配置**
-
-**# 默认将在软件运行目录下创建一个名叫file的文件夹用于保存文件**
-
-File.ROOT.PATH=file
-
-**# 限制上传单文件最大大小**
-
-spring.servlet.multipart.max-file-size=10MB
-
-**# 限制所有文件最大大小**
-
-spring.servlet.multipart.max-request-size=1024MB
-
-**# 关闭spring boot 自己的 favicon**
-
-spring.mvc.favicon.enabled=false
-
-**# 日志文件目录**
-
-logging.file=log/spring.log
-
-**# 正常的日志级别**
-
-logging.level.root=info
-
-**# 显示 mapper 目录下日志级别**
-
-**# logging.level.com.buguagaoshu.community.mapper=debug**
-
-**# 单日志文件大小**
-
-logging.file.max-size=1MB
-
-**# 要保留的最大存档日志天数**
-
-logging.file.max-history=7
-
-index.page.size=10
-
-**# jwt 密钥**
-
-jwt.key=buguagaoshu
-
-**# 默认token有效期两小时**
-
-jwt.ttl=7200000
-
 
 ## 资料
 [spring 入门指南](https://spring.io/guides)
@@ -201,6 +128,8 @@ jwt.ttl=7200000
 [Java web开发基础](http://jinxuliang.com/course/CoursePortal/Details/5a9268a9a664d72f041e0a6a)
 
 [BootStrap4 中文文档](http://bs4.ntp.org.cn/)
+
+[spring-session-jdbc](https://docs.spring.io/spring-session/docs/current/reference/html5/guides/boot-jdbc.html)
 
 ## 工具
 在线 markdown 编辑器 [markdown edit](https://pandao.github.io/editor.md/)
@@ -248,4 +177,8 @@ service 服务层
 
 util 各种工具
 
+## 更新日志
 
+### 2019-09-22更新
+
+添加 spring-session-jdbc，修改配置文件为 yml，删除不必要的包

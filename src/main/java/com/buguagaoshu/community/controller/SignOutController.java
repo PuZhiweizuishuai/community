@@ -3,8 +3,6 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.util.StringUtil;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

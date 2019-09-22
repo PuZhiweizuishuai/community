@@ -5,6 +5,8 @@ import com.buguagaoshu.community.component.MyLocaleResolver;
 import com.buguagaoshu.community.util.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.LocaleResolver;
 
@@ -30,6 +32,11 @@ public class MyConfig {
     @Bean
     public JwtUtil jwtUtil() {
         return new JwtUtil();
+    }
+
+    @Bean
+    public TaskScheduler taskScheduler() {
+        return new ThreadPoolTaskScheduler();
     }
 
 }

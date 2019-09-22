@@ -1,0 +1,49 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.147.129:3306/community?useUnicode=true&characterEncoding=UTF-8
+    username: puzhiwei
+    password: 123456
+    type: com.alibaba.druid.pool.DruidDataSource
+  session:
+    jdbc:
+      initialize-schema: always
+  servlet:
+    multipart:
+      # 限制单文件最大大小
+      max-file-size: 10MB
+      # 限制所有文件最大大小
+      max-request-size: 1024MB
+  mvc:
+    favicon:
+      enabled: false
+  messages:
+    basename: i18n.index
+
+server:
+  port: 8080
+
+# 应用根目录下的文件名
+File:
+  ROOT:
+    PATH: file
+
+logging:
+  file:
+    max-size: 1MB
+    max-history: 7
+  level:
+    root: info
+
+#logging:
+#  level:
+#    com:
+#      buguagaoshu:
+#        community:
+#          mapper: debug
+
+jwt:
+  key: buguagaoshu
+  ttl: 7200000
+
+
