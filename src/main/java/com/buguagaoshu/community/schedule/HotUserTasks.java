@@ -60,7 +60,7 @@ public class HotUserTasks {
         // 计算排序权值，一个回复为 5， 一个点赞为 3
         // TODO 待添加点赞数
         for(Question question : questionList) {
-            count.put(question.getUserId(), count.get(question.getUserId())+1L+ question.getCommentCount() * 5 + question.getLikeCount() * 3);
+            count.put(question.getUserId(), count.get(question.getUserId())+1L+ question.getCommentCount() * 5 + question.getLikeCount() * 3 + question.getViewCount());
         }
 
 
@@ -73,7 +73,7 @@ public class HotUserTasks {
             BeanUtils.copyProperties(user, userDto);
             userDto.setQuestionCount(questionService.getUserQuestionCount(userDto.getId(), 1));
             // TODO 待添加关注数和点赞数
-            userDto.setLikeCount(0);
+            userDto.setLikeCount(user.getLikeCount());
             userDto.setFollowCount(0);
             userDto.setSortWeight(count.get(userDto.getId()));
             userList.add(userDto);
