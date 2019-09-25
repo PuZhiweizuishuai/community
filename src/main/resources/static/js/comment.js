@@ -148,3 +148,43 @@ function showSecondComment(e) {
 
     }
 }
+
+function alterLikeButtonClass() {
+
+}
+
+
+function clickLikeQuetion(e) {
+    var notifier = $("#now-online-user-id").val();
+    console.log(notifier);
+    if(notifier==null) {
+        alert("请先登陆！");
+        return;
+    }
+    var questionId = e.getAttribute("questionid-data");
+    var receiver = e.getAttribute("receiver-data");
+    var ClickLikeDTO = {
+        notifier: notifier,
+        receiver: receiver,
+        questionId: questionId,
+        commentId: -1
+    };
+
+    var likeCount = document.getElementById("like-button-number").innerText;
+    fetch("/api/clickLike", {
+        method: 'POST', // or 'PUT'
+        body: JSON.stringify(ClickLikeDTO), // data can be `string` or {object}!
+        headers: new Headers({
+            'Content-Type': 'application/json'
+        })
+    }).then(res => res.json())
+    .catch(error => console.error('Error:', error))
+    .then(function (response) {
+        if(response.success) {
+            document.getElementById("like-button-number").innerText = (parseInt(likeCount) + 1);
+            document.getElementById("like-button").className = "btn btn-primary btn-sm mb-0";
+        } else {
+            alert(response.msg);
+        }
+    });
+}

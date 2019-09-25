@@ -163,6 +163,11 @@ public interface UserMapper {
     @Update("update users set userTopPhotoUrl=#{userTopPhotoUrl} where id=#{id}")
     int updateUserTopPhotoUrl(@Param("id") long id, @Param("userTopPhotoUrl") String userTopPhotoUrl);
 
+    /**
+     * 更新获赞数
+     * */
+    @Update("update users set likeCount=likeCount+#{likeCount} where id=#{id}")
+    int updateUserLikeCount(@Param("likeCount") long likeCount, @Param("id") long id);
 
 
     @Select("select * from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search} order by id desc limit #{page}, #{size}")

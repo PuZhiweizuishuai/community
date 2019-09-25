@@ -28,6 +28,7 @@ CREATE TABLE users
     selfIntroduction varchar (500),
     simpleSelfIntroduction varchar (50),
     likes varchar (50),
+    likeCount bigint default 0,
     creationTime VARCHAR(19),
     lastTime VARCHAR(19),
     headUrl VARCHAR(300),
@@ -82,12 +83,16 @@ CREATE TABLE Questions
     viewCount bigint DEFAULT 1,
     commentCount bigint DEFAULT 0,
     likeCount bigint DEFAULT 0,
+    followCount bigint default 0,
     tag varchar(256),
     createTime bigint,
     alterTime bigint,
     status int default 1,
     constraint user_question_FK foreign key(userId) references users(id)
 );
+
+CREATE INDEX index_question_createTime ON Questions (createTime);
+CREATE INDEX index_question_alterTime ON Questions (alterTime);
 
 -- 评论表
 CREATE TABLE comment
@@ -106,6 +111,8 @@ CREATE TABLE comment
     constraint comments_user_FK foreign key(questionId) references Questions(questionId),
     constraint comment_user_FK foreign key(commentator) references users(id)
 );
+
+CREATE INDEX index_comment_createTime ON comment (createTime);
 
 -- 通知表
 -- id 通知 id
@@ -135,6 +142,26 @@ create table admin
     userCount bigint default 0,
     userAddCount bigint default 0,
     questionAddCount bigint default 0
+);
+
+--点赞表
+-- likeId 点赞主键ID
+-- notifier 点赞发起人
+-- receiver 点赞接收人
+-- questionId 点赞的问题ID
+-- commentId 点赞的评论ID
+-- type 点赞类型
+-- createTime 点赞时间
+create table clickLike
+(
+    likeId bigint primary key AUTO_INCREMENT,
+    notifier bigint not null,
+    notifierName varchar(50),
+    receiver bigint not null,
+    questionId bigint,
+    commentId bigint,
+    type bigint,
+    createTime bigint
 );
 
 --alter table Questions modify questionId bigint NOT NULL;

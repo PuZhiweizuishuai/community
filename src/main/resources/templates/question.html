@@ -97,10 +97,24 @@
                         </p>
                     </div>
                     <div class="col text-right">
-                        <button type="button" class="btn btn-secondary btn-sm mb-0" style="height: 30px;width: 100px">
-                            关注 <span class="badge badge-light" th:text="${question.likeCount}">4</span>
+                        <button th:if="${isQuestionClickLike==false}" id="like-button" onclick="clickLikeQuetion(this)"
+                                th:questionId-data="${question.questionId}"
+                                th:receiver-data="${question.getUserId()}"
+                                type="button" class="btn btn-outline-primary btn-sm mb-0" style="height: 30px;width: 100px">
+                            <img src="/image/icon/clicklike.svg" width="auto" height="20">
+                            <span class="badge badge-light" id="like-button-number" th:text="${question.likeCount}">4</span>
                         </button>
+                        <button th:if="${isQuestionClickLike==true}" id="like-button" onclick="clickLikeQuetion(this)"
+                                th:questionId-data="${question.questionId}"
+                                th:receiver-data="${question.getUserId()}"
+                                type="button" class="btn btn-primary btn-sm mb-0" style="height: 30px;width: 100px">
 
+                            <img src="/image/icon/clicklike.svg" width="auto" height="20">
+                            <span class="badge badge-light" id="like-button-number" th:text="${question.likeCount}">4</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mb-0" style="height: 30px;width: 100px">
+                            关注 <span class="badge badge-light" th:text="${question.followCount}">4</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -305,6 +319,7 @@
                 <div class="form-group">
                     <!-- 评论区上用户头像 -->
                     <div class="media mb-2" th:if="${session.user != null}">
+                        <input type="hidden" id="now-online-user-id"  th:value="${session.user.getId()}">
                         <img class="align-self-center mr-3 img-fluid rounded-circle"
                              th:src="${session.user.getHeadUrl()}" width="40" height="40">
                         <p class="mt-2"><a th:href="${'/user/' + session.user.getUserId()}">

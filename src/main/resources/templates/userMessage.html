@@ -60,7 +60,7 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="#">
+                                    <a class="nav-link" th:href="${'/message/' + user.getUserId() + '?type=3'}">
                                         点赞 <span class="badge badge-info" th:text="${likeCount}">0</span>
                                     </a>
                                 </li>

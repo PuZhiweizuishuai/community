@@ -57,6 +57,8 @@ public class User {
      * */
     private String likes;
 
+    private long likeCount;
+
     private int power;
 
     /**

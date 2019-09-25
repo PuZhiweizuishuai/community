@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+<button onclick="clicke()">测试</button>
+<script type="text/javascript">
+    function clicke() {
+        console.log("test");
+        var url = "/api/test/clickLike";
+        var ClickLikeDTO = {
+            notifier: 1,
+            receiver: 2,
+            questionId: 1,
+            commentId: -1
+        };
+
+        // console.log(JSON.stringify(ClickLikeDTO));
+        fetch(url, {
+            method: 'POST', // or 'PUT'
+            body: JSON.stringify(ClickLikeDTO), // data can be `string` or {object}!
+            headers: new Headers({
+                'Content-Type': 'application/json'
+            })
+        }).then(res => res.json())
+       .catch(error => console.error('Error:', error))
+       .then(function (response) {
+            console.log(response.commentId);
+        });
+    }
+</script>
+</body>
+
+</html>

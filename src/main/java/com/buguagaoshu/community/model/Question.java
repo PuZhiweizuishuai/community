@@ -17,6 +17,7 @@ public class Question {
     private long viewCount;
     private long commentCount;
     private long likeCount;
+    private long followCount;
     private String tag;
     private long createTime;
     private long alterTime;

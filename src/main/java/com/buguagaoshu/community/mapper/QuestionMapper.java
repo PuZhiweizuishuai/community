@@ -104,6 +104,14 @@ public interface QuestionMapper {
     int updateQuestionCommentCount(Question question);
 
     /**
+     * 点赞数加 n
+     * @param question 问题
+     * @return 点赞数加 n
+     * */
+    @Update("update Questions set likeCount=likeCount+#{likeCount} where questionId=#{questionId}")
+    int updateQuestionLikeCount(Question question);
+
+    /**
      * 根据正则匹配相关问题（带状态，不匹配删除的问题）
      *
      * @param tag        标签

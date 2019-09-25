@@ -18,6 +18,7 @@ public class QuestionDto {
     private long viewCount;
     private long commentCount;
     private long likeCount;
+    private long followCount;
     private String tag;
     private String createTime;
     private String alterTime;

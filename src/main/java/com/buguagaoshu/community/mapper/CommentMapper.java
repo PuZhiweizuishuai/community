@@ -41,6 +41,12 @@ public interface CommentMapper {
     @Update("update comment set commentCount=commentCount+#{commentCount} where commentId=#{commentId}")
     int updateCommentCount(Comment comment);
 
+    /**
+     * 更新点赞数
+     * */
+    @Update("update comment set likeCount=likeCount+#{likeCount} where commentId=#{commentId}")
+    int updateCommentLikeCount(Comment comment);
+
 
     @Select("select * from comment where questionId=#{questionId} AND status=#{status}")
     List<Comment> getAllComment(@Param("questionId") long questionId, @Param("status") int status);
