@@ -161,7 +161,8 @@ create table clickLike
     questionId bigint,
     commentId bigint,
     type bigint,
-    createTime bigint
+    createTime bigint,
+    notificationId bigint
 );
 
 --alter table Questions modify questionId bigint NOT NULL;

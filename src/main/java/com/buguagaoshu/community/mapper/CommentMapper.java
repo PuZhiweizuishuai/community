@@ -13,7 +13,7 @@ import java.util.List;
 public interface CommentMapper {
     @Insert("insert into comment(questionId ,parentId, type, commentator, content, likeCount, commentCount, createTime, modifiedTime) " +
             "values(#{questionId}, #{parentId}, #{type}, #{commentator}, #{content}, #{likeCount},  #{commentCount}, #{createTime}, #{modifiedTime})")
-    @Options(useGeneratedKeys = true, keyProperty = "commentId")
+    @Options(useGeneratedKeys = true, keyProperty = "commentId", keyColumn = "commentId")
     int insertComment(Comment comment);
 
 

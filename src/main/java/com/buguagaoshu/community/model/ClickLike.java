@@ -17,4 +17,5 @@ public class ClickLike {
     private long commentId;
     private int type;
     private long createTime;
+    private long notificationId;
 }

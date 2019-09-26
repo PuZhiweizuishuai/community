@@ -1,6 +1,7 @@
 package com.buguagaoshu.community;
 
 import com.buguagaoshu.community.enums.QuestionSortType;
+import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.Notification;
@@ -41,10 +42,12 @@ public class CommunityApplicationTests {
     @Autowired
     NotificationService notificationService;
 
+    @Autowired
+    NotificationMapper notificationMapper;
+
     @Test
     public void contextLoads() {
 
-        System.out.println(key);
     }
 
 }

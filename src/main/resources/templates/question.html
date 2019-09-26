@@ -97,14 +97,14 @@
                         </p>
                     </div>
                     <div class="col text-right">
-                        <button th:if="${isQuestionClickLike==false}" id="like-button" onclick="clickLikeQuetion(this)"
+                        <button th:if="${isQuestionClickLike==false}" id="like-button" onclick="clickLikeQuestion(this)"
                                 th:questionId-data="${question.questionId}"
                                 th:receiver-data="${question.getUserId()}"
                                 type="button" class="btn btn-outline-primary btn-sm mb-0" style="height: 30px;width: 100px">
                             <img src="/image/icon/clicklike.svg" width="auto" height="20">
                             <span class="badge badge-light" id="like-button-number" th:text="${question.likeCount}">4</span>
                         </button>
-                        <button th:if="${isQuestionClickLike==true}" id="like-button" onclick="clickLikeQuetion(this)"
+                        <button th:if="${isQuestionClickLike==true}" id="like-button" onclick="clickLikeQuestion(this)"
                                 th:questionId-data="${question.questionId}"
                                 th:receiver-data="${question.getUserId()}"
                                 type="button" class="btn btn-primary btn-sm mb-0" style="height: 30px;width: 100px">

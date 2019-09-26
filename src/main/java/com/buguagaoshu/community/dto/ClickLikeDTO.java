@@ -13,4 +13,5 @@ public class ClickLikeDTO {
     private Long receiver;
     private Long questionId;
     private Long commentId;
+    private String token;
 }

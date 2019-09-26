@@ -14,9 +14,9 @@ public interface ClickLikeMapper {
      * @param clickLike 点赞信息
      * @return 结果
      * */
-    @Insert("insert into clickLike(notifier, notifierName, receiver, questionId, commentId, type, createTime) " +
-            "values(#{notifier}, #{notifierName}, #{receiver}, #{questionId}, #{commentId}, #{type}, #{createTime})")
-    @Options(useGeneratedKeys = true, keyProperty = "likeId")
+    @Insert("insert into clickLike(notifier, notifierName, receiver, questionId, commentId, type, createTime, notificationId) " +
+            "values(#{notifier}, #{notifierName}, #{receiver}, #{questionId}, #{commentId}, #{type}, #{createTime}, #{notificationId})")
+    @Options(useGeneratedKeys = true, keyProperty = "likeId", keyColumn = "likeId")
     int createClickLike(ClickLike clickLike);
 
     /**
@@ -28,4 +28,12 @@ public interface ClickLikeMapper {
      * */
     @Select("select * from clickLike where notifier=#{notifier} and questionId=#{questionId} and commentId=#{commentId}")
     ClickLike getClickLikePreventRepeat(@Param("notifier") long notifier, @Param("questionId") long questionId, @Param("commentId") long commentId);
+
+    /**
+     * 删除点赞
+     * @param likeId 主键ID
+     * @return 结果
+     * */
+    @Delete("DELETE FROM clickLike where likeId=#{likeId}")
+    int deleteClickLike(@Param("likeId") long likeId);
 }

@@ -23,7 +23,9 @@ public enum ClickLikeTypeEnum {
 
     REPEAT_LIKE(-3, "你已经点过赞了，不能重复点赞，取消点赞功能开发中!"),
 
-    SUCCESS(0, "点赞成功!");
+    SUCCESS(0, "点赞成功!"),
+
+    SUCCESS_CANCEL(3, "取消点赞成功！");
 
 
     int type;

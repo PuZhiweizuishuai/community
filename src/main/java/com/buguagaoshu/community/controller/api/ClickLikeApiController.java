@@ -4,7 +4,10 @@ import com.buguagaoshu.community.dto.ClickLikeDTO;
 import com.buguagaoshu.community.enums.ClickLikeTypeEnum;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
+import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.JwtUtil;
 import com.buguagaoshu.community.util.StringUtil;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,26 +24,39 @@ import java.util.Map;
 public class ClickLikeApiController {
     private final ClickLikeService clickLikeService;
 
+    private final UserService userService;
+
+    private final JwtUtil jwtUtil;
+
     @Autowired
-    public ClickLikeApiController(ClickLikeService clickLikeService) {
+    public ClickLikeApiController(ClickLikeService clickLikeService, JwtUtil jwtUtil, UserService userService) {
         this.clickLikeService = clickLikeService;
+        this.jwtUtil = jwtUtil;
+        this.userService = userService;
     }
 
     @PostMapping("/api/clickLike")
-    public Map<String, Object> clickLike(@RequestBody ClickLikeDTO clickLikeDTO, HttpServletRequest request) {
-        User user = (User) request.getSession().getAttribute("user");
-        if(user == null) {
+    public Map<String, Object> clickLike(@RequestBody ClickLikeDTO clickLikeDTO) {
+        if (clickLikeDTO.getToken() == null || clickLikeDTO.getToken().equals("")) {
             return StringUtil.dealResultMessage(false, "请先登陆后再点赞!");
         }
-        if(clickLikeDTO.getReceiver().equals(clickLikeDTO.getNotifier())) {
-            return StringUtil.dealResultMessage(false, "不能给自己点赞！");
-        }
-        clickLikeDTO.setNotifierName(user.getUserName());
-        ClickLikeTypeEnum clickLikeTypeEnum = clickLikeService.createClickLike(clickLikeDTO);
-        if(clickLikeTypeEnum.equals(ClickLikeTypeEnum.SUCCESS)) {
-            return StringUtil.dealResultMessage(true, "点赞成功！");
-        } else {
-            return StringUtil.dealResultMessage(false, clickLikeTypeEnum.getName());
+        try {
+            Claims claims = jwtUtil.parseJWT(clickLikeDTO.getToken());
+            clickLikeDTO.setNotifierName(claims.get("userName").toString());
+
+            if (clickLikeDTO.getReceiver().equals(Long.valueOf(claims.getId()))) {
+                return StringUtil.dealResultMessage(false, "不能给自己点赞！");
+            }
+            ClickLikeTypeEnum clickLikeTypeEnum = clickLikeService.createClickLike(clickLikeDTO);
+            if (clickLikeTypeEnum.equals(ClickLikeTypeEnum.SUCCESS)) {
+                return StringUtil.dealResultMessage(true, "点赞成功！");
+            }  else if(clickLikeTypeEnum.equals(ClickLikeTypeEnum.SUCCESS_CANCEL)) {
+                return StringUtil.dealResultMessage(true, clickLikeTypeEnum.getName());
+            } else {
+                return StringUtil.dealResultMessage(false, clickLikeTypeEnum.getName());
+            }
+        } catch (Exception e) {
+            return StringUtil.dealResultMessage(false, "请先登陆后再点赞!");
         }
     }
 

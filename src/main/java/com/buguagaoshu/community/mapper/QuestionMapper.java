@@ -20,7 +20,7 @@ public interface QuestionMapper {
      */
     @Insert("insert into Questions(userId, title, classification, description, fileUrl, tag, createTime, alterTime) " +
             "values (#{userId}, #{title}, #{classification}, #{description}, #{fileUrl}, #{tag}, #{createTime}, #{alterTime})")
-    @Options(useGeneratedKeys = true, keyProperty = "questionId")
+    @Options(useGeneratedKeys = true, keyProperty = "questionId", keyColumn = "questionId")
     int createQuestion(Question question);
 
     /**

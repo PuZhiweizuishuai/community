@@ -59,18 +59,30 @@ public class ClickLikeServiceImpl implements ClickLikeService {
 
         // 判断类型
         if(clickLikeDTO.getCommentId() == -1) {
-            if(clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), -1) != null) {
-                return ClickLikeTypeEnum.REPEAT_LIKE;
+            // 取消点赞
+            ClickLike oldClick = clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), -1);
+            if(oldClick != null) {
+                clickLikeMapper.deleteClickLike(oldClick.getLikeId());
+                // 问题点赞 -1
+                question.setLikeCount(-1);
+                questionMapper.updateQuestionLikeCount(question);
+                // 用户点赞 -1
+                userMapper.updateUserLikeCount(-1, oldClick.getReceiver());
+                // 删除通知
+                notificationMapper.deleteNotification(oldClick.getNotificationId());
+                return ClickLikeTypeEnum.SUCCESS_CANCEL;
             }
             clickLike.setType(ClickLikeTypeEnum.LIKE_QUESTION.getType());
             clickLike.setCreateTime(System.currentTimeMillis());
+            // 创建通知
+            Long notificationId = createNotification(clickLike, NotificationTypeEnum.LIKE_QUESTION, clickLike.getQuestionId());
+            clickLike.setNotificationId(notificationId);
+
             // 插入点赞表
             clickLikeMapper.createClickLike(clickLike);
             // 更新问题点赞数
             question.setLikeCount(1);
             questionMapper.updateQuestionLikeCount(question);
-            // 创建通知
-            createNotification(clickLike, NotificationTypeEnum.LIKE_QUESTION, clickLike.getQuestionId());
             // 用户获赞数加一
             userMapper.updateUserLikeCount(1, clickLike.getReceiver());
             return ClickLikeTypeEnum.SUCCESS;
@@ -80,17 +92,28 @@ public class ClickLikeServiceImpl implements ClickLikeService {
             if(comment == null) {
                 return ClickLikeTypeEnum.LIKE_COMMENT_NOT_FOUND;
             }
-            if(clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), comment.getCommentId()) != null) {
-                return ClickLikeTypeEnum.REPEAT_LIKE;
+            ClickLike oldClick = clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), -1);
+            if(oldClick != null) {
+                // 删除点赞
+                clickLikeMapper.deleteClickLike(oldClick.getLikeId());
+                // 用户点赞 -1
+                userMapper.updateUserLikeCount(-1, oldClick.getReceiver());
+                // 删除通知
+                notificationMapper.deleteNotification(oldClick.getNotificationId());
+                // 评论点赞 -1
+                comment.setLikeCount(-1);
+                commentMapper.updateCommentLikeCount(comment);
+                return ClickLikeTypeEnum.SUCCESS_CANCEL;
             }
             clickLike.setType(ClickLikeTypeEnum.LIKE_COMMENT.getType());
             clickLike.setCreateTime(System.currentTimeMillis());
+            // 创建通知
+            Long notificationId = createNotification(clickLike, NotificationTypeEnum.LIKE_COMMENT, clickLike.getCommentId());
+            clickLike.setNotificationId(notificationId);
             clickLikeMapper.createClickLike(clickLike);
             // 更新评论点赞数
             comment.setLikeCount(1);
             commentMapper.updateCommentCount(comment);
-            // 创建通知
-            createNotification(clickLike, NotificationTypeEnum.LIKE_COMMENT, clickLike.getCommentId());
             // 用户获赞加 1
             userMapper.updateUserLikeCount(1, clickLike.getReceiver());
             return ClickLikeTypeEnum.SUCCESS;
@@ -106,10 +129,10 @@ public class ClickLikeServiceImpl implements ClickLikeService {
     }
 
 
-    private void createNotification(ClickLike clickLike, NotificationTypeEnum notificationType,
+    private Long createNotification(ClickLike clickLike, NotificationTypeEnum notificationType,
                                     Long outerId) {
         if(clickLike.getReceiver() == clickLike.getNotifier()) {
-            return;
+            return -1L;
         }
         Notification notification = new Notification();
 
@@ -126,5 +149,6 @@ public class ClickLikeServiceImpl implements ClickLikeService {
         // 通知接收人
         notification.setReceiver(clickLike.getReceiver());
         notificationMapper.insertNotification(notification);
+        return notification.getId();
     }
 }

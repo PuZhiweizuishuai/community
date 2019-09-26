@@ -102,7 +102,7 @@ function showSecondComment(e) {
                         "href": "/user/" + userComment.user.userId,
                         html: userComment.user.userName
                     })).append($("<spam/>", {
-                        html: userComment.createTime
+                        html: "&nbsp;&nbsp;" + userComment.createTime
                     }))).append($("<div/>",{
                         "class": "col text-right"
                     }).append($("<a/>", {
@@ -149,12 +149,7 @@ function showSecondComment(e) {
     }
 }
 
-function alterLikeButtonClass() {
-
-}
-
-
-function clickLikeQuetion(e) {
+function clickLikeQuestion(e) {
     var notifier = $("#now-online-user-id").val();
     console.log(notifier);
     if(notifier==null) {
@@ -167,7 +162,8 @@ function clickLikeQuetion(e) {
         notifier: notifier,
         receiver: receiver,
         questionId: questionId,
-        commentId: -1
+        commentId: -1,
+        token: getCookie('token')
     };
 
     var likeCount = document.getElementById("like-button-number").innerText;
@@ -181,10 +177,35 @@ function clickLikeQuetion(e) {
     .catch(error => console.error('Error:', error))
     .then(function (response) {
         if(response.success) {
-            document.getElementById("like-button-number").innerText = (parseInt(likeCount) + 1);
-            document.getElementById("like-button").className = "btn btn-primary btn-sm mb-0";
+            if(response.msg == "取消点赞成功！") {
+                alert(response.msg);
+                document.getElementById("like-button-number").innerText = (parseInt(likeCount) - 1);
+                document.getElementById("like-button").className = "btn btn-outline-primary btn-sm mb-0";
+            } else {
+                alert(response.msg);
+                document.getElementById("like-button-number").innerText = (parseInt(likeCount) + 1);
+                document.getElementById("like-button").className = "btn btn-primary btn-sm mb-0";
+            }
+
         } else {
             alert(response.msg);
         }
     });
+}
+
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
 }

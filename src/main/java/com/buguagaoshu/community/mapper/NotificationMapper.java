@@ -2,6 +2,7 @@ package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Notification;
 import org.apache.ibatis.annotations.*;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -18,8 +19,12 @@ public interface NotificationMapper {
      * */
     @Insert("insert into notification(notifier, receiver, outerId, type, createTime, status)" +
             " values (#{notifier}, #{receiver}, #{outerId}, #{type}, #{createTime}, #{status})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insertNotification(Notification notification);
+    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+    Long insertNotification(Notification notification);
+
+
+    @Delete("DELETE FROM notification where id=#{id}")
+    int deleteNotification(@Param("id") long id);
 
     /**
      * 获取该用户当前所有未读通知数

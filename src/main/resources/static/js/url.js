@@ -67,7 +67,7 @@ var signOut = function (aObjId) {
         aObj.href = aObj.href + "&l=" + l;
     }
     delCookie("token");
-}
+};
 
 // 发从登陆请求，测试用
 var sendSignInPost = function () {
@@ -88,6 +88,6 @@ var sendSignInPost = function () {
         }
 
     });
-}
+};
 
 

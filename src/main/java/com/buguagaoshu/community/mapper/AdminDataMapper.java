@@ -13,7 +13,7 @@ import java.util.List;
 public interface AdminDataMapper {
     @Insert("insert into admin(time, questionCount, userCount, userAddCount, questionAddCount) values " +
             "(#{time}, #{questionCount}, #{userCount}, #{userAddCount}, #{questionAddCount})")
-    @Options(useGeneratedKeys = true, keyProperty = "adminId")
+    @Options(useGeneratedKeys = true, keyProperty = "adminId", keyColumn = "adminId")
     int insertAdminData(AdminData data);
 
 
