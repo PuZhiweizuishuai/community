@@ -84,7 +84,7 @@
                 </div>
                 <div class="container">
                     <div class="row">
-                        <div class="col-5" th:each="user : ${hotUser}">
+                        <div class="col-5 mt-3" th:each="user : ${hotUser}">
                             <div class="media">
                                 <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}"><img
                                         class="align-self-center mr-3 img-fluid rounded-circle" th:src="${user.getHeadUrl()}"
@@ -132,7 +132,7 @@
             </div>
             <div class="container">
                 <div class="row" >
-                    <div class="col-5 mt-4" th:each="user : ${newUser.data}">
+                    <div class="col-5 mt-3" th:each="user : ${newUser.data}">
                         <div class="media">
                             <a class="link-to-text" th:href="'/user/' + ${user.getUserId()}"><img
                                     class="align-self-center mr-3 img-fluid rounded-circle" th:src="${user.getHeadUrl()}"

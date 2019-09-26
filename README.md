@@ -38,7 +38,7 @@
 
 不管怎样，你都需要先使用 database.sql 脚本创建数据库
 
-与配置 application.properties 
+与配置 application.yml
 
 以下为打包方法
 
