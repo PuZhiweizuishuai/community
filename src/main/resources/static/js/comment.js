@@ -76,8 +76,6 @@ function showSecondComment(e) {
         //commentBody.empty();
 
     } else {
-        console.log("id    "  + id);
-        console.log(commentBody.children().length);
         $.getJSON("/api/twoLevelComment/" + id, function (data) {
             if(commentBody.children().length != 1) {
                 comment.collapse('show');
@@ -151,7 +149,6 @@ function showSecondComment(e) {
 
 function clickLikeQuestion(e) {
     var notifier = $("#now-online-user-id").val();
-    console.log(notifier);
     if(notifier==null) {
         alert("请先登陆！");
         return;
@@ -178,11 +175,9 @@ function clickLikeQuestion(e) {
     .then(function (response) {
         if(response.success) {
             if(response.msg == "取消点赞成功！") {
-                alert(response.msg);
                 document.getElementById("like-button-number").innerText = (parseInt(likeCount) - 1);
                 document.getElementById("like-button").className = "btn btn-outline-primary btn-sm mb-0";
             } else {
-                alert(response.msg);
                 document.getElementById("like-button-number").innerText = (parseInt(likeCount) + 1);
                 document.getElementById("like-button").className = "btn btn-primary btn-sm mb-0";
             }
