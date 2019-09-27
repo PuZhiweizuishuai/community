@@ -22,9 +22,33 @@ public interface CommentMapper {
 
     /**
      * 查找一级评论列表
+     * 按时间正序
      */
     @Select("select * from comment where questionId=#{questionId} AND type=#{type} AND status=#{status} limit #{page}, #{size}")
     List<Comment> getCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type, @Param("page") long page, @Param("size") long size, @Param("status") int status);
+
+    /**
+     * 查找一级评论列表
+     * 按时间倒序
+     */
+    @Select("select * from comment where questionId=#{questionId} AND type=#{type} AND status=#{status} ORDER BY createTime DESC limit #{page}, #{size}")
+    List<Comment> getNewCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type, @Param("page") long page, @Param("size") long size, @Param("status") int status);
+
+
+    /**
+     * 查找一级评论列表
+     * 按点赞数排序
+     */
+    @Select("select * from comment where questionId=#{questionId} AND type=#{type} AND status=#{status} ORDER BY likeCount DESC limit #{page}, #{size}")
+    List<Comment> getLikeCountCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type, @Param("page") long page, @Param("size") long size, @Param("status") int status);
+
+    /**
+     * 查找一级评论列表
+     * 按回复数排序
+     */
+    @Select("select * from comment where questionId=#{questionId} AND type=#{type} AND status=#{status} ORDER BY commentCount DESC limit #{page}, #{size}")
+    List<Comment> getReplyCountCommentDtoByQuestionId(@Param("questionId") long questionId, @Param("type") int type, @Param("page") long page, @Param("size") long size, @Param("status") int status);
+
 
 
     @Select("select COUNT(1) from comment where questionId=#{questionId} AND type=#{type} AND status=#{status}")

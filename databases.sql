@@ -126,6 +126,7 @@ create table notification
     notifier bigint not null ,
     receiver bigint not null ,
     outerId bigint not null ,
+    commentId bigint default -1,
     type int not null ,
     createTime bigint not null ,
     status int default 0,

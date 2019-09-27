@@ -105,20 +105,23 @@ function showSecondComment(e) {
                         "class": "col text-right"
                     }).append($("<a/>", {
                         "href": "#",
-                        html: "编辑"
+                        html: ""
                     })).append($("<span/>", {
                         html: "&nbsp;"
                     })).append($("<a/>", {
                         "href": "#",
-                        html: "删除"
+                        html: ""
                     })))).append($("<p/>", {
                         html: userComment.content
-                    })).append($("<a/>", {
-                        "href": "#"
+                    })).append($("<button/>", {
+                        "style": "background-color: transparent;border: 0px;",
+                        "data-id": userComment.commentId,
+                        "onclick": "clickLikeComment(this, 2)"
                     }).append($("<img/>", {
                         "src": "/image/icon/clicklike.svg",
                         "height": 20
                     })).append($("<span/>", {
+                        "id": "comment-likeCount-" + userComment.commentId,
                         "class": "badge badge-light",
                         html: userComment.likeCount
                     }))).append($("<a/>", {
@@ -187,6 +190,53 @@ function clickLikeQuestion(e) {
         }
     });
 }
+
+function clickLikeComment(e, type) {
+    var notifier = $("#now-online-user-id").val();
+    if(notifier==null) {
+        alert("请先登陆！");
+        return;
+    }
+    var questionId = document.getElementById("like-button").getAttribute("questionid-data");
+    var receiver = document.getElementById("like-button").getAttribute("receiver-data");
+    var ClickLikeDTO = {
+        notifier: notifier,
+        receiver: receiver,
+        questionId: questionId,
+        commentId: e.getAttribute("data-id"),
+        token: getCookie('token')
+    };
+    var likeCountID = "comment-likeCount-" + e.getAttribute("data-id");
+    var likeCount = document.getElementById(likeCountID).innerText;
+    fetch("/api/clickLike", {
+        method: 'POST', // or 'PUT'
+        body: JSON.stringify(ClickLikeDTO), // data can be `string` or {object}!
+        headers: new Headers({
+            'Content-Type': 'application/json'
+        })
+    }).then(res => res.json())
+   .catch(error => console.error('Error:', error))
+   .then(function (response) {
+        if(response.success) {
+            if(response.msg == "取消点赞成功！") {
+                document.getElementById(likeCountID).innerText = (parseInt(likeCount) - 1);
+                if(type == 1) {
+                    e.className = "btn btn-outline-primary btn-sm mb-0";
+                }
+                alert(response.msg);
+            } else {
+                document.getElementById(likeCountID).innerText = (parseInt(likeCount) + 1);
+                if(type == 1) {
+                    e.className = "btn btn-primary btn-sm mb-0";
+                }
+                alert(response.msg);
+            }
+        } else {
+            alert(response.msg);
+        }
+    });
+}
+
 
 
 function getCookie(cname) {

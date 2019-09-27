@@ -2,6 +2,7 @@ package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
+import com.buguagaoshu.community.enums.CommentSortTypeEnum;
 import com.buguagaoshu.community.enums.CommentTypeEnum;
 import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
@@ -84,7 +85,7 @@ public class CommentServiceImpl implements CommentService {
             }
             // 创建通知
             // TODO 考虑传入评论ID
-            createNotification(comment, dbComment.getCommentator(), "","",
+            createNotification(comment, dbComment.getCommentator(), "", "",
                     NotificationTypeEnum.REPLY_COMMENT, question.getQuestionId());
 
             // 修改帖子修改时间
@@ -117,7 +118,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public PaginationDto<CommentDto> getCommentDtoByQuestionIdForQuestion(String questionId, String page, String size) {
+    public PaginationDto<CommentDto> getCommentDtoByQuestionIdForQuestion(String questionId, String page, String size, CommentSortTypeEnum commentSortTypeEnum) {
         long qId;
         try {
             qId = Long.valueOf(questionId);
@@ -127,8 +128,21 @@ public class CommentServiceImpl implements CommentService {
         long allCommentNumber = commentMapper.getCommentNumber(qId, 1, 1);
         // 计算分页参数
         long[] param = NumberUtils.getPageAndSize(page, size, allCommentNumber);
+        List<Comment> comments;
+        switch (commentSortTypeEnum) {
+            case NEW:
+                comments = commentMapper.getNewCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
+                break;
+            case BEST_LIKE:
+                comments = commentMapper.getLikeCountCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
+                break;
+            case BEST_COMMENT:
+                comments = commentMapper.getReplyCountCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
+                break;
+            default:
+                comments = commentMapper.getCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
+        }
 
-        List<Comment> comments = commentMapper.getCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
 
         if (comments.size() == 0) {
             return null;
@@ -203,11 +217,11 @@ public class CommentServiceImpl implements CommentService {
 
     /**
      * 创建通知
-     * */
+     */
     private void createNotification(Comment comment, Long receiver, String notifierName,
                                     String outerTitle, NotificationTypeEnum notificationType,
                                     Long outerId) {
-        if(receiver == comment.getCommentator()) {
+        if (receiver == comment.getCommentator()) {
             return;
         }
         Notification notification = new Notification();

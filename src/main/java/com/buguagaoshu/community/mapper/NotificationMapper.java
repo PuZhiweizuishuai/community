@@ -17,8 +17,8 @@ public interface NotificationMapper {
      * @param notification 消息
      * @return 插入结果
      * */
-    @Insert("insert into notification(notifier, receiver, outerId, type, createTime, status)" +
-            " values (#{notifier}, #{receiver}, #{outerId}, #{type}, #{createTime}, #{status})")
+    @Insert("insert into notification(notifier, receiver, outerId, commentId, type, createTime, status)" +
+            " values (#{notifier}, #{receiver}, #{outerId}, #{commentId}, #{type}, #{createTime}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
     Long insertNotification(Notification notification);
 

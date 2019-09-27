@@ -74,6 +74,8 @@ public class MessageController {
 
         NotificationDTO notificationDTO = notificationService.readNotification(id, user);
 
+        System.out.println(notificationDTO.getOuterid());
+
         if(notificationDTO.getReceiver() == user.getId()) {
             return StringUtil.jumpWebLangeParameter("/question/" + notificationDTO.getOuterid(), true, request);
         } else {

@@ -28,6 +28,8 @@ public class Notification {
      */
     private long outerId;
 
+    private long commentId = -1;
+
     /**
      * 通知类型
      */

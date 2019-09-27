@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
+import com.buguagaoshu.community.enums.CommentSortTypeEnum;
 import com.buguagaoshu.community.model.ClickLike;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
@@ -43,12 +44,15 @@ public class QuestionController {
     public String getQuestion(@PathVariable("questionId") String questionId,
                               @RequestParam(value = "page", defaultValue = "1") String page,
                               @RequestParam(value = "size", defaultValue = "10") String size,
+                              @RequestParam(value = "sort", defaultValue = "0") String sort,
                               Model model,
                               HttpServletRequest request) {
         QuestionDto question = questionService.selectQuestionById(questionId);
         if (question == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+
+
         if (question.getStatus() == 0) {
             User user = (User) request.getSession().getAttribute("admin");
             if (user == null) {
@@ -56,15 +60,16 @@ public class QuestionController {
                 return StringUtil.jumpWebLangeParameter("/error", false, request);
             }
             List<Question> relevantQuestion = questionService.getRelevantQuestion(question);
-            PaginationDto<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(questionId, page, size);
+            PaginationDto<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(questionId, page, size, CommentSortTypeEnum.getType(sort));
             model.addAttribute("question", question);
             model.addAttribute("comments", commentDtos);
             model.addAttribute("relevantQuestion", relevantQuestion);
+            model.addAttribute("sort", sort);
             return "question";
         }
 
         List<Question> relevantQuestion = questionService.getRelevantQuestion(question);
-        PaginationDto<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(questionId, page, size);
+        PaginationDto<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(questionId, page, size, CommentSortTypeEnum.getType(sort));
         // TODO 阅读数加1，此处待优化，如限定一个ip只能增加一次阅读数
         questionService.updateQuestionViewCount(question.getQuestionId());
 
@@ -89,6 +94,7 @@ public class QuestionController {
         model.addAttribute("question", question);
         model.addAttribute("comments", commentDtos);
         model.addAttribute("relevantQuestion", relevantQuestion);
+        model.addAttribute("sort", sort);
         return "question";
     }
 }

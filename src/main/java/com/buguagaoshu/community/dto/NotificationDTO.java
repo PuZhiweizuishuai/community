@@ -26,6 +26,8 @@ public class NotificationDTO {
 
     private long outerid;
 
+    private long commentId = -1;
+
     private String typeName;
 
     private int type;

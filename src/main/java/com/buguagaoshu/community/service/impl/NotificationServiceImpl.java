@@ -5,9 +5,11 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
+import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
+import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.Notification;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
@@ -36,12 +38,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final QuestionMapper questionMapper;
 
+    private final CommentMapper commentMapper;
+
     @Autowired
     public NotificationServiceImpl(NotificationMapper notificationMapper, UserMapper userMapper,
-                                   QuestionMapper questionMapper) {
+                                   QuestionMapper questionMapper, CommentMapper commentMapper) {
         this.notificationMapper = notificationMapper;
         this.userMapper = userMapper;
         this.questionMapper = questionMapper;
+        this.commentMapper = commentMapper;
     }
 
     @Override
@@ -114,9 +119,15 @@ public class NotificationServiceImpl implements NotificationService {
             notificationDTO.setNotifierId(userMap.get(notification.getNotifier()).getUserId());
             notificationDTO.setNotifierName(userMap.get(notification.getNotifier()).getUserName());
 
-            Question question = questionMapper.getQuestionIgnoreStatus(notification.getOuterId());
-            //TODO 目测可以优化
-            notificationDTO.setOuterTitle(question.getTitle());
+            if(notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()) {
+                Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
+                notificationDTO.setOuterTitle(comment.getContent());
+            } else {
+                Question question = questionMapper.getQuestionIgnoreStatus(notification.getOuterId());
+                //TODO 目测可以优化
+                notificationDTO.setOuterTitle(question.getTitle());
+
+            }
             notificationDTO.setOuterid(notification.getOuterId());
             notificationDTO.setTypeName(NotificationTypeEnum.nameOfType(notification.getType()));
             notificationDTO.setType(notification.getType());

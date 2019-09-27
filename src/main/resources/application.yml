@@ -34,13 +34,12 @@ logging:
     max-history: 7
   level:
     root: info
-
-#logging:
-#  level:
 #    com:
 #      buguagaoshu:
 #        community:
 #          mapper: debug
+
+
 
 jwt:
   key: buguagaoshu
