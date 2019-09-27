@@ -67,6 +67,7 @@
     </style>
 </head>
 <body>
+<a name="top"></a>
 <!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->
 <div th:insert="~{navigation :: navbar}"></div>
 
@@ -160,6 +161,7 @@
             </div>
 
             <!--回复导航-->
+            <a name="commentTop"></a>
             <div class="container mt-4">
                 <div class="row">
                     <div class="col">
@@ -168,21 +170,22 @@
                     <div class="col">
                         <ul class="nav justify-content-end">
                             <li class="nav-item">
-                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=0)}">发帖时间</a>
+                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=0)} + '#commentTop'">发帖时间</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=1)}">倒序</a>
+                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=1)} + '#commentTop'">倒序</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=2)}">最多点赞</a>
+                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=2)} + '#commentTop'">最多点赞</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=3)}">最多评论</a>
+                                <a class="nav-link active" th:href="'/question/' + ${question.getQuestionId()} + @{/(sort=3)} +'#commentTop'">最多评论</a>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
+
             <hr class="mt-2"/>
             <!-- 显示回复 -->
             <div class="container" th:if="${comments != null}">
@@ -284,7 +287,7 @@
                         <!-- 上一页 -->
                         <li class="page-item" th:if="${comments.showPrevious}">
                             <a class="page-link" id="link-to-last-a"
-                               th:href="'/question/'+ ${question.getQuestionId()} + @{/(page=${comments.nowPage-1},sort=${sort})}"
+                               th:href="'/question/'+ ${question.getQuestionId()} + @{/(page=${comments.nowPage-1},sort=${sort})}+ '#commentTop'"
                                aria-label="Previous"
                                onclick="addLocaleUrlForPage('link-to-last-a')">
                                 <span aria-hidden="true">&laquo;</span>
@@ -295,7 +298,7 @@
 
                         <li class="page-item" th:each="page : ${comments.pages}"
                             th:class="${comments.nowPage == page}? 'page-item active' : 'page-item'">
-                            <a class="page-link" th:href="${'/question/'+question.getQuestionId()} + @{/(page=${page},sort=${sort})}"
+                            <a class="page-link" th:href="${'/question/'+question.getQuestionId()} + @{/(page=${page},sort=${sort})}+ '#commentTop'"
                                th:text="${page}" th:id="${page}"
                                th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
                                 1
@@ -306,7 +309,7 @@
                         <!-- 下一页 -->
                         <li class="page-item" th:if="${comments.showNext}">
                             <a class="page-link" id="lind-to-next-a"
-                               th:href="'/question/'+${question.getQuestionId()} + @{/(page=${comments.nowPage+1},sort=${sort})}"
+                               th:href="'/question/'+${question.getQuestionId()} + @{/(page=${comments.nowPage+1},sort=${sort})}+ '#commentTop'"
                                aria-label="Next"
                                onclick="addLocaleUrlForPage('lind-to-next-a')">
                                 <span aria-hidden="true">&raquo;</span>
@@ -316,7 +319,7 @@
                         <!-- 最后一页 -->
                         <li class="page-item" th:if="${comments.showEndPage}">
                             <a class="page-link" id="link-to-end-a"
-                               th:href="'/question/'+${question.getQuestionId()} + @{/(page=${comments.totalPage},sort=${sort})}"
+                               th:href="'/question/'+${question.getQuestionId()} + @{/(page=${comments.totalPage},sort=${sort})}+ '#commentTop'"
                                th:if="${comments.showEndPage}"
                                aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
                                 <span aria-hidden="true">&raquo;&raquo;</span>
@@ -471,6 +474,9 @@
     </div>
 </div>
 
+<div id="backTop" class="text-right mr-5 mb-5" style="position:fixed; right: 20px; bottom: 10px;">
+    <a href="#top"><img src="/image/icon/top.svg" width="60px" alt="回到顶部" title="回到顶部"></a>
+</div>
 
 <div class="container" style="height: 30px">
 </div>

@@ -62,7 +62,7 @@ maven: 3
 
 运行打包命令
 ```bash
-mvn clena package
+mvn clean package
 ```
 运行项目
 ```bash
