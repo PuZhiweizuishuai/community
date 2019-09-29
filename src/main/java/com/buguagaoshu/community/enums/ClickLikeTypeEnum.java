@@ -25,7 +25,9 @@ public enum ClickLikeTypeEnum {
 
     SUCCESS(0, "点赞成功!"),
 
-    SUCCESS_CANCEL(3, "取消点赞成功！");
+    SUCCESS_CANCEL(3, "取消点赞成功！"),
+
+    CLICK_LIKE_IS_NOT_USER(4, "不能给自己点赞");
 
 
     int type;

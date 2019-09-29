@@ -198,10 +198,10 @@ function clickLikeComment(e, type) {
         return;
     }
     var questionId = document.getElementById("like-button").getAttribute("questionid-data");
-    var receiver = document.getElementById("like-button").getAttribute("receiver-data");
+    // var receiver = document.getElementById("like-button").getAttribute("receiver-data");
     var ClickLikeDTO = {
         notifier: notifier,
-        receiver: receiver,
+        // receiver: receiver,
         questionId: questionId,
         commentId: e.getAttribute("data-id"),
         token: getCookie('token')

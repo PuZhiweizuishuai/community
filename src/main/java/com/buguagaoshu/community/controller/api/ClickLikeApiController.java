@@ -43,10 +43,7 @@ public class ClickLikeApiController {
         try {
             Claims claims = jwtUtil.parseJWT(clickLikeDTO.getToken());
             clickLikeDTO.setNotifierName(claims.get("userName").toString());
-
-            if (clickLikeDTO.getReceiver().equals(Long.valueOf(claims.getId()))) {
-                return StringUtil.dealResultMessage(false, "不能给自己点赞！");
-            }
+            clickLikeDTO.setNotifier(Long.valueOf(claims.getId()));
             ClickLikeTypeEnum clickLikeTypeEnum = clickLikeService.createClickLike(clickLikeDTO);
             if (clickLikeTypeEnum.equals(ClickLikeTypeEnum.SUCCESS)) {
                 return StringUtil.dealResultMessage(true, "点赞成功！");

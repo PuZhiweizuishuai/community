@@ -48,7 +48,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
         ClickLike clickLike = new ClickLike();
         clickLike.setNotifier(clickLikeDTO.getNotifier());
         clickLike.setNotifierName(clickLikeDTO.getNotifierName());
-        clickLike.setReceiver(clickLikeDTO.getReceiver());
+        // clickLike.setReceiver(clickLikeDTO.getReceiver());
         // 防止问题不存在
         Question question = questionMapper.selectQuestionById(clickLikeDTO.getQuestionId(), 1);
         if(question == null) {
@@ -59,6 +59,9 @@ public class ClickLikeServiceImpl implements ClickLikeService {
 
         // 判断类型
         if(clickLikeDTO.getCommentId() == -1) {
+            if(clickLike.getNotifier() == question.getUserId()) {
+                return ClickLikeTypeEnum.CLICK_LIKE_IS_NOT_USER;
+            }
             // 取消点赞
             ClickLike oldClick = clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), -1);
             if(oldClick != null) {
@@ -72,6 +75,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
                 notificationMapper.deleteNotification(oldClick.getNotificationId());
                 return ClickLikeTypeEnum.SUCCESS_CANCEL;
             }
+            clickLike.setReceiver(question.getUserId());
             clickLike.setType(ClickLikeTypeEnum.LIKE_QUESTION.getType());
             clickLike.setCreateTime(System.currentTimeMillis());
             // 创建通知
@@ -92,6 +96,9 @@ public class ClickLikeServiceImpl implements ClickLikeService {
             if(comment == null) {
                 return ClickLikeTypeEnum.LIKE_COMMENT_NOT_FOUND;
             }
+            if(clickLike.getNotifier() == comment.getCommentator()) {
+                return ClickLikeTypeEnum.CLICK_LIKE_IS_NOT_USER;
+            }
             ClickLike oldClick = clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), clickLike.getCommentId());
 
             if(oldClick != null) {
@@ -106,6 +113,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
                 commentMapper.updateCommentLikeCount(comment);
                 return ClickLikeTypeEnum.SUCCESS_CANCEL;
             }
+            clickLike.setReceiver(comment.getCommentator());
             clickLike.setType(ClickLikeTypeEnum.LIKE_COMMENT.getType());
             clickLike.setCreateTime(System.currentTimeMillis());
             // 创建通知
