@@ -57,6 +57,7 @@ public class MessageController {
         model.addAttribute("commentCount", notificationMapper.getNoReadCommentCount(user.getId()));
         model.addAttribute("likeCount", notificationMapper.getNoReadLikeCount(user.getId()));
         model.addAttribute("systemCount", notificationMapper.getNoReadSystemCount(user.getId()));
+        model.addAttribute("type", type);
         return "userMessage";
     }
 
@@ -73,8 +74,6 @@ public class MessageController {
         }
 
         NotificationDTO notificationDTO = notificationService.readNotification(id, user);
-
-        System.out.println(notificationDTO.getOuterid());
 
         if(notificationDTO.getReceiver() == user.getId()) {
             return StringUtil.jumpWebLangeParameter("/question/" + notificationDTO.getOuterid(), true, request);
