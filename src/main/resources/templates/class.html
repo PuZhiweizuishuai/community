@@ -40,9 +40,6 @@
             background-color:#494a4b;
             color: white;
         }
-
-    </style>
-    <style type="text/css">
         .hot-tag {
             background-color: #99cfff;
         }
@@ -63,8 +60,33 @@
 <body>
 <!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->
 <div th:insert="~{navigation :: navbar}"></div>
-
-
+<div class="container" style="height: 30px">
+</div>
+<div class="container" style="padding-left: 0">
+    <ul class="nav nav-pills">
+        <li class="nav-item my-nav">
+            <a class="nav-link my-nav my-nav-active" th:class="${class == '0'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">开发语言</a>
+        </li>
+        <li class="nav-item my-nav ml-2">
+            <a class="nav-link my-nav" th:class="${class == '1'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">平台框架</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '2'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">服务器</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '3'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">数据库缓存</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '4'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">开发工具</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '5'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">系统设备</a>
+        </li>
+        <li class="nav-item ml-2 my-nav">
+            <a class="nav-link my-nav" th:class="${class == '6'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">休闲灌水</a>
+        </li>
+    </ul>
+</div>
 <div class="container" style="height: 30px">
 </div>
 </div>
@@ -88,15 +110,12 @@
 
                                 </h5>
                                 <p class="mb-1">
-                                    <button type="button"  style="font-size: 10px" class="btn btn-secondary btn-sm">
-                                        关注 <span class="badge badge-light" th:text="${tagclass.getFollowCount()}">4</span>
-                                    </button>
-                                    <button type="button"  style="font-size: 10px" class="btn btn-secondary btn-sm">
-                                        讨论数 <span class="badge badge-light" th:text="${tagclass.getTalkCount()}">4</span>
-                                    </button>
+                                    <span><span th:text="${tagclass.getFollowCount()}"></span>个关注</span>
+                                    <span><span th:text="${tagclass.getTalkCount()}"></span>个讨论</span>
                                 </p>
                             </div>
                         </div>
+                        <hr/>
                     </div>
                 </div>
             </div>
