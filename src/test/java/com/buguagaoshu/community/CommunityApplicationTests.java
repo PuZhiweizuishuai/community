@@ -1,6 +1,7 @@
 package com.buguagaoshu.community;
 
 import com.buguagaoshu.community.enums.QuestionSortType;
+import com.buguagaoshu.community.enums.TagClassTypeEnum;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
@@ -47,7 +48,7 @@ public class CommunityApplicationTests {
 
     @Test
     public void contextLoads() {
-        System.out.println(System.currentTimeMillis());
+        System.out.println(TagClassTypeEnum.values().length);
     }
 
 }

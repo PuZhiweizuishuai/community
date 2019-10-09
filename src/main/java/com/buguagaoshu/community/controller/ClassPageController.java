@@ -3,10 +3,13 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.TagClassCache;
+import com.buguagaoshu.community.service.TagClassService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,21 +23,22 @@ public class ClassPageController {
 
     private final HotQuestionCache hotQuestionCache;
 
-    private final TagClassCache tagClassCache;
+    private final TagClassService tagClassService;
 
     @Autowired
-    public ClassPageController(HotTagCache hotTagCache, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache) {
+    public ClassPageController(HotTagCache hotTagCache, HotQuestionCache hotQuestionCache, TagClassService tagClassService) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
-        this.tagClassCache = tagClassCache;
+        this.tagClassService = tagClassService;
     }
 
     @GetMapping("/class")
-    public String getClassPage(Model model) {
+    public String getClassPage(Model model, @RequestParam(value = "type", defaultValue = "1") String type) {
         model.addAttribute("hotQuestions", hotQuestionCache.getHotQuestionDTOList());
         List<String> hots = hotTagCache.getHots();
         model.addAttribute("hots", hots);
-        model.addAttribute("tags", tagClassCache.getTagClassList());
+        model.addAttribute("tags", tagClassService.getTagClassByTypeNotUserPage(type));
+        model.addAttribute("type", type);
         return "class";
     }
 }

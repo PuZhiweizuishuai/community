@@ -65,25 +65,25 @@
 <div class="container" style="padding-left: 0">
     <ul class="nav nav-pills">
         <li class="nav-item my-nav">
-            <a class="nav-link my-nav my-nav-active" th:class="${class == '0'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">开发语言</a>
+            <a class="nav-link my-nav my-nav-active" th:class="${type == '1'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=1)}">开发语言</a>
         </li>
         <li class="nav-item my-nav ml-2">
-            <a class="nav-link my-nav" th:class="${class == '1'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">平台框架</a>
+            <a class="nav-link my-nav" th:class="${type == '2'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=2)}">平台框架</a>
         </li>
         <li class="nav-item ml-2 my-nav">
-            <a class="nav-link my-nav" th:class="${class == '2'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">服务器</a>
+            <a class="nav-link my-nav" th:class="${type == '3'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=3)}">服务器</a>
         </li>
         <li class="nav-item ml-2 my-nav">
-            <a class="nav-link my-nav" th:class="${class == '3'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">数据库缓存</a>
+            <a class="nav-link my-nav" th:class="${type == '4'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=4)}">数据库缓存</a>
         </li>
         <li class="nav-item ml-2 my-nav">
-            <a class="nav-link my-nav" th:class="${class == '4'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">开发工具</a>
+            <a class="nav-link my-nav" th:class="${type == '5'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=5)}">开发工具</a>
         </li>
         <li class="nav-item ml-2 my-nav">
-            <a class="nav-link my-nav" th:class="${class == '5'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">系统设备</a>
+            <a class="nav-link my-nav" th:class="${type == '6'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=6)}">系统设备</a>
         </li>
         <li class="nav-item ml-2 my-nav">
-            <a class="nav-link my-nav" th:class="${class == '6'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" href="#">休闲灌水</a>
+            <a class="nav-link my-nav" th:class="${type == '7'}? 'nav-link my-nav my-nav-active' : 'nav-link my-nav'" th:href="'/class' + @{/(type=7)}">休闲灌水</a>
         </li>
     </ul>
 </div>

@@ -14,7 +14,7 @@ public class TagClass {
     private long followCount;
     private String image;
     private String simpleDesc;
-    private String type;
+    private int type;
     private long createTime;
     private long modifiedTime;
     private int status;
