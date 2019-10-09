@@ -2,6 +2,7 @@ package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
+import com.buguagaoshu.community.cache.TagClassCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,10 +20,13 @@ public class ClassPageController {
 
     private final HotQuestionCache hotQuestionCache;
 
+    private final TagClassCache tagClassCache;
+
     @Autowired
-    public ClassPageController(HotTagCache hotTagCache, HotQuestionCache hotQuestionCache) {
+    public ClassPageController(HotTagCache hotTagCache, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
+        this.tagClassCache = tagClassCache;
     }
 
     @GetMapping("/class")
@@ -30,6 +34,7 @@ public class ClassPageController {
         model.addAttribute("hotQuestions", hotQuestionCache.getHotQuestionDTOList());
         List<String> hots = hotTagCache.getHots();
         model.addAttribute("hots", hots);
+        model.addAttribute("tags", tagClassCache.getTagClassList());
         return "class";
     }
 }

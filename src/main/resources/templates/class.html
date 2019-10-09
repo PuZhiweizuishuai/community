@@ -73,7 +73,33 @@
     <div class="row">
         <!-- 左边 -->
         <div class="col-xl-9 mt-3 issue-right">
-            <h1>正在努力施工中！</h1>
+            <div class="container">
+                <div class="row">
+                    <div class="col-5 mt-3" th:each="tagclass : ${tags}">
+                        <div class="media">
+                            <a class="link-to-text" href="#"><img
+                                    class="align-self-center mr-3 img-fluid" th:src="${tagclass.getImage()}"
+                                    style="width: 64px; height: auto; "></a>
+                            <div class="media-body">
+                                <h5 class="mt-0">
+                                    <a class="link-to-text" href="#">
+                                        <span th:text="${tagclass.getTitle()}"></span>
+                                    </a>
+
+                                </h5>
+                                <p class="mb-1">
+                                    <button type="button"  style="font-size: 10px" class="btn btn-secondary btn-sm">
+                                        关注 <span class="badge badge-light" th:text="${tagclass.getFollowCount()}">4</span>
+                                    </button>
+                                    <button type="button"  style="font-size: 10px" class="btn btn-secondary btn-sm">
+                                        讨论数 <span class="badge badge-light" th:text="${tagclass.getTalkCount()}">4</span>
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 右边 -->

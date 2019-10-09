@@ -47,7 +47,7 @@ public class CommunityApplicationTests {
 
     @Test
     public void contextLoads() {
-
+        System.out.println(System.currentTimeMillis());
     }
 
 }
