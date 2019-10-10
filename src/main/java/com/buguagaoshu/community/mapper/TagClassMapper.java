@@ -4,6 +4,7 @@ import com.buguagaoshu.community.model.TagClass;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -34,4 +35,17 @@ public interface TagClassMapper {
      * */
     @Select("select COUNT(*) from topic where type=#{type}")
     long getTagClassCountByType(@Param("type") String type);
+
+    /**
+     * 更新讨论数
+     * */
+    @Update("update topic set talkCount=talkCount+#{talkCount} where id=#{id}")
+    int updateTagTalkCount(TagClass tagClass);
+
+
+    /**
+     * 更新关注数
+     * */
+    @Update("update topic set followCount=followCount+#{followCount} where id=#{id}")
+    int updateTagFollowCount(TagClass tagClass);
 }

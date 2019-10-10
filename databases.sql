@@ -181,7 +181,7 @@ CREATE TABLE `topic`
   PRIMARY KEY (`id`)
 );
 
---insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('', '/image/topicicon/javascript.svg', '', '5', '1570610874840', '1570610874840');
+--insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('', '/image/topicicon/javascript.svg', '', '7', '1570610874840', '1570610874840');
 
 
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('JavaScript', '/image/topicicon/javascript.svg', 'JavaScript是一种直译式脚本语言，是一种动态类型、弱类型、基于原型的语言，内置支持类型。它的解释器被称为JavaScript引擎，为浏览器的一部分，广泛用于客户端的脚本语言，最早是在HTML（标准通用标记语言下的一个应用）网页上使用，用来给HTML网页增加动态功能。', '1', '1570610874840', '1570610874840');
@@ -240,7 +240,7 @@ insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) val
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('NetBeans', '/image/topicicon/logo_netbeans_red.png', 'NetBeans是Sun公司（2009年被甲骨文收购）在2000年创立的开放源代码供开发人员和客户社区的家园，旨在构建世界级的Java IDE。NetBeans当前可以在Solaris、Windows、Linux和Macintosh OS X平台上进行开发，并在SPL(Sun公用许可)范围内使用。', '5', '1570610874840', '1570610874840');
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('PyCharm', '/image/topicicon/pycharm.svg', 'PyCharm是一种Python IDE，带有一整套可以帮助用户在使用Python语言开发时提高其效率的工具，比如调试、语法高亮、Project管理、代码跳转、智能提示、自动完成、单元测试、版本控制。此外，该IDE提供了一些高级功能，以用于支持Django框架下的专业Web开发。', '5', '1570610874840', '1570610874840');
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('Navicat', '/image/topicicon/navicat.jpg', 'Navicat是一套快速、可靠并价格相当便宜的数据库管理工具，专为简化数据库的管理及降低系统管理成本而设。它的设计符合数据库管理员、开发人员及中小企业的需要。Navicat 是以直觉化的图形用户界面而建的，让你可以以安全并且简单的方式创建、组织、访问并共用信息。', '5', '1570610874840', '1570610874840');
-insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('CLion', '/image/topicicon/javascript.svg', ' CLion是一款专为开发C及C++所设计的跨平台IDE。它是以IntelliJ为基础设计的,包含了许多智能功能来提高开发人员的生产力。', '5', '1570610874840', '1570610874840');
+insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('CLion', '/image/topicicon/clion.svg', ' CLion是一款专为开发C及C++所设计的跨平台IDE。它是以IntelliJ为基础设计的,包含了许多智能功能来提高开发人员的生产力。', '5', '1570610874840', '1570610874840');
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('WebStorm', '/image/topicicon/WebStorm.svg', 'WebStorm 是jetbrains公司旗下一款JavaScript 开发工具。目前已经被广大中国JS开发者誉为“Web前端开发神器”、“最强大的HTML5编辑器”、“最智能的JavaScript IDE”等。与IntelliJ IDEA同源，继承了IntelliJ IDEA强大的JS部分的功能。', '5', '1570610874840', '1570610874840');
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('PhpStorm', '/image/topicicon/PhpStorm.svg', 'PhpStorm 是 JetBrains 公司开发的一款商业的 PHP 集成开发工具，旨在提高用户效率，可深刻理解用户的编码，提供智能代码补全，快速导航以及即时错误检查。', '5', '1570610874840', '1570610874840');
 
@@ -255,7 +255,10 @@ insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) val
 
 
 
-
+insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('体育', '/image/topicicon/sports.svg', '体育', '7', '1570610874840', '1570610874840');
+insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('娱乐八卦', '/image/topicicon/game.svg', '娱乐八卦', '7', '1570610874840', '1570610874840');
+insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('闲聊', '/image/topicicon/chat.svg', '闲聊', '7', '1570610874840', '1570610874840');
+insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('游戏', '/image/topicicon/games.svg', '游戏', '7', '1570610874840', '1570610874840');
 
 
 --alter table Questions modify questionId bigint NOT NULL;
