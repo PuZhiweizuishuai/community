@@ -14,7 +14,9 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import sun.misc.BASE64Decoder;
+
+import java.util.Base64;
+import java.util.Base64.Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -113,15 +115,15 @@ public class UserUpdateApiController {
     public MultipartFile base64toMultipart(String data, String fileName) {
         try {
             String[] baseStrs = data.split(",");
-            BASE64Decoder decoder = new BASE64Decoder();
-            byte[] b = decoder.decodeBuffer(baseStrs[1]);
+            Base64.Decoder decoder = Base64.getDecoder();
+            byte[] b = decoder.decode(baseStrs[1]);
             for (int i = 0; i < b.length; ++i) {
                 if (b[i] < 0) {
                     b[i] += 256;
                 }
             }
             return new Base64MultipartFile(b, baseStrs[0], fileName);
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("图片文件转换:  {}",e.getMessage());
             return null;
         }
