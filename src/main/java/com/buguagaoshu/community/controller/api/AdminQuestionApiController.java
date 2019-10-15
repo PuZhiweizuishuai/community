@@ -6,16 +6,12 @@ import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
-import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.*;
 import com.buguagaoshu.community.service.*;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
-import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
