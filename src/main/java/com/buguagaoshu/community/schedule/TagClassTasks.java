@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -27,10 +29,18 @@ public class TagClassTasks {
         this.tagClassCache = tagClassCache;
     }
 
-    @Scheduled(fixedRate = 10800000)
+    /**
+     * 十分钟更新一次
+     * */
+    @Scheduled(fixedRate = 600000)
     public void TagClassCache() {
         log.info("开始缓存话题");
         List<TagClass> tagClassList = tagClassMapper.getAllTagClass();
+        Map<String, TagClass> tagClassMap = new HashMap<>();
+        for (TagClass tagClass : tagClassList) {
+            tagClassMap.put(tagClass.getTitle(), tagClass);
+        }
         tagClassCache.setTagClassList(tagClassList);
+        tagClassCache.setTagClassMap(tagClassMap);
     }
 }

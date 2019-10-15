@@ -48,7 +48,7 @@ public class CommunityApplicationTests {
 
     @Test
     public void contextLoads() {
-        System.out.println(TagClassTypeEnum.values().length);
+
     }
 
 }

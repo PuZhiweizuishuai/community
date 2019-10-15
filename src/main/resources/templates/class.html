@@ -99,19 +99,19 @@
                 <div class="row">
                     <div class="col-5 mt-3" th:each="tagclass : ${tags}">
                         <div class="media">
-                            <a class="link-to-text" href="#"><img
+                            <a class="link-to-text" th:href="@{/(tag=${tagclass.getTitle()})}"><img
                                     class="align-self-center mr-3 img-fluid" th:src="${tagclass.getImage()}"
                                     style="width: 64px; height: auto; "></a>
                             <div class="media-body">
                                 <h5 class="mt-0">
-                                    <a class="link-to-text" href="#">
+                                    <a class="link-to-text" th:href="@{/(tag=${tagclass.getTitle()})}">
                                         <span th:text="${tagclass.getTitle()}"></span>
                                     </a>
 
                                 </h5>
                                 <p class="mb-1">
-                                    <span><span th:text="${tagclass.getFollowCount()}"></span>个关注</span>
-                                    <span><span th:text="${tagclass.getTalkCount()}"></span>个讨论</span>
+                                    <span><span style="font-weight: bold" th:text="${tagclass.getFollowCount()}"></span>个关注</span> &nbsp;
+                                    <span><span style="font-weight: bold" th:text="${tagclass.getTalkCount()}"></span>个讨论</span>
                                 </p>
                             </div>
                         </div>

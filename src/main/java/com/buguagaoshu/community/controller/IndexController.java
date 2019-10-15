@@ -3,10 +3,12 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.IndexTopQuestion;
+import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.QuestionClassType;
 import com.buguagaoshu.community.enums.QuestionSortType;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -36,12 +38,15 @@ public class IndexController {
 
     private final HotQuestionCache hotQuestionCache;
 
+    private final TagClassCache tagClassCache;
+
     @Autowired
-    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache) {
+    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache) {
         this.questionService = questionService;
         this.hotTagCache = hotTagCache;
         this.indexTopQuestion = indexTopQuestion;
         this.hotQuestionCache = hotQuestionCache;
+        this.tagClassCache = tagClassCache;
     }
 
 
@@ -75,6 +80,12 @@ public class IndexController {
         model.addAttribute("paginationDto", paginationDto);
         model.addAttribute("hots", hots);
         model.addAttribute("tag", tag);
+
+        TagClass tagClass = tagClassCache.getTagClassMap().get(tag);
+        if (tagClass != null) {
+            model.addAttribute("tagClass", tagClass);
+        }
+
         model.addAttribute("sort", sort);
         model.addAttribute("class", classification);
         return "index";

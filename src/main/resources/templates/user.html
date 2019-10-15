@@ -152,13 +152,10 @@
             <div class="container mt-2 mb-2">
                 <ul class="nav">
                     <li class="nav-item">
-                        <a class="nav-link" th:href="'/user/' + ${user.getUserId()}">动态</a>
+                        <a class="nav-link" th:href="'/user/' + ${user.getUserId()}">发帖</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">回复</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">提问</a>
+                        <a class="nav-link" th:href="'/user/' + ${user.getUserId()}+ @{/(type=1)}">回复</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">文章</a>
@@ -197,7 +194,7 @@
                 <ul class="pagination justify-content-end">
                     <!-- 返回首页 -->
                     <li class="page-item" th:if="${paginationDto.showFirstPage}">
-                        <a class="page-link" id="first-page-a" th:href="'/user/' + ${user.getUserId()}"
+                        <a class="page-link" id="first-page-a" th:href="'/user/' + ${user.getUserId()}+ @{/(page=1,type=${type})}"
                            aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
                             <span aria-hidden="true">&laquo;&laquo;</span>
                             <span class="sr-only">Previous</span>
@@ -206,7 +203,7 @@
                     <!-- 上一页 -->
                     <li class="page-item" th:if="${paginationDto.showPrevious}">
                         <a class="page-link" id="link-to-last-a"
-                           th:href="'/user/'+ ${user.getUserId()} + @{/(page=${paginationDto.nowPage} - 1)}"
+                           th:href="'/user/'+ ${user.getUserId()} + @{/(page=${paginationDto.nowPage-1},type=${type})}"
                            aria-label="Previous"
                            onclick="addLocaleUrlForPage('link-to-last-a')">
                             <span aria-hidden="true">&laquo;</span>
@@ -217,7 +214,7 @@
 
                     <li class="page-item" th:each="page : ${paginationDto.pages}"
                         th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
-                        <a class="page-link" th:href="${'/user/'+user.getUserId()} + @{/(page=${page})}"
+                        <a class="page-link" th:href="${'/user/'+user.getUserId()} + @{/(page=${page},type=${type})}"
                            th:text="${page}" th:id="${page}"
                            th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
                             1
@@ -228,7 +225,7 @@
                     <!-- 下一页 -->
                     <li class="page-item" th:if="${paginationDto.showNext}">
                         <a class="page-link" id="lind-to-next-a"
-                           th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.nowPage} + 1)}"
+                           th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.nowPage+1},type=${type})}"
                            aria-label="Next"
                            onclick="addLocaleUrlForPage('lind-to-next-a')">
                             <span aria-hidden="true">&raquo;</span>
@@ -238,7 +235,7 @@
                     <!-- 最后一页 -->
                     <li class="page-item" th:if="${paginationDto.showEndPage}">
                         <a class="page-link" id="link-to-end-a"
-                           th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.totalPage})}"
+                           th:href="'/user/'+${user.getUserId()} + @{/(page=${paginationDto.totalPage},type=${type})}"
                            th:if="${paginationDto.showEndPage}"
                            aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
                             <span aria-hidden="true">&raquo;&raquo;</span>

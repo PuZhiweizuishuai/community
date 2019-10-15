@@ -13,5 +13,27 @@ public interface TagClassService {
     PaginationDto<TagClass> getTagClassByType(String type, String page, String size);
 
 
+    /**
+     * 获取当前类型的话题
+     * @param type 类型
+     * @return 话题列表
+     * */
     List<TagClass> getTagClassByTypeNotUserPage(String type);
+
+    /**
+     * 更新当前话题的讨论数
+     *
+     * @param tag 标签
+     * @return 1
+     */
+    int updateTalkCount(String tag);
+
+    /**
+     * 修改问题后对话题讨论数量的调整
+     *
+     * @param newQuestionTag 修改后的标签
+     * @param oldQuestionTag 修改前的标签
+     * @return 1
+     */
+    int alterQuestionTalkCount(String[] newQuestionTag, String[] oldQuestionTag);
 }

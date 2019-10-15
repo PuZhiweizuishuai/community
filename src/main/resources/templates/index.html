@@ -102,7 +102,8 @@
                 <div class="row">
                     <div class="col">
                         <h4>
-                            <img src="image/icon/found.svg" width="35" height="35"/>
+                            <img th:if="${tagClass==null}" src="image/icon/found.svg" width="35" height="35"/>
+                            <img th:if="${tagClass!=null}" th:src="${tagClass.getImage()}" width="35" height="auto">
                             <span th:if="${tag != null}" th:text="${tag}">
 
                             </span>
@@ -251,6 +252,33 @@
 
         <!-- 右边 -->
         <div class="col">
+            <br/>
+            <div th:if="${tagClass!=null}">
+                <div class="row">
+                    <div class="col">
+                        <h5>
+                            话题描述：
+                        </h5>
+                    </div>
+                    <div class="col text-right">
+                        <button type="button" class="btn btn-success btn-sm">
+                            关注
+                            <span class="badge badge-light" th:text="${tagClass.getFollowCount()}">9</span>
+                        </button>
+                    </div>
+                </div>
+                <hr/>
+                <input id="tag-simple-desc" type="hidden" th:value="${tagClass.getSimpleDesc()}">
+                <p id="tag-simple-desc-text" style="font-size: 15px">
+                </p>
+                <script>
+                    document.getElementById("tag-simple-desc-text").innerHTML = document.getElementById("tag-simple-desc").getAttribute("value");
+                </script>
+                <hr/>
+                <p>
+                  话题讨论数：<span th:text="${tagClass.getTalkCount()}"></span>
+                </p>
+            </div>
             <br/>
             <p>
                 广告位招租

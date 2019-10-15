@@ -6,11 +6,12 @@ import com.buguagaoshu.community.enums.TagClassTypeEnum;
 import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -52,5 +53,55 @@ public class TagClassServiceImpl implements TagClassService {
             }
         }
         return tagClassList;
+    }
+
+    @Override
+    public int updateTalkCount(String tag) {
+        String regex = ",|，";
+        String[] tags = tag.split(regex);
+        if (tags.length == 1) {
+            TagClass tagClass = tagClassMapper.getTagClassByTitle(tag);
+
+
+            if (tagClass != null) {
+                tagClass.setTalkCount(1);
+                tagClassMapper.updateTagTalkCount(tagClass);
+                return 1;
+            }
+        }
+        for (String tagStr : tags) {
+            TagClass tagClass = tagClassMapper.getTagClassByTitle(tagStr);
+            if (tagClass != null) {
+                tagClass.setTalkCount(1);
+                tagClassMapper.updateTagTalkCount(tagClass);
+            }
+        }
+        return 1;
+    }
+
+    @Override
+    public int alterQuestionTalkCount(String[] newQuestionTag, String[] oldQuestionTag) {
+        List<String> minus = StringUtil.minus(newQuestionTag, oldQuestionTag);
+        for(String string : newQuestionTag) {
+            if(minus.contains(string)) {
+                TagClass tagClass = tagClassMapper.getTagClassByTitle(string);
+                if(tagClass != null) {
+                    tagClass.setTalkCount(1);
+                    tagClassMapper.updateTagTalkCount(tagClass);
+                }
+            }
+        }
+
+        for(String string : oldQuestionTag) {
+            if(minus.contains(string)) {
+                TagClass tagClass = tagClassMapper.getTagClassByTitle(string);
+                if(tagClass != null) {
+                    tagClass.setTalkCount(-1);
+                    tagClassMapper.updateTagTalkCount(tagClass);
+                }
+            }
+        }
+
+        return 1;
     }
 }

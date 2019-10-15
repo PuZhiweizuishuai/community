@@ -58,7 +58,7 @@ maven: 3
         </dependency>
 ```
 使用 database.sql 脚本创建数据库
-配置 application.properties
+配置 application.yml
 
 运行打包命令
 ```bash
@@ -66,7 +66,7 @@ mvn clean package
 ```
 运行项目
 ```bash
-java -jar community-0.0.1-SNAPSHOT.jar
+java -jar target/community-0.0.1-SNAPSHOT.jar
 ```
 即可
 
@@ -178,6 +178,10 @@ service 服务层
 util 各种工具
 
 ## 更新日志
+
+#### 2019-10-15更新
+
+完成话题分类页
 
 #### 2019-09-27更新
 

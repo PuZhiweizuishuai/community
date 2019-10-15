@@ -29,6 +29,12 @@ public interface TagClassMapper {
     List<TagClass> getTagClassByType(@Param("type") String type);
 
     /**
+     * @param title 问题标题
+     * */
+    @Select("select * from topic where title=#{title}")
+    TagClass getTagClassByTitle(@Param("title") String title);
+
+    /**
      * 通过话题类型获取话题数量
      * @param type 话题类型
      * @return 数量

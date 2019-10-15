@@ -38,6 +38,7 @@ public class UserController {
     public String getUserHome(@PathVariable("userId") String userId,
                               @RequestParam(value = "page", defaultValue = "1") String page,
                               @RequestParam(value = "size", defaultValue = "15") String size,
+                              @RequestParam(value = "type", defaultValue = "0") String type,
                               Model model,
                               HttpServletRequest request) {
         if (userId == null) {
@@ -48,6 +49,7 @@ public class UserController {
             model.addAttribute("user", user);
             PaginationDto paginationDto = questionService.getQuestionByUserId(page, size, user.getId());
             model.addAttribute("paginationDto", paginationDto);
+            model.addAttribute("type", type);
             return StringUtil.jumpWebLangeParameter("user", false, request);
         }
         return StringUtil.jumpWebLangeParameter("/", true, request);

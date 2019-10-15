@@ -11,6 +11,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.QuestionService;
+import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
@@ -22,6 +23,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -43,13 +45,16 @@ public class QuestionServiceImpl implements QuestionService {
 
     private final UserPermissionService userPermissionService;
 
+    private final TagClassService tagClassService;
+
     private long[] param;
 
     @Autowired
-    public QuestionServiceImpl(QuestionMapper questionMapper, UserService userService, UserPermissionService userPermissionService) {
+    public QuestionServiceImpl(QuestionMapper questionMapper, UserService userService, UserPermissionService userPermissionService, TagClassService tagClassService) {
         this.questionMapper = questionMapper;
         this.userService = userService;
         this.userPermissionService = userPermissionService;
+        this.tagClassService = tagClassService;
     }
 
 
@@ -120,10 +125,13 @@ public class QuestionServiceImpl implements QuestionService {
 
 
     @Override
+    @Transactional(rollbackFor = CustomizeException.class)
     public int createQuestion(Question question) {
         if (question.getQuestionId() == -1) {
             question.setCreateTime(System.currentTimeMillis());
             question.setAlterTime(System.currentTimeMillis());
+            // 话题数 +1
+            tagClassService.updateTalkCount(question.getTag());
             return questionMapper.createQuestion(question);
         } else {
             Question oldQuestion = questionMapper.selectQuestionById(question.getQuestionId(), 1);
@@ -133,7 +141,12 @@ public class QuestionServiceImpl implements QuestionService {
                 log.info("有人尝试非法修改，修改被拦截！");
                 throw new CustomizeException(CustomizeErrorCode.INVALID_OPERATION);
             }
+            String regex = ",|，";
+            String[] newTags = question.getTag().split(regex);
+            String[] oldTags = oldQuestion.getTag().split(regex);
             question.setAlterTime(System.currentTimeMillis());
+
+            tagClassService.alterQuestionTalkCount(newTags, oldTags);
             return questionMapper.updateQuestion(question);
         }
     }

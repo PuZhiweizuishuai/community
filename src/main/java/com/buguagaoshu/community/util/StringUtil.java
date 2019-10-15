@@ -2,9 +2,7 @@ package com.buguagaoshu.community.util;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -73,7 +71,7 @@ public class StringUtil {
 
     /**
      * 格式化时间
-     * */
+     */
     public static String foematTime(long data) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return simpleDateFormat.format(data);
@@ -200,5 +198,37 @@ public class StringUtil {
             }
         }
         return true;
+    }
+
+    /**
+     * 求差集
+     */
+    public static ArrayList<String> minus(String[] arr1, String[] arr2) {
+        ArrayList<String> list = new ArrayList<>();
+        LinkedList<String> history = new LinkedList<>();
+        String[] longerArr = arr1;
+        String[] shorterArr = arr2;
+        //找出较长的数组来减较短的数组
+        if (arr1.length > arr2.length) {
+            longerArr = arr2;
+            shorterArr = arr1;
+        }
+        for (String str : longerArr) {
+            if (!list.contains(str)) {
+                list.add(str);
+            }
+        }
+        for (String str : shorterArr) {
+            if (list.contains(str)) {
+                history.add(str);
+                list.remove(str);
+            } else {
+                if (!history.contains(str)) {
+                    list.add(str);
+
+                }
+            }
+        }
+        return list;
     }
 }

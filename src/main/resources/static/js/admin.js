@@ -155,3 +155,17 @@ function updateHotUser() {
         }
     })
 }
+
+function updateTagClass() {
+    $.ajax({
+        type: 'get',
+        url: '/api/admin/updateTagClass',
+        success: function (resultdata) {
+            if (resultdata.success) {
+                alert(resultdata.msg)
+            } else {
+                alert(resultdata.msg);
+            }
+        }
+    })
+}
