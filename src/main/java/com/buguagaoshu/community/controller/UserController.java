@@ -37,7 +37,7 @@ public class UserController {
     @GetMapping("/user/{userId}")
     public String getUserHome(@PathVariable("userId") String userId,
                               @RequestParam(value = "page", defaultValue = "1") String page,
-                              @RequestParam(value = "size", defaultValue = "10") String size,
+                              @RequestParam(value = "size", defaultValue = "15") String size,
                               Model model,
                               HttpServletRequest request) {
         if (userId == null) {

@@ -48,7 +48,7 @@ public class IndexController {
     @GetMapping(value = {"/", "index"})
     public String index(HttpServletRequest request, Model model,
                         @RequestParam(value = "page", defaultValue = "1") String page,
-                        @RequestParam(value = "size", defaultValue = "10") String size,
+                        @RequestParam(value = "size", defaultValue = "15") String size,
                         @RequestParam(value = "tag", required = false) String tag,
                         @RequestParam(value = "sort", defaultValue = "3") String sort,
                         @RequestParam(value = "class", defaultValue = "0") String classification) {
