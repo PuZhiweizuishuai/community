@@ -1,6 +1,5 @@
 package com.buguagaoshu.community.schedule;
 
-import com.buguagaoshu.community.mapper.OnlineUserMapper;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;

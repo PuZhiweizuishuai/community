@@ -2,7 +2,6 @@ package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Question;
 import org.apache.ibatis.annotations.*;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 

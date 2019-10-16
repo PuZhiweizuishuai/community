@@ -2,7 +2,6 @@ package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.dto.NotificationDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
-import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;

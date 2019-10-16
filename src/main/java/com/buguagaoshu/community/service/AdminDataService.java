@@ -4,7 +4,6 @@ import com.buguagaoshu.community.dto.AdminDataDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.AdminData;
 
-import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}

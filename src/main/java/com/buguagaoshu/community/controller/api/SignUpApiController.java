@@ -7,19 +7,12 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
 import com.wf.captcha.utils.CaptchaUtil;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.Errors;
-import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 注册控制

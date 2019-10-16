@@ -2,13 +2,11 @@ package com.buguagaoshu.community.controller;
 
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
-import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.service.TagClassService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;

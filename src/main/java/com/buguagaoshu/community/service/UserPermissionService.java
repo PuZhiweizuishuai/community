@@ -2,7 +2,6 @@ package com.buguagaoshu.community.service;
 
 import com.buguagaoshu.community.model.UserPermission;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Update;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}

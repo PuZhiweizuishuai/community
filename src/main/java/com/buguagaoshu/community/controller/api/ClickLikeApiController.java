@@ -2,7 +2,6 @@ package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.dto.ClickLikeDTO;
 import com.buguagaoshu.community.enums.ClickLikeTypeEnum;
-import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.JwtUtil;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**

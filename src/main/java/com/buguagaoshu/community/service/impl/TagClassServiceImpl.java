@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -82,20 +82,23 @@ public class TagClassServiceImpl implements TagClassService {
     @Override
     public int alterQuestionTalkCount(String[] newQuestionTag, String[] oldQuestionTag) {
         List<String> minus = StringUtil.minus(newQuestionTag, oldQuestionTag);
-        for(String string : newQuestionTag) {
-            if(minus.contains(string)) {
+        if (minus.size() == 0) {
+            return 0;
+        }
+        for (String string : newQuestionTag) {
+            if (minus.contains(string)) {
                 TagClass tagClass = tagClassMapper.getTagClassByTitle(string);
-                if(tagClass != null) {
+                if (tagClass != null) {
                     tagClass.setTalkCount(1);
                     tagClassMapper.updateTagTalkCount(tagClass);
                 }
             }
         }
 
-        for(String string : oldQuestionTag) {
-            if(minus.contains(string)) {
+        for (String string : oldQuestionTag) {
+            if (minus.contains(string)) {
                 TagClass tagClass = tagClassMapper.getTagClassByTitle(string);
-                if(tagClass != null) {
+                if (tagClass != null) {
                     tagClass.setTalkCount(-1);
                     tagClassMapper.updateTagTalkCount(tagClass);
                 }
