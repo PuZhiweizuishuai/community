@@ -56,23 +56,23 @@ public class TagClassServiceImpl implements TagClassService {
     }
 
     @Override
-    public int updateTalkCount(String tag) {
+    public int updateTalkCount(String tag, int count) {
         String regex = ",|，";
         String[] tags = tag.split(regex);
         if (tags.length == 1) {
-            TagClass tagClass = tagClassMapper.getTagClassByTitle(tag);
+            TagClass tagClass = tagClassCache.getTagClassMap().get(tag);
 
 
             if (tagClass != null) {
-                tagClass.setTalkCount(1);
+                tagClass.setTalkCount(count);
                 tagClassMapper.updateTagTalkCount(tagClass);
                 return 1;
             }
         }
         for (String tagStr : tags) {
-            TagClass tagClass = tagClassMapper.getTagClassByTitle(tagStr);
+            TagClass tagClass = tagClassCache.getTagClassMap().get(tagStr);
             if (tagClass != null) {
-                tagClass.setTalkCount(1);
+                tagClass.setTalkCount(count);
                 tagClassMapper.updateTagTalkCount(tagClass);
             }
         }
@@ -87,7 +87,7 @@ public class TagClassServiceImpl implements TagClassService {
         }
         for (String string : newQuestionTag) {
             if (minus.contains(string)) {
-                TagClass tagClass = tagClassMapper.getTagClassByTitle(string);
+                TagClass tagClass = tagClassCache.getTagClassMap().get(string);
                 if (tagClass != null) {
                     tagClass.setTalkCount(1);
                     tagClassMapper.updateTagTalkCount(tagClass);
@@ -97,7 +97,7 @@ public class TagClassServiceImpl implements TagClassService {
 
         for (String string : oldQuestionTag) {
             if (minus.contains(string)) {
-                TagClass tagClass = tagClassMapper.getTagClassByTitle(string);
+                TagClass tagClass = tagClassCache.getTagClassMap().get(string);
                 if (tagClass != null) {
                     tagClass.setTalkCount(-1);
                     tagClassMapper.updateTagTalkCount(tagClass);

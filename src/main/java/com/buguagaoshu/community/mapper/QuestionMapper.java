@@ -132,7 +132,7 @@ public interface QuestionMapper {
      * @param status 状态
      * @return 搜索结果
      * */
-    @Select("select * from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} order by questionId desc limit #{page}, #{size}")
+    @Select("select * from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status} order by questionId desc limit #{page}, #{size}")
     List<Question> searchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
 
@@ -142,7 +142,7 @@ public interface QuestionMapper {
      * @param status 状态
      * @return  返回正则搜索的数量
      * */
-    @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search} and status=#{status}")
+    @Select("select COUNT(*) from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status}")
     long searchQuestionCount(@Param("search") String search, @Param("status") int status);
 
 
@@ -186,14 +186,14 @@ public interface QuestionMapper {
      * @param status 状态
      * @return 搜索结果
      * */
-    @Select("select * from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
+    @Select("select * from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
     List<Question> selectQuestionUseCommentCountBySearch(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
 
     /**
      * 返回正则搜索的零回复数量
      * */
-    @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search} and status=#{status} AND commentCount=0")
+    @Select("select COUNT(*) from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0")
     long selectQuestionUseCommentCountBySearchNumber(@Param("search") String search, @Param("status") int status);
 
 

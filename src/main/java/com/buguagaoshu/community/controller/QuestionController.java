@@ -57,7 +57,7 @@ public class QuestionController {
             User user = (User) request.getSession().getAttribute("admin");
             if (user == null) {
                 model.addAttribute("message", "这个问题已经被删除了！如需恢复，请联系管理员！");
-                return StringUtil.jumpWebLangeParameter("/error", false, request);
+                return "error";
             }
             List<Question> relevantQuestion = questionService.getRelevantQuestion(question);
             PaginationDto<CommentDto> commentDtos = commentService.getCommentDtoByQuestionIdForQuestion(questionId, page, size, CommentSortTypeEnum.getType(sort));

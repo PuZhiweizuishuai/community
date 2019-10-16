@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.cache.IndexTopQuestion;
+import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.mapper.CommentMapper;
@@ -13,6 +14,7 @@ import com.buguagaoshu.community.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,10 +40,14 @@ public class AdminQuestionApiController {
 
     private final IndexTopQuestion indexTopQuestion;
 
+    private final TagClassService tagClassService;
+
+    private final TagClassCache tagClassCache;
+
 
     @Autowired
     public AdminQuestionApiController(UserService userService, QuestionMapper questionMapper, NotificationMapper notificationMapper, CommentMapper commentMapper,
-                                      UserPermissionService userPermissionService, IndexTopQuestion indexTopQuestion) {
+                                      UserPermissionService userPermissionService, IndexTopQuestion indexTopQuestion, TagClassService tagClassService, TagClassCache tagClassCache) {
         this.userService = userService;
         this.questionMapper = questionMapper;
 
@@ -50,6 +56,8 @@ public class AdminQuestionApiController {
 
         this.userPermissionService = userPermissionService;
         this.indexTopQuestion = indexTopQuestion;
+        this.tagClassService = tagClassService;
+        this.tagClassCache = tagClassCache;
     }
 
 
@@ -79,7 +87,10 @@ public class AdminQuestionApiController {
             for (Comment comment : comments) {
                 createNotification(question, admin, comment.getCommentator(), NotificationTypeEnum.SYSTEM_DELETE_COMMENT);
             }
+
+            tagClassService.updateTalkCount(question.getTag(), -1);
             questionMapper.alterStatus(questionId, 0);
+
             log.info("管理员 {} 删除了问题 {}", admin.getId(), questionId);
             return StringUtil.dealResultMessage(true, "设置成功");
         }
@@ -96,6 +107,8 @@ public class AdminQuestionApiController {
             for (Comment comment : comments) {
                 createNotification(question, admin, comment.getCommentator(), NotificationTypeEnum.SYSTEM_DELETE_COMMENT);
             }
+
+            tagClassService.updateTalkCount(question.getTag(), -1);
             questionMapper.alterStatus(questionId, 0);
             log.info("用户 {} 删除了问题 {}", user.getId(), questionId);
             return StringUtil.dealResultMessage(true, "删除成功！");
@@ -127,7 +140,7 @@ public class AdminQuestionApiController {
         for (Comment comment : comments) {
             createNotification(question, admin, comment.getCommentator(), NotificationTypeEnum.SYSTEM_RESET_COMMENT);
         }
-
+        tagClassService.updateTalkCount(question.getTag(), 1);
         questionMapper.alterStatus(questionId, 1);
         log.info("管理员 {} 恢复了问题 {}", admin.getId(), questionId);
         return StringUtil.dealResultMessage(true, "恢复成功！");

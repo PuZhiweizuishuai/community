@@ -128,7 +128,7 @@ public class QuestionServiceImpl implements QuestionService {
             question.setCreateTime(System.currentTimeMillis());
             question.setAlterTime(System.currentTimeMillis());
             // 话题数 +1
-            tagClassService.updateTalkCount(question.getTag());
+            tagClassService.updateTalkCount(question.getTag(), 1);
             return questionMapper.createQuestion(question);
         } else {
             Question oldQuestion = questionMapper.selectQuestionById(question.getQuestionId(), 1);

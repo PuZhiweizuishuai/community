@@ -24,9 +24,10 @@ public interface TagClassService {
      * 更新当前话题的讨论数
      *
      * @param tag 标签
+     * @param count 增加或减少数量
      * @return 1
      */
-    int updateTalkCount(String tag);
+    int updateTalkCount(String tag, int count);
 
     /**
      * 修改问题后对话题讨论数量的调整
