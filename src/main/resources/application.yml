@@ -29,9 +29,9 @@ File:
     PATH: file
 
 logging:
-  file:
-    max-size: 1MB
-    max-history: 7
+  file: log/spring.log
+  file.max-history: 7
+  file.max-size: 1MB
   level:
     root: info
 #    com:

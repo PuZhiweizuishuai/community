@@ -147,10 +147,12 @@
             <!--标签-->
             <div class="container">
                 <span th:each="tag:${question.getTag().split(',|，')}">
+                    <a th:href="@{/(tag=${tag})}">
                     <span class="badge badge-primary mr-2">
                         <img src="/image/icon/tag.svg" height="15px">
                         <span class="ml-1" th:text="${tag}"></span>
                     </span>
+                    </a>
                 </span>
             </div>
             <!-- 编辑 -->
