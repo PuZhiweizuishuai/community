@@ -14,7 +14,9 @@ public enum FileTypeEnum {
 
     VIDEO_FILE(2, "视频"),
 
-    MUSIC_FILE(3, "声音");
+    MUSIC_FILE(3, "声音"),
+
+    PDF_FILE(4, "PDF");
 
     int code;
     String type;

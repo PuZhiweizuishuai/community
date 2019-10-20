@@ -31,6 +31,10 @@ public class FileUtil {
             return FileTypeEnum.MUSIC_FILE;
         }
 
+        if (".PDF".equals(type)) {
+            return FileTypeEnum.PDF_FILE;
+        }
+
         return FileTypeEnum.FILE;
     }
 }

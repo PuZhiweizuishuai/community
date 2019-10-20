@@ -5,7 +5,7 @@ const vditor = new Vditor('issues-text', {
     counter: 100000,
     height: 500,
     hint: {
-        emojiPath: 'https://cdn.jsdelivr.net/npm/vditor@1.8.3/dist/images/emoji',
+        emojiPath: '/js/vditor/images/emoji',
         emoji: emojis
     },
     tab: '\t',

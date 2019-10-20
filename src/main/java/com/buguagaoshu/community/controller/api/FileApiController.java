@@ -159,7 +159,7 @@ public class FileApiController {
     }
 
 
-    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/video/{filename:.+}", produces = "video/mpeg4")
+    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/video/{filename:.+}", produces = "video/mp4")
     @ResponseBody
     public ResponseEntity<?> getVideo(@PathVariable("filename") String filename,
                                      @PathVariable("userId") String userId) {
@@ -181,16 +181,28 @@ public class FileApiController {
 
         switch (FileUtil.getFileType(filename)) {
             case IMAGE_FILE:
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
                 headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE);
+                headers.add(HttpHeaders.ACCEPT, MediaType.IMAGE_PNG_VALUE);
                 break;
             case MUSIC_FILE:
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
                 headers.add(HttpHeaders.CONTENT_TYPE, "audio/mp3");
+                headers.add(HttpHeaders.ACCEPT, "audio/mp3");
                 break;
             case VIDEO_FILE:
-                headers.add(HttpHeaders.CONTENT_TYPE, "video/mpeg4");
+                headers.add(HttpHeaders.ACCEPT, "video/mp4");
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
+                headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
+                break;
+            case PDF_FILE:
+                headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_PDF_VALUE);
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
+                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
                 break;
             default:
-                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
+                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
         }
         try {
             String path = ROOT + "/" + userId + "/file/";
