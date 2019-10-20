@@ -1,6 +1,9 @@
 function comment() {
     var questionId = $("#questionId").val();
-    var content = $("#content").val();
+    var content = vditor.getValue();
+    if(content == '\n' || content == " ") {
+        alert("评论不能为空！");
+    }
     var captcha = $("#captcha").val();
     sendComments(questionId, questionId, content, 1, captcha);
 }
@@ -46,6 +49,7 @@ function sendComments(questionId, parentId, content, type, captcha) {
                 return;
             }
             if(response.code == 200) {
+                vditor.clearCache();
                 drowComment(response);
             } else {
                 alert(response.message);

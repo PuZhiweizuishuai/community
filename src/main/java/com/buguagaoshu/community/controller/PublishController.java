@@ -77,7 +77,6 @@ public class PublishController {
         question.setTag(tag);
         question.setUserId(user.getId());
         question.setCreateTime(time);
-
         if (!check(question, CAPTCHA, model, request)) {
             return StringUtil.jumpWebLangeParameter("publish", false, request);
         }

@@ -2,17 +2,17 @@
 create database community;
 use community;
 
---查看数据库编码
+-- 查看数据库编码
 show variables LIKE 'collation_%';
 
---如果不是utf8 collation_database 则修改为 utf8 编码
---修改数据库编码属性
-ALTER DATABASE community CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+-- 如果不是utf8mb4 collation_database 则修改为 utf8mb4 编码
+-- 修改数据库编码属性
+ALTER DATABASE community CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
 -- TODO 修改时间为bigint 方便后期排序
 
---创建用户表
+-- 创建用户表
 CREATE TABLE users
 (
     id bigint,
@@ -35,18 +35,18 @@ CREATE TABLE users
     userTopPhotoUrl varchar (300),
     PRIMARY KEY (id)
 );
---
+
 ALTER TABLE community.users ADD UNIQUE (userId);
---设置邮箱不重复
+-- 设置邮箱不重复
 ALTER TABLE community.users ADD UNIQUE (email);
 
---设置主键自增
+-- 设置主键自增
 alter table users modify id bigint auto_increment;
---设置主键从1000开始自增
+-- 设置主键从1000开始自增
 alter table users AUTO_INCREMENT=1000;
 
 
---用户权限表
+-- 用户权限表
 create table userPermission
 (
     id bigint,
@@ -58,7 +58,7 @@ create table userPermission
     constraint userPermission_FK foreign key(id) references users(id)
 );
 
---在线用户表
+-- 在线用户表
 create table onlineUser
 (
     id bigint,
@@ -71,7 +71,7 @@ create table onlineUser
     constraint onlineUser_FK foreign key(id) references users(id)
 );
 
---问题表
+-- 问题表
 CREATE TABLE Questions
 (
     questionId bigint PRIMARY KEY AUTO_INCREMENT,
@@ -145,7 +145,7 @@ create table admin
     questionAddCount bigint default 0
 );
 
---点赞表
+-- 点赞表
 -- likeId 点赞主键ID
 -- notifier 点赞发起人
 -- receiver 点赞接收人
@@ -181,7 +181,7 @@ CREATE TABLE `topic`
   PRIMARY KEY (`id`)
 );
 
---insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('', '/image/topicicon/javascript.svg', '', '7', '1570610874840', '1570610874840');
+-- insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('', '/image/topicicon/javascript.svg', '', '7', '1570610874840', '1570610874840');
 
 
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('JavaScript', '/image/topicicon/javascript.svg', 'JavaScript是一种直译式脚本语言，是一种动态类型、弱类型、基于原型的语言，内置支持类型。它的解释器被称为JavaScript引擎，为浏览器的一部分，广泛用于客户端的脚本语言，最早是在HTML（标准通用标记语言下的一个应用）网页上使用，用来给HTML网页增加动态功能。', '1', '1570610874840', '1570610874840');
@@ -261,10 +261,10 @@ insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) val
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('游戏', '/image/topicicon/games.svg', '游戏', '7', '1570610874840', '1570610874840');
 
 
---alter table Questions modify questionId bigint NOT NULL;
---alter table users modify id bigint NOT NULL;
---select * from Questions limit 0, 5;
---alter table userPermission add updateTime varchar(19) not null ;
---alter table userPermission change  column modifer modifier varchar(20)
---insert into userPermission values (1,0);
+-- alter table Questions modify questionId bigint NOT NULL;
+-- alter table users modify id bigint NOT NULL;
+-- select * from Questions limit 0, 5;
+-- alter table userPermission add updateTime varchar(19) not null ;
+-- alter table userPermission change  column modifer modifier varchar(20)
+-- insert into userPermission values (1,0);
 

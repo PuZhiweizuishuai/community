@@ -37,7 +37,7 @@ public class CommentApiController {
     public ResultDTO insertComment(@RequestBody CommentCreateDto commentDto,
                                    HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
-        if(user == null) {
+        if (user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NO_LOGIN);
         }
         // 检查验证码
@@ -46,7 +46,7 @@ public class CommentApiController {
             CaptchaUtil.clear(request);
             return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
         }
-        if(commentDto == null || commentDto.getContent() == null || commentDto.getContent().equals("")) {
+        if (commentDto == null || commentDto.getContent() == null || commentDto.getContent().equals("") || commentDto.getContent().equals("\n")) {
             return ResultDTO.errorOf(CustomizeErrorCode.CONTENT_IS_EMPTY);
         }
         Comment comment = new Comment();
@@ -57,6 +57,8 @@ public class CommentApiController {
         comment.setContent(commentDto.getContent());
         comment.setCreateTime(System.currentTimeMillis());
         comment.setModifiedTime(System.currentTimeMillis());
+
+
         try {
             commentService.insertComment(comment);
         } catch (Exception e) {

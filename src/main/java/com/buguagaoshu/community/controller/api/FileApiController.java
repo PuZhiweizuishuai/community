@@ -1,14 +1,20 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.alibaba.druid.sql.ast.SQLSubPartition;
+import com.alibaba.druid.sql.ast.statement.SQLForeignKeyImpl;
 import com.alibaba.fastjson.JSONObject;
 import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.util.FileUtil;
 import com.buguagaoshu.community.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +23,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -83,6 +91,60 @@ public class FileApiController {
         }
     }
 
+
+    @PostMapping(value = "/api/file/upload")
+    public Map<String, Object> newUpload(@RequestParam(value = "file[]", required = false) MultipartFile[] files,
+                                         HttpServletRequest request) {
+        Map<String, Object> map = new HashMap<>(4);
+        map.put("msg", "你还没有登陆，请登陆后重试！");
+        map.put("code", 1);
+        User user = (User) request.getSession().getAttribute("user");
+        if(user == null) {
+            return map;
+        }
+        if(files.length > 9) {
+            map.put("msg", "一次最多只能上传9个文件，你已超过了这个数量！");
+            return map;
+        }
+
+        for (MultipartFile file : files) {
+            String fileName = file.getOriginalFilename();
+            if (!FileUtil.checkFileType(fileName)) {
+                map.put("msg", "不支持的文件格式！");
+                return map;
+            }
+        }
+
+        Map<String, Object> succMap = new HashMap<>(2);
+        Map<String, Object> data = new HashMap<>(2);
+        for (MultipartFile file : files) {
+            String fileName = file.getOriginalFilename();
+            String name = ImageUtil.createNewFileName(fileName);
+            String path = ROOT + "/" + user.getUserId() + "/file/";
+            if (ImageUtil.checkFileType(fileName)) {
+                path = ROOT + "/" + user.getUserId() + "/image/";
+            }
+            String pathName = "/" + path + name;
+            File dest = new File(path);
+            //判断文件父目录是否存在
+            if (!dest.exists() && !dest.mkdirs()) {
+                map.put("msg", "上传失败，请重试");
+                return map;
+            }
+            try {
+                Files.copy(file.getInputStream(), Paths.get(path, name));
+                succMap.put(fileName, pathName);
+            } catch (Exception e) {
+                map.put("msg", "上传失败，请重试");
+                return map;
+            }
+        }
+        map.put("msg", "上传成功！");
+        data.put("succMap", succMap);
+        map.put("data", data);
+        return map;
+    }
+
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/image/{filename:.+}", produces = "image/png")
     @ResponseBody
     public ResponseEntity<?> getImage(@PathVariable("filename") String filename,
@@ -115,9 +177,24 @@ public class FileApiController {
     @ResponseBody
     public ResponseEntity<?> getFile(@PathVariable("filename") String filename,
                                       @PathVariable("userId") String userId) {
+        HttpHeaders headers = new HttpHeaders();
+
+        switch (FileUtil.getFileType(filename)) {
+            case IMAGE_FILE:
+                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE);
+                break;
+            case MUSIC_FILE:
+                headers.add(HttpHeaders.CONTENT_TYPE, "audio/mp3");
+                break;
+            case VIDEO_FILE:
+                headers.add(HttpHeaders.CONTENT_TYPE, "video/mpeg4");
+                break;
+            default:
+                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
+        }
         try {
             String path = ROOT + "/" + userId + "/file/";
-            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
+            return new ResponseEntity<Object>(resourceLoader.getResource("file:" + Paths.get(path, filename)), headers, HttpStatus.OK);
         } catch (Exception e) {
             log.error("文件获取失败:  {}",e.getMessage());
             return ResponseEntity.notFound().build();

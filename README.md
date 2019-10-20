@@ -50,6 +50,8 @@ maven: 3
 
 数据库： MySQL 或者 MariaDB 或者 H2 （使用H2数据库需要在pom文件中添加H5依赖）
 
+### 注意：数据库字符集请使用 utf8mb4，以便用于支持 emoji，不然在插入emoji时会异常
+
 ```xml
         <dependency>
             <groupId>com.h2database</groupId>
@@ -134,6 +136,8 @@ java -jar target/community-0.0.1-SNAPSHOT.jar
 ## 工具
 在线 markdown 编辑器 [markdown edit](https://pandao.github.io/editor.md/)
 
+[Vditor](https://hacpai.com/article/1549638745630)
+
 JavaScript剪裁图片工具 [cropperjs](https://github.com/fengyuanchen/cropperjs)
 
 JavaScript定位引擎 [popper.js](https://github.com/FezVrasta/popper.js)
@@ -178,6 +182,12 @@ service 服务层
 util 各种工具
 
 ## 更新日志
+
+#### 2019-10-20更新
+
+替换 markdown 编辑器为更加好用的 Vditor
+
+修改数据库字符集为 utf8mb4 以便用于更好的支持 emoji 
 
 #### 2019-10-15更新
 
