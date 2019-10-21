@@ -22,6 +22,11 @@ spring:
 
 server:
   port: 8080
+#  ssl:
+#    key-store: buguagaoshu.key
+#    key-store-type: PKCS12
+#    key-alias: buguagaoshu
+#    key-store-password: buguagaoshu
 
 # 应用根目录下的文件名
 File:

@@ -1,7 +1,9 @@
 package com.buguagaoshu.community;
 
+import org.apache.catalina.connector.Connector;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * @author Pu Zhiwei
@@ -14,4 +16,14 @@ public class CommunityApplication {
     public static void main(String[] args) {
         SpringApplication.run(CommunityApplication.class, args);
     }
+
+//    @Bean
+//    public Connector httpConnector() {
+//        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+//        connector.setScheme("http");
+//        connector.setPort(8080);
+//        connector.setSecure(false);
+//        connector.setRedirectPort(8080);
+//        return connector;
+//    }
 }

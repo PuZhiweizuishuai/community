@@ -76,7 +76,7 @@ CREATE TABLE Questions
 (
     questionId bigint PRIMARY KEY AUTO_INCREMENT,
     userId bigint NOT NULL,
-    title varchar(50),
+    title varchar(60),
     classification varchar (50),
     description text,
     fileUrl text,

@@ -104,16 +104,15 @@ public class PublishController {
     private boolean check(Question question, String CAPTCHA, Model model, HttpServletRequest request) {
 
         boolean isTag = StringUtil.judgeTagNumber(question.getTag());
-        if (question.getTitle() != null && !question.getTitle().equals("")
+        if (question.getTitle() != null && !question.getTitle().equals("") && question.getTitle().length() <= 50
                 && question.getClassification() != null && !question.getClassification().equals("null")
                 && CaptchaUtil.ver(CAPTCHA, request)
                 && question.getDescription() != null && !question.getDescription().equals("") && isTag) {
             CaptchaUtil.clear(request);
             return true;
         }
-
-        if (question.getTitle() == null || question.getTitle().equals("")) {
-            model.addAttribute("titleMessage", "标题不能为空！");
+        if (question.getTitle() == null || question.getTitle().equals("") || question.getTitle().length() > 50) {
+            model.addAttribute("titleMessage", "标题不能为空,并且标题不能超过50个字符");
         }
         if (question.getClassification() == null || question.getClassification().equals("null")) {
             model.addAttribute("classMessage", "分类不能为空！");
