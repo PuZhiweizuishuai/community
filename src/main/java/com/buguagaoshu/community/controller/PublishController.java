@@ -126,7 +126,7 @@ public class PublishController {
             model.addAttribute("CAPTCHAMessage", "验证码错误！");
         }
         if (!isTag) {
-            model.addAttribute("tagMessage", "最多只能输入6个标签！");
+            model.addAttribute("tagMessage", "标签不能为空且最多只能输入6个标签！");
         }
         model.addAttribute("question", question);
         return false;

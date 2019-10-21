@@ -192,12 +192,15 @@ public class StringUtil {
     public static boolean judgeTagNumber(String tag) {
         String regex = ",|，";
         if (tag != null) {
+            if(tag.equals("")) {
+                return false;
+            }
             String[] str = tag.split(regex);
             if (str.length > 5) {
                 return false;
             }
         }
-        return true;
+        return tag != null;
     }
 
     /**
