@@ -57,7 +57,7 @@ public class AdminController {
 
     @GetMapping("/admin/main")
     public String getIndexPage(@RequestParam(value = "page", defaultValue = "1") String page,
-                               @RequestParam(value = "size", defaultValue = "10") String size,
+                               @RequestParam(value = "size", defaultValue = "20") String size,
                                Model model) {
         AdminPageDto adminPageDto = new AdminPageDto();
         adminPageDto.setUserNumber(userService.getAlluserCount());
@@ -71,7 +71,7 @@ public class AdminController {
 
     @GetMapping("/admin/user")
     public String getAdminUserPage(@RequestParam(value = "page", defaultValue = "1") String page,
-                                   @RequestParam(value = "size", defaultValue = "10") String size,
+                                   @RequestParam(value = "size", defaultValue = "20") String size,
                                    Model model) {
         PaginationDto<User> paginationDto = userService.getUserList(page, size);
         model.addAttribute("paginationDto", paginationDto);
@@ -80,7 +80,7 @@ public class AdminController {
 
     @GetMapping("/admin/question")
     public String getAdminQuestionPage(@RequestParam(value = "page", defaultValue = "1") String page,
-                                       @RequestParam(value = "size", defaultValue = "10") String size,
+                                       @RequestParam(value = "size", defaultValue = "20") String size,
                                        @RequestParam(value = "class", required = false) String classification,
                                        Model model) {
         // TODO 等待添加分类查找
@@ -102,7 +102,7 @@ public class AdminController {
     @GetMapping("/admin/search")
     public String search(@RequestParam(value = "page", defaultValue = "1") String page,
                          @RequestParam(value = "type" , defaultValue = "question") String type,
-                         @RequestParam(value = "size", defaultValue = "10") String size,
+                         @RequestParam(value = "size", defaultValue = "20") String size,
                          @RequestParam(value = "search", required = false) String search,
                          Model model) {
         PaginationDto<QuestionDto> questionDtoPaginationDto = null;

@@ -1,7 +1,5 @@
 package com.buguagaoshu.community.controller.api;
 
-import com.alibaba.druid.sql.ast.SQLSubPartition;
-import com.alibaba.druid.sql.ast.statement.SQLForeignKeyImpl;
 import com.alibaba.fastjson.JSONObject;
 import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.mapper.UserMapper;
@@ -202,7 +200,7 @@ public class FileApiController {
                 break;
             default:
                 headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
-                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
+                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
         }
         try {
             String path = ROOT + "/" + userId + "/file/";

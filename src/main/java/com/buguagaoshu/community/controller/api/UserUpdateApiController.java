@@ -196,7 +196,7 @@ public class UserUpdateApiController {
             CaptchaUtil.clear(request);
             return StringUtil.dealResultMessage(false, "验证码错误！请刷新后重试！");
         }
-
+        CaptchaUtil.clear(request);
         if (oldPassword.equals(newPassword)) {
             return StringUtil.dealResultMessage(false, "两次输入密码相同！");
         }

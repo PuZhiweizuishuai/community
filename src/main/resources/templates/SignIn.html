@@ -115,7 +115,7 @@
     <!--验证码 -->
     <div class="form-group">
         <a href="javascript:void(0);">
-            <img src="/captche/images" onclick="this.src='/captche/images?'+Math.random()"/>
+            <img title="点击刷新" src="/captche/images" onclick="this.src='/captche/images?'+Math.random()"/>
         </a>
         <input autocomplete="off" type="text" th:placeholder="#{publish.issue.CAPTCHA}" name="validateCode" id="validateCode" class="form-control" required="required"/>
         <small id="validateCodeMessage" class="form-text text-muted" th:text="${kaptchaMsg}"></small>

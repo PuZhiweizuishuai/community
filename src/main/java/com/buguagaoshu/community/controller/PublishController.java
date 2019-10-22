@@ -111,6 +111,7 @@ public class PublishController {
             CaptchaUtil.clear(request);
             return true;
         }
+        CaptchaUtil.clear(request);
         if (question.getTitle() == null || question.getTitle().equals("") || question.getTitle().length() > 50) {
             model.addAttribute("titleMessage", "标题不能为空,并且标题不能超过50个字符");
         }

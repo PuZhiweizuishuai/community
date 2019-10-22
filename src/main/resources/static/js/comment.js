@@ -39,7 +39,6 @@ function sendComments(questionId, parentId, content, type, captcha) {
             "captcha": captcha
         }),
         success: function (response) {
-            console.log(response);
             if (response.code == 2003) {
                 var isAccepted = confirm("你还没有登陆，请先登陆后再操作！");
                 if (isAccepted) {
@@ -49,8 +48,8 @@ function sendComments(questionId, parentId, content, type, captcha) {
                 return;
             }
             if(response.code == 200) {
+                drawComment(response, type, parentId);
                 vditor.clearCache();
-                drowComment(response);
             } else {
                 alert(response.message);
             }
@@ -59,9 +58,72 @@ function sendComments(questionId, parentId, content, type, captcha) {
     });
 }
 
-function drowComment(response) {
-    // 先简单粗暴直接刷新
-    window.location.reload();
+function drawComment(response, type, id) {
+    if(type === 2) {
+        const commentBody = $("#commentBody-" + id);
+        const img = document.getElementById("get_now_online_user_src");
+        const c = $("<div/>",{
+            "class": "media mt-3 mr-2 ml-2"
+        }).append($("<img/>",{
+            "class": "align-self-start mr-3 rounded-circle",
+            "src": img.getAttribute("src"),
+            "width": 35,
+            "height": 35
+        })).append($("<div/>", {
+            "class": "media-body"
+        }).append($("<div/>", {
+            "class": "row mt-0"
+        }).append($("<div/>", {
+            "class": "col"
+        }).append($("<a/>", {
+            "href": "/user/" + document.getElementById("now-online-user-userId").value,
+            html: document.getElementById("now-online-user-name").value
+        })).append($("<spam/>", {
+            html: "&nbsp;&nbsp;刚刚"
+        }))).append($("<div/>",{
+            "class": "col text-right"
+        }).append($("<a/>", {
+            "href": "#",
+            html: ""
+        })).append($("<span/>", {
+            html: "&nbsp;"
+        })).append($("<a/>", {
+            "href": "#",
+            html: ""
+        })))).append($("<p/>", {
+            "class": "mt-2",
+            html: response.data.content
+        })).append($("<button/>", {
+            "style": "background-color: transparent;border: 0px;",
+            "data-id": response.data.commentId,
+            "onclick": "clickLikeComment(this, 2)"
+        }).append($("<img/>", {
+            "src": "/image/icon/clicklike.svg",
+            "height": 20
+        })).append($("<span/>", {
+            "id": "comment-likeCount-" + response.data.commentId,
+            "class": "badge badge-light",
+            html: 0
+        }))).append($("<a/>", {
+            "href": "#"
+        }).append($("<img/>", {
+            "src": "/image/icon/comment.svg",
+            "height": 20
+        })).append($("<span/>", {
+            "class": "badge badge-light",
+            html: 0
+        }))).append($("<hr/>", {
+
+        })));
+        commentBody.prepend(c);
+        const text = "second-content-" + response.data.parentId;
+        const captcha = "second-captcha-" + response.data.parentId;
+        document.getElementById(text).value = "";
+        document.getElementById(captcha).value = "";
+
+    } else {
+        window.location.reload();
+    }
 }
 
 /**
@@ -116,6 +178,7 @@ function showSecondComment(e) {
                         "href": "#",
                         html: ""
                     })))).append($("<p/>", {
+                        "class": "mt-2",
                         html: userComment.content
                     })).append($("<button/>", {
                         "style": "background-color: transparent;border: 0px;",

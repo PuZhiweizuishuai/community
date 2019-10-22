@@ -235,7 +235,7 @@
                                     <div class="row">
                                         <div class="col text-right">
                                             <a href="javascript:void(0);">
-                                                <img src="/captche/images"
+                                                <img src="/captche/images" title="点击刷新"
                                                      onclick="this.src='/captche/images?'+Math.random()"
                                                      height="40dp"/>
                                             </a>
@@ -329,7 +329,10 @@
                     <!-- 评论区上用户头像 -->
                     <div class="media mb-2" th:if="${session.user != null}">
                         <input type="hidden" id="now-online-user-id"  th:value="${session.user.getId()}">
+                        <input type="hidden" id="now-online-user-userId"  th:value="${session.user.getUserId()}">
+                        <input type="hidden" id="now-online-user-name"  th:value="${session.user.getUserName()}">
                         <img class="align-self-center mr-3 img-fluid rounded-circle"
+                             id="get_now_online_user_src"
                              th:src="${session.user.getHeadUrl()}" width="40" height="40">
                         <p class="mt-2"><a th:href="${'/user/' + session.user.getUserId()}">
                             <span th:text="${session.user.getUserName()}">
@@ -358,7 +361,7 @@
                             },
                             tab: '\t',
                             upload: {
-                                accept: 'image/*, .wav, .mp4, .zip, .rar, .7z, .docx, .dox, .ppt, .pptx, .xls, .xlsx, .pdf, .apk',
+                                accept: 'image/*, .wav, .mp4, .zip, .rar, .7z, .docx, .dox, .ppt, .pptx, .xls, .xlsx, .pdf, .apk, .mp3',
                                 url: '/api/file/upload',
                                 linkToImgUrl: '/api/file/upload',
                                 filename (name) {

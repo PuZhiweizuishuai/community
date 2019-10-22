@@ -50,6 +50,7 @@ public class SignInServiceImpl implements SignInService {
             CaptchaUtil.clear(request);
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
         }
+        CaptchaUtil.clear(request);
         if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_EMAIL_OR_PASSWORD_NULL);
         }
