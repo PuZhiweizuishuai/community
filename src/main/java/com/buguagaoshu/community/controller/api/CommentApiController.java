@@ -50,8 +50,10 @@ public class CommentApiController {
         if (commentDto == null || commentDto.getContent() == null || commentDto.getContent().equals("") || commentDto.getContent().equals("\n")) {
             return ResultDTO.errorOf(CustomizeErrorCode.CONTENT_IS_EMPTY);
         }
+
         Comment comment = new Comment();
         comment.setQuestionId(commentDto.getQuestionId());
+        comment.setParentCommentId(commentDto.getParentCommentId());
         comment.setParentId(commentDto.getParentId());
         comment.setType(commentDto.getType());
         comment.setCommentator(user.getId());

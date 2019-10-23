@@ -21,6 +21,11 @@ public class CommentDto {
     private long questionId;
 
     /**
+     * 父级评论
+     * */
+    private long parentCommentId;
+
+    /**
      * 评论目标 id
      */
     private long parentId;
@@ -61,4 +66,8 @@ public class CommentDto {
     private String modifiedTime;
 
     private User user;
+
+    private String targetName;
+
+    private String targetUrl;
 }

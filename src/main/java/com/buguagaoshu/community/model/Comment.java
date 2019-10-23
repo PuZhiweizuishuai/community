@@ -19,6 +19,11 @@ public class Comment {
     private long questionId;
 
     /**
+     * 评论在评论的位置
+     * */
+    private long parentCommentId;
+
+    /**
      * 评论目标 id
      * */
     private long parentId;

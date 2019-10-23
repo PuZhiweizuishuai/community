@@ -11,8 +11,8 @@ import java.util.List;
  */
 @Mapper
 public interface CommentMapper {
-    @Insert("insert into comment(questionId ,parentId, type, commentator, content, likeCount, commentCount, createTime, modifiedTime) " +
-            "values(#{questionId}, #{parentId}, #{type}, #{commentator}, #{content}, #{likeCount},  #{commentCount}, #{createTime}, #{modifiedTime})")
+    @Insert("insert into comment(questionId , parentCommentId, parentId, type, commentator, content, likeCount, commentCount, createTime, modifiedTime) " +
+            "values(#{questionId}, #{parentCommentId}, #{parentId}, #{type}, #{commentator}, #{content}, #{likeCount},  #{commentCount}, #{createTime}, #{modifiedTime})")
     @Options(useGeneratedKeys = true, keyProperty = "commentId", keyColumn = "commentId")
     int insertComment(Comment comment);
 
@@ -58,8 +58,8 @@ public interface CommentMapper {
     /**
      * 查找二级评论列表
      */
-    @Select("select * from comment where parentId=#{parentId} AND  type=#{type} AND status=#{status}")
-    List<Comment> getTwoLevelCommentByParent(@Param("parentId") long parentId, @Param("type") int type, @Param("status") int status);
+    @Select("select * from comment where parentCommentId=#{parentCommentId} AND type=#{type} AND status=#{status}")
+    List<Comment> getTwoLevelCommentByParent(@Param("parentCommentId") long parentCommentId, @Param("type") int type, @Param("status") int status);
 
 
     @Update("update comment set commentCount=commentCount+#{commentCount} where commentId=#{commentId}")

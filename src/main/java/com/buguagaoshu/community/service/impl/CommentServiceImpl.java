@@ -83,6 +83,15 @@ public class CommentServiceImpl implements CommentService {
             if (dbComment == null) {
                 throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
             }
+            if (comment.getParentId() != comment.getParentCommentId()) {
+                Comment father = commentMapper.selectCommentByCommentId(comment.getParentCommentId(), 1);
+                if (father == null) {
+                    throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
+                }
+                father.setCommentCount(1);
+                commentMapper.updateCommentCount(father);
+            }
+
             // 创建通知
             // TODO 考虑传入评论ID
             createNotification(comment, dbComment.getCommentator(), "", "",
@@ -199,12 +208,19 @@ public class CommentServiceImpl implements CommentService {
             user.clean();
             users.add(user);
         }
+
         // 获取 userMap
         Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
 
         // 为评论添加作者信息
         List<CommentDto> commentDtos = comments.stream().map(comment -> {
             CommentDto commentDto = new CommentDto();
+            if (comment.getParentCommentId() != comment.getParentId()) {
+                Comment targetComment = commentMapper.selectCommentByCommentId(comment.getParentId(), 1);
+                User targetUser = userService.selectUserById(targetComment.getCommentator());
+                commentDto.setTargetName(targetUser.getUserName());
+                commentDto.setTargetUrl("/user/" + targetUser.getUserId());
+            }
             BeanUtils.copyProperties(comment, commentDto);
             commentDto.setUser(userMap.get(comment.getCommentator()));
             commentDto.setCreateTime(StringUtil.foematTime(comment.getCreateTime()));

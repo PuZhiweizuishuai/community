@@ -15,6 +15,11 @@ public class CommentCreateDto {
     private long questionId;
 
     /**
+     * 父级评论
+     * */
+    private long parentCommentId;
+
+    /**
      * 评论目标 id
      */
     private long parentId;

@@ -99,6 +99,7 @@ CREATE TABLE comment
 (
     commentId bigint PRIMARY KEY AUTO_INCREMENT,
     questionId bigint not null,
+    parentCommentId bigint not null,
     parentId bigint NOT NULL,
     type int NOT NULL,
     commentator bigint NOT NULL,
