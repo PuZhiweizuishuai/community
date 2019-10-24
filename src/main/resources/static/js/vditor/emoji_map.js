@@ -54,10 +54,9 @@ var emojis = {
     "52": "😵",
     "53": "😡",
     "54": "😠",
-    "doge": "/js/vditor/images/emoji/doge.png",
-    "huaji": "/js/vditor/images/emoji/huaji.gif",
-    "trollface": "/js/vditor/images/emoji/trollface.png",
-
+    "doge": "/js/vditor/dist/images/emoji/doge.png",
+    "huaji": "/js/vditor/dist/images/emoji/huaji.gif",
+    "trollface": "/js/vditor/dist/images/emoji/trollface.png",
     '+1': '👍',
     '-1': '👎',
     'heart': '❤',

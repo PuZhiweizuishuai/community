@@ -5,12 +5,12 @@ const vditor = new Vditor('issues-text', {
     counter: 100000,
     height: 500,
     hint: {
-        emojiPath: '/js/vditor/images/emoji',
+        emojiPath: '/js/vditor/dist/images/emoji',
         emoji: emojis
     },
     tab: '\t',
     upload: {
-        accept: 'image/*, .wav, .mp4, .zip, .rar, .7z, .docx, .dox, .ppt, .pptx, .xls, .xlsx, .pdf, .apk, .mp3',
+        accept: 'image/*, .wav, .mp4, .zip, .rar, .7z, .docx, .dox, .ppt, .pptx, .xls, .xlsx, .pdf, .apk, .mp3, .txt',
         url: '/api/file/upload',
         linkToImgUrl: '/api/file/upload',
         filename (name) {
