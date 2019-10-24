@@ -74,18 +74,12 @@
                 <!-- 发起 -->
                 <li class="nav-item dropdown" th:if="${session.user != null}">
 
-                    <a class="nav-link" href="#"
-                       role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link" href="/publish" id="publish-a" onclick="addLocaleUrl('publish-a')"
+                       role="button" >
                         <img class="rounded-circle"
                              src="/image/icon/publish.svg" width="30" height="30"/>
                         [[#{index.writePost}]]
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="/publish" id="publish-a" onclick="addLocaleUrl('publish-a')"
-                           th:text="#{index.issue}">问题</a>
-                        <div class="dropdown-divider"></div>
-
-                    </div>
                 </li>
 
                 <!-- 我 -->

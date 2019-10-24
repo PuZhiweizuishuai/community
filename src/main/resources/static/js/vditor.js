@@ -3,7 +3,7 @@ const vditor = new Vditor('issues-text', {
     typewriterMode: true,
     placeholder: "请自觉遵守互联网相关的政策法规，严禁发布色情、暴力、反动的言论。",
     counter: 100000,
-    height: 500,
+    height: 700,
     hint: {
         emojiPath: '/js/vditor/dist/images/emoji',
         emoji: emojis
