@@ -97,7 +97,7 @@ public class NotificationServiceImpl implements NotificationService {
             return null;
         }
 
-        Set<Long> disUserIds = notifications.stream().map(notify -> notify.getNotifier()).collect(Collectors.toSet());
+        Set<Long> disUserIds = notifications.stream().map(Notification::getNotifier).collect(Collectors.toSet());
 
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
 
@@ -107,7 +107,7 @@ public class NotificationServiceImpl implements NotificationService {
             User user = userMapper.selectUserById(userId);
             users.add(user);
         }
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(u -> u.getId(), u -> u));
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
 
         for (Notification notification : notifications) {
             NotificationDTO notificationDTO = new NotificationDTO();
@@ -122,11 +122,13 @@ public class NotificationServiceImpl implements NotificationService {
             if(notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()) {
                 Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
                 notificationDTO.setOuterTitle(comment.getContent());
+            } else if (notification.getType() == NotificationTypeEnum.REPLY_COMMENT.getType()) {
+                Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
+                notificationDTO.setOuterTitle(comment.getContent());
             } else {
                 Question question = questionMapper.getQuestionIgnoreStatus(notification.getOuterId());
                 //TODO 目测可以优化
                 notificationDTO.setOuterTitle(question.getTitle());
-
             }
             notificationDTO.setOuterid(notification.getOuterId());
             notificationDTO.setTypeName(NotificationTypeEnum.nameOfType(notification.getType()));

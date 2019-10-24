@@ -14,7 +14,7 @@ public enum NotificationTypeEnum {
     /**
      * 回复了评论
      */
-    REPLY_COMMENT(2, "回复了你在问题"),
+    REPLY_COMMENT(2, "回复了你的评论"),
 
     /**
      * 点赞了问题

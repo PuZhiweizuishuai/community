@@ -89,7 +89,7 @@
                                     <a th:href="${'/user/'+notification.notifierId}"><span th:text="${notification.notifierName}"></span></a>
                                     <span class="ml-2" th:text="${notification.getTypeName()}"></span>
                                     <a class="ml-2" th:href="${'/message/' + user.getUserId() +'/' + notification.getId()}"><span th:text="${notification.getOuterTitle()}"></span></a>
-                                    <span th:if="${notification.getType()==2}" class="ml-2">下的评论</span>
+<!--                                    <span th:if="${notification.getType()==2}" class="ml-2">下的评论</span>-->
 
                                     <span th:if="${notification.getType() == 6}">如有疑问或需要恢复，请联系管理员！</span>
                                     <span th:if="${notification.getType() == 7}">导致了你的评论被牵连删除，如有疑问或需要恢复，请联系管理员！</span>
