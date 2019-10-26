@@ -15,6 +15,7 @@ import com.buguagaoshu.community.model.*;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -175,8 +176,8 @@ public class CommentServiceImpl implements CommentService {
             CommentDto commentDto = new CommentDto();
             BeanUtils.copyProperties(comment, commentDto);
 
-            commentDto.setCreateTime(StringUtil.foematTime(comment.getCreateTime()));
-            commentDto.setModifiedTime(StringUtil.foematTime(comment.getModifiedTime()));
+            commentDto.setCreateTime(DateFormatUtil.getTimeDifference(comment.getCreateTime(), System.currentTimeMillis()));
+            commentDto.setModifiedTime(DateFormatUtil.getTimeDifference(comment.getModifiedTime(), System.currentTimeMillis()));
             commentDto.setUser(userMap.get(comment.getCommentator()));
             return commentDto;
         }).collect(Collectors.toList());
@@ -223,8 +224,8 @@ public class CommentServiceImpl implements CommentService {
             }
             BeanUtils.copyProperties(comment, commentDto);
             commentDto.setUser(userMap.get(comment.getCommentator()));
-            commentDto.setCreateTime(StringUtil.foematTime(comment.getCreateTime()));
-            commentDto.setModifiedTime(StringUtil.foematTime(comment.getModifiedTime()));
+            commentDto.setCreateTime(DateFormatUtil.getTimeDifference(comment.getCreateTime(), System.currentTimeMillis()));
+            commentDto.setModifiedTime(DateFormatUtil.getTimeDifference(comment.getModifiedTime(), System.currentTimeMillis()));
             return commentDto;
         }).collect(Collectors.toList());
 

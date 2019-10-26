@@ -14,6 +14,7 @@ import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -164,8 +165,8 @@ public class QuestionServiceImpl implements QuestionService {
             user.clean();
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
-            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
+            questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
+            questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
             questionDto.setUser(user);
             questionDtoList.add(questionDto);
         }
@@ -188,8 +189,8 @@ public class QuestionServiceImpl implements QuestionService {
         for (Question question : questionList) {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
-            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
+            questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
+            questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
             questionDtoList.add(questionDto);
         }
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
@@ -222,8 +223,8 @@ public class QuestionServiceImpl implements QuestionService {
         user.setPower(userPermission.getPower());
         QuestionDto questionDto = new QuestionDto();
         BeanUtils.copyProperties(question, questionDto);
-        questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
-        questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
+        questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
+        questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
         questionDto.setUser(user);
         return questionDto;
     }

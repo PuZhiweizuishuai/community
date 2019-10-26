@@ -71,7 +71,6 @@ public class SignUpApiController {
         user.setLastTime(StringUtil.getNowTime());
 
         int result = userService.insertUser(user);
-        System.out.println(result);
         // 插入数据
         if (result == 1) {
             // 写入权限信息
