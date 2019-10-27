@@ -261,9 +261,10 @@
                         </h5>
                     </div>
                     <div class="col text-right">
-                        <button type="button" class="btn btn-success btn-sm">
-                            关注
-                            <span class="badge badge-light" th:text="${tagClass.getFollowCount()}">9</span>
+                        <button onclick="followTopic(this)" type="button"  th:followId-data="${tagClass.getId()}" th:followTitle-data="${tagClass.title}" class="btn btn-success btn-sm">
+                            <span id="tag_class_button" th:if="${followTag}">取消关注</span>
+                            <span id="tag_class_button" th:if="${followTag==false}">关注</span>
+                            <span class="badge badge-light" id="tag_class_number" th:text="${tagClass.getFollowCount()}">9</span>
                         </button>
                     </div>
                 </div>
@@ -383,7 +384,7 @@
 <!-- 页脚 -->
 <div th:insert="~{footer :: footer}"></div>
 
-
+<script src="/js/follow.js" type="text/javascript"></script>
 <script src="/js/url.js" type="text/javascript"></script>
 </body>
 </html>

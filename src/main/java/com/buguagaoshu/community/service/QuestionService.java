@@ -104,4 +104,12 @@ public interface QuestionService {
      * @return 返回问题总数
      */
     long getUserQuestionCount(long id, int status);
+
+
+    /**
+     * 更新问题关注数
+     * @param question 问题
+     * @return 结果
+     * */
+    int updateFollowCount(Question question);
 }

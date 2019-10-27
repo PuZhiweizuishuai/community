@@ -57,6 +57,16 @@ public class User {
      * */
     private String likes;
 
+    /**
+     * 关注数
+     * */
+    private long followCount;
+
+    /**
+     * 粉丝数
+     * */
+    private long fansCount;
+
     private long likeCount;
 
     private int power;

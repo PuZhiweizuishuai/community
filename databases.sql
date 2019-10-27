@@ -29,6 +29,8 @@ CREATE TABLE users
     simpleSelfIntroduction varchar (50),
     likes varchar (50),
     likeCount bigint default 0,
+    followCount bigint default 0,
+    fansCount bigint default 0,
     creationTime VARCHAR(19),
     lastTime VARCHAR(19),
     headUrl VARCHAR(300),
@@ -260,6 +262,46 @@ insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) val
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('娱乐八卦', '/image/topicicon/game.svg', '娱乐八卦', '7', '1570610874840', '1570610874840');
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('闲聊', '/image/topicicon/chat.svg', '闲聊', '7', '1570610874840', '1570610874840');
 insert into topic (title, image, simpleDesc, type, createTime, modifiedTime) values ('游戏', '/image/topicicon/games.svg', '游戏', '7', '1570610874840', '1570610874840');
+
+
+-- 关注话题表
+create table followTopic
+(
+    `followTopicId` bigint NOT NULL AUTO_INCREMENT,
+    `topicId` bigint not null ,
+    `topicTitle` varchar (100) not null ,
+    `topicImage` varchar (10000),
+    `userId` bigint not null ,
+    `createTime` bigint not null ,
+    PRIMARY KEY (`followTopicId`)
+);
+CREATE INDEX index_followTopic_userId ON followTopic (userId);
+
+-- 关注问题
+create table followQuestion
+(
+    `id` bigint not null AUTO_INCREMENT,
+    `followQuestionId` bigint not null ,
+    `followQuestionAuthor` bigint not null ,
+    `followQuestionTitle` varchar(60) not null ,
+    `userId` bigint not null ,
+    `createTime` bigint not null ,
+    PRIMARY KEY (`id`)
+);
+CREATE INDEX index_followQuestion_userId ON followQuestion (userId);
+CREATE INDEX index_followQuestion_questionId ON followQuestion (followQuestionId);
+
+-- 关注用户
+create table followUser
+(
+    `id` bigint not null AUTO_INCREMENT,
+    `followUserId` bigint not null ,
+    `userId` bigint not null ,
+    `createTime` bigint not null,
+    PRIMARY KEY (`id`)
+)
+CREATE INDEX index_followUser_userId ON followUser (userId);
+CREATE INDEX index_followUser_followUserId ON followUser (followUserId);
 
 
 -- alter table Questions modify questionId bigint NOT NULL;

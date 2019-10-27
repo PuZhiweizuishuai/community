@@ -5,10 +5,12 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.CommentSortTypeEnum;
 import com.buguagaoshu.community.model.ClickLike;
+import com.buguagaoshu.community.model.FollowQuestion;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
 import com.buguagaoshu.community.service.CommentService;
+import com.buguagaoshu.community.service.FollowQuestionService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,17 +35,20 @@ public class QuestionController {
 
     private final ClickLikeService clickLikeService;
 
+    private final FollowQuestionService followQuestionService;
+
     @Autowired
-    public QuestionController(QuestionService questionService, CommentService commentService, ClickLikeService clickLikeService) {
+    public QuestionController(QuestionService questionService, CommentService commentService, ClickLikeService clickLikeService, FollowQuestionService followQuestionService) {
         this.questionService = questionService;
         this.commentService = commentService;
         this.clickLikeService = clickLikeService;
+        this.followQuestionService = followQuestionService;
     }
 
     @GetMapping("/question/{questionId}")
     public String getQuestion(@PathVariable("questionId") String questionId,
                               @RequestParam(value = "page", defaultValue = "1") String page,
-                              @RequestParam(value = "size", defaultValue = "10") String size,
+                              @RequestParam(value = "size", defaultValue = "15") String size,
                               @RequestParam(value = "sort", defaultValue = "0") String sort,
                               Model model,
                               HttpServletRequest request) {
@@ -76,9 +81,11 @@ public class QuestionController {
         // 判断点赞
         User user = (User) request.getSession().getAttribute("user");
         ClickLike clickLike = new ClickLike();
-        Boolean isQuestionClickLike = false;
+        boolean isQuestionClickLike;
+        boolean isFollowQuestion = false;
         if (user == null) {
             isQuestionClickLike = false;
+            isFollowQuestion = false;
 
         } else {
             clickLike.setNotifier(user.getId());
@@ -89,8 +96,13 @@ public class QuestionController {
             } else {
                 isQuestionClickLike = false;
             }
+            FollowQuestion followQuestion = new FollowQuestion();
+            followQuestion.setFollowQuestionId(question.getQuestionId());
+            followQuestion.setUserId(user.getId());
+            isFollowQuestion = followQuestionService.isFollowQuestion(followQuestion);
         }
         model.addAttribute("isQuestionClickLike", isQuestionClickLike);
+        model.addAttribute("isFollowQuestion", isFollowQuestion);
         model.addAttribute("question", question);
         model.addAttribute("comments", commentDtos);
         model.addAttribute("relevantQuestion", relevantQuestion);

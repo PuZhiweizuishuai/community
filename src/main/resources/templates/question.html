@@ -114,8 +114,11 @@
                             <img src="/image/icon/clicklike.svg" width="auto" height="20">
                             <span class="badge badge-light" id="like-button-number" th:text="${question.likeCount}">4</span>
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mb-0" style="height: 30px;width: 100px">
-                            关注 <span class="badge badge-light" th:text="${question.followCount}">4</span>
+
+                        <button onclick="followQuestion(this)" type="button" id="follow_question_button" th:questionId-data="${question.questionId}" th:class="${isFollowQuestion}?'btn btn-secondary btn-sm mb-0' : 'btn btn-outline-secondary btn-sm mb-0'" style="height: 30px;width: 100px">
+                            <span th:if="${isFollowQuestion}" id="follow_question_text">取消关注</span>
+                            <span th:if="${isFollowQuestion==false}" id="follow_question_text">关注</span>
+                            <span id="follow_question_number" class="badge badge-light" th:text="${question.followCount}">4</span>
                         </button>
                     </div>
                 </div>
@@ -485,6 +488,7 @@
         })
     }
 </script>
+<script src="/js/follow.js" type="text/javascript"></script>
 <script src="/js/url.js" type="text/javascript"></script>
 <script src="/js/comment.js" type="text/javascript"></script>
 </body>

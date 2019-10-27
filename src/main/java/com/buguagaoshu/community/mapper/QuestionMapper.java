@@ -110,6 +110,15 @@ public interface QuestionMapper {
     @Update("update Questions set likeCount=likeCount+#{likeCount} where questionId=#{questionId}")
     int updateQuestionLikeCount(Question question);
 
+
+    /**
+     * 关注数加 n
+     * @param question 问题
+     * @return 关注数加 n
+     * */
+    @Update("update Questions set followCount=followCount+#{followCount} where questionId=#{questionId}")
+    int updateQuestionFollowCount(Question question);
+
     /**
      * 根据正则匹配相关问题（带状态，不匹配删除的问题）
      *

@@ -51,9 +51,14 @@ public class UserDto implements Comparable<UserDto> {
     private long questionCount;
 
     /**
-     * 粉丝数
+     * 关注数
      * */
     private long followCount;
+
+    /**
+     * 粉丝数
+     * */
+    private long fansCount;
 
 
     /**

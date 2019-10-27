@@ -30,6 +30,13 @@ public interface TagClassService {
     int updateTalkCount(String tag, int count);
 
     /**
+     * 跟新关注数
+     * @param tagClass 话题
+     * @return 结果
+     * */
+    int updateFollowCount(TagClass tagClass);
+
+    /**
      * 修改问题后对话题讨论数量的调整
      *
      * @param newQuestionTag 修改后的标签

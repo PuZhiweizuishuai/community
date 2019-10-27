@@ -306,6 +306,11 @@ public class QuestionServiceImpl implements QuestionService {
         return questionMapper.getUserQuestionCount(id, status);
     }
 
+    @Override
+    public int updateFollowCount(Question question) {
+        return questionMapper.updateQuestionFollowCount(question);
+    }
+
 
     public PaginationDto<QuestionDto> paginationDto(List<Question> questionList, long allQuestionCount, long[] param) {
         Set<Long> usersId = questionList.stream().map(question -> question.getUserId()).collect(Collectors.toSet());

@@ -107,11 +107,11 @@
                                         <span>问题数：</span><span th:text="${user.questionCount}"></span>
                                         <span class="mb-2">获赞数：</span><span th:text="${user.likeCount}"></span>
                                     </p>
-                                    <p class="mb-1">
-                                        <button type="button"  style="font-size: 10px" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
-                                            关注 <span class="badge badge-light" th:text="${user.followCount}">4</span>
-                                        </button>
-                                    </p>
+<!--                                    <p class="mb-1">-->
+<!--                                        <button type="button"  style="font-size: 10px" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">-->
+<!--                                            关注 <span class="badge badge-light" th:text="${user.followCount}">4</span>-->
+<!--                                        </button>-->
+<!--                                    </p>-->
                                 </div>
                             </div>
                             <hr/>
@@ -152,11 +152,11 @@
                                     <span th:if="${user.getSimpleSelfIntroduction()==null}">该用户暂未填写！</span>
                                     <span th:text="${user.getSimpleSelfIntroduction()}"></span>
                                 </p>
-                                <p class="mb-1" >
-                                    <button type="button" style="font-size: 10px" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">
-                                        关注
-                                    </button>
-                                </p>
+<!--                                <p class="mb-1" >-->
+<!--                                    <button type="button" style="font-size: 10px" th:data-id="${user.getUserId()}" class="btn btn-secondary btn-sm">-->
+<!--                                        关注-->
+<!--                                    </button>-->
+<!--                                </p>-->
                             </div>
                         </div>
                         <hr/>

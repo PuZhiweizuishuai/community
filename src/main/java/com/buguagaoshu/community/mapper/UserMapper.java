@@ -169,6 +169,23 @@ public interface UserMapper {
     @Update("update users set likeCount=likeCount+#{likeCount} where id=#{id}")
     int updateUserLikeCount(@Param("likeCount") long likeCount, @Param("id") long id);
 
+    /**
+     * 更新关注数
+     * @param user 用户
+     * @return 结果
+     * */
+    @Update("update users set followCount=followCount+#{followCount} where id=#{id}")
+    int updateUserFollowCount(User user);
+
+
+    /**
+     * 更新关注数
+     * @param user 用户
+     * @return 结果
+     * */
+    @Update("update users set fansCount=fansCount+#{fansCount} where id=#{id}")
+    int updateUserFansCount(User user);
+
 
     @Select("select * from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search} order by id desc limit #{page}, #{size}")
     List<User> searchUser(@Param("search") String search, @Param("page") long page, @Param("size") long size);

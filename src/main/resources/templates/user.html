@@ -16,16 +16,27 @@
     <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
     <style type="text/css">
         body {
-        / / background-image: url("https://api.isoyu.com/bing_images.php");
+            /*background-image: url("https://api.isoyu.com/bing_images.php");*/
             background-color: #efefef;
         }
-
+        a {
+            text-decoration: none;
+        }
+        a:hover{
+            text-decoration: none;
+        }
         .container-card {
             padding: 0;
         }
         -webkit-scrollbar{
             width: 2px;
             background: none;
+        }
+        .list-group-a {
+            color: black;
+        }
+        .list-group-a:hover{
+            color: #175199;
         }
     </style>
 </head>
@@ -126,12 +137,18 @@
                                 class="Button ProfileHeader-expandButton Button--plain" onclick="showDetail()">
                             显示详细资料
                         </button>
-                        <div class="ProfileButtonGroup ProfileHeader-buttons"
-                             th:if="${session.user != null && session.user.getId() == user.getId()}">
-                            <a href="/setting"
+                        <div class="ProfileButtonGroup ProfileHeader-buttons">
+                            <a th:if="${session.user != null && session.user.getId() == user.getId()}" href="/setting"
                                     class="Button Button--blue">编辑个人资料
                             </a>
+
+                            <button  th:if="${session.user != null && session.user.getId() != user.getId()}" onclick="followUser(this)" id="follow_user_button" th:id-data="${user.getId()}" type="button" class="Button FollowButton Button--primary Button--blue">
+                                <span th:if="${isFollowUser==false}" style="display: inline-flex; align-items: center;">&#8203;<svg class="Zi Zi--Plus FollowButton-icon" fill="currentColor" viewBox="0 0 24 24" width="1.2em" height="1.2em"><path d="M13.491 10.488s-.012-5.387 0-5.998c-.037-1.987-3.035-1.987-2.997 0-.038 1.912 0 5.998 0 5.998H4.499c-1.999.01-1.999 3.009 0 3.009s5.995-.01 5.995-.01v5.999c0 2.019 3.006 2.019 2.997 0-.01-2.019 0-5.998 0-5.998s3.996.009 6.004.009c2.008 0 2.008-3-.01-3.009h-5.994z" fill-rule="evenodd"></path></svg></span>
+                                <span th:if="${isFollowUser}">取消关注</span>
+                                <span th:if="${isFollowUser==false}">关注他</span>
+                            </button>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -146,8 +163,8 @@
 <!-- 内容 -->
 <div class="container" style="background-color: #efefef;">
     <div class="row">
-        <!-- 左边 -->
-        <div class="col-xl-9 mt-3 shadow-sm" style="background-color: white;">
+        <!-- 左边问题列表 -->
+        <div th:if="${paginationDto != null}" class="col-xl-9 mt-3 shadow-sm" style="background-color: white;">
             <!-- 帖子列表头 -->
             <div class="container mt-2 mb-2">
                 <ul class="nav">
@@ -246,6 +263,131 @@
             </nav>
         </div>
 
+        <!-- 左边关注话题列表       -->
+        <div th:if="${followTopics != null}" class="col-xl-9 mt-3 shadow-sm" style="background-color: white;">
+            <!-- 帖子列表头 -->
+            <div class="container mt-2 mb-2">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link" name="question" th:href="'/user/' + ${user.getUserId()} + '/following/questions#question'">关注的问题</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" name="topic" th:href="'/user/' + ${user.getUserId()} + '/following/topic#topic'">关注的话题</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">关注的人</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">粉丝</a>
+                    </li>
+                </ul>
+                <hr style="margin-top: 0%;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-5 mt-3" th:each="tagclass : ${followTopics}">
+                            <div class="media">
+                                <a class="link-to-text" th:href="@{/(tag=${tagclass.getTopicTitle()})}"><img
+                                        class="align-self-center mr-3 img-fluid" th:src="${tagclass.getTopicImage()}"
+                                        style="width: 64px; height: auto; "></a>
+                                <div class="media-body">
+                                    <h5 class="mt-0">
+                                        <a class="link-to-text" th:href="@{/(tag=${tagclass.getTopicTitle()})}">
+                                            <span th:text="${tagclass.getTopicTitle()}"></span>
+                                        </a>
+
+                                    </h5>
+                                </div>
+                            </div>
+                            <hr/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 左边关注问题列表       -->
+        <div th:if="${followQuestions != null}" class="col-xl-9 mt-3 shadow-sm" style="background-color: white;">
+            <!-- 帖子列表头 -->
+            <div class="container mt-2 mb-2">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link" name="question" th:href="'/user/' + ${user.getUserId()} + '/following/questions#question'">关注的问题</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" name="topic" th:href="'/user/' + ${user.getUserId()} + '/following/topic#topic'">关注的话题</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">关注的人</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">粉丝</a>
+                    </li>
+                </ul>
+                <hr style="margin-top: 0%;">
+                <div class="container">
+                    <div th:each="question : ${followQuestions.data}">
+                        <h5><a class="list-group-a" th:href="'/question/' + ${question.followQuestionId}" th:text="${question.followQuestionTitle}"></a></h5>
+                        <p style="font-size: 14px; color: #8590a6;"><span>关注时间：</span> <span th:text="${question.time}"></span></p>
+                        <hr/>
+                    </div>
+                </div>
+                <nav aria-label="Page navigation example" th:if="${followQuestions.totalPage} != 0">
+                    <ul class="pagination justify-content-end">
+                        <!-- 返回首页 -->
+                        <li class="page-item" th:if="${followQuestions.showFirstPage}">
+                            <a class="page-link" id="first-page-a" th:href="'/user/' + ${user.getUserId()}+ '/following/questions' +@{/(page=1)}"
+                               aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+                        <!-- 上一页 -->
+                        <li class="page-item" th:if="${followQuestions.showPrevious}">
+                            <a class="page-link" id="link-to-last-a"
+                               th:href="'/user/'+ ${user.getUserId()} + '/following/questions' + @{/(page=${followQuestions.nowPage-1})}"
+                               aria-label="Previous"
+                               onclick="addLocaleUrlForPage('link-to-last-a')">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+
+
+                        <li class="page-item" th:each="page : ${followQuestions.pages}"
+                            th:class="${followQuestions.nowPage == page}? 'page-item active' : 'page-item'">
+                            <a class="page-link" th:href="${'/user/'+user.getUserId()} +'/following/questions'+ @{/(page=${page})}"
+                               th:text="${page}" th:id="${page}"
+                               th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
+                                1
+                            </a>
+                        </li>
+
+
+                        <!-- 下一页 -->
+                        <li class="page-item" th:if="${followQuestions.showNext}">
+                            <a class="page-link" id="lind-to-next-a"
+                               th:href="'/user/'+${user.getUserId()} +'/following/questions'+ @{/(page=${followQuestions.nowPage+1})}"
+                               aria-label="Next"
+                               onclick="addLocaleUrlForPage('lind-to-next-a')">
+                                <span aria-hidden="true">&raquo;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                        <!-- 最后一页 -->
+                        <li class="page-item" th:if="${followQuestions.showEndPage}">
+                            <a class="page-link" id="link-to-end-a"
+                               th:href="'/user/'+${user.getUserId()} + '/following/questions'+@{/(page=${followQuestions.totalPage})}"
+                               th:if="${followQuestions.showEndPage}"
+                               aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
 
         <!-- 右边 -->
         <div class="col">
@@ -280,17 +422,24 @@
             <br/>
             <div class="container shadow-sm" style="background-color: white;">
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">关注的问题</li>
-                    <li class="list-group-item">关注的话题</li>
+                    <li class="list-group-item">
+                        <a class="list-group-a" th:href="${'/user/' + user.userId}">动态</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="list-group-a" th:href="${'/user/' + user.userId + '/following/questions'}">关注的问题</a>
+                    </li>
+                    <li class="list-group-item">
+                        <a class="list-group-a" th:href="${'/user/' + user.userId + '/following/topic'}">关注的话题</a>
+                    </li>
                     <li class="list-group-item">最新回复</li>
                     <li class="list-group-item">邀请我的问题</li>
-                    <li class="list-group-item">Vestibulum at eros</li>
                 </ul>
             </div>
 
 
         </div>
     </div>
+
     <div class="container" style="height: 30px">
     </div>
 </div>
@@ -300,7 +449,7 @@
 
 <!-- 页脚 -->
 <div th:insert="~{footer :: footer}"></div>
-
+<script src="/js/follow.js" type="text/javascript"></script>
 <script src="/js/url.js" type="text/javascript"></script>
 <script src="/js/user.js" type="text/javascript"></script>
 </body>

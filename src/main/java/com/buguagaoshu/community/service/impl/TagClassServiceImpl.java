@@ -64,6 +64,8 @@ public class TagClassServiceImpl implements TagClassService {
 
 
             if (tagClass != null) {
+                tagClass.setTalkCount(tagClass.getTalkCount() + count);
+                tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
                 tagClass.setTalkCount(count);
                 tagClassMapper.updateTagTalkCount(tagClass);
                 return 1;
@@ -72,11 +74,18 @@ public class TagClassServiceImpl implements TagClassService {
         for (String tagStr : tags) {
             TagClass tagClass = tagClassCache.getTagClassMap().get(tagStr);
             if (tagClass != null) {
+                tagClass.setTalkCount(tagClass.getTalkCount() + count);
+                tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
                 tagClass.setTalkCount(count);
                 tagClassMapper.updateTagTalkCount(tagClass);
             }
         }
         return 1;
+    }
+
+    @Override
+    public int updateFollowCount(TagClass tagClass) {
+        return tagClassMapper.updateTagFollowCount(tagClass);
     }
 
     @Override
@@ -89,6 +98,8 @@ public class TagClassServiceImpl implements TagClassService {
             if (minus.contains(string)) {
                 TagClass tagClass = tagClassCache.getTagClassMap().get(string);
                 if (tagClass != null) {
+                    tagClass.setTalkCount(tagClass.getTalkCount() + 1);
+                    tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
                     tagClass.setTalkCount(1);
                     tagClassMapper.updateTagTalkCount(tagClass);
                 }
@@ -99,6 +110,8 @@ public class TagClassServiceImpl implements TagClassService {
             if (minus.contains(string)) {
                 TagClass tagClass = tagClassCache.getTagClassMap().get(string);
                 if (tagClass != null) {
+                    tagClass.setTalkCount(tagClass.getTalkCount() - 1);
+                    tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
                     tagClass.setTalkCount(-1);
                     tagClassMapper.updateTagTalkCount(tagClass);
                 }

@@ -8,7 +8,10 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.QuestionClassType;
 import com.buguagaoshu.community.enums.QuestionSortType;
+import com.buguagaoshu.community.model.FollowTopic;
 import com.buguagaoshu.community.model.TagClass;
+import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.service.FollowTopicService;
 import com.buguagaoshu.community.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -40,13 +43,16 @@ public class IndexController {
 
     private final TagClassCache tagClassCache;
 
+    private final FollowTopicService followTopicService;
+
     @Autowired
-    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache) {
+    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache, FollowTopicService followTopicService) {
         this.questionService = questionService;
         this.hotTagCache = hotTagCache;
         this.indexTopQuestion = indexTopQuestion;
         this.hotQuestionCache = hotQuestionCache;
         this.tagClassCache = tagClassCache;
+        this.followTopicService = followTopicService;
     }
 
 
@@ -83,7 +89,19 @@ public class IndexController {
 
         TagClass tagClass = tagClassCache.getTagClassMap().get(tag);
         if (tagClass != null) {
-            model.addAttribute("tagClass", tagClass);
+            User user = (User) request.getSession().getAttribute("user");
+            if (user == null) {
+                model.addAttribute("followTag", false);
+                model.addAttribute("tagClass", tagClass);
+            } else {
+                FollowTopic followTopic = new FollowTopic();
+                followTopic.setUserId(user.getId());
+                followTopic.setTopicId(tagClass.getId());
+                boolean b = followTopicService.isFollowTopic(followTopic);
+                model.addAttribute("followTag", b);
+                model.addAttribute("tagClass", tagClass);
+            }
+
         }
 
         model.addAttribute("sort", sort);
