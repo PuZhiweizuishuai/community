@@ -139,8 +139,38 @@ public class UserController {
         }
         User user = userService.selectUserByUserId(userId);
         if (user != null) {
+            PaginationDto<User> userPaginationDto = followUserService.getFollowUserList(user.getId(), page, size);
+            model.addAttribute("followUser", userPaginationDto);
+            model.addAttribute("user", user);
+            User nowUser = (User) request.getSession().getAttribute("user");
+            if (nowUser == null) {
+                model.addAttribute("isFollowUser", true);
+            } else {
+                FollowUser followUser = new FollowUser();
+                followUser.setFollowUserId(user.getId());
+                followUser.setUserId(nowUser.getId());
+                model.addAttribute("isFollowUser", followUserService.isFollowUser(followUser));
+            }
+            return StringUtil.jumpWebLangeParameter("user", false, request);
+        }
+        return StringUtil.jumpWebLangeParameter("/", true, request);
+    }
 
 
+    @GetMapping("/user/{userId}/following/fans")
+    public String getUserFans(@PathVariable("userId") String userId,
+                              @RequestParam(value = "page", defaultValue = "1") String page,
+                              @RequestParam(value = "size", defaultValue = "20") String size,
+                              Model model,
+                              HttpServletRequest request) {
+        if (userId == null) {
+            return StringUtil.jumpWebLangeParameter("/", true, request);
+        }
+        User user = userService.selectUserByUserId(userId);
+        if (user != null) {
+            PaginationDto<User> userPaginationDto = followUserService.getFansList(user.getId(), page, size);
+            model.addAttribute("userFans", userPaginationDto);
+            model.addAttribute("user", user);
             User nowUser = (User) request.getSession().getAttribute("user");
             if (nowUser == null) {
                 model.addAttribute("isFollowUser", true);

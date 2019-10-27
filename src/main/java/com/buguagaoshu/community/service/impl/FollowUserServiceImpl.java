@@ -7,9 +7,13 @@ import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.FollowUser;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.FollowUserService;
+import com.buguagaoshu.community.util.NumberUtils;
 import io.jsonwebtoken.Claims;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -69,11 +73,38 @@ public class FollowUserServiceImpl implements FollowUserService {
 
     @Override
     public PaginationDto<User> getFollowUserList(long userId, String page, String size) {
-        return null;
+        long allCount = followUserMapper.selectUserFollowCount(userId);
+        long[] param = NumberUtils.getPageAndSize(page, size, allCount);
+        List<FollowUser> followUsers = followUserMapper.selectUserFollowList(userId, param[0], param[1]);
+        List<User> userList = new ArrayList<>();
+        for (FollowUser followUser : followUsers) {
+            User user = userMapper.selectUserById(followUser.getFollowUserId());
+            user.clean();
+            userList.add(user);
+        }
+        PaginationDto<User> paginationDto = new PaginationDto<>();
+        paginationDto.setData(userList);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(allCount);
+        return paginationDto;
+
     }
 
     @Override
     public PaginationDto<User> getFansList(long userId, String page, String size) {
-        return null;
+        long allCount = followUserMapper.selectUserFansCount(userId);
+        long[] param = NumberUtils.getPageAndSize(page, size, allCount);
+        List<FollowUser> followUsers = followUserMapper.selectUserFans(userId, param[0], param[1]);
+        List<User> userList = new ArrayList<>();
+        for (FollowUser followUser : followUsers) {
+            User user = userMapper.selectUserById(followUser.getUserId());
+            user.clean();
+            userList.add(user);
+        }
+        PaginationDto<User> paginationDto = new PaginationDto<>();
+        paginationDto.setData(userList);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(allCount);
+        return paginationDto;
     }
 }
