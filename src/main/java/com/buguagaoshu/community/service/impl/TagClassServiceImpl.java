@@ -39,7 +39,7 @@ public class TagClassServiceImpl implements TagClassService {
     public List<TagClass> getTagClassByTypeNotUserPage(String type) {
         int typeCode = 1;
         try {
-            typeCode = Integer.valueOf(type);
+            typeCode = Integer.parseInt(type);
             if (typeCode <= 0 || typeCode > TagClassTypeEnum.values().length) {
                 typeCode = 1;
             }

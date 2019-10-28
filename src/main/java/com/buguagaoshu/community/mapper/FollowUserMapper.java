@@ -39,14 +39,14 @@ public interface FollowUserMapper {
     int deleteFollowUser(FollowUser followUser);
 
 
-    @Select("select * from followUser where userId=#{userId} limit #{page}, #{size}")
+    @Select("select * from followUser where userId=#{userId} order by id desc limit #{page}, #{size}")
     List<FollowUser> selectUserFollowList(@Param("userId") long userId, @Param("page") long page, @Param("size") long size);
 
     @Select("select COUNT(*) from followUser where userId=#{userId}")
     long selectUserFollowCount(@Param("userId") long userId);
 
 
-    @Select("select * from followUser where followUserId=#{followUserId} limit #{page}, #{size}")
+    @Select("select * from followUser where followUserId=#{followUserId} order by id desc limit #{page}, #{size}")
     List<FollowUser> selectUserFans(@Param("followUserId") long followUserId, @Param("page") long page, @Param("size") long size);
 
 

@@ -26,7 +26,7 @@ public interface FollowTopicMapper {
      * @param userId 用户 Id
      * @return 关注列表
      * */
-    @Select("select * from followTopic where userId=#{userId}")
+    @Select("select * from followTopic where userId=#{userId} order by followTopicId desc")
     List<FollowTopic> selectUserFollowTopic(@Param("userId") long userId);
 
     /**

@@ -47,15 +47,23 @@ public class FollowTopicServiceImpl implements FollowTopicService {
         if (temp == null) {
             tagClass.setFollowCount(tagClass.getFollowCount()+1);
             tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
-            tagClass.setFollowCount(1);
-            tagClassService.updateFollowCount(tagClass);
+
+            TagClass newClass = new TagClass();
+            newClass.setId(tagClass.getId());
+            newClass.setFollowCount(1);
+            tagClassService.updateFollowCount(newClass);
+
             followTopicMapper.insertFollowTop(followTopic);
             return 1;
         } else {
             tagClass.setFollowCount(tagClass.getFollowCount()-1);
             tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
-            tagClass.setFollowCount(-1);
-            tagClassService.updateFollowCount(tagClass);
+
+            TagClass newClass = new TagClass();
+            newClass.setId(tagClass.getId());
+            newClass.setFollowCount(1);
+
+            tagClassService.updateFollowCount(newClass);
             followTopicMapper.deleteFollowTopic(temp.getFollowTopicId());
             return 2;
         }

@@ -46,7 +46,7 @@ public interface FollowQuestionMapper {
      * @param size 每页显示数目
      * @return 结果
      * */
-    @Select("select * from followQuestion where userId=#{userId} limit #{page}, #{size}")
+    @Select("select * from followQuestion where userId=#{userId} order by id desc limit #{page}, #{size}")
     List<FollowQuestion> selectUserFollowQuestion(@Param("userId") long userId, @Param("page") long page, @Param("size") long size);
 
     /**
