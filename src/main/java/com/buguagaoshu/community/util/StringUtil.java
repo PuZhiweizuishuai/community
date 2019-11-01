@@ -90,15 +90,15 @@ public class StringUtil {
         String[] userBirthday = birthday.split("-");
         String[] nowDay = nowTime.split("-");
         try {
-            int age = Integer.valueOf(nowDay[0]) - Integer.valueOf(userBirthday[0]);
+            int age = Integer.parseInt(nowDay[0]) - Integer.parseInt(userBirthday[0]);
             if (age > 0) {
                 return age;
             } else if (age == 0) {
-                int month = Integer.valueOf(nowDay[1]) - Integer.valueOf(userBirthday[1]);
+                int month = Integer.parseInt(nowDay[1]) - Integer.parseInt(userBirthday[1]);
                 if (month > 0) {
                     return 0;
                 } else if (month == 0) {
-                    int day = Integer.valueOf(nowDay[2]) - Integer.valueOf(userBirthday[2]);
+                    int day = Integer.parseInt(nowDay[2]) - Integer.parseInt(userBirthday[2]);
                     if (day > 0) {
                         return 0;
                     } else if (day == 0) {

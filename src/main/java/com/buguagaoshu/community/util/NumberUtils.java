@@ -13,8 +13,8 @@ public class NumberUtils {
         long sizeNumber;
         // 使用 string 防止传入参数不是数字
         try {
-            offset = Long.valueOf(page);
-            sizeNumber = Long.valueOf(size);
+            offset = Long.parseLong(page);
+            sizeNumber = Long.parseLong(size);
         } catch (Exception e) {
             offset = 1;
             sizeNumber = 10;
