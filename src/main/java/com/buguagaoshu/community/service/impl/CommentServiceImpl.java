@@ -95,7 +95,7 @@ public class CommentServiceImpl implements CommentService {
 
             // 创建通知
             // TODO 考虑传入评论ID
-            createNotification(comment, dbComment.getCommentator(), "", "",
+            createNotification(comment, dbComment.getCommentator(), "", StringUtil.subString(comment.getContent(), 200),
                     NotificationTypeEnum.REPLY_COMMENT, question.getQuestionId(), comment.getParentId());
 
             // 修改帖子修改时间
@@ -112,7 +112,8 @@ public class CommentServiceImpl implements CommentService {
             if (question == null || (comment.getQuestionId() != comment.getParentId())) {
                 throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
             }
-            createNotification(comment, question.getUserId(), "", "",
+
+            createNotification(comment, question.getUserId(), "", StringUtil.subString(comment.getContent(), 200),
                     NotificationTypeEnum.REPLY_QUESTION, question.getQuestionId(), -1L);
             // 修改帖子修改时间
             questionMapper.alterQuestionAlterTime(System.currentTimeMillis(), comment.getQuestionId());
@@ -236,7 +237,7 @@ public class CommentServiceImpl implements CommentService {
      * 创建通知
      */
     private void createNotification(Comment comment, Long receiver, String notifierName,
-                                    String outerTitle, NotificationTypeEnum notificationType,
+                                    String commentContent, NotificationTypeEnum notificationType,
                                     Long outerId, Long commentId) {
         if (receiver == comment.getCommentator()) {
             return;
@@ -256,7 +257,11 @@ public class CommentServiceImpl implements CommentService {
         // 通知接收人
         notification.setReceiver(receiver);
 
+        // 缓存评论内容
+        notification.setCommentContent(commentContent);
+
         notification.setCommentId(commentId);
+
         notificationMapper.insertNotification(notification);
     }
 }

@@ -9,22 +9,22 @@ public enum NotificationTypeEnum {
     /**
      * 回复了问题
      */
-    REPLY_QUESTION(1, "回复了问题"),
+    REPLY_QUESTION(1, "回复了我的问题"),
 
     /**
      * 回复了评论
      */
-    REPLY_COMMENT(2, "回复了你的评论"),
+    REPLY_COMMENT(2, "回复了我的评论"),
 
     /**
      * 点赞了问题
      */
-    LIKE_QUESTION(3, "点赞了问题"),
+    LIKE_QUESTION(3, "点赞了我的问题"),
 
     /**
      * 点赞了评论
      */
-    LIKE_COMMENT(4, "点赞了评论"),
+    LIKE_COMMENT(4, "点赞了我的评论"),
 
     /**
      * 系统消息

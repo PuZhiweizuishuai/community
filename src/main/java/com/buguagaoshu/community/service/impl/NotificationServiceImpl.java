@@ -114,17 +114,17 @@ public class NotificationServiceImpl implements NotificationService {
 
             notificationDTO.setId(notification.getId());
             notificationDTO.setCreateTime(StringUtil.foematTime(notification.getCreateTime()));
-
+            notificationDTO.setCommentContent(notification.getCommentContent());
             notificationDTO.setNotifier(notification.getNotifier());
             notificationDTO.setNotifierId(userMap.get(notification.getNotifier()).getUserId());
             notificationDTO.setNotifierName(userMap.get(notification.getNotifier()).getUserName());
 
             if(notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()) {
                 Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
-                notificationDTO.setOuterTitle(comment.getContent());
+                notificationDTO.setOuterTitle(StringUtil.subString(comment.getContent(), 25));
             } else if (notification.getType() == NotificationTypeEnum.REPLY_COMMENT.getType()) {
                 Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
-                notificationDTO.setOuterTitle(comment.getContent());
+                notificationDTO.setOuterTitle(StringUtil.subString(comment.getContent(), 25));
             } else {
                 Question question = questionMapper.getQuestionIgnoreStatus(notification.getOuterId());
                 //TODO 目测可以优化

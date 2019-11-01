@@ -122,6 +122,7 @@ CREATE INDEX index_comment_createTime ON comment (createTime);
 -- notifier 通知发起人
 -- receiver 通知接收人
 -- outerId 通知产生的地址，帖子或回复
+-- commentContent 缓存评论内容
 -- type 消息类型 点赞or回复
 create table notification
 (
@@ -129,6 +130,7 @@ create table notification
     notifier bigint not null ,
     receiver bigint not null ,
     outerId bigint not null ,
+    commentContent text,
     commentId bigint default -1,
     type int not null ,
     createTime bigint not null ,

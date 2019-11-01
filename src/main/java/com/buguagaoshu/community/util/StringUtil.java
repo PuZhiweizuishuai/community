@@ -234,4 +234,11 @@ public class StringUtil {
         }
         return list;
     }
+
+    public static String subString(String str, int n) {
+        if (str.length() > n) {
+            return str.substring(0, n) + "......";
+        }
+        return str;
+    }
 }

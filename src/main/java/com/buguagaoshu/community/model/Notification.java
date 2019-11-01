@@ -31,6 +31,11 @@ public class Notification {
     private long commentId = -1;
 
     /**
+     * 缓存评论内容
+     * */
+    private String commentContent = "";
+
+    /**
      * 通知类型
      */
     private int type;

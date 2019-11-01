@@ -32,6 +32,10 @@ public class NotificationDTO {
 
     private int type;
 
+    /**
+     * 缓存评论内容
+     * */
+    private String commentContent;
 
     private long commentCount;
     private long likeCount;

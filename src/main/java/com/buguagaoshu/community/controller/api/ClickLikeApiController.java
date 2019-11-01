@@ -7,6 +7,7 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.JwtUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import io.jsonwebtoken.Claims;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import java.util.Map;
  * create          2019-09-25 17:01
  */
 @RestController
+@Slf4j
 public class ClickLikeApiController {
     private final ClickLikeService clickLikeService;
 
@@ -51,6 +53,7 @@ public class ClickLikeApiController {
                 return StringUtil.dealResultMessage(false, clickLikeTypeEnum.getName());
             }
         } catch (Exception e) {
+            log.error("点赞异常：{}", e.getMessage());
             return StringUtil.dealResultMessage(false, "请先登陆后再点赞!");
         }
     }
