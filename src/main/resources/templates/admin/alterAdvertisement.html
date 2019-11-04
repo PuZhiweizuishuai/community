@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>修改广告</title>
+    <link rel="shortcut icon" href="/favicon.png"/>
+    <link rel="bookmark" href="/favicon.png"/>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
+    <style type="text/css">
+        body {
+            background-color: #efefef;
+        }
+    </style>
+    <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+</head>
+<body>
+<nav class="navbar navbar-light bg-light">
+    <a class="navbar-brand" href="/admin/advertisement">返回</a>
+</nav>
+<div class="container" style="height: 30px"></div>
+
+<div class="container" style="background-color: white">
+    <div class="container" style="background-color: white">
+        <div class="w-75">
+            <input type="hidden" id="id" th:value="${ad.id}">
+            <div class="form-group">
+                <label for="title">广告标题</label>
+                <input autocomplete="off" type="text" name="title" class="form-control" id="title"
+                       aria-describedby="titleHelp" placeholder="广告标题" th:value="${ad.title}">
+                <small id="titleHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="url">链接地址</label>
+                <input autocomplete="off" type="text" name="url" class="form-control" id="url" aria-describedby="urlHelp"
+                       placeholder="链接地址" th:value="${ad.url}">
+                <small id="urlHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="form-group">
+                <label for="image">图片设置(上传图片前请先登陆社区账号)</label>
+                <input autocomplete="off" type="text" name="image" class="form-control" id="image"
+                       aria-describedby="imageHelp" placeholder="图片链接" th:value="${ad.image}">
+                <input type="file" accept="image/*" id="image_file" name="myfile" />
+                <input type="button" onclick="uploadImage()" value="上传" />
+                <small id="imageHelp" class="form-text text-muted"></small>
+            </div>
+            <div class="container" style="height: 30px"></div>
+            <p id="result"></p>
+            <div class="container" style="height: 30px"></div>
+            <button type="button" onclick="addAdvertisement()" class="btn btn-primary">提交</button>
+        </div>
+    </div>
+    <script>
+        function addAdvertisement() {
+            const id = document.getElementById("id").value;
+            const title = document.getElementById("title").value;
+            const url = document.getElementById("url").value;
+            const image = document.getElementById("image").value;
+            if (title === null || title === '') {
+                document.getElementById("titleHelp").innerText = "标题不能为空！";
+                return;
+            }
+            if (url === null || url === '') {
+                document.getElementById("urlHelp").innerText = "链接不能为空";
+            }
+            if (image === null || image === '') {
+                document.getElementById("imageHelp").innerText = "图片不能为空";
+            }
+            const createAdvertisement = {
+                "id": id,
+                "title": title,
+                "url": url,
+                "image": image
+            };
+            $.ajax({
+                type: 'POST',
+                url: '/admin/advertisement/alter',
+                contentType: 'application/json',
+                data: JSON.stringify(createAdvertisement),
+                success: function (result) {
+                    if (result.success) {
+                        window.close();
+                    } else {
+                        document.getElementById("result").innerText = result.msg;
+                        document.getElementById("title").value = result.ad.title;
+                        document.getElementById("url").value = result.ad.url;
+                        document.getElementById("image").value = result.ad.image;
+                    }
+                }
+            });
+        }
+
+        function uploadImage() {
+            var formData = new FormData();
+            var file = document.getElementById("image_file").files[0];
+            formData.append("editormd-image-file", file);
+            formData.append("type", "");
+            $.ajax({
+                url:"/api/file/image/upload",
+                type:"POST",
+                data:formData,
+                processData : false,
+                contentType : false,
+                enctype: "multipart/form-data",
+                async : false,
+                success : function (result) {
+                    //成功后的回调事件
+                    if(result.success == 1) {
+                        document.getElementById("imageHelp").innerText = "上传成功";
+                        document.getElementById("image").value = result.url;
+                    } else {
+                        document.getElementById("imageHelp").innerText = result.message;
+                    }
+                }
+            })
+        }
+    </script>
+</div>
+<div class="container" style="height: 30px"></div>
+<footer class="footer mt-auto py-3">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <span class="text-muted">Copyright © 2019 · <a href="/">不挂高数社区</a></span>
+            </div>
+            <div class="col text-right">
+                <span><a href="/about">关于我们</a></span>
+            </div>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

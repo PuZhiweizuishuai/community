@@ -44,7 +44,9 @@ logging:
 #        community:
 #          mapper: debug
 
-
+# 每页广告数
+advertisement:
+  number: 3
 
 jwt:
   key: buguagaoshu

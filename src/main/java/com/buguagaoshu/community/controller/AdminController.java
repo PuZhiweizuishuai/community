@@ -5,10 +5,7 @@ import com.buguagaoshu.community.dto.AdminPageDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.User;
-import com.buguagaoshu.community.service.AdminDataService;
-import com.buguagaoshu.community.service.OnlineUserService;
-import com.buguagaoshu.community.service.QuestionService;
-import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -26,19 +23,13 @@ import java.util.stream.Collectors;
  */
 @Controller
 public class AdminController {
-    final
-    AdminDataService adminDataService;
+    private final AdminDataService adminDataService;
 
-    final
-    QuestionService questionService;
+    private final QuestionService questionService;
 
+    private final UserService userService;
 
-    final
-    UserService userService;
-
-
-    final
-    OnlineUserService onlineUserService;
+    private final OnlineUserService onlineUserService;
 
     @Autowired
     public AdminController(QuestionService questionService, UserService userService, OnlineUserService onlineUserService, AdminDataService adminDataService) {
@@ -46,11 +37,14 @@ public class AdminController {
         this.userService = userService;
         this.onlineUserService = onlineUserService;
         this.adminDataService = adminDataService;
-
     }
 
     @GetMapping("/admin")
-    public String getAdminPage() {
+    public String getAdminPage(HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute("admin");
+        if (user != null) {
+            return "redirect:/admin/main";
+        }
         return "admin/index";
     }
 

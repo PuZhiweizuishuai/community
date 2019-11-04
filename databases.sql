@@ -301,10 +301,26 @@ create table followUser
     `userId` bigint not null ,
     `createTime` bigint not null,
     PRIMARY KEY (`id`)
-)
+);
 CREATE INDEX index_followUser_userId ON followUser (userId);
 CREATE INDEX index_followUser_followUserId ON followUser (followUserId);
 
+-- 广告表
+CREATE TABLE `advertisement`
+(
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `title` varchar(256) DEFAULT NULL,
+  `url` varchar(1000) DEFAULT NULL,
+  `image` varchar(1000) DEFAULT NULL,
+  `createTime` bigint DEFAULT NULL,
+  `modifiedUser` bigint DEFAULT NULL,
+  `startTime` bigint DEFAULT NULL,
+  `endTime` bigint DEFAULT NULL,
+  `position` varchar(50) NOT NULL,
+  `viewCount` bigint default 0,
+  `status` int(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
 
 -- alter table Questions modify questionId bigint NOT NULL;
 -- alter table users modify id bigint NOT NULL;

@@ -48,7 +48,7 @@ public class FileApiController {
 
     @PostMapping(value = "/api/file/image/upload")
     public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile file, String type,
-                         HttpServletRequest request) throws Exception {
+                         HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
         if(user == null) {
             return new FileDTO(0, "未登陆用户禁止上传图片","");

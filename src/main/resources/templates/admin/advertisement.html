@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>不挂高数管理页</title>
+    <title>不挂高数管理页-广告</title>
     <!-- Favicon -->
     <link rel="shortcut icon" href="/favicon.png"/>
     <link rel="bookmark" href="/favicon.png"/>
@@ -19,7 +19,7 @@
     <script src="/js/jquery-3.4.1.min.js"></script>
 </head>
 
-<body onload="showTime()">
+<body>
 <!-- Sidenav -->
 
 <nav class="navbar navbar-vertical fixed-left navbar-expand-md navbar-light bg-white" id="sidenav-main">
@@ -62,7 +62,7 @@
             <div class="navbar-collapse-header d-md-none">
                 <div class="row">
                     <div class="col-6 collapse-brand">
-                        <a href="../index.html">
+                        <a href="/admin/main">
                             <img src="/favicon.png">
                         </a>
                         不挂高数社区
@@ -89,7 +89,7 @@
             <!-- Navigation -->
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link active" href="/admin/main">
+                    <a class="nav-link" href="/admin/main">
                         <i class="ni ni-tv-2 text-primary"></i> 主页
                     </a>
                 </li>
@@ -114,7 +114,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/advertisement">
+                    <a class="nav-link active" href="/admin/advertisement">
                         <i class="ni ni-bullet-list-67 text-red"></i> 广告设置
                     </a>
                 </li>
@@ -128,13 +128,14 @@
         </div>
     </div>
 </nav>
+
 <!-- Main content -->
 <div class="main-content">
     <!-- Top navbar -->
     <nav class="navbar navbar-top navbar-expand-md navbar-dark" id="navbar-main">
         <div class="container-fluid">
             <!-- Brand -->
-            <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="#">数据变化趋势</a>
+            <a class="h4 mb-0 text-white text-uppercase d-none d-lg-inline-block" href="#">广告列表</a>
             <!-- Form -->
             <form class="navbar-search navbar-search-dark form-inline mr-3 d-none d-md-flex ml-lg-auto" action="/admin/search" method="get">
                 <div class="form-group mb-0">
@@ -184,11 +185,12 @@
                 <div class="row">
                     <div id="for-Admin-User" class="col-xl-3 col-lg-6">
                         <div class="card card-stats mb-4 mb-xl-0">
+                            <a href="/admin/advertisement/add">
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">总问题数</h5>
-                                        <span class="h2 font-weight-bold mb-0" id="class_number" th:text="${adminPageDto.questionNumber}">350,897</span>
+                                        <h5 class="card-title text-uppercase text-muted mb-0">总广告数</h5>
+                                        <span class="h2 font-weight-bold mb-0" id="class_number" th:text="${Advertisements.allCount}">350,897</span>
                                     </div>
                                     <div class="col-auto">
                                         <div class="icon icon-shape bg-danger text-white rounded-circle shadow">
@@ -198,75 +200,10 @@
                                 </div>
                                 <p class="mt-3 mb-0 text-muted text-sm">
                                     <span class="text-success mr-2"></span>
-                                    <span class="text-nowrap"></span>
+                                    <span class="text-nowrap">点击添加广告</span>
                                 </p>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">当前在线用户</h5>
-                                        <span class="h2 font-weight-bold mb-0" th:text="${adminPageDto.onlineUser}">2,356</span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-warning text-white rounded-circle shadow">
-                                            <i class="fas fa-chart-pie"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-danger mr-2">&nbsp;</span>
-                                    <span class="text-nowrap">&nbsp;</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="for-Admin-User-1" class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">总用户数</h5>
-                                        <span class="h2 font-weight-bold mb-0" id="now_user_number" th:text="${adminPageDto.userNumber}">924</span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-yellow text-white rounded-circle shadow">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-warning mr-2"></span>
-                                    <span class="text-nowrap"></span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-lg-6">
-                        <div class="card card-stats mb-4 mb-xl-0">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col">
-                                        <h5 class="card-title text-uppercase text-muted mb-0">当前时间</h5>
-                                        <span class="h2 font-weight-bold mb-0" id="now_time"></span>
-                                    </div>
-                                    <div class="col-auto">
-                                        <div class="icon icon-shape bg-info text-white rounded-circle shadow">
-                                            <i class="ni ni-time-alarm"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="mt-3 mb-0 text-muted text-sm">
-                                    <span class="text-success mr-2"></span>
-                                    <span class="text-nowrap"></span>
-                                </p>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -280,65 +217,90 @@
             <div class="col">
                 <div class="card shadow">
                     <div class="card-header border-0">
-                        <h3 class="mb-0">近期数据</h3>
+                        <h3 class="mb-0">所有广告</h3>
                     </div>
                     <div class="table-responsive" id="classTable">
                         <table class="table align-items-center table-flush">
                             <thead class="thead-light">
                             <tr>
-                                <th scope="col">同步ID</th>
-                                <th scope="col">同步时间</th>
-                                <th scope="col">用户数</th>
-                                <th scope="col">问题数</th>
-                                <th scope="col">用户增长</th>
-                                <th scope="col">问题增长</th>
+                                <th scope="col">广告ID</th>
+                                <th scope="col">标题</th>
+                                <th scope="col">点击数</th>
+                                <th scope="col">创建时间</th>
+                                <th scope="col">开始时间</th>
+                                <th scope="col">结束时间</th>
+                                <th scope="col">投放位置</th>
+                                <th scope="col">广告状态</th>
                             </tr>
                             </thead>
                             <tbody>
-                            <tr th:each="admin:${paginationDto.data}">
+                            <tr th:each="advertisement:${Advertisements.data}">
                                 <th scope="row">
                                     <div class="media align-items-center">
-                                        <div class="media-body">
-                                            <span class="mb-0 text-sm" th:text="${admin.adminId}"></span>
-                                        </div>
+                                        <a th:href="${'/admin/advertisement/' + advertisement.id}">
+                                            <span th:text="${advertisement.id}"></span>
+                                        </a>
                                     </div>
                                 </th>
-                                <td th:text="${admin.time}">
-                                    $2,500 USD
+                                <td >
+                                    <a th:href="${'/admin/advertisement/' + advertisement.id}">
+                                        <span th:text="${advertisement.title}"></span>
+                                    </a>
+                                </td>
+                                <td >
+                                    <a th:href="${'/admin/advertisement/' + advertisement.id}">
+                                        <span th:text="${advertisement.viewCount}"></span>
+                                    </a>
                                 </td>
                                 <td>
-                      <span class="badge badge-dot mr-4" th:text="${admin.userCount}">
-
-                      </span>
+<!--                                    <a th:href="${'/user/' + question.user.getUserId()}">-->
+                                        <span class="badge badge-dot mr-4" th:text="${advertisement.createTime}"></span>
+<!--                                    </a>-->
                                 </td>
-                                <td th:text="${admin.questionCount}">
+                                <td>
+<!--                                    <a th:href="${'/user/' + question.user.getUserId()}">-->
+                                        <span class="badge badge-dot mr-4" th:text="${advertisement.startTime}"></span>
+<!--                                    </a>-->
+                                </td>
+                                <td th:text="${advertisement.endTime}">
 
                                 </td>
-                                <td th:text="${admin.userAddCount}">
+                                <td th:text="${advertisement.position}">
 
                                 </td>
-                                <td class="text-right" th:text="${admin.questionAddCount}">
-
+                                <td class="text-right" >
+                                    <span th:if="${advertisement.status==1}">投放中</span>
+                                    <span th:if="${advertisement.status==0}">暂未投放</span>
+                                    <div class="dropdown">
+                                        <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-arrow" x-placement="top-end" style="position: absolute; will-change: transform; top: 0px; left: 0px; transform: translate3d(32px, -2px, 0px);">
+                                            <button th:data-id="${advertisement.id}" class="dropdown-item" onclick="alterAD(this)">修改</button>
+                                            <button th:if="${advertisement.status==1}" th:data-id="${advertisement.id}" class="dropdown-item" onclick="closeAD(this)">结束投放</button>
+                                            <button th:if="${advertisement.status==0}" th:data-id="${advertisement.id}" class="dropdown-item" onclick="showSendStartAd(this)" >设置开始投放</button>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="card-footer py-4">
-                        <nav aria-label="Page navigation example" th:if="${paginationDto.totalPage} != 0">
+                        <nav aria-label="Page navigation example" th:if="${Advertisements.totalPage} != 0">
                             <ul class="pagination justify-content-end">
                                 <!-- 返回首页 -->
-                                <li class="page-item" th:if="${paginationDto.showFirstPage}">
-                                    <a class="page-link" id="first-page-a" href="/admin/main"
+                                <li class="page-item" th:if="${Advertisements.showFirstPage}">
+                                    <a class="page-link" id="first-page-a" href="/admin/advertisement"
                                        aria-label="Previous" onclick="addLocaleUrlForPage('first-page-a')">
                                         <span aria-hidden="true">&laquo;&laquo;</span>
                                         <span class="sr-only">Previous</span>
                                     </a>
                                 </li>
                                 <!-- 上一页 -->
-                                <li class="page-item" th:if="${paginationDto.showPrevious}">
+                                <li class="page-item" th:if="${Advertisements.showPrevious}">
                                     <a class="page-link" id="link-to-last-a"
-                                       th:href="'/admin/main' + @{/(page=${paginationDto.nowPage} - 1)}"
+                                       th:href="'/admin/advertisement' + @{/(page=${Advertisements.nowPage} - 1)}"
                                        aria-label="Previous"
                                        onclick="addLocaleUrlForPage('link-to-last-a')">
                                         <span aria-hidden="true">&laquo;</span>
@@ -347,9 +309,9 @@
                                 </li>
 
 
-                                <li class="page-item" th:each="page : ${paginationDto.pages}"
-                                    th:class="${paginationDto.nowPage == page}? 'page-item active' : 'page-item'">
-                                    <a class="page-link" th:href="${'/admin/main?page='+page}"
+                                <li class="page-item" th:each="page : ${Advertisements.pages}"
+                                    th:class="${Advertisements.nowPage == page}? 'page-item active' : 'page-item'">
+                                    <a class="page-link" th:href="${'/admin/advertisement?page='+page}"
                                        th:text="${page}" th:id="${page}"
                                        th:onclick="'javascript:addLocaleUrlForPage(\''+${page}+'\')'">
                                         1
@@ -358,9 +320,9 @@
 
 
                                 <!-- 下一页 -->
-                                <li class="page-item" th:if="${paginationDto.showNext}">
+                                <li class="page-item" th:if="${Advertisements.showNext}">
                                     <a class="page-link" id="lind-to-next-a"
-                                       th:href="'/admin/main/' + @{/(page=${paginationDto.nowPage} + 1)}"
+                                       th:href="'/admin/advertisement/' + @{/(page=${Advertisements.nowPage} + 1)}"
                                        aria-label="Next"
                                        onclick="addLocaleUrlForPage('lind-to-next-a')">
                                         <span aria-hidden="true">&raquo;</span>
@@ -368,10 +330,10 @@
                                     </a>
                                 </li>
                                 <!-- 最后一页 -->
-                                <li class="page-item" th:if="${paginationDto.showEndPage}">
+                                <li class="page-item" th:if="${Advertisements.showEndPage}">
                                     <a class="page-link" id="link-to-end-a"
-                                       th:href="'/admin/main/' + @{/(page=${paginationDto.totalPage})}"
-                                       th:if="${paginationDto.showEndPage}"
+                                       th:href="'/admin/advertisement/' + @{/(page=${Advertisements.totalPage})}"
+                                       th:if="${Advertisements.showEndPage}"
                                        aria-label="Next" onclick="addLocaleUrlForPage('link-to-end-a')">
                                         <span aria-hidden="true">&raquo;&raquo;</span>
                                         <span class="sr-only">Next</span>
@@ -417,56 +379,34 @@
 </div>
 <!-- Argon Scripts -->
 <!-- Core -->
-
+<div id="showSendAd"  style="width: 100%; height: 100%;position:fixed;bottom: 0px;background: rgba(0, 0, 0, 0.7);display: none">
+<div class="container" style="height: 60px"></div>
+    <div class="container">
+        <input type="hidden" id="adId" value="-1">
+        <div class="form-group">
+            <label style="color:white;" for="time">投放时间(单位天)</label>
+            <input autocomplete="off" type="number" name="time" class="form-control" id="time"
+                   aria-describedby="timeHelp" placeholder="投放时间">
+            <small id="timeHelp" class="form-text text-muted"></small>
+        </div>
+        <div class="form-group">
+            <label style="color:white;" for="position">投放位置</label>
+            <select class="form-control" id="position">
+                <option value="home page">主页</option>
+                <option value="publish page">发布页</option>
+            </select>
+        </div>
+        <div class="container" style="height: 30px"></div>
+        <p style="color: white" id="result"></p>
+        <div class="container" style="height: 30px"></div>
+        <button type="button"  class="btn btn-primary" onclick="SendStartAd()">提交</button>
+        <button type="button"  class="btn btn-secondary" onclick="closeSendStartAd()">取消</button>
+    </div>
+    </div>
+</div>
 <script src="/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Argon JS -->
 <script src="/assets/js/argon.js?v=1.0.0"></script>
-<script>
-    /*获取当前时间*/
-    function showTime() {
-        //创建Date对象
-        var today = new Date();
-        //分别取出年、月、日、时、分、秒
-        var year = today.getFullYear();
-        var month = today.getMonth() + 1;
-        var day = today.getDate();
-        var hours = today.getHours();
-        var minutes = today.getMinutes();
-        var seconds = today.getSeconds();
-        //如果是单个数，则前面补0
-        month = month < 10 ? "0" + month : month;
-        day = day < 10 ? "0" + day : day;
-        hours = hours < 10 ? "0" + hours : hours;
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-
-        //构建要输出的字符串
-        var str = hours + ":" + minutes + ":" + seconds;
-
-        //获取id=result的对象
-        var obj = document.getElementById("now_time");
-        //将str的内容写入到id=result的<div>中去
-        obj.innerHTML = str;
-        //延时器
-        window.setTimeout("showTime()", 100);
-    };
-
-    // 退出登陆
-    var logoutForSystem = function(){
-        $.ajax({
-            type : 'post',//指定request的类型
-            url : '../logout',//目标地址
-            success : function(){
-                if($.cookie("RememberMe") === "false") {
-                    $.cookie("userName", null);
-                    $.cookie("userPwd", null);
-                }
-                window.location.href = "../";
-
-            }
-        });
-    };
-</script>
+<script src="/js/admin.js"></script>
 </body>
-
 </html>

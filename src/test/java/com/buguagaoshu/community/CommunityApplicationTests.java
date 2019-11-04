@@ -1,5 +1,6 @@
 package com.buguagaoshu.community;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
@@ -38,9 +39,12 @@ public class CommunityApplicationTests {
     @Autowired
     NotificationMapper notificationMapper;
 
+    @Autowired
+    AdvertisementCache advertisementCache;
+
     @Test
     public void contextLoads() {
-
+        System.out.println(advertisementCache.AD_MAX_NUMBER);
     }
 
 }

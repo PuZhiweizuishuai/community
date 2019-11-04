@@ -169,3 +169,75 @@ function updateTagClass() {
         }
     })
 }
+
+
+function showSendStartAd(e) {
+    document.getElementById("showSendAd").style.display = "inline";
+    document.getElementById("adId").value = e.getAttribute("data-id");
+}
+
+function closeSendStartAd(e) {
+    document.getElementById("showSendAd").style.display = "none";
+}
+
+function SendStartAd() {
+    const id = document.getElementById("adId").value;
+    const time = document.getElementById("time").value;
+    const position = document.getElementById("position").value;
+    if (id === -1) {
+        document.getElementById("result").innerText = "广告ID错误，请取消后重试！";
+        return;
+    }
+    if (time === null || time < 0) {
+        document.getElementById("result").innerText = "时间不能小于0";
+        return;
+    }
+    const createAdvertisement = {
+        "id": id,
+        "time": time,
+        "position": position
+    };
+    $.ajax({
+        type: 'POST',
+        url: '/admin/advertisement/setting',
+        contentType: 'application/json',
+        data: JSON.stringify(createAdvertisement),
+        success: function (result) {
+            if (result.success) {
+                document.getElementById("result").innerText = result.msg;
+                window.location.reload();
+            } else {
+                document.getElementById("result").innerText = result.msg;
+                document.getElementById("time").value = result.ad.time;
+            }
+        }
+    });
+
+}
+
+function alterAD(e) {
+    const id = e.getAttribute("data-id");
+    const url = "/admin/advertisement/" + id;
+    window.open(url);
+}
+
+function closeAD(e) {
+    const id = e.getAttribute("data-id");
+    const createAdvertisement = {
+        "id": id,
+    };
+    $.ajax({
+        type: 'POST',
+        url: '/admin/advertisement/close',
+        contentType: 'application/json',
+        data: JSON.stringify(createAdvertisement),
+        success: function (result) {
+            if (result.success) {
+                alert(result.msg);
+                window.location.reload();
+            } else {
+                alert(result.msg);
+            }
+        }
+    });
+}

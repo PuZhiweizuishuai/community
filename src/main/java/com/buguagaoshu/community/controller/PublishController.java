@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.QuestionService;
@@ -20,9 +21,12 @@ import javax.servlet.http.HttpServletRequest;
 public class PublishController {
     private final QuestionService questionService;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public PublishController(QuestionService questionService) {
+    public PublishController(QuestionService questionService, AdvertisementCache advertisementCache) {
         this.questionService = questionService;
+        this.advertisementCache = advertisementCache;
     }
 
     @GetMapping("/publish")
@@ -36,6 +40,7 @@ public class PublishController {
         }
 
         model.addAttribute("question", new Question());
+        model.addAttribute("advertisements", advertisementCache.getPublishAdvertisementMap().values());
         return "publish";
     }
 
@@ -96,6 +101,7 @@ public class PublishController {
         Question question = questionService.selectQuestionNotDtoById(questionId);
         if (user != null && question != null && user.getId() == question.getUserId()) {
             model.addAttribute("question", question);
+            model.addAttribute("advertisements", advertisementCache.getPublishAdvertisementMap().values());
             return StringUtil.jumpWebLangeParameter("publish", false, request);
         }
         return StringUtil.jumpWebLangeParameter("/", true, request);

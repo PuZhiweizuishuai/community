@@ -1,9 +1,6 @@
 package com.buguagaoshu.community.controller;
 
-import com.buguagaoshu.community.cache.HotQuestionCache;
-import com.buguagaoshu.community.cache.HotTagCache;
-import com.buguagaoshu.community.cache.IndexTopQuestion;
-import com.buguagaoshu.community.cache.TagClassCache;
+import com.buguagaoshu.community.cache.*;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.QuestionClassType;
@@ -45,14 +42,17 @@ public class IndexController {
 
     private final FollowTopicService followTopicService;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache, FollowTopicService followTopicService) {
+    public IndexController(QuestionService questionService, HotTagCache hotTagCache, IndexTopQuestion indexTopQuestion, HotQuestionCache hotQuestionCache, TagClassCache tagClassCache, FollowTopicService followTopicService, AdvertisementCache advertisementCache) {
         this.questionService = questionService;
         this.hotTagCache = hotTagCache;
         this.indexTopQuestion = indexTopQuestion;
         this.hotQuestionCache = hotQuestionCache;
         this.tagClassCache = tagClassCache;
         this.followTopicService = followTopicService;
+        this.advertisementCache = advertisementCache;
     }
 
 
@@ -104,6 +104,7 @@ public class IndexController {
 
         }
 
+        model.addAttribute("advertisements", advertisementCache.getHomeAdvertisementMap().values());
         model.addAttribute("sort", sort);
         model.addAttribute("class", classification);
         return "index";
