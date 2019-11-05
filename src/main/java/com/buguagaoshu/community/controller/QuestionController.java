@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
@@ -37,12 +38,15 @@ public class QuestionController {
 
     private final FollowQuestionService followQuestionService;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public QuestionController(QuestionService questionService, CommentService commentService, ClickLikeService clickLikeService, FollowQuestionService followQuestionService) {
+    public QuestionController(QuestionService questionService, CommentService commentService, ClickLikeService clickLikeService, FollowQuestionService followQuestionService, AdvertisementCache advertisementCache) {
         this.questionService = questionService;
         this.commentService = commentService;
         this.clickLikeService = clickLikeService;
         this.followQuestionService = followQuestionService;
+        this.advertisementCache = advertisementCache;
     }
 
     @GetMapping("/question/{questionId}")
@@ -70,6 +74,7 @@ public class QuestionController {
             model.addAttribute("comments", commentDtos);
             model.addAttribute("relevantQuestion", relevantQuestion);
             model.addAttribute("sort", sort);
+            model.addAttribute("advertisements", advertisementCache.getQuestionAdvertisementMap().values());
             return "question";
         }
 
@@ -107,6 +112,7 @@ public class QuestionController {
         model.addAttribute("comments", commentDtos);
         model.addAttribute("relevantQuestion", relevantQuestion);
         model.addAttribute("sort", sort);
+        model.addAttribute("advertisements", advertisementCache.getQuestionAdvertisementMap().values());
         return "question";
     }
 }

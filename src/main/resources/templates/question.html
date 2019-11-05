@@ -438,31 +438,25 @@
             </div>
             <br/>
             <!-- 图片轮播 -->
-            <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-                <ol class="carousel-indicators">
-                    <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
-                    <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
-                    <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+            <div id="Advertisement" class="carousel slide" data-ride="carousel">
+                <ol class="carousel-indicators" >
+                    <li th:each="ad : ${advertisements}" th:class="${adStat.index == 0} ? 'active' : ''" data-target="#Advertisement"  th:data-slide-to="${adStat.index}"></li>
                 </ol>
                 <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
-                                        alt="First slide"></a>
-                    </div>
-                    <div class="carousel-item">
-                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
-                                        alt="Second slide"></a>
-                    </div>
-                    <div class="carousel-item">
-                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
-                                        alt="Third slide"></a>
+                    <div th:each="ad : ${advertisements}" th:class="${adStat.index == 0} ? 'carousel-item active' : 'carousel-item'">
+                        <a th:href="'/adUrl' + @{/(url=${ad.url},id=${ad.id})}" target="_blank">
+                            <img class="d-block w-100" th:src="${ad.image}" th:alt="${ad.title}" th:title="${ad.title}">
+                            <div class="carousel-caption d-none d-md-block mb-0" style="border-bottom: 0px">
+                                <p class="mb-0" th:text="${ad.title}"></p>
+                            </div>
+                        </a>
                     </div>
                 </div>
-                <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+                <a class="carousel-control-prev" href="#Advertisement" role="button" data-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="sr-only">Previous</span>
                 </a>
-                <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+                <a class="carousel-control-next" href="#Advertisement" role="button" data-slide="next">
                     <span class="carousel-control-next-icon" aria-hidden="true"></span>
                     <span class="sr-only">Next</span>
                 </a>

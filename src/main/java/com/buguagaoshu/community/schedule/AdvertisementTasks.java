@@ -3,7 +3,6 @@ package com.buguagaoshu.community.schedule;
 import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.mapper.AdvertisementMapper;
 import com.buguagaoshu.community.model.Advertisement;
-import com.buguagaoshu.community.service.AdvertisementService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,8 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.buguagaoshu.community.cache.AdvertisementCache.HOME;
-import static com.buguagaoshu.community.cache.AdvertisementCache.PUBLISH;
+import static com.buguagaoshu.community.cache.AdvertisementCache.*;
 
 
 /**
@@ -42,6 +40,7 @@ public class AdvertisementTasks {
     public void setAdvertisement() {
         Map<Long, Object> home = new HashMap<>(4);
         Map<Long, Object> publish = new HashMap<>(4);
+        Map<Long, Object> question = new HashMap<>(4);
         List<Advertisement> advertisementList = advertisementMapper.selectAdvertisementByStatus(1);
         for (Advertisement advertisement : advertisementList) {
             if (advertisement.getPosition().equals(HOME)) {
@@ -56,10 +55,17 @@ public class AdvertisementTasks {
                 } else {
                     close(advertisement);
                 }
+            } else if (advertisement.getPosition().equals(QUESTION)) {
+                if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                    question.put(advertisement.getId(), advertisement);
+                } else {
+                    close(advertisement);
+                }
             }
         }
         advertisementCache.setHomeAdvertisementMap(home);
         advertisementCache.setPublishAdvertisementMap(publish);
+        advertisementCache.setQuestionAdvertisementMap(question);
         log.info("加载广告数据完成！");
     }
 

@@ -137,6 +137,17 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                     advertisement.setModifiedUser(user.getId());
                     advertisementCache.getPublishAdvertisementMap().put(advertisement.getId(), advertisement);
                     return advertisementMapper.updateAdvertisementSetting(advertisement);
+                } else if (createAdvertisement.getPosition().equals(AdvertisementCache.QUESTION)) {
+                    if (advertisementCache.getQuestionAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                        return 2;
+                    }
+                    advertisement.setPosition(createAdvertisement.getPosition());
+                    advertisement.setStatus(1);
+                    advertisement.setStartTime(System.currentTimeMillis());
+                    advertisement.setEndTime(System.currentTimeMillis() + createAdvertisement.getTime() * DAY_TIME);
+                    advertisement.setModifiedUser(user.getId());
+                    advertisementCache.getQuestionAdvertisementMap().put(advertisement.getId(), advertisement);
+                    return advertisementMapper.updateAdvertisementSetting(advertisement);
                 }
 
             } else {
@@ -160,4 +171,5 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         }
         return 0;
     }
+
 }

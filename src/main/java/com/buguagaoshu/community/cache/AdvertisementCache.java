@@ -25,6 +25,11 @@ public class AdvertisementCache {
     public final static String PUBLISH = "publish page";
 
     /**
+     * 问题页
+     * */
+    public final static String QUESTION = "question page";
+
+    /**
      * 广告数
      * */
     @Value("${advertisement.number}")
@@ -32,13 +37,15 @@ public class AdvertisementCache {
 
     private Map<Long, Object> homeAdvertisementMap;
     private Map<Long, Object> publishAdvertisementMap;
-
+    public Map<Long, Object> questionAdvertisementMap;
 
     public void removeAdvertisement(Advertisement advertisement) {
         if (advertisement.getPosition().equals(HOME)) {
             homeAdvertisementMap.remove(advertisement.getId());
         } else if (advertisement.getPosition().equals(PUBLISH)) {
             publishAdvertisementMap.remove(advertisement.getId());
+        } else if (advertisement.getPosition().equals(QUESTION)) {
+            questionAdvertisementMap.remove(advertisement.getId());
         }
     }
 }
