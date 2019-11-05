@@ -77,7 +77,7 @@
                 success: function (result) {
                     if (result.success) {
                         document.getElementById("result").innerText = result.msg;
-                        window.location.reload();
+                        window.location.href = "/admin/advertisement";
                     } else {
                         document.getElementById("result").innerText = result.msg;
                         document.getElementById("title").value = result.ad.title;

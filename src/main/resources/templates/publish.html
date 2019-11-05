@@ -397,7 +397,7 @@
                 </ol>
                 <div class="carousel-inner">
                     <div th:each="ad : ${advertisements}" th:class="${adStat.index == 0} ? 'carousel-item active' : 'carousel-item'">
-                        <a th:href="'/adUrl' + @{/(url=${ad.url},id=${ad.id})}">
+                        <a th:href="'/adUrl' + @{/(url=${ad.url},id=${ad.id})}" target="_blank">
                             <img class="d-block w-100" th:src="${ad.image}" th:alt="${ad.title}" th:title="${ad.title}">
                             <div class="carousel-caption d-none d-md-block mb-0" style="border-bottom: 0px">
                                 <p class="mb-0" th:text="${ad.title}"></p>

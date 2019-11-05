@@ -185,8 +185,10 @@
             <!-- 显示回复 -->
             <div class="container" th:if="${comments != null}">
                 <div class="media mt-4 question-comment" th:each="comment : ${comments.data}">
+                    <a th:href="${'/user/' + comment.user.getUserId()}">
                     <img class="rounded-circle align-self-start mr-3" th:src="${comment.user.getHeadUrl()}" width="40"
                          height="40">
+                    </a>
                     <div class="media-body">
                         <a class="mt-0 ml-0 issuse-question-people"
                            th:href="${'/user/' + comment.user.getUserId()}"><span

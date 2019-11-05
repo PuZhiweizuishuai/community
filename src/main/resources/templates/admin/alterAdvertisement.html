@@ -79,7 +79,7 @@
                 data: JSON.stringify(createAdvertisement),
                 success: function (result) {
                     if (result.success) {
-                        window.close();
+                        window.location.href = "/admin/advertisement";
                     } else {
                         document.getElementById("result").innerText = result.msg;
                         document.getElementById("title").value = result.ad.title;

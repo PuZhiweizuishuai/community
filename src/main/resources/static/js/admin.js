@@ -218,7 +218,7 @@ function SendStartAd() {
 function alterAD(e) {
     const id = e.getAttribute("data-id");
     const url = "/admin/advertisement/" + id;
-    window.open(url);
+    window.location.href = url;
 }
 
 function closeAD(e) {

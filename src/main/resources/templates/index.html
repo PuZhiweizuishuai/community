@@ -165,9 +165,9 @@
             <!-- 帖子 -->
             <div th:each="question : ${paginationDto.data}">
                 <div class="media">
-                    <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${question.user.headUrl}"
+                    <a th:href="'/user/'+ ${question.user.getUserId()}"><img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${question.user.headUrl}"
                          src="image/head/boyhead.png"
-                         style="max-width: 64px; height: auto; ">
+                            style="max-width: 64px; height: auto; "></a>
                     <div class="media-body">
                         <h5 class="mt-0"><a class="link-to-text" target="_blank"
                                             th:href="'/question/' + ${question.getQuestionId()}"
@@ -291,7 +291,7 @@
                 </ol>
                 <div class="carousel-inner">
                     <div th:each="ad : ${advertisements}" th:class="${adStat.index == 0} ? 'carousel-item active' : 'carousel-item'">
-                        <a th:href="'/adUrl' + @{/(url=${ad.url},id=${ad.id})}">
+                        <a th:href="'/adUrl' + @{/(url=${ad.url},id=${ad.id})}" target="_blank">
                             <img class="d-block w-100" th:src="${ad.image}" th:alt="${ad.title}" th:title="${ad.title}">
                             <div class="carousel-caption d-none d-md-block mb-0" style="border-bottom: 0px">
                                 <p class="mb-0" th:text="${ad.title}"></p>
