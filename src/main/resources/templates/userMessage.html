@@ -229,10 +229,34 @@
                     <li class="list-group-item">邀请我的问题</li>
                 </ul>
             </div>
-
-
+            <br/>
+            <div class="container shadow-sm" style="background-color: white;">
+                <p>广告</p>
+                <div id="Advertisement" class="carousel slide" data-ride="carousel">
+                    <ol class="carousel-indicators" >
+                        <li th:each="ad : ${advertisements}" th:class="${adStat.index == 0} ? 'active' : ''" data-target="#Advertisement"  th:data-slide-to="${adStat.index}"></li>
+                    </ol>
+                    <div class="carousel-inner">
+                        <div th:each="ad : ${advertisements}" th:class="${adStat.index == 0} ? 'carousel-item active' : 'carousel-item'">
+                            <a th:href="'/adUrl' + @{/(url=${ad.url},id=${ad.id})}" target="_blank">
+                                <img class="d-block w-100" th:src="${ad.image}" th:alt="${ad.title}" th:title="${ad.title}">
+                                <div class="carousel-caption d-none d-md-block mb-0" style="border-bottom: 0px">
+                                    <p class="mb-0" th:text="${ad.title}"></p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <a class="carousel-control-prev" href="#Advertisement" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="carousel-control-next" href="#Advertisement" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+            </div>
         </div>
-
     </div>
     <div class="container" style="height: 30px">
     </div>

@@ -6,6 +6,6 @@ package com.buguagaoshu.community;
  */
 public class Test {
     public static void main(String[] args) {
-        System.out.println(1573734765146L-1572870765146L);
+        System.out.println(2 > 3 ? 2 : 1);
     }
 }

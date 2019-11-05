@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.dto.NotificationDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.mapper.NotificationMapper;
@@ -28,11 +29,14 @@ public class MessageController {
 
     private final NotificationMapper notificationMapper;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public MessageController(UserService userService, NotificationService notificationService, NotificationMapper notificationMapper) {
+    public MessageController(UserService userService, NotificationService notificationService, NotificationMapper notificationMapper, AdvertisementCache advertisementCache) {
         this.userService = userService;
         this.notificationService = notificationService;
         this.notificationMapper = notificationMapper;
+        this.advertisementCache = advertisementCache;
     }
     /**
      * 负责跳转到个人信息页面
@@ -49,6 +53,8 @@ public class MessageController {
         } else if(!user.getUserId().equals(userId)) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+        model.addAttribute("advertisements", advertisementCache.getMessageAdvertisementMap().values());
+
         model.addAttribute("user", user);
         PaginationDto<NotificationDTO> paginationDto = notificationService.getAllNotification(page, size, user.getId(), type);
         model.addAttribute("notifications", paginationDto);

@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.service.TagClassService;
@@ -23,11 +24,14 @@ public class ClassPageController {
 
     private final TagClassService tagClassService;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public ClassPageController(HotTagCache hotTagCache, HotQuestionCache hotQuestionCache, TagClassService tagClassService) {
+    public ClassPageController(HotTagCache hotTagCache, HotQuestionCache hotQuestionCache, TagClassService tagClassService, AdvertisementCache advertisementCache) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
         this.tagClassService = tagClassService;
+        this.advertisementCache = advertisementCache;
     }
 
     @GetMapping("/class")
@@ -37,6 +41,8 @@ public class ClassPageController {
         model.addAttribute("hots", hots);
         model.addAttribute("tags", tagClassService.getTagClassByTypeNotUserPage(type));
         model.addAttribute("type", type);
+        model.addAttribute("news", advertisementCache.getNewsMap().values());
+        model.addAttribute("advertisements", advertisementCache.getClassAdvertisementMap().values());
         return "class";
     }
 }

@@ -51,7 +51,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             return advertisementMapper.insertAdvertisement(advertisement);
         }
         return 0;
-       // return advertisementMapper.insertAdvertisement(advertisement);
+        // return advertisementMapper.insertAdvertisement(advertisement);
     }
 
     @Override
@@ -114,42 +114,63 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         if (createAdvertisement.getId() != null && createAdvertisement.getTime() != null && createAdvertisement.getPosition() != null) {
             Advertisement advertisement = advertisementMapper.selectAdvertisementById(createAdvertisement.getId());
             if (advertisement != null) {
-                if (createAdvertisement.getPosition().equals(AdvertisementCache.HOME)) {
-                    if (advertisementCache.getHomeAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                        return 2;
-                    }
-                    advertisement.setPosition(createAdvertisement.getPosition());
-                    advertisement.setStatus(1);
-                    advertisement.setStartTime(System.currentTimeMillis());
-                    advertisement.setEndTime(System.currentTimeMillis() + createAdvertisement.getTime() * DAY_TIME);
-                    advertisement.setModifiedUser(user.getId());
-
-                    advertisementCache.getHomeAdvertisementMap().put(advertisement.getId(), advertisement);
-                    return advertisementMapper.updateAdvertisementSetting(advertisement);
-                } else if (createAdvertisement.getPosition().equals(AdvertisementCache.PUBLISH)) {
-                    if (advertisementCache.getPublishAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                        return 2;
-                    }
-                    advertisement.setPosition(createAdvertisement.getPosition());
-                    advertisement.setStatus(1);
-                    advertisement.setStartTime(System.currentTimeMillis());
-                    advertisement.setEndTime(System.currentTimeMillis() + createAdvertisement.getTime() * DAY_TIME);
-                    advertisement.setModifiedUser(user.getId());
-                    advertisementCache.getPublishAdvertisementMap().put(advertisement.getId(), advertisement);
-                    return advertisementMapper.updateAdvertisementSetting(advertisement);
-                } else if (createAdvertisement.getPosition().equals(AdvertisementCache.QUESTION)) {
-                    if (advertisementCache.getQuestionAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                        return 2;
-                    }
-                    advertisement.setPosition(createAdvertisement.getPosition());
-                    advertisement.setStatus(1);
-                    advertisement.setStartTime(System.currentTimeMillis());
-                    advertisement.setEndTime(System.currentTimeMillis() + createAdvertisement.getTime() * DAY_TIME);
-                    advertisement.setModifiedUser(user.getId());
-                    advertisementCache.getQuestionAdvertisementMap().put(advertisement.getId(), advertisement);
-                    return advertisementMapper.updateAdvertisementSetting(advertisement);
+                switch (createAdvertisement.getPosition()) {
+                    case AdvertisementCache.HOME:
+                        if (advertisementCache.getHomeAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getHomeAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.PUBLISH:
+                        if (advertisementCache.getPublishAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getPublishAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.QUESTION:
+                        if (advertisementCache.getQuestionAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getQuestionAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.CLASS:
+                        if (advertisementCache.getClassAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getClassAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.USER:
+                        if (advertisementCache.getUserAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getUserAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.USER_HOME:
+                        if (advertisementCache.getUserHomeAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getUserHomeAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.MESSAGE:
+                        if (advertisementCache.getMessageAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getMessageAdvertisementMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.NEWS:
+                        if (advertisementCache.getNewsMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getNewsMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    case AdvertisementCache.SEARCH:
+                        if (advertisementCache.getSearchMap().size() >= advertisementCache.AD_MAX_NUMBER) {
+                            return 2;
+                        }
+                        advertisementCache.getSearchMap().put(advertisement.getId(), advertisement);
+                        return initAdvertisement(advertisement, createAdvertisement, user);
+                    default:
                 }
-
             } else {
                 return -1;
             }
@@ -170,6 +191,16 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             return advertisementMapper.updateAdvertisementSetting(advertisement);
         }
         return 0;
+    }
+
+    private int initAdvertisement(Advertisement advertisement, CreateAdvertisement createAdvertisement, User user) {
+        advertisement.setPosition(createAdvertisement.getPosition());
+        advertisement.setStatus(1);
+        advertisement.setStartTime(System.currentTimeMillis());
+        advertisement.setEndTime(System.currentTimeMillis() + createAdvertisement.getTime() * DAY_TIME);
+        advertisement.setModifiedUser(user.getId());
+
+        return advertisementMapper.updateAdvertisementSetting(advertisement);
     }
 
 }

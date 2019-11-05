@@ -322,6 +322,34 @@ CREATE TABLE `advertisement`
   PRIMARY KEY (`id`)
 );
 
+INSERT INTO `advertisement` VALUES (1, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338496, 1, 1572947526905, 1659347526905, 'home page', 0, 1);
+INSERT INTO `advertisement` VALUES (2, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338620, 1, 1572947535616, 1659347535616, 'home page', 0, 1);
+INSERT INTO `advertisement` VALUES (3, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338637, 1, 1572947544469, 1659347544469, 'home page', 0, 1);
+INSERT INTO `advertisement` VALUES (4, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338652, 1, 1572947554777, 1659347554777, 'publish page', 0, 1);
+INSERT INTO `advertisement` VALUES (5, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338664, 1, 1572947563057, 1659347563057, 'publish page', 0, 1);
+INSERT INTO `advertisement` VALUES (6, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338688, 1, 1572947568092, 1659347568092, 'publish page', 0, 1);
+INSERT INTO `advertisement` VALUES (7, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338707, 1, 1572947577167, 1659347577167, 'question page', 0, 1);
+INSERT INTO `advertisement` VALUES (8, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338728, 1, 1572947588594, 1659347588594, 'question page', 0, 1);
+INSERT INTO `advertisement` VALUES (9, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338743, 1, 1572947597538, 1659347597538, 'question page', 0, 1);
+INSERT INTO `advertisement` VALUES (10, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338761, 1, 1572947609915, 1659347609915, 'class page', 0, 1);
+INSERT INTO `advertisement` VALUES (11, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338776, 1, 1572947617555, 1659347617555, 'class page', 0, 1);
+INSERT INTO `advertisement` VALUES (12, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338789, 1, 1572947624462, 1659347624462, 'class page', 0, 1);
+INSERT INTO `advertisement` VALUES (13, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338801, 1, 1572947629868, 1659347629868, 'user page', 0, 1);
+INSERT INTO `advertisement` VALUES (14, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338812, 1, 1572947638318, 1659347638318, 'user page', 0, 1);
+INSERT INTO `advertisement` VALUES (15, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338824, 1, 1572947643550, 1659347643550, 'user page', 0, 1);
+INSERT INTO `advertisement` VALUES (16, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338835, 1, 1572947653538, 1659347653538, 'user home', 0, 1);
+INSERT INTO `advertisement` VALUES (17, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338852, 1, 1572947658929, 1659347658929, 'user home', 0, 1);
+INSERT INTO `advertisement` VALUES (18, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338868, 1, 1572947664200, 1659347664200, 'user home', 0, 1);
+INSERT INTO `advertisement` VALUES (19, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338880, 1, 1572947670018, 1659347670018, 'message', 0, 1);
+INSERT INTO `advertisement` VALUES (20, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338891, 1, 1572947675179, 1659347675179, 'message', 0, 1);
+INSERT INTO `advertisement` VALUES (21, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338907, 1, 1572947680696, 1659347680696, 'message', 0, 1);
+INSERT INTO `advertisement` VALUES (22, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338920, 1, 1572947688667, 1659347688667, 'search', 0, 1);
+INSERT INTO `advertisement` VALUES (23, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338936, 1, 1572947694436, 1659347694436, 'search', 0, 1);
+INSERT INTO `advertisement` VALUES (24, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338943, 1, 1572947703535, 1659347703535, 'search', 0, 1);
+INSERT INTO `advertisement` VALUES (25, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338956, 1, 1572947713271, 1659347713271, 'news', 0, 1);
+INSERT INTO `advertisement` VALUES (26, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338967, 1, 1572947718577, 1659347718577, 'news', 0, 1);
+INSERT INTO `advertisement` VALUES (27, '系统默认', '/', '/image/101-desktop-wallpaper.png', 1572947338978, 1, 1572947726681, 1659347726681, 'news', 1, 1);
+
 -- alter table Questions modify questionId bigint NOT NULL;
 -- alter table users modify id bigint NOT NULL;
 -- select * from Questions limit 0, 5;

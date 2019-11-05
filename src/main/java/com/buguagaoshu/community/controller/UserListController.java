@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.HotUserCache;
@@ -28,12 +29,15 @@ public class UserListController {
 
     private final HotQuestionCache hotQuestionCache;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public UserListController(UserService userService, HotUserCache hotUserCache, HotTagCache hotTagCache, HotQuestionCache hotQuestionCache) {
+    public UserListController(UserService userService, HotUserCache hotUserCache, HotTagCache hotTagCache, HotQuestionCache hotQuestionCache, AdvertisementCache advertisementCache) {
         this.userService = userService;
         this.hotUserCache = hotUserCache;
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
+        this.advertisementCache = advertisementCache;
     }
 
 
@@ -57,6 +61,8 @@ public class UserListController {
         model.addAttribute("hots", hots);
         model.addAttribute("class", type);
         model.addAttribute("page", page);
+        model.addAttribute("news", advertisementCache.getNewsMap().values());
+        model.addAttribute("advertisements", advertisementCache.getUserAdvertisementMap().values());
         return "userList";
     }
 }

@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.controller;
 
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.FollowQuestion;
 import com.buguagaoshu.community.model.FollowTopic;
@@ -34,13 +35,16 @@ public class UserController {
 
     private final FollowQuestionService followQuestionService;
 
+    private final AdvertisementCache advertisementCache;
+
     @Autowired
-    public UserController(UserService userService, QuestionService questionService, FollowTopicService followTopicService, FollowUserService followUserService, FollowQuestionService followQuestionService) {
+    public UserController(UserService userService, QuestionService questionService, FollowTopicService followTopicService, FollowUserService followUserService, FollowQuestionService followQuestionService, AdvertisementCache advertisementCache) {
         this.userService = userService;
         this.questionService = questionService;
         this.followTopicService = followTopicService;
         this.followUserService = followUserService;
         this.followQuestionService = followQuestionService;
+        this.advertisementCache = advertisementCache;
     }
 
     @GetMapping("/user/{userId}")
@@ -54,6 +58,8 @@ public class UserController {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
         User user = userService.selectUserByUserId(userId);
+        model.addAttribute("advertisements", advertisementCache.getUserHomeAdvertisementMap().values());
+
         if (user != null) {
             model.addAttribute("user", user);
             PaginationDto paginationDto = questionService.getQuestionByUserId(page, size, user.getId());
@@ -80,6 +86,8 @@ public class UserController {
         if (userId == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+        model.addAttribute("advertisements", advertisementCache.getUserHomeAdvertisementMap().values());
+
         User user = userService.selectUserByUserId(userId);
         if (user != null) {
 
@@ -109,6 +117,8 @@ public class UserController {
         if (userId == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+        model.addAttribute("advertisements", advertisementCache.getUserHomeAdvertisementMap().values());
+
         User user = userService.selectUserByUserId(userId);
         if (user != null) {
             PaginationDto<FollowQuestion> followQuestionPaginationDto =  followQuestionService.selectUserFollowQuestion(user.getId(), page, size);
@@ -137,6 +147,8 @@ public class UserController {
         if (userId == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+        model.addAttribute("advertisements", advertisementCache.getUserHomeAdvertisementMap().values());
+
         User user = userService.selectUserByUserId(userId);
         if (user != null) {
             PaginationDto<User> userPaginationDto = followUserService.getFollowUserList(user.getId(), page, size);
@@ -166,6 +178,8 @@ public class UserController {
         if (userId == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
+        model.addAttribute("advertisements", advertisementCache.getUserHomeAdvertisementMap().values());
+
         User user = userService.selectUserByUserId(userId);
         if (user != null) {
             PaginationDto<User> userPaginationDto = followUserService.getFansList(user.getId(), page, size);

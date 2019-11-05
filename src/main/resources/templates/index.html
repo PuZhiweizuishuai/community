@@ -341,22 +341,16 @@
             <!-- 图片轮播 -->
             <div id="news-carousel" class="carousel slide" data-ride="carousel">
                 <ol class="carousel-indicators">
-                    <li data-target="#news-carousel" data-slide-to="0" class="active"></li>
-                    <li data-target="#news-carousel" data-slide-to="1"></li>
-                    <li data-target="#news-carousel" data-slide-to="2"></li>
+                    <li th:each="n : ${news}" data-target="#news-carousel" th:data-slide-to="${nStat.index}" th:class="${nStat.index==0} ? 'active' : ''"></li>
                 </ol>
                 <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
-                                        alt="First slide"></a>
-                    </div>
-                    <div class="carousel-item">
-                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
-                                        alt="Second slide"></a>
-                    </div>
-                    <div class="carousel-item">
-                        <a href=""><img class="d-block w-100" src="/image/101-desktop-wallpaper.png"
-                                        alt="Third slide"></a>
+                    <div th:each="n : ${news}" th:class="${nStat.index == 0} ? 'carousel-item active' : 'carousel-item'">
+                        <a th:href="'/adUrl' + @{/(url=${n.url},id=${n.id})}" target="_blank">
+                            <img class="d-block w-100" th:src="${n.image}" th:alt="${n.title}" th:title="${n.title}" >
+                            <div class="carousel-caption d-none d-md-block mb-0" style="border-bottom: 0px">
+                                <p class="mb-0" th:text="${n.title}"></p>
+                            </div>
+                        </a>
                     </div>
                 </div>
                 <a class="carousel-control-prev" href="#news-carousel" role="button" data-slide="prev">

@@ -8,9 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 import static com.buguagaoshu.community.cache.AdvertisementCache.*;
 
@@ -38,34 +37,76 @@ public class AdvertisementTasks {
      * */
     @Scheduled(fixedRate = 3600000)
     public void setAdvertisement() {
-        Map<Long, Object> home = new HashMap<>(4);
-        Map<Long, Object> publish = new HashMap<>(4);
-        Map<Long, Object> question = new HashMap<>(4);
         List<Advertisement> advertisementList = advertisementMapper.selectAdvertisementByStatus(1);
         for (Advertisement advertisement : advertisementList) {
-            if (advertisement.getPosition().equals(HOME)) {
-                if (advertisement.getEndTime() >= System.currentTimeMillis()) {
-                    home.put(advertisement.getId(), advertisement);
-                } else {
-                    close(advertisement);
-                }
-            } else if (advertisement.getPosition().equals(PUBLISH)) {
-                if (advertisement.getEndTime() >= System.currentTimeMillis()) {
-                    publish.put(advertisement.getId(), advertisement);
-                } else {
-                    close(advertisement);
-                }
-            } else if (advertisement.getPosition().equals(QUESTION)) {
-                if (advertisement.getEndTime() >= System.currentTimeMillis()) {
-                    question.put(advertisement.getId(), advertisement);
-                } else {
-                    close(advertisement);
-                }
+            switch (advertisement.getPosition()) {
+                case HOME:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getHomeAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case PUBLISH:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getPublishAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case QUESTION:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getQuestionAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case USER:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getUserAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case USER_HOME:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getUserHomeAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case CLASS:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getClassAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case MESSAGE:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getMessageAdvertisementMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case NEWS:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getNewsMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                case SEARCH:
+                    if (advertisement.getEndTime() >= System.currentTimeMillis()) {
+                        advertisementCache.getSearchMap().put(advertisement.getId(), advertisement);
+                    } else {
+                        close(advertisement);
+                    }
+                    break;
+                default:
             }
         }
-        advertisementCache.setHomeAdvertisementMap(home);
-        advertisementCache.setPublishAdvertisementMap(publish);
-        advertisementCache.setQuestionAdvertisementMap(question);
+
         log.info("加载广告数据完成！");
     }
 

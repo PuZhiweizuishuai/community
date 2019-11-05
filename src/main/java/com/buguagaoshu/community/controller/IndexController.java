@@ -105,6 +105,7 @@ public class IndexController {
         }
 
         model.addAttribute("advertisements", advertisementCache.getHomeAdvertisementMap().values());
+        model.addAttribute("news", advertisementCache.getNewsMap().values());
         model.addAttribute("sort", sort);
         model.addAttribute("class", classification);
         return "index";

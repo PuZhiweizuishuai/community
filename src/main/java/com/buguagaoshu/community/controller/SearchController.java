@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.cache.AdvertisementCache;
+import com.buguagaoshu.community.cache.HotQuestionCache;
+import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.User;
@@ -29,10 +32,19 @@ public class SearchController {
 
     private final UserService userService;
 
+    private final AdvertisementCache advertisementCache;
+
+    private final HotQuestionCache hotQuestionCache;
+
+    private final HotTagCache hotTagCache;
+
     @Autowired
-    public SearchController(QuestionService questionService, UserService userService) {
+    public SearchController(QuestionService questionService, UserService userService, AdvertisementCache advertisementCache, HotQuestionCache hotQuestionCache, HotTagCache hotTagCache) {
         this.questionService = questionService;
         this.userService = userService;
+        this.advertisementCache = advertisementCache;
+        this.hotQuestionCache = hotQuestionCache;
+        this.hotTagCache = hotTagCache;
     }
 
     @GetMapping("/search/{search}")
@@ -57,7 +69,12 @@ public class SearchController {
         PaginationDto<User> userpaginationDto = userService.searchUser(search, page, "5");
         paginationDto.setSearch(tempSearch);
         model.addAttribute("paginationDto", paginationDto);
+        model.addAttribute("hotQuestions", hotQuestionCache.getHotQuestionDTOList());
+        model.addAttribute("hots", hotTagCache.getHots());
         model.addAttribute("userpaginationDto", userpaginationDto);
+        model.addAttribute("news", advertisementCache.getNewsMap().values());
+        model.addAttribute("advertisements", advertisementCache.getSearchMap().values());
+
         return "search";
     }
 
@@ -82,6 +99,10 @@ public class SearchController {
         PaginationDto<User> paginationDto = userService.searchUser(search, page, size);
         paginationDto.setSearch(tempSearch);
         model.addAttribute("paginationDto", paginationDto);
+        model.addAttribute("hotQuestions", hotQuestionCache.getHotQuestionDTOList());
+        model.addAttribute("hots", hotTagCache.getHots());
+        model.addAttribute("news", advertisementCache.getNewsMap().values());
+        model.addAttribute("advertisements", advertisementCache.getSearchMap().values());
         return "searchUser";
     }
 }

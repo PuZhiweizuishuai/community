@@ -1,9 +1,11 @@
 package com.buguagaoshu.community;
 
 import com.buguagaoshu.community.cache.AdvertisementCache;
+import com.buguagaoshu.community.mapper.AdvertisementMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.mapper.UserMapper;
+import com.buguagaoshu.community.model.Advertisement;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
@@ -42,9 +44,24 @@ public class CommunityApplicationTests {
     @Autowired
     AdvertisementCache advertisementCache;
 
+    @Autowired
+    AdvertisementMapper advertisementMapper;
+
     @Test
     public void contextLoads() {
-        System.out.println(advertisementCache.AD_MAX_NUMBER);
+        for (int i = 0; i < 27; i++) {
+            Advertisement advertisement = new Advertisement();
+            advertisement.setTitle("系统默认");
+            advertisement.setUrl("/");
+            advertisement.setImage("/image/101-desktop-wallpaper.png");
+            advertisement.setStatus(0);
+            advertisement.setStartTime(0);
+            advertisement.setCreateTime(System.currentTimeMillis());
+            advertisement.setEndTime(0);
+            advertisement.setPosition(" ");
+            advertisement.setModifiedUser(0);
+            advertisementMapper.insertAdvertisement(advertisement);
+        }
     }
 
 }
