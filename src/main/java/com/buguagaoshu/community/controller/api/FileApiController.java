@@ -2,6 +2,7 @@ package com.buguagaoshu.community.controller.api;
 
 import com.alibaba.fastjson.JSONObject;
 import com.buguagaoshu.community.dto.FileDTO;
+import com.buguagaoshu.community.enums.FileTypeEnum;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.util.FileUtil;
@@ -9,6 +10,7 @@ import com.buguagaoshu.community.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,6 +40,7 @@ public class FileApiController {
     private final ResourceLoader resourceLoader;
 
     private final UserMapper userMapper;
+
 
 
     @Autowired
@@ -144,7 +147,6 @@ public class FileApiController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/image/{filename:.+}", produces = "image/png")
-    @ResponseBody
     public ResponseEntity<?> getImage(@PathVariable("filename") String filename,
                                      @PathVariable("userId") String userId) {
         try {
@@ -158,7 +160,6 @@ public class FileApiController {
 
 
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/video/{filename:.+}", produces = "video/mp4")
-    @ResponseBody
     public ResponseEntity<?> getVideo(@PathVariable("filename") String filename,
                                      @PathVariable("userId") String userId) {
         try {
@@ -172,39 +173,39 @@ public class FileApiController {
 
 
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/file/{filename:.+}")
-    @ResponseBody
     public ResponseEntity<?> getFile(@PathVariable("filename") String filename,
                                       @PathVariable("userId") String userId) {
-        HttpHeaders headers = new HttpHeaders();
-
-        switch (FileUtil.getFileType(filename)) {
-            case IMAGE_FILE:
-                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
-                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE);
-                headers.add(HttpHeaders.ACCEPT, MediaType.IMAGE_PNG_VALUE);
-                break;
-            case MUSIC_FILE:
-                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
-                headers.add(HttpHeaders.CONTENT_TYPE, "audio/mp3");
-                headers.add(HttpHeaders.ACCEPT, "audio/mp3");
-                break;
-            case VIDEO_FILE:
-                headers.add(HttpHeaders.ACCEPT, "video/mp4");
-                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
-                headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
-                break;
-            case PDF_FILE:
-                headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_PDF_VALUE);
-                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
-                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
-                break;
-            default:
-                headers.add(HttpHeaders.CONTENT_DISPOSITION, "filename=" + filename);
-                headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
-        }
         try {
+            HttpHeaders headers = new HttpHeaders();
+            FileTypeEnum type = FileUtil.getFileType(filename);
+            switch (type) {
+                case IMAGE_FILE:
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=image" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE);
+                    headers.add(HttpHeaders.ACCEPT, MediaType.IMAGE_PNG_VALUE);
+                    break;
+                case MUSIC_FILE:
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=video" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_TYPE, "audio/mp3");
+                    headers.add(HttpHeaders.ACCEPT, "audio/mp3");
+                    break;
+                case VIDEO_FILE:
+                    headers.add(HttpHeaders.ACCEPT, "video/mp4");
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=video" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
+                    break;
+                case PDF_FILE:
+                    headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_PDF_VALUE);
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=document" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
+                    break;
+                default:
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=file" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
+            }
             String path = ROOT + "/" + userId + "/file/";
-            return new ResponseEntity<Object>(resourceLoader.getResource("file:" + Paths.get(path, filename)), headers, HttpStatus.OK);
+            Resource file = resourceLoader.getResource("file:" + Paths.get(path, filename));
+            return new ResponseEntity<Object>(file, headers, HttpStatus.OK);
         } catch (Exception e) {
             log.error("文件获取失败:  {}",e.getMessage());
             return ResponseEntity.notFound().build();

@@ -158,6 +158,9 @@
             <br/>
             <h5>相关用户</h5>
             <br/>
+            <div th:if="${userpaginationDto == null}">
+                暂无相关用户
+            </div>
             <div th:if="${userpaginationDto != null}" th:each="user : ${userpaginationDto.data}">
                 <div class="media">
                     <img class="align-self-center mr-3 img-fluid rounded-circle" th:src="${user.getHeadUrl()}"
