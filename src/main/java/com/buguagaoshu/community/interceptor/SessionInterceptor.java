@@ -70,7 +70,7 @@ public class SessionInterceptor implements HandlerInterceptor {
                 Claims claims = jwtUtil.parseJWT(token);
                 User suser = (User) request.getSession().getAttribute("user");
                 if (suser == null) {
-                    User users = userService.selectUserById(Long.valueOf(claims.getId()));
+                    User users = userService.selectUserById(Long.parseLong(claims.getId()));
                     request.getSession().setAttribute("user", users);
                 }
             } catch (Exception e) {
@@ -97,7 +97,6 @@ public class SessionInterceptor implements HandlerInterceptor {
 
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-
     }
 
     @Override

@@ -31,12 +31,15 @@ public class AdminController {
 
     private final OnlineUserService onlineUserService;
 
+    private final LogService logService;
+
     @Autowired
-    public AdminController(QuestionService questionService, UserService userService, OnlineUserService onlineUserService, AdminDataService adminDataService) {
+    public AdminController(QuestionService questionService, UserService userService, OnlineUserService onlineUserService, AdminDataService adminDataService, LogService logService) {
         this.questionService = questionService;
         this.userService = userService;
         this.onlineUserService = onlineUserService;
         this.adminDataService = adminDataService;
+        this.logService = logService;
     }
 
     @GetMapping("/admin")
@@ -133,7 +136,8 @@ public class AdminController {
 
 
     @GetMapping("/admin/controller")
-    public String getAdminControllerPage() {
+    public String getAdminControllerPage(Model model) {
+        model.addAttribute("logs", logService.getLogDtoList());
         return "admin/controller";
     }
 }

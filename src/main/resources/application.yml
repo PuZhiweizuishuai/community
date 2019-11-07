@@ -32,6 +32,9 @@ server:
 File:
   ROOT:
     PATH: file
+  LOG:
+    PATH: log
+
 
 logging:
   file: log/spring.log

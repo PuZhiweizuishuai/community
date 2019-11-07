@@ -37,4 +37,22 @@ public class FileUtil {
 
         return FileTypeEnum.FILE;
     }
+
+    public static boolean checkLogFileType(String fileName) {
+        int number = fileName.lastIndexOf(".");
+        if (number <= 0) {
+            return false;
+        }
+        String type = fileName.substring(number).toUpperCase();
+        return ".LOG".equals(type) || ".GZ".equals(type);
+    }
+
+    public static boolean checkLogShow(String fileName) {
+        int number = fileName.lastIndexOf(".");
+        if (number <= 0) {
+            return false;
+        }
+        String type = fileName.substring(number).toUpperCase();
+        return ".LOG".equals(type);
+    }
 }

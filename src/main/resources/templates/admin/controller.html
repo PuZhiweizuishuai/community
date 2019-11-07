@@ -210,6 +210,11 @@
                                 其他设置
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="pills-log-tab" data-toggle="pill" href="#pills-log" role="tab" aria-controls="pills-log" aria-selected="false">
+                                日志下载
+                            </a>
+                        </li>
                     </ul>
                     <hr/>
                     <div class="tab-content" id="pills-tabContent">
@@ -274,6 +279,48 @@
                                 <button type="button" class="btn btn-primary" onclick="updateHotTag()">立即重新计算热门标签</button>
                                 <button type="button" class="btn btn-primary" onclick="updateHotQuestion()">立即重新计算热门问题</button>
                                 <button type="button" class="btn btn-primary" onclick="updateTagClass()">立即同步话题页</button>
+                            </div>
+                            <div class="container" style="height: 30px">
+
+                            </div>
+                        </div>
+                        <!--                        日志下载-->
+                        <div class="tab-pane fade" id="pills-log" role="tabpanel" aria-labelledby="pills-log-tab">
+                            <div class="table-responsive" id="classTable">
+                                <table class="table align-items-center table-flush">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th scope="col">日志名</th>
+                                        <th scope="col">时间</th>
+                                        <th scope="col">查看</th>
+                                        <th scope="col">下载</th>
+                                        <th scope="col">删除</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="log : ${logs}">
+                                        <th scope="row" th:text="${log.getTitle()}">
+                                            spring.log
+                                        </th>
+                                        <td th:text="${log.getTime()}">
+                                            时间
+                                        </td>
+                                        <td>
+                                            <span th:if="${log.getShow()}">
+                                                <a th:href="${'/admin/log/download/' + log.getUrl() + '?type=show'}">查看</a>
+                                            </span>
+                                            <span th:if="${log.getShow()==false}"></span>
+                                        </td>
+
+                                        <td>
+                                            <a th:href="${'/admin/log/download/' + log.getUrl() + '?type=download'}"> <span>下载</span></a>
+                                        </td>
+                                        <td>
+                                           删除
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
                             <div class="container" style="height: 30px">
 

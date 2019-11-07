@@ -11,7 +11,7 @@
 目前还是MVC模式，开发完成后可能会考虑前后端分离
 
 
-已完成登陆注册,发帖，回复评论，点赞，markdown编辑，消息通知，图片文件上传,个人界信息编辑，热门话题，问题与用户的搜索，热门帖子与话题,以及后台管理（在主页输入url /admin 进入）设置首页置顶问题
+已完成登陆注册,发帖，回复评论，点赞，markdown编辑，消息通知，图片文件上传,个人界信息编辑，热门话题，问题与用户的搜索，热门帖子与话题,以及后台管理（在主页输入url /admin 进入）设置首页置顶问题，管理社区，远程查看日志，设置等
 
 部分权限验证,关注用户，话题以及问题
 
@@ -119,6 +119,8 @@ java -jar target/community-0.0.1-SNAPSHOT.jar
 ## 资料
 [spring 入门指南](https://spring.io/guides)
 
+[spring boot文档](https://docs.spring.io/spring-boot/docs/current/reference/html/)
+
 [spring boot 日志](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-logging.html)
 
 [spring thymeleafk快速指南](https://spring.io/guides/gs/serving-web-content/)
@@ -182,6 +184,10 @@ service 服务层
 util 各种工具
 
 ## 更新日志
+
+#### 2019-11-07更新
+
+增加远程查看日志功能，在管理员界面查看
 
 #### 2019-11-04更新
 
