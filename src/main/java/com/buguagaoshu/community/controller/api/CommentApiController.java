@@ -4,6 +4,7 @@ import com.buguagaoshu.community.dto.CommentCreateDto;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
+import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
@@ -64,8 +65,12 @@ public class CommentApiController {
 
         try {
             commentService.insertComment(comment);
-        } catch (Exception e) {
+        } catch (CustomizeException e) {
             log.info("插入评论异常：{}", e.getMessage());
+            log.info("问题或评论id：{}", commentDto.getQuestionId() + "    " + commentDto.getParentCommentId());
+            return errorOf(e);
+        } catch (Exception e) {
+            log.info("插入评论 Exception 异常：{}", e.getMessage());
             return errorOf(CustomizeErrorCode.SYS_ERROR);
         }
         return okOf(comment);

@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +32,7 @@ import java.util.Map;
  * create          2019-09-03 18:43
  * 文件上传
  */
-@RestController
+@Controller
 @Slf4j
 public class FileApiController {
     @Value("${File.ROOT.PATH}")
@@ -42,7 +43,6 @@ public class FileApiController {
     private final UserMapper userMapper;
 
 
-
     @Autowired
     public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper) {
         this.resourceLoader = resourceLoader;
@@ -50,14 +50,15 @@ public class FileApiController {
     }
 
     @PostMapping(value = "/api/file/image/upload")
+    @ResponseBody
     public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile file, String type,
                          HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
-        if(user == null) {
-            return new FileDTO(0, "未登陆用户禁止上传图片","");
+        if (user == null) {
+            return new FileDTO(0, "未登陆用户禁止上传图片", "");
         }
         String fileName = file.getOriginalFilename();
-        if(!ImageUtil.checkFileType(fileName)) {
+        if (!ImageUtil.checkFileType(fileName)) {
             return new FileDTO(0, "图片格式错误", "");
         }
 
@@ -66,8 +67,8 @@ public class FileApiController {
         String pathName = "/" + path + name;
         File dest = new File(path);
         //判断文件父目录是否存在
-        if(!dest.exists() && !dest.mkdirs()){
-            return new FileDTO(0,"上传失败，请重试", "");
+        if (!dest.exists() && !dest.mkdirs()) {
+            return new FileDTO(0, "上传失败，请重试", "");
         }
 
         // TODO 思考如何标记未使用图片
@@ -75,7 +76,7 @@ public class FileApiController {
             // 保存图片
             Files.copy(file.getInputStream(), Paths.get(path, name));
 
-            if(type != null && type.equals("top")) {
+            if (type != null && type.equals("top")) {
                 userMapper.updateUserTopPhotoUrl(user.getId(), pathName);
                 user.setUserTopPhotoUrl(pathName);
                 request.getSession().setAttribute("user", user);
@@ -87,23 +88,24 @@ public class FileApiController {
             res.put("message", "success");
             return res;
         } catch (Exception e) {
-            log.error("文件保存失败：  {}",e.getMessage());
-            return new FileDTO(0,"上传失败，请重试", "");
+            log.error("文件保存失败：  {}", e.getMessage());
+            return new FileDTO(0, "上传失败，请重试", "");
         }
     }
 
 
     @PostMapping(value = "/api/file/upload")
+    @ResponseBody
     public Map<String, Object> newUpload(@RequestParam(value = "file[]", required = false) MultipartFile[] files,
                                          HttpServletRequest request) {
         Map<String, Object> map = new HashMap<>(4);
         map.put("msg", "你还没有登陆，请登陆后重试！");
         map.put("code", 1);
         User user = (User) request.getSession().getAttribute("user");
-        if(user == null) {
+        if (user == null) {
             return map;
         }
-        if(files.length > 9) {
+        if (files.length > 9) {
             map.put("msg", "一次最多只能上传9个文件，你已超过了这个数量！");
             return map;
         }
@@ -147,67 +149,70 @@ public class FileApiController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/image/{filename:.+}", produces = "image/png")
+    @ResponseBody
     public ResponseEntity<?> getImage(@PathVariable("filename") String filename,
-                                     @PathVariable("userId") String userId) {
+                                      @PathVariable("userId") String userId) {
         try {
             String path = ROOT + "/" + userId + "/image/";
             return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
         } catch (Exception e) {
-            log.error("图片文件获取失败:  {}",e.getMessage());
+            log.error("图片文件获取失败:  {}", e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
 
 
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/video/{filename:.+}", produces = "video/mp4")
+    @ResponseBody
     public ResponseEntity<?> getVideo(@PathVariable("filename") String filename,
-                                     @PathVariable("userId") String userId) {
+                                      @PathVariable("userId") String userId) {
         try {
             String path = ROOT + "/" + userId + "/video/";
             return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
         } catch (Exception e) {
-            log.error("视频文件获取失败:  {}",e.getMessage());
+            log.error("视频文件获取失败:  {}", e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
 
 
-    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/file/{filename:.+}")
-    public ResponseEntity<?> getFile(@PathVariable("filename") String filename,
-                                      @PathVariable("userId") String userId) {
+    @GetMapping("/file/{userId}/file/{filename:.+}")
+    @ResponseBody
+    public ResponseEntity<Object> getFile(@PathVariable("filename") String filename,
+                                     @PathVariable("userId") String userId) {
         try {
             HttpHeaders headers = new HttpHeaders();
             FileTypeEnum type = FileUtil.getFileType(filename);
             switch (type) {
                 case IMAGE_FILE:
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=image" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"image" + ImageUtil.getSuffix(filename) + "\"");
                     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE);
                     headers.add(HttpHeaders.ACCEPT, MediaType.IMAGE_PNG_VALUE);
                     break;
                 case MUSIC_FILE:
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=video" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"video" + ImageUtil.getSuffix(filename) + "\"");
                     headers.add(HttpHeaders.CONTENT_TYPE, "audio/mp3");
                     headers.add(HttpHeaders.ACCEPT, "audio/mp3");
                     break;
                 case VIDEO_FILE:
                     headers.add(HttpHeaders.ACCEPT, "video/mp4");
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=video" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"video" + ImageUtil.getSuffix(filename) + "\"");
                     headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
                     break;
                 case PDF_FILE:
                     headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_PDF_VALUE);
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=document" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"document" + ImageUtil.getSuffix(filename) + "\"");
                     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
                     break;
                 default:
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=file" + ImageUtil.getSuffix(filename));
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"file" + ImageUtil.getSuffix(filename) + "\"");
                     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
             }
             String path = ROOT + "/" + userId + "/file/";
             Resource file = resourceLoader.getResource("file:" + Paths.get(path, filename));
             return new ResponseEntity<Object>(file, headers, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("文件获取失败:  {}",e.getMessage());
+            log.error("文件获取失败:  {}", e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

@@ -64,13 +64,13 @@ public class PublishController {
         }
         long id;
         try {
-            id = Long.valueOf(questionId);
+            id = Long.parseLong(questionId);
         } catch (Exception e) {
             id = -1;
         }
         long time;
         try {
-            time = Long.valueOf(createTime);
+            time = Long.parseLong(createTime);
         } catch (Exception e) {
             time = 0;
         }
