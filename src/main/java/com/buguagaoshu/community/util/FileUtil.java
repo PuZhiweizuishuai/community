@@ -55,4 +55,15 @@ public class FileUtil {
         String type = fileName.substring(number).toUpperCase();
         return ".LOG".equals(type);
     }
+
+    public static boolean checkLogDelete(String fileName) {
+        int number = fileName.lastIndexOf(".");
+        // 安全检验，避免传入非法字符
+        if (number <= 0 || fileName.contains("..") || fileName.contains("/")) {
+            return false;
+        }
+
+        String type = fileName.substring(number).toUpperCase();
+        return ".GZ".equals(type);
+    }
 }

@@ -11,7 +11,11 @@ public class ImageUtil {
      * 获取文件后缀名
      */
     public static String getSuffix(String fileName) {
-        return fileName.substring(fileName.lastIndexOf("."));
+        int number = fileName.lastIndexOf(".");
+        if (number <= 0) {
+            return "";
+        }
+        return fileName.substring(number);
     }
 
     /**

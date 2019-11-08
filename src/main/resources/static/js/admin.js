@@ -241,3 +241,37 @@ function closeAD(e) {
         }
     });
 }
+
+
+function closeDeleteLog() {
+    document.getElementById("showSendDeleteLog").style.display = "none";
+}
+
+function sendDeleteLog() {
+    const password = document.getElementById("password").value;
+    const title = document.getElementById("fileName").value;
+    const logDTO = {
+        "title": title,
+        "password": password
+    };
+    $.ajax({
+        type: 'POST',
+        url: '/admin/log/delete',
+        contentType: 'application/json',
+        data: JSON.stringify(logDTO),
+        success: function (result) {
+            if (result.success) {
+                document.getElementById("result").innerText = result.msg;
+                alert(result.msg);
+                window.location.reload();
+            } else {
+                document.getElementById("result").innerText = result.msg;
+            }
+        }
+    });
+}
+
+function setLogTitle(e) {
+    document.getElementById("showSendDeleteLog").style.display = "inline";
+    document.getElementById("fileName").value = e.getAttribute("data-title");
+}

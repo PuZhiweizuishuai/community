@@ -80,6 +80,14 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public boolean deleteLog(String name) {
+        String pathStr = LOG_PATH + "/";
+        try {
+            Path files = Paths.get(pathStr).resolve(name);
+            Files.delete(files);
+            return true;
+        } catch (IOException e) {
+            log.error("文件删除错误：{}", e.getMessage());
+        }
         return false;
     }
 }

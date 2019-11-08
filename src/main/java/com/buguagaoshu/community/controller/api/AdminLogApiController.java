@@ -1,8 +1,12 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.dto.LogDTO;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.LogService;
+import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.FileUtil;
+import com.buguagaoshu.community.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -13,7 +17,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -23,6 +26,7 @@ import java.util.Map;
  * 管理员控制日志的接口
  */
 @Controller
+@Slf4j
 class AdminLogApiController {
     /**
      * 下载日志
@@ -39,10 +43,13 @@ class AdminLogApiController {
 
     private final LogService logService;
 
+    private final UserService userService;
+
 
     @Autowired
-    public AdminLogApiController(LogService logService) {
+    public AdminLogApiController(LogService logService, UserService userService) {
         this.logService = logService;
+        this.userService = userService;
     }
 
 
@@ -70,8 +77,28 @@ class AdminLogApiController {
         return new ResponseEntity<Object>(file, headers, HttpStatus.OK);
     }
 
-    public Map<String, Object> deleteLog() {
-        return null;
+    @PostMapping("/admin/log/delete")
+    @ResponseBody
+    public Map<String, Object> deleteLog(@RequestBody LogDTO logDTO, HttpServletRequest request) {
+        User user = (User) request.getSession().getAttribute("admin");
+        if (user == null) {
+            return StringUtil.dealResultMessage(false, "权限不足！");
+        }
+        user = userService.selectUserById(user.getId());
+        if (StringUtil.judgePassword(logDTO.getPassword(), user.getPassword())) {
+            if (FileUtil.checkLogDelete(logDTO.getTitle())) {
+                if (logService.deleteLog(logDTO.getTitle())) {
+                    log.error("管理员 {} 删除了日志 {}", user.getId(), logDTO.getTitle());
+                    return StringUtil.dealResultMessage(true, "删除成功");
+                } else {
+                    return StringUtil.dealResultMessage(false, "未发现此文件");
+                }
+            } else {
+                return StringUtil.dealResultMessage(false, "不支持格式，或非法字符！");
+            }
+        } else {
+            return StringUtil.dealResultMessage(false, "密码错误");
+        }
     }
 
     private void setHttpHead(HttpHeaders headers, String filename, String contentDisposition) {
