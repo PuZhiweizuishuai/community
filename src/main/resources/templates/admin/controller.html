@@ -316,7 +316,7 @@
                                         </td>
 
                                         <td>
-                                            <a class="btn btn-success btn-sm" th:href="${'/admin/log/download/' + log.getUrl() + '?type=download'}"> <span>下载</span></a>
+                                            <a class="btn btn-success btn-sm" target="_blank" th:href="${'/admin/log/download/' + log.getUrl() + '?type=download'}"> <span>下载</span></a>
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-danger btn-sm" th:if="${log.getShow()==false}" th:data-title="${log.getTitle()}" onclick="setLogTitle(this)">删除</button>

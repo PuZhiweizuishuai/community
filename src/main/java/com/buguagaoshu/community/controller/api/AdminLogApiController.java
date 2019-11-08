@@ -105,11 +105,11 @@ class AdminLogApiController {
         if (FileUtil.checkLogShow(filename)) {
             headers.add(HttpHeaders.ACCEPT, "text/**");
             headers.add(HttpHeaders.CONTENT_DISPOSITION, contentDisposition + filename + "\"");
-            headers.add(HttpHeaders.CONTENT_TYPE, "text/**");
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/**; charset=utf-8");
         } else {
             headers.add(HttpHeaders.ACCEPT, "application/x-zip-compressed");
             headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"" + filename + "\"");
-            headers.add(HttpHeaders.CONTENT_TYPE, "application/x-zip-compressed");
+            headers.add(HttpHeaders.CONTENT_TYPE, "application/x-zip-compressed; charset=utf-8");
         }
     }
 }
