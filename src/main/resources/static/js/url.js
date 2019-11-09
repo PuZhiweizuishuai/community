@@ -54,40 +54,17 @@ function getCookie(name) {
 
 function delCookie(name) {
     var exp = new Date();
-    exp.setTime(exp.getTime() - 1);
+    exp.setTime(exp.getTime()-1);
     var cval = getCookie(name);
     if (cval != null)
-        document.cookie = name + "=" + cval + ";expires=" + exp.toGMTString();
+        document.cookie = name + "="+ cval + ";expires=" + exp.toGMTString() + ";path=/";
 }
 
-var signOut = function (aObjId) {
-    var l = GetQueryString('l');
-    var aObj = document.getElementById(aObjId);
-    if (l === 'en-US') {
-        aObj.href = aObj.href + "&l=" + l;
-    }
+var signOut = function () {
     delCookie("token");
+    //debugger;
+    window.location.href = "/sign-out"
 };
 
-// 发从登陆请求，测试用
-var sendSignInPost = function () {
-    var email = document.forms["user"]["email"].value;
-    var password = document.forms["user"]["password"].value;
-    var remember = document.forms["user"]["remember"].checkbox;
-
-    $.ajax({
-        type: 'get',
-        url: '/api/checkEmail',
-        data: {
-            "email": email,
-            "password": password,
-            "remember": remember
-        },
-        success: function (resultdata) {
-            console.log(resultdata);
-        }
-
-    });
-};
 
 

@@ -14,6 +14,7 @@ import com.buguagaoshu.community.util.JwtUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import com.wf.captcha.utils.CaptchaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -61,9 +62,13 @@ public class SignInServiceImpl implements SignInService {
         User user = userService.selectUserByEmail(email);
         if (user != null) {
             if (StringUtil.judgePassword(password, user.getPassword())) {
+                int ttl = -1;
                 UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
+                // 如果选择记住密码，则持久化 cookie
+                // 否则设置关闭浏览器直接清除 cookie
                 if (rememberMe) {
                     // token 有效期为七天
+                    ttl = 604800;
                     jwtUtil.setTtl(604800000);
                 }
                 String token = jwtUtil.createJWT(user.getId(), user.getUserId(), user.getUserName(), email, userPermission.getPower());
@@ -74,6 +79,7 @@ public class SignInServiceImpl implements SignInService {
                 hashMap.put("token", token);
                 user.clean();
                 hashMap.put("user", user);
+                hashMap.put("time", ttl);
                 // 跟新登陆时间
                 userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
                 return hashMap;

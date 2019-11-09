@@ -22,7 +22,7 @@ public class JwtUtil {
 
     /**
      * 过期时间
-     * 默认一小时
+     * 默认二小时
      * */
     @Value("${jwt.ttl}")
     private long ttl;

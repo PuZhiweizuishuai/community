@@ -4,6 +4,7 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,8 +28,10 @@ public class ApiUtilController {
 
     /**
      * 返回该用户当前访问的 ip
+     * @CrossOrigin 允许跨域请求
      */
     @GetMapping("/api/getUserIp")
+    @CrossOrigin
     @ResponseBody
     public String getUserIP(HttpServletRequest httpsServer) {
         return IpUtil.getIpAddr(httpsServer);

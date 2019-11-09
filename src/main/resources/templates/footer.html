@@ -23,24 +23,24 @@
         </div>
     </footer>
     <!-- Modal -->
-    <div th:if="${session.checkOnline != null && session.checkOnline}" id="Sign-out-tips" class="modal fade show" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" style="display: block; padding-right: 16px;">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalCenterTitle">提示</h5>
-                    <button onclick="closeSignOut()" type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>您的账号已在其他地方登陆，所以您被迫下线，如果不是您本人操作，请立即修改密码。</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" onmousedown="closeSignOut()" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
+<!--    <div th:if="${session.checkOnline != null && session.checkOnline}" id="Sign-out-tips" class="modal fade show" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" style="display: block; padding-right: 16px;">-->
+<!--        <div class="modal-dialog modal-dialog-centered" role="document">-->
+<!--            <div class="modal-content">-->
+<!--                <div class="modal-header">-->
+<!--                    <h5 class="modal-title" id="exampleModalCenterTitle">提示</h5>-->
+<!--                    <button onclick="closeSignOut()" type="button" class="close" data-dismiss="modal" aria-label="Close">-->
+<!--                        <span aria-hidden="true">×</span>-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--                <div class="modal-body">-->
+<!--                    <p>您的账号已在其他地方登陆，所以您被迫下线，如果不是您本人操作，请立即修改密码。</p>-->
+<!--                </div>-->
+<!--                <div class="modal-footer">-->
+<!--                    <button type="button" onmousedown="closeSignOut()" class="btn btn-secondary" data-dismiss="modal">Close</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
 </div>
 
 </body>

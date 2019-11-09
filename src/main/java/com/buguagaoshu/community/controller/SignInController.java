@@ -28,20 +28,10 @@ import java.util.HashMap;
  */
 @Controller
 public class SignInController {
-    private final UserService userService;
-
-    private final UserPermissionService userPermissionService;
-
-    private final OnlineUserService onlineUserService;
-
     private final SignInService signInService;
 
     @Autowired
-    public SignInController(UserService userService, UserPermissionService userPermissionService,
-                            OnlineUserService onlineUserService, SignInService signInService) {
-        this.userService = userService;
-        this.userPermissionService = userPermissionService;
-        this.onlineUserService = onlineUserService;
+    public SignInController(SignInService signInService) {
         this.signInService = signInService;
     }
 
@@ -67,7 +57,8 @@ public class SignInController {
             // 设置 session
             request.getSession().setAttribute("user", user);
             // 写入 cookie
-            response.addCookie(new Cookie("token", (String) signInMsg.get("token")));
+            Cookie cookie = new Cookie("token", (String) signInMsg.get("token"));
+            response.addCookie(cookie);
             return StringUtil.jumpWebLangeParameter("/", true, request);
         } catch (CustomizeException e) {
             if (CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR.getCode().equals(e.getCode())) {

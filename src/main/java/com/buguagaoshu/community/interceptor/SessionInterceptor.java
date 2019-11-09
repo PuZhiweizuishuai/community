@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.interceptor;
 
+import ch.qos.logback.classic.pattern.SyslogStartConverter;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
@@ -64,8 +65,7 @@ public class SessionInterceptor implements HandlerInterceptor {
         /**
          * TODO 优化登陆逻辑
          * */
-        request.getSession().setAttribute("checkOnline", false);
-        if (token != null && !token.equals("")) {
+        if (token != null) {
             try {
                 Claims claims = jwtUtil.parseJWT(token);
                 User suser = (User) request.getSession().getAttribute("user");

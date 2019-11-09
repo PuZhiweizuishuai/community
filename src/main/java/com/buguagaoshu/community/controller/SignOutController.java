@@ -32,10 +32,12 @@ public class SignOutController {
     @RequestMapping(value = "sign-out", method = RequestMethod.GET)
     public String signOut(HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
+        if (user == null) {
+            return StringUtil.jumpWebLangeParameter("/", true, request);
+        }
         String token = null;
         if (request.getCookies() != null) {
-            Cookie[] cookies = request.getCookies();
-            for (Cookie cookie : cookies) {
+            for (Cookie cookie : request.getCookies()) {
                 if (cookie.getName().equals("token")) {
                     token = cookie.getValue();
                     if (token != null) {
@@ -47,6 +49,6 @@ public class SignOutController {
             }
         }
         request.getSession().removeAttribute("user");
-        return StringUtil.jumpWebLangeParameter("/", true, request);
+        return "redirect:/";
     }
 }

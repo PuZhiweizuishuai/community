@@ -96,8 +96,8 @@
                            th:text="#{index.myhome}">我的主页</a>
                         <a class="dropdown-item" href="/setting" th:text="#{index.setting}">设置</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="/sign-out" id="sign-out-a" onclick="signOut('sign-out-a')"
-                           th:text="#{index.signout}">退出登陆</a>
+                        <button class="dropdown-item" id="sign-out-a" onclick="signOut()"
+                           th:text="#{index.signout}">退出登陆</button>
                     </div>
                 </li>
 
