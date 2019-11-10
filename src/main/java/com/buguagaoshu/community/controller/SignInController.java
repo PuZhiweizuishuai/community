@@ -58,6 +58,7 @@ public class SignInController {
             request.getSession().setAttribute("user", user);
             // 写入 cookie
             Cookie cookie = new Cookie("token", (String) signInMsg.get("token"));
+            cookie.setMaxAge((Integer) signInMsg.get("time"));
             response.addCookie(cookie);
             return StringUtil.jumpWebLangeParameter("/", true, request);
         } catch (CustomizeException e) {
