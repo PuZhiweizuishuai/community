@@ -15,6 +15,8 @@
 
 部分权限验证,关注用户，话题以及问题
 
+还有一个简单的在线聊天室
+
 待完成找回密码，删除未使用图片
 
 后端使用 Spring boot 和  mybatis 开发
@@ -103,6 +105,12 @@ java -jar target/community-0.0.1-SNAPSHOT.jar
 
 ![](https://github.com/PuZhiweizuishuai/community/blob/master/images/questionPage3.jpg)
 
+群聊页
+
+![聊天页](https://github.com/PuZhiweizuishuai/community/blob/master/images/chat1.jpg "聊天页")
+
+![聊天页](https://github.com/PuZhiweizuishuai/community/blob/master/images/chat.jpg "聊天页")
+
 消息提醒页
 
 ![](https://github.com/PuZhiweizuishuai/community/blob/master/images/message.jpg)
@@ -134,6 +142,8 @@ java -jar target/community-0.0.1-SNAPSHOT.jar
 [BootStrap4 中文文档](http://bs4.ntp.org.cn/)
 
 [spring-session-jdbc](https://docs.spring.io/spring-session/docs/current/reference/html5/guides/boot-jdbc.html)
+
+[一个websocket-chat-demo](https://github.com/callicoder/spring-boot-websocket-chat-demo)
 
 ## 工具
 在线 markdown 编辑器 [markdown edit](https://pandao.github.io/editor.md/)
@@ -184,6 +194,10 @@ service 服务层
 util 各种工具
 
 ## 更新日志
+
+#### 2019-11-10更新
+
+增加一个在线聊天室
 
 #### 2019-11-07更新
 

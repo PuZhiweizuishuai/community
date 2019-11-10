@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <link rel="shortcut icon" href="/favicon.png"/>
+      <link rel="bookmark" href="/favicon.png"/>
+      <title>不挂高数社区在线聊天室</title>
+      <link rel="stylesheet" href="/css/charMain.css" />
+  </head>
+  <body>
+    <noscript>
+      <h2>抱歉，你的浏览器不支持JavaScript，所以无法聊天，请选择支持JavaScript的浏览器或打开浏览器的JavaScript支持</h2>
+    </noscript>
+
+    <div id="username-page" th:if="${session.user == null}">
+        <div class="username-page-container">
+            <h5>你还没有登陆，请登陆后再试！</h5>
+            <h5><a href="/sign-in">点击登陆</a></h5>
+        </div>
+    </div>
+
+    <div id="username-page" th:if="${session.user != null}">
+        <div class="username-page-container">
+            <h1>在你开始聊天之前，还是要提醒你一句：互联网不是法外之地</h1>
+            <p>请自觉遵守互联网相关的政策法规，严禁发布色情、暴力、反动的言论。</p>
+            <p>ps:点击用户头像，可以跳转至用户首页！</p>
+            <form id="usernameForm" name="usernameForm">
+                <div class="form-group">
+                    <input type="hidden" id="name" th:value="${session.user.userName}" autocomplete="off" class="form-control" />
+                    <input type="hidden" id="userId" th:value="${session.user.userId}" autocomplete="off" class="form-control" />
+                    <input type="hidden" id="userImage" th:value="${session.user.headUrl}" autocomplete="off" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="accent username-submit">开始聊天</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="chat-page" class="hidden" th:if="${session.user != null}">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>不挂高数社区聊天室</h2>
+            </div>
+            <div class="connecting">
+                连接中
+            </div>
+            <ul id="messageArea">
+
+            </ul>
+            <form id="messageForm" name="messageForm" nameForm="messageForm">
+                <div class="form-group">
+                    <div class="input-group clearfix">
+                        <input type="text" id="message" placeholder="请输入聊天内容" autocomplete="off" class="form-control"/>
+                        <button type="submit" class="primary">Send</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/sockjs.min.js"></script>
+    <script src="/js/stomp.min.js"></script>
+    <script src="/js/chatMain.js"></script>
+  </body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" th:href="@{/favicon.png}"/>
+    <link rel="bookmark" th:href="@{/favicon.png}"/>
+    <title>不挂高数社区-聊天</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/index.css"/>
+    <script src="/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <style type="text/css">
+        body {
+            /*background-image: url("https://api.isoyu.com/bing_images.php");*/
+            background-color: #efefef;
+        }
+
+        .issue-right {
+            border-right-style: solid;
+            border-right-width: 1px;
+            border-right-color: #efefef;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+        .my-nav {
+            background-color: #efefef;
+            color: black;
+            border-radius: 10px;
+        }
+
+        .my-nav-active {
+            background: #494a4b;
+            color: white;
+        }
+        .my-nav:hover {
+            background-color:#494a4b;
+            color: white;
+        }
+        .hot-tag {
+            background-color: #99cfff;
+        }
+        .hot-tag:hover{
+            background-color: #23527c;
+        }
+        .hot-question {
+            padding: 5px;
+        }
+
+    </style>
+</head>
+<body>
+<!-- 标题栏 使用  fixed-top 将标题栏固定在顶部 -->
+<div th:insert="~{navigation :: navbar}"></div>
+
+
+<div class="container" style="height: 30px">
+</div>
+<div class="container">
+    <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+            <h1 class="display-4">聊天室</h1>
+            <p class="lead">各位胸弟，聊一下吧，不要钱的 ~</p>
+            <a class="btn btn-primary btn-lg" href="/" role="button">离开</a>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="alert alert-success" role="alert">
+        聊天注意事项：
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">1.登陆后才能聊天。</li>
+        <li class="list-group-item">2.点击右下角图标进行聊天。</li>
+        <li class="list-group-item">3.本站不存储所有聊天信息，关闭聊天后消息立即失效。</li>
+        <li class="list-group-item">4.请自觉遵守互联网相关的政策法规，严禁发布色情、暴力、反动的言论。</li>
+        <li class="list-group-item">5.因为不保存聊天消息，所以你只能看见你在进入聊天室后的这段时间里收到的消息。</li>
+    </ul>
+</div>
+<div class="container" style="height: 30px">
+</div>
+<div id="backTop" class="text-right mr-5 mb-5" style="position:fixed; right: 20px; bottom: 10px;">
+    <a target="_blank" href="/chatPage"><img src="/image/icon/chat.svg" width="100px" alt="开始聊天" title="开始聊天"></a>
+</div>
+
+<!-- 页脚 -->
+<div th:insert="~{footer :: footer}"></div>
+
+<script src="/js/follow.js" type="text/javascript"></script>
+<script src="/js/url.js" type="text/javascript"></script>
+</body>
+</html>
