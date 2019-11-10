@@ -35,19 +35,15 @@ public class SignOutController {
         if (user == null) {
             return StringUtil.jumpWebLangeParameter("/", true, request);
         }
-        String token = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if (cookie.getName().equals("token")) {
-                    token = cookie.getValue();
-                    if (token != null) {
-                        onlineUserService.deleteOnlineUserById(user.getId());
-                    }
                     cookie.setValue(null);
                     break;
                 }
             }
         }
+        onlineUserService.deleteOnlineUserById(user.getId());
         request.getSession().removeAttribute("user");
         return "redirect:/";
     }

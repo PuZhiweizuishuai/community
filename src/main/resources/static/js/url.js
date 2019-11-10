@@ -61,9 +61,9 @@ function delCookie(name) {
 }
 
 var signOut = function () {
-    delCookie("token");
     //debugger;
-    window.location.href = "/sign-out"
+    window.location.href = "/sign-out";
+    delCookie("token");
 };
 
 
