@@ -91,9 +91,9 @@ public class AdminController {
         User user = (User) request.getSession().getAttribute("admin");
         if(user != null) {
             request.getSession().removeAttribute("admin");
-            return "redirect:/admin/index";
+            return "redirect:/admin";
         }
-        return "redirect:/admin/index";
+        return "redirect:/admin";
     }
 
     @GetMapping("/admin/search")
