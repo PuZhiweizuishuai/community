@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.component.WebSocketEventListener;
 import com.buguagaoshu.community.model.ChatMessage;
 import com.buguagaoshu.community.model.User;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -34,6 +35,7 @@ public class ChatController {
     @MessageMapping("/chat.sendMessage")
     @SendTo("/topic/public")
     public ChatMessage sendMessage(@Payload ChatMessage chatMessage) {
+        chatMessage.setCount(WebSocketEventListener.onlineCount);
         return chatMessage;
     }
 
@@ -42,6 +44,7 @@ public class ChatController {
     public ChatMessage addUser(@Payload ChatMessage chatMessage,
                                SimpMessageHeaderAccessor headerAccessor) {
         // Add username in web socket session
+        chatMessage.setCount(WebSocketEventListener.onlineCount);
         headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
         return chatMessage;
     }

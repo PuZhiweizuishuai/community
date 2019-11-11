@@ -19,6 +19,8 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class WebSocketEventListener {
     private final SimpMessageSendingOperations messagingTemplate;
 
+    public static int onlineCount = 0;
+
     @Autowired
     public WebSocketEventListener(SimpMessageSendingOperations messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
@@ -27,6 +29,7 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+        onlineCount++;
         //log.info("Received a new web socket connection 收到新的web套接字连接！");
     }
 
@@ -36,12 +39,12 @@ public class WebSocketEventListener {
 
         String username = (String) headerAccessor.getSessionAttributes().get("username");
         if(username != null) {
-            log.info("User Disconnected(用户断开连接) : " + username);
-
+            //log.info("User Disconnected(用户断开连接) : " + username);
+            onlineCount--;
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setType(ChatMessage.MessageType.LEAVE);
             chatMessage.setSender(username);
-
+            chatMessage.setCount(onlineCount);
             messagingTemplate.convertAndSend("/topic/public", chatMessage);
         }
     }

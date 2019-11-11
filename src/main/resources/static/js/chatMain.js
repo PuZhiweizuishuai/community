@@ -7,7 +7,7 @@ var messageForm = document.querySelector('#messageForm');
 var messageInput = document.querySelector('#message');
 var messageArea = document.querySelector('#messageArea');
 var connectingElement = document.querySelector('.connecting');
-
+var onlineUserCount = document.querySelector("#onlineUserCount");
 var stompClient = null;
 var username = null;
 var userId = null;
@@ -120,7 +120,7 @@ function onMessageReceived(payload) {
     var textElement = document.createElement('p');
     var messageText = document.createTextNode(message.content);
     textElement.appendChild(messageText);
-
+    onlineUserCount.innerText = message.count;
     messageElement.appendChild(textElement);
 
     messageArea.appendChild(messageElement);

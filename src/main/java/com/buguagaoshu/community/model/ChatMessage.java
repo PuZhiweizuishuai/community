@@ -11,6 +11,7 @@ public class ChatMessage {
     private String sender;
     private String image;
     private String id;
+    private int count;
 
     public enum MessageType {
         /**
@@ -67,6 +68,14 @@ public class ChatMessage {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 
     @Override
