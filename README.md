@@ -64,6 +64,8 @@ maven: 3
 使用 database.sql 脚本创建数据库
 配置 application.yml
 
+安装 MinIO 服务器， 修改 application.yml 里 MinIO 参数
+
 运行打包命令
 ```bash
 mvn clean package
@@ -145,6 +147,8 @@ java -jar target/community-0.0.1-SNAPSHOT.jar
 
 [一个websocket-chat-demo](https://github.com/callicoder/spring-boot-websocket-chat-demo)
 
+[MinIO 官方文档](https://docs.min.io/cn/)
+
 ## 工具
 在线 markdown 编辑器 [markdown edit](https://pandao.github.io/editor.md/)
 
@@ -194,6 +198,10 @@ service 服务层
 util 各种工具
 
 ## 更新日志
+
+#### 2020-03-08更新
+
+添加对象存储MinIO，升级Spring版本
 
 #### 2019-11-10更新
 

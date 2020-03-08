@@ -5,6 +5,7 @@ import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.enums.FileTypeEnum;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.repository.FileStorageRepository;
 import com.buguagaoshu.community.util.FileUtil;
 import com.buguagaoshu.community.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -42,11 +43,14 @@ public class FileApiController {
 
     private final UserMapper userMapper;
 
+    private final FileStorageRepository fileStorageRepository;
+
 
     @Autowired
-    public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper) {
+    public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper, FileStorageRepository fileStorageRepository) {
         this.resourceLoader = resourceLoader;
         this.userMapper = userMapper;
+        this.fileStorageRepository = fileStorageRepository;
     }
 
     @PostMapping(value = "/api/file/image/upload")
@@ -75,6 +79,8 @@ public class FileApiController {
         try {
             // 保存图片
             Files.copy(file.getInputStream(), Paths.get(path, name));
+
+            //fileStorageRepository.saveFile(pathName, file);
 
             if (type != null && type.equals("top")) {
                 userMapper.updateUserTopPhotoUrl(user.getId(), pathName);

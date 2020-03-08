@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller.api;
 import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.repository.FileStorageRepository;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.Base64MultipartFile;
 import com.buguagaoshu.community.util.StringUtil;
@@ -11,10 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URI;
 import java.util.Base64;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -36,15 +40,19 @@ public class UserUpdateApiController {
     final
     UserService userService;
 
-    @Autowired
+    final
     UserMapper userMapper;
 
     private final ResourceLoader resourceLoader;
 
+    private final FileStorageRepository fileStorageRepository;
+
     @Autowired
-    public UserUpdateApiController(UserService userService, ResourceLoader resourceLoader) {
+    public UserUpdateApiController(UserService userService, ResourceLoader resourceLoader, FileStorageRepository fileStorageRepository, UserMapper userMapper) {
         this.userService = userService;
         this.resourceLoader = resourceLoader;
+        this.fileStorageRepository = fileStorageRepository;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -71,7 +79,8 @@ public class UserUpdateApiController {
         }
         try {
             // 保存图片
-            Files.copy(file.getInputStream(), Paths.get(path, name));
+            // Files.copy(file.getInputStream(), Paths.get(path, name));
+            fileStorageRepository.saveFile(pathName, file);
             userService.updateUserHeadUrlById(user.getId(), pathName);
             user.setHeadUrl(pathName);
             request.getSession().setAttribute("user", user);
@@ -90,15 +99,13 @@ public class UserUpdateApiController {
      */
     @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/image/head/{filename:.+}", produces = "image/png")
     @ResponseBody
-    public ResponseEntity<?> getFile(@PathVariable("filename") String filename,
-                                     @PathVariable("userId") String userId) {
-        try {
-            String path = ROOT + "/" + userId + "/image/head/";
-            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
-        } catch (Exception e) {
-            log.error("图片文件获取失败:  {}",e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+    public HttpEntity<?> getFile(@PathVariable("filename") String filename,
+                                 @PathVariable("userId") String userId) {
+        String path = ROOT + "/" + userId + "/image/head/" + filename;
+        return ResponseEntity
+                .status(HttpStatus.TEMPORARY_REDIRECT)
+                .location(URI.create(fileStorageRepository.getFileUrl(path)))
+                .body(null);
     }
 
 

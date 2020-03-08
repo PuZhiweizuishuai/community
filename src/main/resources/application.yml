@@ -1,8 +1,8 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.147.129:3306/community?useUnicode=true&characterEncoding=UTF-8
-    username: puzhiwei
+    url: jdbc:mysql://192.168.147.132:3306/community?useUnicode=true&characterEncoding=UTF-8
+    username: root
     password: 123456
     type: com.alibaba.druid.pool.DruidDataSource
 #  session:
@@ -54,5 +54,13 @@ advertisement:
 jwt:
   key: buguagaoshu
   ttl: 7200000
+
+# MinIO对象存储
+minio:
+  server: http://192.168.147.132:9000
+  accessKey: admin
+  secretKey: admin
+  outTime: 86400
+  bucket: community
 
 
