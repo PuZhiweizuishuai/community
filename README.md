@@ -64,6 +64,8 @@ maven: 3
 使用 database.sql 脚本创建数据库
 配置 application.yml
 
+安装照 Redis
+
 安装 MinIO 服务器， 修改 application.yml 里 MinIO 参数
 
 运行打包命令
@@ -198,6 +200,10 @@ service 服务层
 util 各种工具
 
 ## 更新日志
+
+#### 2020-03-29更新
+
+使用Spring Session Redis 
 
 #### 2020-03-08更新
 

@@ -79,8 +79,8 @@ public class UserUpdateApiController {
         }
         try {
             // 保存图片
-            // Files.copy(file.getInputStream(), Paths.get(path, name));
-            fileStorageRepository.saveFile(pathName, file);
+            Files.copy(file.getInputStream(), Paths.get(path, name));
+            // fileStorageRepository.saveFile(pathName, file);
             userService.updateUserHeadUrlById(user.getId(), pathName);
             user.setHeadUrl(pathName);
             request.getSession().setAttribute("user", user);
@@ -101,11 +101,18 @@ public class UserUpdateApiController {
     @ResponseBody
     public HttpEntity<?> getFile(@PathVariable("filename") String filename,
                                  @PathVariable("userId") String userId) {
-        String path = ROOT + "/" + userId + "/image/head/" + filename;
-        return ResponseEntity
-                .status(HttpStatus.TEMPORARY_REDIRECT)
-                .location(URI.create(fileStorageRepository.getFileUrl(path)))
-                .body(null);
+        try {
+            String path = ROOT + "/" + userId + "/image/head/";
+            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
+        } catch (Exception e) {
+            log.error("图片文件获取失败:  {}",e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+//        String path = ROOT + "/" + userId + "/image/head/" + filename;
+//        return ResponseEntity
+//                .status(HttpStatus.TEMPORARY_REDIRECT)
+//                .location(URI.create(fileStorageRepository.getFileUrl(path)))
+//                .body(null);
     }
 
 

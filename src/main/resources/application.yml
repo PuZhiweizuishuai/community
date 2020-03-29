@@ -5,9 +5,13 @@ spring:
     username: root
     password: 123456
     type: com.alibaba.druid.pool.DruidDataSource
-#  session:
-#    jdbc:
-#      initialize-schema: always
+  redis:
+    host: 192.168.1.104
+    password: *****
+    timeout: 1000ms
+  cache:
+    redis:
+      time-to-live: 1h
   servlet:
     multipart:
       # 限制单文件最大大小
