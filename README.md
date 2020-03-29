@@ -64,7 +64,7 @@ maven: 3
 使用 database.sql 脚本创建数据库
 配置 application.yml
 
-安装照 Redis
+安装 Redis, 或配置Redis连接
 
 安装 MinIO 服务器， 修改 application.yml 里 MinIO 参数
 
