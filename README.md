@@ -6,6 +6,10 @@
 
 [community](https://github.com/codedrinker/community)
 
+## 在线访问
+
+https://community.buguagaoshu.com/
+
 ## 介绍
 
 目前还是MVC模式，开发完成后可能会考虑前后端分离
@@ -25,7 +29,7 @@
 
 页面模板使用 Thymeleaf
 
-前端页面设计使用 BootStrap4 
+前端页面设计使用 BootStrap4
 
 热门话题与热门问题每一小时更新一次
 
@@ -203,7 +207,7 @@ util 各种工具
 
 #### 2020-03-29更新
 
-使用Spring Session Redis 
+使用Spring Session Redis
 
 #### 2020-03-08更新
 
@@ -241,7 +245,7 @@ util 各种工具
 
 替换 markdown 编辑器为更加好用的 Vditor
 
-修改数据库字符集为 utf8mb4 以便用于更好的支持 emoji 
+修改数据库字符集为 utf8mb4 以便用于更好的支持 emoji
 
 #### 2019-10-15更新
 
