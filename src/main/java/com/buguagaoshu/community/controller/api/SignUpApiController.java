@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import java.util.HashMap;
 
 /**
@@ -38,7 +37,7 @@ public class SignUpApiController {
      */
     @PostMapping("/api/register")
     @ResponseBody
-    public HashMap<String, Object> userSignUp(@Valid User user, String validateCode, HttpServletRequest request) {
+    public HashMap<String, Object> userSignUp(User user, String validateCode, HttpServletRequest request) {
         if (!CaptchaUtil.ver(validateCode, request)) {
             CaptchaUtil.clear(request);
             return StringUtil.dealResultMessage(false, "验证码错误！");

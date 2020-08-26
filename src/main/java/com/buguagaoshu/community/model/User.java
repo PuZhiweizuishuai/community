@@ -1,12 +1,7 @@
 package com.buguagaoshu.community.model;
 
 import lombok.Data;
-import org.apache.ibatis.annotations.Param;
-import org.hibernate.validator.constraints.Length;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}

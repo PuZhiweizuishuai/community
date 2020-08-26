@@ -12,8 +12,11 @@
         <div class="container">
             <div class="row">
                 <div class="col">
-                    <span class="text-muted">Copyright © 2019 · <a href="/">不挂高数社区</a></span>
+                    <span class="text-muted">Copyright © 2019 - <span id="now-year"></span> <a href="/">不挂高数社区</a></span>
                 </div>
+                <script>
+                    document.querySelector("#now-year").innerText = new Date().getFullYear()
+                </script>
                 <div class="col text-right">
                     <span><a href="/about">关于我们</a></span>
                 </div>
