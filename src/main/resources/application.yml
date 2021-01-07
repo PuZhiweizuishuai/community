@@ -1,12 +1,12 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.1.105:3306/community?useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:mysql://192.168.0.100:3306/community?useUnicode=true&characterEncoding=UTF-8
     username: root
     password: pzw123456
     type: com.alibaba.druid.pool.DruidDataSource
   redis:
-    host: 192.168.1.105
+    host: 192.168.0.100
     password: pzw123456
     timeout: 1000ms
   cache:

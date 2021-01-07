@@ -160,7 +160,7 @@ function drawComment(response, type, id) {
             html: ""
         })))).append($("<p/>", {
             "class": "mt-2",
-            html: response.data.content
+            text: response.data.content
         })).append($("<button/>", {
             "style": "background-color: transparent;border: 0px;",
             "data-id": response.data.commentId,
@@ -234,8 +234,11 @@ function drawCommentForTwo(response, parentId, id, targetUrl, targetName) {
         html: ""
     })))).append($("<p/>", {
         "class": "mt-2",
-        html: "回复 <a target='_blank' href='" + targetUrl + "'>@" + targetName + "</a> : " +  response.data.content
-    })).append($("<button/>", {
+        // 注意 XSS
+        html: "回复 <a target='_blank' href='" + targetUrl + "'>@" + targetName + "</a> :"
+    }).append($("<span/>", {
+        text: response.data.content
+    }))).append($("<button/>", {
         "style": "background-color: transparent;border: 0px;",
         "data-id": response.data.commentId,
         "onclick": "clickLikeComment(this, 2)"
@@ -459,7 +462,7 @@ function draw(index, userComment) {
         html: ""
     })))).append($("<p/>", {
         "class": "mt-2",
-        html: userComment.content
+        text: userComment.content
     })).append($("<button/>", {
         "style": "background-color: transparent;border: 0px;",
         "data-id": userComment.commentId,
@@ -522,8 +525,11 @@ function drawTwoComment(index, userComment) {
         html: ""
     })))).append($("<p/>", {
         "class": "mt-2",
-        html: "回复 <a target='_blank' href='" + userComment.targetUrl + "'>@" + userComment.targetName + "</a> : " + userComment.content
-    })).append($("<button/>", {
+        // 注意 XSS
+        html: "回复 <a target='_blank' href='" + userComment.targetUrl + "'>@" + userComment.targetName + "</a> :"
+    }).append($("<span/>", {
+        text: userComment.content
+    }))).append($("<button/>", {
         "style": "background-color: transparent;border: 0px;",
         "data-id": userComment.commentId,
         "onclick": "clickLikeComment(this, 2)"
