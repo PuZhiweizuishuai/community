@@ -139,7 +139,10 @@
 
     <button class="btn btn-lg btn-primary btn-block" type="button" onclick="check()">[[#{index.signIn}]]
     </button>
-    <p class="mt-5 mb-3 text-muted">&copy; 2019-2019</p>
+    <p class="mt-5 mb-3 text-muted">&copy; 2019-<span id="now-time"></span></p>
+    <script>
+        document.querySelector("#now-time").innerText = new Date().getFullYear()
+    </script>
 </form>
 
 <script src="/js/url.js" type="text/javascript"></script>
