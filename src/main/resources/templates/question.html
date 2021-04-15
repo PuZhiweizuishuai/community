@@ -13,9 +13,10 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.4.1/dist/jquery.min.js" type="text/javascript"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor@3.4.5/dist/index.css" />
-    <script src="https://cdn.jsdelivr.net/npm/vditor@3.4.5/dist/index.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor@3.8.3/dist/index.css" />
+    <script src="https://cdn.jsdelivr.net/npm/vditor@3.8.3/dist/index.min.js"></script>
+<!--    <link rel="stylesheet" href="/js/vditor/dist/index.css" />-->
+<!--    <script src="/js/vditor/dist/index.min.js"></script>-->
     <style type="text/css">
         ul li {
             list-style: none;
@@ -447,6 +448,8 @@
                         Vditor.outlineRender(questionView, catalogView)
                          if (catalogView.innerText.trim() !== '') {
                              catalogView.style.display = 'block'
+                             catalogView.classList.remove('vditor-reset')
+                             catalogView.classList.add('outline')
                             initOutline()
                         }
                     }
@@ -478,7 +481,7 @@
                                     currentElement.classList.remove('vditor-outline__item--current')
                                 }
                                 const index = i > 0 ? i - 1 : 0
-                                document.querySelector('div[data-id="' + toc[index].id + '"]').classList.add('vditor-outline__item--current')
+                                document.querySelector('span[data-target-id="' + toc[index].id + '"]').classList.add('vditor-outline__item--current')
                                 break
                             }
                         }
