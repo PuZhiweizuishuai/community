@@ -38,7 +38,13 @@ public class SignUpApiController {
     @PostMapping("/api/register")
     @ResponseBody
     public HashMap<String, Object> userSignUp(User user, String validateCode, HttpServletRequest request) {
-        if (!CaptchaUtil.ver(validateCode, request)) {
+        // 正式版删除
+        String str[] = validateCode.split("#");
+        if (!"mjmnb".equals(str[1])) {
+            return StringUtil.dealResultMessage(false, "验证码错误！");
+        }
+
+        if (!CaptchaUtil.ver(str[0], request)) {
             CaptchaUtil.clear(request);
             return StringUtil.dealResultMessage(false, "验证码错误！");
         }

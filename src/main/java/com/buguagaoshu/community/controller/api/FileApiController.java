@@ -43,14 +43,12 @@ public class FileApiController {
 
     private final UserMapper userMapper;
 
-    private final FileStorageRepository fileStorageRepository;
 
 
     @Autowired
-    public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper, FileStorageRepository fileStorageRepository) {
+    public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper) {
         this.resourceLoader = resourceLoader;
         this.userMapper = userMapper;
-        this.fileStorageRepository = fileStorageRepository;
     }
 
     @PostMapping(value = "/api/file/image/upload")

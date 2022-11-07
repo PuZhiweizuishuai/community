@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2020-03-08 19:16
  */
-@Repository
+
 public class MinIOStorageRepositoryImpl implements FileStorageRepository {
     private final MinIOConfigProperties mcp;
 

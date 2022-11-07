@@ -45,13 +45,11 @@ public class UserUpdateApiController {
 
     private final ResourceLoader resourceLoader;
 
-    private final FileStorageRepository fileStorageRepository;
 
     @Autowired
-    public UserUpdateApiController(UserService userService, ResourceLoader resourceLoader, FileStorageRepository fileStorageRepository, UserMapper userMapper) {
+    public UserUpdateApiController(UserService userService, ResourceLoader resourceLoader, UserMapper userMapper) {
         this.userService = userService;
         this.resourceLoader = resourceLoader;
-        this.fileStorageRepository = fileStorageRepository;
         this.userMapper = userMapper;
     }
 

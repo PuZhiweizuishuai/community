@@ -15,7 +15,7 @@ import java.util.Map;
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-09-25 18:06
  */
-@Controller
+//@Controller
 public class TestController {
     @GetMapping("/edit")
     public String test() {

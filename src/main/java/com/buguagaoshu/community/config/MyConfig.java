@@ -49,7 +49,7 @@ public class MyConfig {
     /**
      * MinIO 连接客户端
      * */
-    @Bean
+
     public MinioClient minioClient() throws InvalidPortException, InvalidEndpointException {
         return new MinioClient(mcp.getServer(), mcp.getAccessKey(), mcp.getSecretKey());
     }

@@ -1,17 +1,19 @@
 spring:
+  web:
+    resources:
+      chain:
+        cache: true
+        enabled: true
+        compressed: true
+      cache:
+        period: 2592000
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.0.100:3306/community?useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:mysql://127.0.0.1:3306/community?useUnicode=true&characterEncoding=UTF-8
     username: root
-    password: pzw123456
+    password: 123456
     type: com.alibaba.druid.pool.DruidDataSource
-  redis:
-    host: 192.168.0.100
-    password: pzw123456
-    timeout: 1000ms
-  cache:
-    redis:
-      time-to-live: 1h
+
   servlet:
     multipart:
       # 限制单文件最大大小
@@ -25,7 +27,7 @@ spring:
     basename: i18n.index
 
 server:
-  port: 8080
+  port: 8079
 #  ssl:
 #    key-store: buguagaoshu.key
 #    key-store-type: PKCS12
@@ -41,15 +43,15 @@ File:
 
 
 logging:
-  file: log/spring.log
-  file.max-history: 7
-  file.max-size: 1MB
   level:
-    root: info
-#    com:
-#      buguagaoshu:
-#        community:
-#          mapper: debug
+    com:
+      buguagaoshu:
+        community: info
+  file:
+    name: log/spring.log
+  logback:
+    rollingpolicy:
+      max-history: 7
 
 # 每页广告数
 advertisement:
