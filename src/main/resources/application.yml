@@ -1,14 +1,24 @@
 spring:
+  application:
+    name: community
   datasource:
+    # Spring Boot 4 默认使用 HikariCP，已移除 DruidDataSource，无需再指定 type
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.0.100:3306/community?useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:mysql://192.168.0.100:3306/community?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root
-    password: pzw123456
-    type: com.alibaba.druid.pool.DruidDataSource
-  redis:
-    host: 192.168.0.100
-    password: pzw123456
-    timeout: 1000ms
+    password: 123456
+    hikari:
+      pool-name: CommunityHikariPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+  data:
+    redis:
+      host: 192.168.0.100
+      port: 6379
+      # 实测测试环境 Redis 未设置密码，配置密码会导致 AUTH 报错
+      # password:
+      timeout: 1s
   cache:
     redis:
       time-to-live: 1h
@@ -18,9 +28,6 @@ spring:
       max-file-size: 10MB
       # 限制所有文件最大大小
       max-request-size: 1024MB
-  mvc:
-    favicon:
-      enabled: false
   messages:
     basename: i18n.index
 
@@ -39,11 +46,13 @@ File:
   LOG:
     PATH: log
 
-
 logging:
-  file: log/spring.log
-  file.max-history: 7
-  file.max-size: 1MB
+  file:
+    name: log/spring.log
+  logback:
+    rollingpolicy:
+      max-history: 7
+      max-file-size: 1MB
   level:
     root: info
 #    com:
@@ -59,12 +68,13 @@ jwt:
   key: buguagaoshu
   ttl: 7200000
 
-# MinIO对象存储
-minio:
-  server: http://192.168.147.132:9000
-  accessKey: admin
-  secretKey: admin
-  outTime: 86400
+# S3 兼容对象存储（AWS SDK v2）
+# 沿用原 MinIO 地址；若该地址不可用，请改成实际可用的 S3 / MinIO 端点
+s3:
+  endpoint: http://192.168.147.132:9000
+  region: us-east-1
+  access-key: admin
+  secret-key: admin
   bucket: community
-
-
+  out-time: 86400
+  path-style-access: true

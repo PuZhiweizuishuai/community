@@ -5,14 +5,14 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.util.StringUtil;
-import com.wf.captcha.utils.CaptchaUtil;
+import com.buguagaoshu.community.captcha.CaptchaUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 

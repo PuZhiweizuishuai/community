@@ -1,6 +1,6 @@
 package com.buguagaoshu.community.interceptor;
 
-import ch.qos.logback.classic.pattern.SyslogStartConverter;
+
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}

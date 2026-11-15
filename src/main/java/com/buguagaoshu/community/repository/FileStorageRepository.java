@@ -2,8 +2,6 @@ package com.buguagaoshu.community.repository;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.stream.Stream;
-
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2020-03-08 19:14

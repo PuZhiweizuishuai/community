@@ -5,12 +5,12 @@ import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.StringUtil;
-import com.wf.captcha.utils.CaptchaUtil;
+import com.buguagaoshu.community.captcha.CaptchaUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 
 /**

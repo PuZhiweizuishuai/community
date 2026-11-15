@@ -1,6 +1,5 @@
 package com.buguagaoshu.community.controller.api;
 
-import com.alibaba.fastjson.JSONObject;
 import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.enums.FileTypeEnum;
 import com.buguagaoshu.community.mapper.UserMapper;
@@ -21,7 +20,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -88,7 +87,8 @@ public class FileApiController {
                 request.getSession().setAttribute("user", user);
             }
 
-            JSONObject res = new JSONObject();
+            // 使用 Jackson（Spring Boot 默认 HTTP 转换器）可直接序列化的 Map 替代 fastjson
+            Map<String, Object> res = new HashMap<>(3);
             res.put("url", pathName);
             res.put("success", 1);
             res.put("message", "success");

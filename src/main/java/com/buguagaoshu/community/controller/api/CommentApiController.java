@@ -8,12 +8,12 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
-import com.wf.captcha.utils.CaptchaUtil;
+import com.buguagaoshu.community.captcha.CaptchaUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.buguagaoshu.community.dto.ResultDTO.errorOf;

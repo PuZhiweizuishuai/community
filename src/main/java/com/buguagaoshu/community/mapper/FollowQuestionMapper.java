@@ -2,9 +2,7 @@ package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.FollowQuestion;
 import org.apache.ibatis.annotations.*;
-import org.springframework.web.bind.annotation.PostMapping;
 
-import javax.annotation.Priority;
 import java.util.List;
 
 /**

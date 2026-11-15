@@ -12,12 +12,12 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.JwtUtil;
 import com.buguagaoshu.community.util.StringUtil;
-import com.wf.captcha.utils.CaptchaUtil;
+import com.buguagaoshu.community.captcha.CaptchaUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 
 /**

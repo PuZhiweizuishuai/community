@@ -7,7 +7,7 @@ import com.buguagaoshu.community.repository.FileStorageRepository;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.Base64MultipartFile;
 import com.buguagaoshu.community.util.StringUtil;
-import com.wf.captcha.utils.CaptchaUtil;
+import com.buguagaoshu.community.captcha.CaptchaUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.Base64;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
