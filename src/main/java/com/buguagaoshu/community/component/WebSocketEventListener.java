@@ -2,7 +2,6 @@ package com.buguagaoshu.community.component;
 
 import com.buguagaoshu.community.model.ChatMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -10,42 +9,49 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.util.Map;
+
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-11-10 19:19
+ * WebSocket 生命周期监听：连接建立时不再简单 +1，断开时按 clientToken
+ * 精确释放 {@link ChatPresenceRegistry} 中的席位，并广播 LEAVE。
  */
 @Component
 @Slf4j
 public class WebSocketEventListener {
+
     private final SimpMessageSendingOperations messagingTemplate;
+    private final ChatPresenceRegistry presence;
 
-    public static int onlineCount = 0;
-
-    @Autowired
-    public WebSocketEventListener(SimpMessageSendingOperations messagingTemplate) {
+    public WebSocketEventListener(SimpMessageSendingOperations messagingTemplate,
+                                  ChatPresenceRegistry presence) {
         this.messagingTemplate = messagingTemplate;
+        this.presence = presence;
     }
-
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        onlineCount++;
-        //log.info("Received a new web socket connection 收到新的web套接字连接！");
+        log.debug("聊天室建立连接，当前在线 {} 人", presence.count());
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-
-        String username = (String) headerAccessor.getSessionAttributes().get("username");
-        if(username != null) {
-            //log.info("User Disconnected(用户断开连接) : " + username);
-            onlineCount--;
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setType(ChatMessage.MessageType.LEAVE);
-            chatMessage.setSender(username);
-            chatMessage.setCount(onlineCount);
-            messagingTemplate.convertAndSend("/topic/public", chatMessage);
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        Map<String, Object> attributes = accessor.getSessionAttributes();
+        if (attributes == null) {
+            return;
         }
+        String userId = (String) attributes.get("chatUserId");
+        String clientToken = (String) attributes.get("chatClientToken");
+        ChatPresenceRegistry.Presence removed = presence.leave(userId, clientToken);
+        if (removed == null) {
+            return;
+        }
+        ChatMessage message = new ChatMessage();
+        message.setType(ChatMessage.MessageType.LEAVE);
+        message.setSender(removed.userName());
+        message.setImage(removed.image());
+        message.setId(userId);
+        message.setCount(presence.count());
+        messagingTemplate.convertAndSend("/topic/public", message);
     }
 }

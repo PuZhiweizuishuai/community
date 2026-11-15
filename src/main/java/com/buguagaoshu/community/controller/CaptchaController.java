@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Controller
 @Slf4j
 public class CaptchaController {
-    @GetMapping(value = "/captche/images")
+    @GetMapping(value = {"/api/captcha", "/captche/images"})
     public void captcha(HttpServletRequest request, HttpServletResponse response) throws Exception {
         CaptchaUtil.out(request, response);
     }

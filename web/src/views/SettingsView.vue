@@ -1,0 +1,310 @@
+<script setup>
+import { computed, ref, watch } from 'vue'
+import { ArrowLeft, Image, KeyRound, Pencil, UserRoundPen } from '@lucide/vue'
+import { settingApi, assetUrl } from '@/api'
+import { useSessionStore } from '@/stores/session'
+import { useToastStore } from '@/stores/toast'
+import Avatar from '@/components/Avatar.vue'
+import Captcha from '@/components/Captcha.vue'
+import ImageCropper from '@/components/ImageCropper.vue'
+
+const session = useSessionStore()
+const toast = useToastStore()
+
+const tab = ref('profile')
+const user = ref({ ...session.user })
+watch(() => session.user, (value) => (user.value = { ...value }), { deep: true })
+
+const saving = ref(false)
+const pwd = ref({ oldPassword: '', newPassword: '', confirm: '', captcha: '' })
+const captchaRef = ref(null)
+const avatarInput = ref(null)
+const coverInput = ref(null)
+const crop = ref(null)
+const uploading = ref(false)
+
+const tabs = [
+  { value: 'profile', label: '基本资料', icon: UserRoundPen, hint: '昵称、学校与自我介绍' },
+  { value: 'security', label: '安全设置', icon: KeyRound, hint: '修改登录密码' },
+  { value: 'media', label: '头像与封面', icon: Image, hint: '上传前可裁剪' },
+]
+
+const coverUrl = computed(() => assetUrl(user.value?.userTopPhotoUrl))
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [meta, base64] = dataUrl.split(',')
+  const mime = /:(.*?);/.exec(meta)?.[1] || 'image/jpeg'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
+async function saveProfile() {
+  saving.value = true
+  try {
+    await settingApi.updateData({
+      userName: user.value.userName,
+      sex: user.value.sex,
+      school: user.value.school,
+      major: user.value.major,
+      simpleSelfIntroduction: user.value.simpleSelfIntroduction,
+      selfIntroduction: user.value.selfIntroduction,
+      like: user.value.likes,
+    })
+    await session.refresh(true)
+    toast.success('资料已更新')
+  } finally {
+    saving.value = false
+  }
+}
+
+async function savePassword() {
+  if (pwd.value.newPassword.length < 6) return toast.warning('新密码至少 6 位')
+  if (pwd.value.newPassword !== pwd.value.confirm) return toast.warning('两次输入的新密码不一致')
+  saving.value = true
+  try {
+    await settingApi.updatePassword({
+      oldPassword: pwd.value.oldPassword,
+      newPassword: pwd.value.newPassword,
+      CAPTCHA: pwd.value.captcha,
+    })
+    toast.success('密码修改成功')
+    pwd.value = { oldPassword: '', newPassword: '', confirm: '', captcha: '' }
+  } catch {
+    pwd.value.captcha = ''
+    captchaRef.value?.refresh?.()
+  } finally {
+    saving.value = false
+  }
+}
+
+async function pickFile(event, kind) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!file.type.startsWith('image/')) return toast.warning('请选择图片文件')
+  const src = await readAsDataUrl(file)
+  crop.value =
+    kind === 'avatar'
+      ? { src, kind, aspect: 1, outputWidth: 240, outputHeight: 240, title: '裁剪新头像（1:1）' }
+      : { src, kind, aspect: 3, outputWidth: 1200, outputHeight: 400, title: '裁剪主页封面（3:1）' }
+}
+
+async function onCropConfirm(dataUrl) {
+  const kind = crop.value?.kind
+  crop.value = null
+  uploading.value = true
+  try {
+    if (kind === 'avatar') {
+      const result = await settingApi.updateHeadUrl(dataUrl)
+      if (result?.success === 1 || result?.success === true) toast.success('头像已更新')
+      else return
+    } else {
+      const formData = new FormData()
+      formData.append('editormd-image-file', dataUrlToBlob(dataUrl), 'cover.jpeg')
+      formData.append('type', 'top')
+      const result = await settingApi.uploadImage(formData)
+      if (result?.url || result?.success === 1) toast.success('封面已更新')
+      else return
+    }
+    await session.refresh(true)
+  } finally {
+    uploading.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="page-container">
+    <!-- 顶部资料卡 -->
+    <div class="surface mb-5 overflow-hidden">
+      <div
+        class="relative h-32 bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 sm:h-40"
+        :style="user.userTopPhotoUrl ? { backgroundImage: `url(${coverUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}"
+      >
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/25 to-transparent" />
+      </div>
+      <div class="flex flex-wrap items-end gap-4 px-6 pb-5 -mt-10">
+        <div class="relative">
+          <div class="rounded-full border-4 border-white shadow-md">
+            <Avatar :src="user.headUrl" :name="user.userName" :size="80" />
+          </div>
+          <button
+            class="btn btn-circle btn-xs btn-primary absolute -right-1 -bottom-1"
+            type="button"
+            title="更换头像"
+            @click="tab = 'media'"
+          >
+            <Pencil class="size-3.5" />
+          </button>
+        </div>
+        <div class="min-w-0 flex-1 pt-10">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-xl font-bold text-slate-800">{{ user.userName }}</h1>
+            <span v-if="session.power === 2" class="badge badge-warning badge-sm">VIP</span>
+            <span v-else-if="session.power === 0" class="badge badge-error badge-sm">管理员</span>
+          </div>
+          <p class="mt-0.5 text-xs text-slate-400">@{{ user.userId }} · {{ user.email }}</p>
+          <p class="line-clamp-1 mt-1 text-sm text-slate-500">{{ user.simpleSelfIntroduction || '还没有写个性签名' }}</p>
+        </div>
+        <div class="flex gap-6 pt-10 text-center">
+          <div><p class="text-lg font-bold text-indigo-600">{{ user.likeCount || 0 }}</p><p class="text-xs text-slate-400">获赞</p></div>
+          <div><p class="text-lg font-bold text-indigo-600">{{ user.followCount || 0 }}</p><p class="text-xs text-slate-400">关注</p></div>
+          <div><p class="text-lg font-bold text-indigo-600">{{ user.fansCount || 0 }}</p><p class="text-xs text-slate-400">粉丝</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
+      <!-- 左侧导航 -->
+      <ul class="surface menu h-fit gap-1 p-3">
+        <li v-for="item in tabs" :key="item.value">
+          <button
+            type="button"
+            class="flex items-start gap-3 rounded-lg px-3 py-2.5 text-left"
+            :class="tab === item.value ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600'"
+            @click="tab = item.value"
+          >
+            <component :is="item.icon" class="mt-0.5 size-4" />
+            <span>
+              <span class="block text-sm">{{ item.label }}</span>
+              <span class="block text-xs opacity-60">{{ item.hint }}</span>
+            </span>
+          </button>
+        </li>
+        <li class="my-2 border-t border-slate-100" />
+        <li>
+          <RouterLink :to="`/user/${user.userId}`" class="flex items-center gap-1.5 text-sm text-slate-500"><ArrowLeft class="size-3.5" />查看我的主页</RouterLink>
+        </li>
+      </ul>
+
+      <!-- 右侧内容 -->
+      <div class="surface min-w-0 p-5 sm:p-6">
+        <div v-if="tab === 'profile'" class="space-y-5">
+          <div>
+            <h2 class="text-base font-semibold text-slate-800">基本资料</h2>
+            <p class="mt-1 text-xs text-slate-400">这些信息会展示在你的个人主页上</p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="form-control">
+              <span class="label-text mb-1.5 font-medium text-slate-700">昵称</span>
+              <input v-model="user.userName" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" maxlength="20" />
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1.5 font-medium text-slate-700">性别</span>
+              <select v-model="user.sex" class="select select-bordered w-full focus:border-indigo-400 focus:outline-none">
+                <option>保密</option><option>男</option><option>女</option>
+              </select>
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1.5 font-medium text-slate-700">学校</span>
+              <input v-model="user.school" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="就读 / 毕业院校" />
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1.5 font-medium text-slate-700">专业</span>
+              <input v-model="user.major" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="所学专业" />
+            </label>
+          </div>
+
+          <label class="form-control">
+            <span class="label-text mb-1.5 flex justify-between font-medium text-slate-700">
+              个性签名 <span class="text-xs font-normal text-slate-400">{{ (user.simpleSelfIntroduction || '').length }} / 50</span>
+            </span>
+            <input v-model="user.simpleSelfIntroduction" maxlength="50" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="一句话介绍自己" />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-1.5 flex justify-between font-medium text-slate-700">
+              自我介绍 <span class="text-xs font-normal text-slate-400">{{ (user.selfIntroduction || '').length }} / 500</span>
+            </span>
+            <textarea v-model="user.selfIntroduction" maxlength="500" rows="4" class="textarea textarea-bordered w-full leading-relaxed focus:border-indigo-400 focus:outline-none" placeholder="多写一点，让大家更了解你…" />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-1.5 font-medium text-slate-700">爱好</span>
+            <input v-model="user.likes" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="用逗号分隔，例如：摄影, 跑步, 开源" />
+          </label>
+
+          <div class="flex items-center gap-3 border-t border-slate-100 pt-4">
+            <button class="btn btn-primary btn-sm px-6" :disabled="saving" type="button" @click="saveProfile">
+              {{ saving ? '保存中…' : '保存修改' }}
+            </button>
+            <span class="text-xs text-slate-400">修改后会立即同步到个人主页</span>
+          </div>
+        </div>
+
+        <div v-else-if="tab === 'security'" class="max-w-md space-y-5">
+          <div>
+            <h2 class="text-base font-semibold text-slate-800">修改密码</h2>
+            <p class="mt-1 text-xs text-slate-400">密码需为 6 ~ 30 位字母、数字或常见符号</p>
+          </div>
+          <label class="form-control"><span class="label-text mb-1.5 font-medium text-slate-700">原密码</span><input v-model="pwd.oldPassword" type="password" class="input input-bordered w-full" autocomplete="current-password" /></label>
+          <label class="form-control"><span class="label-text mb-1.5 font-medium text-slate-700">新密码</span><input v-model="pwd.newPassword" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>
+          <label class="form-control"><span class="label-text mb-1.5 font-medium text-slate-700">确认新密码</span><input v-model="pwd.confirm" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>
+          <div>
+            <span class="label-text mb-1.5 block font-medium text-slate-700">验证码</span>
+            <Captcha ref="captchaRef" v-model="pwd.captcha" />
+          </div>
+          <button class="btn btn-primary btn-sm px-6" :disabled="saving" type="button" @click="savePassword">
+            {{ saving ? '提交中…' : '确认修改' }}
+          </button>
+        </div>
+
+        <div v-else class="space-y-5">
+          <div>
+            <h2 class="text-base font-semibold text-slate-800">头像与主页封面</h2>
+            <p class="mt-1 text-xs text-slate-400">选择图片后先裁剪再上传，避免头像变形或封面被拉伸</p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="rounded-xl border border-slate-200 p-4">
+              <div class="flex items-center gap-3">
+                <Avatar :src="user.headUrl" :name="user.userName" :size="64" />
+                <div>
+                  <h3 class="text-sm font-semibold text-slate-700">头像</h3>
+                  <p class="text-xs text-slate-400">正方形 1:1，建议 240×240</p>
+                </div>
+              </div>
+              <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="pickFile($event, 'avatar')" />
+              <button class="btn btn-outline btn-sm mt-4 w-full" type="button" :disabled="uploading" @click="avatarInput?.click()">选择并裁剪头像</button>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 p-4">
+              <img :src="coverUrl" alt="主页封面" class="h-16 w-full rounded-lg bg-slate-100 object-cover" />
+              <div class="mt-3">
+                <h3 class="text-sm font-semibold text-slate-700">主页封面</h3>
+                <p class="text-xs text-slate-400">宽幅 3:1，建议 1200×400</p>
+              </div>
+              <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="pickFile($event, 'cover')" />
+              <button class="btn btn-outline btn-sm mt-4 w-full" type="button" :disabled="uploading" @click="coverInput?.click()">选择并裁剪封面</button>
+            </div>
+          </div>
+
+          <div v-if="uploading" class="alert alert-info py-2 text-sm">正在上传裁剪后的图片…</div>
+        </div>
+      </div>
+    </div>
+
+    <ImageCropper
+      v-if="crop"
+      :src="crop.src"
+      :aspect="crop.aspect"
+      :output-width="crop.outputWidth"
+      :output-height="crop.outputHeight"
+      :title="crop.title"
+      @confirm="onCropConfirm"
+      @cancel="crop = null"
+    />
+  </div>
+</template>

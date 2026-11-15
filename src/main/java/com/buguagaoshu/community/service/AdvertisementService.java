@@ -1,9 +1,14 @@
 package com.buguagaoshu.community.service;
 
+import com.buguagaoshu.community.dto.AdvertisementBatchDTO;
+import com.buguagaoshu.community.dto.AdvertisementOperationResult;
 import com.buguagaoshu.community.dto.CreateAdvertisement;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.Advertisement;
 import com.buguagaoshu.community.model.User;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -73,4 +78,13 @@ public interface AdvertisementService {
      * @return 结果
      */
     int closeAdvertisement(CreateAdvertisement createAdvertisement, User user);
+
+    /** 批量投放：逐条返回成功/失败原因，位置容量按本次批次累计校验 */
+    List<AdvertisementOperationResult> batchSetting(AdvertisementBatchDTO batch, User user);
+
+    /** 批量结束投放 */
+    List<AdvertisementOperationResult> batchClose(List<Long> ids, User user);
+
+    /** 各投放位置的使用情况（总数 / 已用 / 剩余） */
+    List<Map<String, Object>> positionStats();
 }

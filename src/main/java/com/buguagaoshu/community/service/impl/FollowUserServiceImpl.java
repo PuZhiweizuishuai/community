@@ -8,7 +8,6 @@ import com.buguagaoshu.community.model.FollowUser;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.FollowUserService;
 import com.buguagaoshu.community.util.NumberUtils;
-import io.jsonwebtoken.Claims;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +31,10 @@ public class FollowUserServiceImpl implements FollowUserService {
 
     @Override
     @Transactional(rollbackFor = CustomizeException.class)
-    public int insertFollowUser(long followUserId, Claims claims, User follow) {
+    public int insertFollowUser(long followUserId, long userId, User follow) {
         FollowUser followUser = new FollowUser();
         followUser.setFollowUserId(followUserId);
-        followUser.setUserId(Long.parseLong(claims.getId()));
+        followUser.setUserId(userId);
         followUser.setCreateTime(System.currentTimeMillis());
         FollowUser temp = followUserMapper.selectFollowUser(followUser);
         if (temp == null) {
@@ -44,7 +43,7 @@ public class FollowUserServiceImpl implements FollowUserService {
             userMapper.updateUserFansCount(follow);
             // 更新关注数
             User user = new User();
-            user.setId(Long.parseLong(claims.getId()));
+            user.setId(userId);
             user.setFollowCount(1);
             userMapper.updateUserFollowCount(user);
             // 插入关注表
@@ -56,7 +55,7 @@ public class FollowUserServiceImpl implements FollowUserService {
             userMapper.updateUserFansCount(follow);
             // 更新关注数
             User user = new User();
-            user.setId(Long.parseLong(claims.getId()));
+            user.setId(userId);
             user.setFollowCount(-1);
             userMapper.updateUserFollowCount(user);
             // 删除

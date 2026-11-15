@@ -8,7 +8,6 @@ import com.buguagaoshu.community.model.FollowTopic;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.FollowTopicService;
 import com.buguagaoshu.community.service.TagClassService;
-import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,12 +35,12 @@ public class FollowTopicServiceImpl implements FollowTopicService {
 
     @Override
     @Transactional(rollbackFor = CustomizeException.class)
-    public int insertFollowTop(FollowTopicDTO followTopicDTO, Claims claims, TagClass tagClass) {
+    public int insertFollowTop(FollowTopicDTO followTopicDTO, long userId, TagClass tagClass) {
         FollowTopic followTopic = new FollowTopic();
         followTopic.setTopicId(followTopicDTO.getTopicId());
         followTopic.setTopicTitle(followTopicDTO.getTopicTitle());
         followTopic.setTopicImage(tagClass.getImage());
-        followTopic.setUserId(Long.parseLong(claims.getId()));
+        followTopic.setUserId(userId);
         followTopic.setCreateTime(System.currentTimeMillis());
         FollowTopic temp = followTopicMapper.selectFollowTopic(followTopic);
         if (temp == null) {

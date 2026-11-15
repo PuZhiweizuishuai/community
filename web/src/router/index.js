@@ -1,0 +1,162 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import { useSessionStore } from '@/stores/session'
+
+const routes = [
+  { path: '/', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { title: '首页' } },
+  {
+    path: '/question/:id',
+    name: 'question',
+    component: () => import('@/views/QuestionView.vue'),
+    meta: { title: '问题详情' },
+  },
+  {
+    path: '/publish',
+    name: 'publish',
+    component: () => import('@/views/PublishView.vue'),
+    meta: { title: '发起讨论', requiresAuth: true },
+  },
+  {
+    path: '/publish/:id',
+    name: 'publish-edit',
+    component: () => import('@/views/PublishView.vue'),
+    meta: { title: '编辑讨论', requiresAuth: true },
+  },
+  { path: '/sign-in', name: 'sign-in', component: () => import('@/views/SignInView.vue'), meta: { title: '登录', bare: true } },
+  { path: '/sign-up', name: 'sign-up', component: () => import('@/views/SignUpView.vue'), meta: { title: '注册', bare: true } },
+  {
+    path: '/search/:keyword?',
+    name: 'search',
+    component: () => import('@/views/SearchView.vue'),
+    meta: { title: '搜索' },
+  },
+  { path: '/topics', name: 'topics', component: () => import('@/views/TopicsView.vue'), meta: { title: '话题' } },
+  { path: '/users', name: 'user-list', component: () => import('@/views/UserListView.vue'), meta: { title: '用户' } },
+  {
+    path: '/user/:userId',
+    name: 'user',
+    component: () => import('@/views/UserView.vue'),
+    meta: { title: '个人主页' },
+  },
+  {
+    path: '/messages',
+    name: 'messages',
+    component: () => import('@/views/MessagesView.vue'),
+    meta: { title: '消息通知', requiresAuth: true },
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/views/SettingsView.vue'),
+    meta: { title: '个人设置', requiresAuth: true },
+  },
+  { path: '/about', name: 'about', component: () => import('@/views/AboutView.vue'), meta: { title: '关于' } },
+  { path: '/chat', name: 'chat-rules', component: () => import('@/views/ChatRulesView.vue'), meta: { title: '聊天室' } },
+  {
+    path: '/chat/room',
+    name: 'chat-room',
+    component: () => import('@/views/ChatRoomView.vue'),
+    meta: { title: '聊天室', bare: true, requiresAuth: true },
+  },
+  {
+    path: '/admin/login',
+    name: 'admin-login',
+    component: () => import('@/views/admin/AdminLoginView.vue'),
+    meta: { title: '后台登录', bare: true, adminArea: true },
+  },
+  { path: '/admin', redirect: '/admin/dashboard', meta: { adminArea: true } },
+  {
+    path: '/admin/dashboard',
+    name: 'admin-dashboard',
+    component: () => import('@/views/admin/AdminDashboardView.vue'),
+    meta: { title: '数据概览', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: () => import('@/views/admin/AdminUsersView.vue'),
+    meta: { title: '用户管理', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/questions',
+    name: 'admin-questions',
+    component: () => import('@/views/admin/AdminQuestionsView.vue'),
+    meta: { title: '问题管理', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/search',
+    name: 'admin-search',
+    component: () => import('@/views/admin/AdminSearchView.vue'),
+    meta: { title: '站内搜索', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/controller',
+    name: 'admin-controller',
+    component: () => import('@/views/admin/AdminControllerView.vue'),
+    meta: { title: '控制面板', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/topics',
+    name: 'admin-topics',
+    component: () => import('@/views/admin/AdminTopicsView.vue'),
+    meta: { title: '话题管理', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/classifications',
+    name: 'admin-classifications',
+    component: () => import('@/views/admin/AdminClassificationsView.vue'),
+    meta: { title: '分类管理', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/advertisements',
+    name: 'admin-ads',
+    component: () => import('@/views/admin/AdminAdvertisementsView.vue'),
+    meta: { title: '广告与新闻', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/advertisements/new',
+    name: 'admin-ad-new',
+    component: () => import('@/views/admin/AdminAdvertisementEditView.vue'),
+    meta: { title: '新增广告', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/advertisements/:id',
+    name: 'admin-ad-edit',
+    component: () => import('@/views/admin/AdminAdvertisementEditView.vue'),
+    meta: { title: '编辑广告', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { title: '页面走丢了' },
+  },
+]
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+  scrollBehavior(to, from, saved) {
+    if (saved) return saved
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
+})
+
+router.beforeEach(async (to) => {
+  const session = useSessionStore()
+  if (!session.loaded) await session.refresh()
+  if (to.meta.requiresAuth && !session.loggedIn) {
+    return { name: 'sign-in', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.requiresAdmin && !session.isAdmin) {
+    return { name: 'admin-login', query: { redirect: to.fullPath } }
+  }
+  if (to.name === 'sign-in' && session.loggedIn) return { name: 'home' }
+  return true
+})
+
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} · 不挂高数` : '不挂高数 · 社区'
+})
+
+export default router

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="不挂高数 - 开发者问答社区" />
+    <title>不挂高数 · 社区</title>
+    <script>
+      // 在首屏渲染前确定主题，避免白天/夜间模式切换时的闪屏
+      ;(function () {
+        try {
+          var mode = localStorage.getItem('community-theme-mode') || 'system'
+          var dark =
+            mode === 'dark' ||
+            (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

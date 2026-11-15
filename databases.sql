@@ -357,3 +357,73 @@ INSERT INTO `advertisement` VALUES (27, '系统默认', '/', '/image/101-desktop
 -- alter table userPermission change  column modifer modifier varchar(20)
 -- insert into userPermission values (1,0);
 
+-- ---------------------------------------------------------------------------
+-- 动态分类：问题分类（提问/讨论/…）与话题所属分类（开发语言/平台框架/…）
+-- 老库升级时由 ClassificationSchemaInitializer 自动建表并用枚举值填充种子数据，
+-- 全新安装可直接执行下面的 DDL。
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `classification`
+(
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `kind` varchar(20) NOT NULL COMMENT 'question=问题分类；topic=话题所属分类',
+  `code` int NOT NULL COMMENT '稳定编号：问题分类用于 /?class=，话题分类写入 topic.type',
+  `name` varchar(50) NOT NULL,
+  `sortOrder` int DEFAULT 0,
+  `status` int DEFAULT 1,
+  `createTime` bigint DEFAULT NULL,
+  `modifiedTime` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_classification_kind_code` (`kind`, `code`),
+  UNIQUE KEY `uk_classification_kind_name` (`kind`, `name`),
+  KEY `idx_classification_kind_status_sort` (`kind`, `status`, `sortOrder`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- 性能优化（全新安装）：统一 InnoDB + utf8mb4，并按实际查询模式补复合索引
+-- 已有数据库请改执行 SQL_Upgrade/001_performance_and_consistency.sql（幂等脚本）
+-- ---------------------------------------------------------------------------
+ALTER TABLE `users` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `userPermission` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `onlineUser` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `Questions` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `comment` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `notification` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `admin` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `clickLike` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `topic` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `followTopic` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `followQuestion` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `followUser` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `advertisement` ENGINE=InnoDB, CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 首页 / 分类 / 用户问题列表：覆盖 status 过滤 + 排序 + 作者过滤
+CREATE INDEX `idx_questions_status_alter` ON `Questions` (`status`, `alterTime`);
+CREATE INDEX `idx_questions_user_status` ON `Questions` (`userId`, `status`);
+CREATE INDEX `idx_questions_class_status` ON `Questions` (`classification`, `status`);
+CREATE INDEX `idx_questions_tag` ON `Questions` (`tag`(191));
+CREATE INDEX `idx_questions_status_create` ON `Questions` (`status`, `createTime`);
+-- 评论：按问题 + 类型 + 状态取一级/二级评论
+CREATE INDEX `idx_comment_question_type_status` ON `comment` (`questionId`, `type`, `status`);
+CREATE INDEX `idx_comment_parent` ON `comment` (`parentId`, `status`);
+-- 通知：未读数与按类型分页
+CREATE INDEX `idx_notification_receiver_status` ON `notification` (`receiver`, `status`);
+CREATE INDEX `idx_notification_receiver_type` ON `notification` (`receiver`, `type`, `status`);
+-- 点赞：防重复判断与按问题统计
+CREATE INDEX `idx_clicklike_unique_check` ON `clickLike` (`notifier`, `questionId`, `commentId`);
+CREATE INDEX `idx_clicklike_question` ON `clickLike` (`questionId`);
+-- 关注关系：判断是否已关注 + 我的关注/粉丝列表
+CREATE INDEX `idx_followtopic_user_topic` ON `followTopic` (`userId`, `topicId`);
+CREATE INDEX `idx_followquestion_user_question` ON `followQuestion` (`userId`, `followQuestionId`);
+CREATE INDEX `idx_followuser_user_follow` ON `followUser` (`userId`, `followUserId`);
+-- 话题：按分类展示、按标题查找
+CREATE INDEX `idx_topic_type_status` ON `topic` (`type`, `status`);
+CREATE INDEX `idx_topic_title` ON `topic` (`title`);
+-- 广告：定时任务按 status 扫描 + 按位置查看容量
+CREATE INDEX `idx_ad_status_end` ON `advertisement` (`status`, `endTime`);
+CREATE INDEX `idx_ad_position_status` ON `advertisement` (`position`, `status`);
+-- 在线用户过期清理、管理数据趋势
+CREATE INDEX `idx_online_expire` ON `onlineUser` (`expireTime`);
+CREATE INDEX `idx_admin_time` ON `admin` (`time`);
+
+ANALYZE TABLE `Questions`, `comment`, `notification`, `topic`, `advertisement`;
+

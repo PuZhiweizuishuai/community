@@ -1,48 +1,46 @@
 package com.buguagaoshu.community.cache;
 
-
 import com.buguagaoshu.community.dto.HotTagDTO;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-09-05 15:00
- * 热门话题
+ * 热门话题缓存。
+ *
+ * <p>旧实现用 PriorityQueue + 自定义 compareTo，遇到空标签 / 相同权重时结果不稳定。
+ * 现在直接按权重降序 + 名称升序排序后截取，保证结果确定、无空值。
  */
 @Component
 @Data
 public class HotTagCache {
-    private List<String> hots;
+
+    /** 榜单容量 */
+    private static final int MAX = 20;
+
+    private List<String> hots = new ArrayList<>();
+
     public void updateTags(Map<String, Long> tags) {
-        int max = 20;
-        PriorityQueue<HotTagDTO> priorityQueue = new PriorityQueue<>(max);
-
-        tags.forEach((name, priority) -> {
-            HotTagDTO hotTagDTO = new HotTagDTO();
-            hotTagDTO.setName(name);
-            hotTagDTO.setPriority(priority);
-            if (priorityQueue.size() < max) {
-                priorityQueue.add(hotTagDTO);
-            } else {
-                HotTagDTO minHot = priorityQueue.peek();
-                if (hotTagDTO.compareTo(minHot) > 0) {
-                    priorityQueue.poll();
-                    priorityQueue.add(hotTagDTO);
-                }
-            }
-        });
-
-
-        List<String> sortedTags = new ArrayList<>();
-
-        HotTagDTO poll = priorityQueue.poll();
-        while (poll != null) {
-            sortedTags.add(0, poll.getName());
-            poll = priorityQueue.poll();
+        if (tags == null || tags.isEmpty()) {
+            hots = new ArrayList<>();
+            return;
         }
-        hots = sortedTags;
+        List<HotTagDTO> ranked = new ArrayList<>();
+        tags.forEach((name, priority) -> {
+            if (name == null || name.isBlank()) {
+                return;
+            }
+            HotTagDTO dto = new HotTagDTO();
+            dto.setName(name.trim());
+            dto.setPriority(priority == null ? 0L : priority);
+            ranked.add(dto);
+        });
+        ranked.sort(Comparator.comparingLong(HotTagDTO::getPriority).reversed()
+                .thenComparing(HotTagDTO::getName));
+        hots = ranked.stream().limit(MAX).map(HotTagDTO::getName).toList();
     }
 }

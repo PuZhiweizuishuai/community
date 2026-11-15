@@ -1,67 +1,49 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.dto.ClickLikeDTO;
+import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.enums.ClickLikeTypeEnum;
+import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
-import com.buguagaoshu.community.service.UserService;
-import com.buguagaoshu.community.util.JwtUtil;
-import com.buguagaoshu.community.util.StringUtil;
-import io.jsonwebtoken.Claims;
+import com.buguagaoshu.community.util.AuthUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-09-25 17:01
+ * 点赞 API（问题或评论）。身份取自会话，不再需要前端传 token。
  */
 @RestController
 @Slf4j
 public class ClickLikeApiController {
+
     private final ClickLikeService clickLikeService;
 
-    private final UserService userService;
-
-    private final JwtUtil jwtUtil;
-
-    @Autowired
-    public ClickLikeApiController(ClickLikeService clickLikeService, JwtUtil jwtUtil, UserService userService) {
+    public ClickLikeApiController(ClickLikeService clickLikeService) {
         this.clickLikeService = clickLikeService;
-        this.jwtUtil = jwtUtil;
-        this.userService = userService;
     }
 
-    @PostMapping("/api/clickLike")
-    public Map<String, Object> clickLike(@RequestBody ClickLikeDTO clickLikeDTO) {
-        if (clickLikeDTO.getToken() == null || clickLikeDTO.getToken().equals("")) {
-            return StringUtil.dealResultMessage(false, "请先登陆后再点赞!");
+    @PostMapping({"/api/like", "/api/clickLike"})
+    public ResultDTO<Map<String, Object>> clickLike(@RequestBody ClickLikeDTO body,
+                                                    HttpServletRequest request) {
+        User user = AuthUtil.requireUser(request);
+        body.setNotifier(user.getId());
+        body.setNotifierName(user.getUserName());
+        if (body.getCommentId() == null) {
+            body.setCommentId(-1L);
         }
-        try {
-            Claims claims = jwtUtil.parseJWT(clickLikeDTO.getToken());
-            clickLikeDTO.setNotifierName(claims.get("userName").toString());
-            clickLikeDTO.setNotifier(Long.valueOf(claims.getId()));
-            ClickLikeTypeEnum clickLikeTypeEnum = clickLikeService.createClickLike(clickLikeDTO);
-            if (clickLikeTypeEnum.equals(ClickLikeTypeEnum.SUCCESS)) {
-                return StringUtil.dealResultMessage(true, "点赞成功！");
-            }  else if(clickLikeTypeEnum.equals(ClickLikeTypeEnum.SUCCESS_CANCEL)) {
-                return StringUtil.dealResultMessage(true, clickLikeTypeEnum.getName());
-            } else {
-                return StringUtil.dealResultMessage(false, clickLikeTypeEnum.getName());
-            }
-        } catch (Exception e) {
-            log.error("点赞异常：{}", e.getMessage());
-            return StringUtil.dealResultMessage(false, "请先登陆后再点赞!");
+        ClickLikeTypeEnum type = clickLikeService.createClickLike(body);
+        if (type == ClickLikeTypeEnum.SUCCESS || type == ClickLikeTypeEnum.SUCCESS_CANCEL) {
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("liked", type == ClickLikeTypeEnum.SUCCESS);
+            data.put("message", type.getName());
+            return ResultDTO.okOf(data);
         }
-    }
-
-
-    @PostMapping("/api/test/clickLike")
-    public ClickLikeDTO testClick(@RequestBody ClickLikeDTO clickLikeDTO) {
-        System.out.println(clickLikeDTO);
-        return clickLikeDTO;
+        return ResultDTO.errorOf(2019, type.getName());
     }
 }

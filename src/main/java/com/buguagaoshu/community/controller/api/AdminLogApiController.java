@@ -53,7 +53,7 @@ class AdminLogApiController {
     }
 
 
-    @GetMapping("/admin/log/download/{filename:.+}")
+    @GetMapping({"/api/admin/log/download/{filename:.+}", "/admin/log/download/{filename:.+}"})
     @ResponseBody
     public ResponseEntity<Object> downloadLog(@PathVariable("filename") String filename,
                                               @RequestParam(value = "type", defaultValue = "download") String type,
@@ -77,7 +77,7 @@ class AdminLogApiController {
         return new ResponseEntity<Object>(file, headers, HttpStatus.OK);
     }
 
-    @PostMapping("/admin/log/delete")
+    @PostMapping({"/api/admin/log/delete", "/admin/log/delete"})
     @ResponseBody
     public Map<String, Object> deleteLog(@RequestBody LogDTO logDTO, HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("admin");

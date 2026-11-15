@@ -5,6 +5,7 @@ import com.buguagaoshu.community.enums.FileTypeEnum;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.repository.FileStorageRepository;
+import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.FileUtil;
 import com.buguagaoshu.community.util.ImageUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -56,9 +57,16 @@ public class FileApiController {
     @ResponseBody
     public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile file, String type,
                          HttpServletRequest request) {
-        User user = (User) request.getSession().getAttribute("user");
+        // 后台登录态保存在 session.admin，编辑话题图标时同样需要允许上传
+        User user = AuthUtil.currentUser(request);
+        if (user == null) {
+            user = AuthUtil.currentAdmin(request);
+        }
         if (user == null) {
             return new FileDTO(0, "未登陆用户禁止上传图片", "");
+        }
+        if (file == null || file.isEmpty()) {
+            return new FileDTO(0, "没有收到图片文件", "");
         }
         String fileName = file.getOriginalFilename();
         if (!ImageUtil.checkFileType(fileName)) {
@@ -81,7 +89,7 @@ public class FileApiController {
 
             //fileStorageRepository.saveFile(pathName, file);
 
-            if (type != null && type.equals("top")) {
+            if ("top".equals(type) && AuthUtil.currentUser(request) != null) {
                 userMapper.updateUserTopPhotoUrl(user.getId(), pathName);
                 user.setUserTopPhotoUrl(pathName);
                 request.getSession().setAttribute("user", user);
@@ -109,6 +117,10 @@ public class FileApiController {
         map.put("code", 1);
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) {
+            return map;
+        }
+        if (files == null || files.length == 0) {
+            map.put("msg", "没有收到任何文件！");
             return map;
         }
         if (files.length > 9) {
@@ -149,6 +161,9 @@ public class FileApiController {
             }
         }
         map.put("msg", "上传成功！");
+        // Vditor 约定 code == 0 表示成功，非 0 会把 msg 当作错误提示
+        map.put("code", 0);
+        data.put("errFiles", new String[0]);
         data.put("succMap", succMap);
         map.put("data", data);
         return map;

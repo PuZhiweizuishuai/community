@@ -1,106 +1,73 @@
 package com.buguagaoshu.community.interceptor;
 
-
 import com.buguagaoshu.community.model.User;
-import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
-import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.JwtUtil;
 import io.jsonwebtoken.Claims;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-08-21 12:09
+ * 前后端分离后只保留「记住我」token 恢复登录态的职责。
+ *
+ * <p>页面渲染已全部交给 Vue，原来的 notificationCount 注入 / ModelAndView 处理
+ * 已移除，未读数改由 GET /api/auth/session 按需返回，避免每个 API 请求都查库。
  */
-@Service
+@Component
 public class SessionInterceptor implements HandlerInterceptor {
-    @Autowired
-    UserService userService;
 
-    @Autowired
-    OnlineUserService onlineUserService;
+    private final UserService userService;
+    private final OnlineUserService onlineUserService;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    UserPermissionService userPermissionService;
-
-    @Autowired
-    NotificationService notificationService;
-
-    @Autowired
-    JwtUtil jwtUtil;
-
+    public SessionInterceptor(UserService userService, OnlineUserService onlineUserService, JwtUtil jwtUtil) {
+        this.userService = userService;
+        this.onlineUserService = onlineUserService;
+        this.jwtUtil = jwtUtil;
+    }
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        User user = (User) request.getSession().getAttribute("user");
-        if (user != null) {
-            request.getSession().setAttribute("notificationCount", notificationService.getAllNotificationNoReadNumber(user.getId()));
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
             return true;
         }
-        /**
-         * TODO 待改进优化, 对于 token 的使用
-         * */
-        String token = null;
-        if (request.getCookies() != null) {
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if (cookie.getName().equals("token")) {
-                        token = cookie.getValue();
-                        break;
-                    }
-                }
-            }
+        String token = readToken(request);
+        if (token == null || token.isBlank()) {
+            return true;
         }
-
-        /**
-         * TODO 优化登陆逻辑
-         * */
-        if (token != null) {
-            try {
-                Claims claims = jwtUtil.parseJWT(token);
-                User suser = (User) request.getSession().getAttribute("user");
-                if (suser == null) {
-                    User users = userService.selectUserById(Long.parseLong(claims.getId()));
-                    request.getSession().setAttribute("user", users);
-                }
-            } catch (Exception e) {
-                onlineUserService.deleteOnlineUserByToken(token);
-                request.getSession().removeAttribute("user");
-            }
-
-            /* TODO 待优化
-            OnlineUser onlineUser = onlineUserService.selectOnlineUserByToken(token);
-            if(onlineUser != null) {
-                User user = userService.selectUserById(onlineUser.getId());
-                UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-                user.setPower(userPermission.getPower());
+        try {
+            Claims claims = jwtUtil.parseJWT(token);
+            User user = userService.selectUserById(Long.parseLong(claims.getId()));
+            if (user != null) {
+                user.clean();
                 request.getSession().setAttribute("user", user);
-            } else {
-                request.getSession().removeAttribute("user");
-                request.getSession().setAttribute("checkOnline", true);
             }
-            */
+        } catch (Exception e) {
+            onlineUserService.deleteOnlineUserByToken(token);
+            HttpSession current = request.getSession(false);
+            if (current != null) {
+                current.removeAttribute("user");
+            }
         }
-
         return true;
     }
 
-    @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-    }
-
-    @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-
+    private String readToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if ("token".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

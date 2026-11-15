@@ -1,0 +1,481 @@
+@import 'tailwindcss';
+@plugin 'daisyui' {
+  themes: light --default, dark;
+}
+
+:root {
+  --brand: #4f46e5;
+  --brand-soft: #eef2ff;
+  --page-bg: #f5f7fb;
+  --surface-bg: #ffffff;
+  --surface-border: #e9edf3;
+  --surface-shadow: 0 2px 10px rgb(31 41 55 / 4%);
+  --text-body: #1f2937;
+  --text-strong: #1f2937;
+  --text-base: #475569;
+  --text-muted: #64748b;
+  --soft-bg: #f1f5f9;
+  --soft-border: #e2e8f0;
+  --inline-code-bg: #f1f5f9;
+  --md-blockquote-bg: #eef2ff;
+  /* 代码块底色必须与 Vditor 当前高亮主题一致，否则 pre 的 padding 会形成深色边框 */
+  --code-block-bg: #ffffff;
+  --code-block-color: #24292e;
+}
+
+[data-theme='dark'] {
+  --brand: #818cf8;
+  --brand-soft: #312e81;
+  --page-bg: #0f172a;
+  --surface-bg: #1e293b;
+  --surface-border: #334155;
+  --surface-shadow: 0 2px 14px rgb(0 0 0 / 22%);
+  --text-body: #e2e8f0;
+  --text-strong: #f1f5f9;
+  --text-base: #cbd5e1;
+  --text-muted: #94a3b8;
+  --soft-bg: #273449;
+  --soft-border: #334155;
+  --inline-code-bg: #334155;
+  --md-blockquote-bg: #312e81;
+  --code-block-bg: #0b1120;
+  --code-block-color: #c9d1d9;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text-body);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* Lucide 图标：统一不被 flex 压缩，并跟随当前文字颜色 */
+svg.lucide {
+  flex-shrink: 0;
+}
+
+.page-container {
+  width: min(1180px, 100% - 2rem);
+  margin: 0 auto;
+}
+
+.surface {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 0.9rem;
+  box-shadow: var(--surface-shadow);
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.link-muted {
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+.link-muted:hover {
+  color: var(--brand);
+}
+
+.theme-menu {
+  background: var(--surface-bg);
+  border-color: var(--surface-border);
+}
+
+/* 聊天室消息气泡：互斥类名，避免背景/文字颜色互相覆盖 */
+.chat-bubble {
+  overflow-wrap: anywhere;
+}
+.chat-bubble-other {
+  background: var(--surface-bg);
+  color: var(--text-body);
+  border: 1px solid var(--surface-border);
+}
+.chat-bubble-mine {
+  background: #4f46e5;
+  color: #ffffff;
+}
+[data-theme='dark'] .chat-bubble-mine {
+  background: #6366f1;
+}
+
+.auth-bg {
+  background: linear-gradient(135deg, #eef2ff 0%, #ffffff 50%, #f1f5f9 100%);
+}
+[data-theme='dark'] .auth-bg {
+  background: linear-gradient(135deg, #1e1b4b 0%, #16213a 50%, #0f172a 100%);
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Markdown 渲染区域（Vditor.preview 输出） */
+.markdown-body {
+  line-height: 1.75;
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  margin: 1.2em 0 0.6em;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-strong);
+}
+.markdown-body h1 {
+  font-size: 1.6rem;
+}
+.markdown-body h2 {
+  font-size: 1.35rem;
+}
+.markdown-body h3 {
+  font-size: 1.15rem;
+}
+.markdown-body p {
+  margin: 0.7em 0;
+}
+.markdown-body img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+.markdown-body pre {
+  overflow-x: auto;
+  /* 跟随主题：白天与 github 亮色高亮同色，夜间与 github-dark 同色 */
+  background: var(--code-block-bg);
+  color: var(--code-block-color);
+  border: 1px solid var(--soft-border);
+  padding: 1rem;
+  border-radius: 0.6rem;
+}
+/* Vditor 的 github / github-dark 主题会给 code.hljs 单独设置背景与 padding，
+   与 pre 叠加会出现「外框 + 内白块」；统一由 pre 提供底色与内边距 */
+.markdown-body pre > code,
+.markdown-body pre > code.hljs {
+  display: block;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 0;
+  overflow-x: auto;
+}
+.markdown-body code {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.9em;
+}
+.markdown-body :not(pre) > code {
+  background: var(--inline-code-bg);
+  color: #c026d3;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+}
+.markdown-body blockquote {
+  border-left: 3px solid var(--brand);
+  background: var(--md-blockquote-bg);
+  margin: 1em 0;
+  padding: 0.6em 1em;
+}
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--soft-border);
+  padding: 0.4em 0.7em;
+}
+
+/* Vditor 在 daisyUI 下的高度与字体修正 */
+.vditor {
+  border-radius: 0.6rem;
+  border-color: var(--soft-border);
+}
+.vditor-reset {
+  font-size: 15px;
+  color: var(--text-body);
+}
+
+/* 正文目录（Vditor.outlineRender 输出） */
+.markdown-toc ul {
+  list-style: none !important;
+  margin: 0;
+  padding-left: 0.75rem;
+}
+.markdown-toc > ul {
+  padding-left: 0;
+}
+.markdown-toc li > span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.markdown-toc li > span > svg {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+.markdown-toc li > span > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.markdown-toc li > span:hover,
+.markdown-toc li > span.vditor-outline__item--current {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 500;
+}
+.markdown-toc .vditor-outline__title {
+  display: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ---------------------------------------------------------------------------
+   页面切换动画：淡入 + 轻微上移，out-in 模式避免两屏内容重叠
+   --------------------------------------------------------------------------- */
+.page-enter-active {
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-leave-active {
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active,
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   夜间模式：覆盖项目里显式写死的 slate / white 工具类
+   daisyUI 的 btn / input / modal / table / badge 等由内置 dark 主题自行适配
+   --------------------------------------------------------------------------- */
+[data-theme='dark'] .text-slate-900,
+[data-theme='dark'] .text-slate-800,
+[data-theme='dark'] .text-slate-700 {
+  color: var(--text-strong);
+}
+[data-theme='dark'] .text-slate-600,
+[data-theme='dark'] .text-slate-500 {
+  color: var(--text-base);
+}
+[data-theme='dark'] .text-slate-400,
+[data-theme='dark'] .text-slate-300 {
+  color: var(--text-muted);
+}
+[data-theme='dark'] .text-indigo-600,
+[data-theme='dark'] .text-indigo-700 {
+  color: #a5b4fc;
+}
+[data-theme='dark'] .text-rose-500 {
+  color: #fb7185;
+}
+[data-theme='dark'] .text-emerald-600 {
+  color: #6ee7b7;
+}
+[data-theme='dark'] .text-amber-600 {
+  color: #fbbf24;
+}
+
+[data-theme='dark'] .bg-white,
+[data-theme='dark'] .bg-white\/95,
+[data-theme='dark'] .bg-white\/80,
+[data-theme='dark'] .bg-white\/30 {
+  background-color: var(--surface-bg);
+}
+[data-theme='dark'] .bg-slate-50,
+[data-theme='dark'] .bg-slate-100,
+[data-theme='dark'] .bg-slate-200,
+[data-theme='dark'] .bg-indigo-50,
+[data-theme='dark'] .bg-emerald-100 {
+  background-color: var(--soft-bg);
+}
+[data-theme='dark'] .bg-slate-900 {
+  background-color: #111827;
+}
+
+[data-theme='dark'] .border-slate-100,
+[data-theme='dark'] .border-slate-200,
+[data-theme='dark'] .border-indigo-200,
+[data-theme='dark'] .border-dashed {
+  border-color: var(--surface-border);
+}
+[data-theme='dark'] .divide-slate-100 > * {
+  border-color: var(--surface-border);
+}
+[data-theme='dark'] .hover\:bg-slate-50:hover,
+[data-theme='dark'] .hover\:bg-white:hover {
+  background-color: var(--soft-bg);
+}
+[data-theme='dark'] .hover\:bg-indigo-50:hover {
+  background-color: var(--brand-soft);
+}
+[data-theme='dark'] .hover\:border-indigo-200:hover,
+[data-theme='dark'] .hover\:border-indigo-300:hover {
+  border-color: #6366f1;
+}
+
+[data-theme='dark'] .markdown-body :not(pre) > code {
+  color: #f0abfc;
+}
+[data-theme='dark'] .vditor-reset,
+[data-theme='dark'] .markdown-body {
+  color: var(--text-body);
+}
+
+/* ---------------------------------------------------------------------------
+   夜间模式代码块：本地兜底的 GitHub Dark 配色
+   Vditor 会动态从 CDN 注入 <link id="vditorHljsStyle">，网络不可达时会缺失；
+   这里用 [data-theme='dark'] 前缀（更高优先级）保证无论 CDN 是否加载成功，
+   代码块与高亮 token 都是暗色，不会退回白底深字的 github 亮色主题。
+   --------------------------------------------------------------------------- */
+[data-theme='dark'] .markdown-body pre,
+[data-theme='dark'] .vditor-reset pre,
+[data-theme='dark'] pre code.hljs {
+  background: var(--code-block-bg);
+  color: var(--code-block-color);
+}
+[data-theme='dark'] .hljs {
+  color: #c9d1d9;
+  background: #0b1120;
+}
+[data-theme='dark'] .hljs-doctag,
+[data-theme='dark'] .hljs-keyword,
+[data-theme='dark'] .hljs-meta .hljs-keyword,
+[data-theme='dark'] .hljs-template-tag,
+[data-theme='dark'] .hljs-template-variable,
+[data-theme='dark'] .hljs-type,
+[data-theme='dark'] .hljs-variable.language_ {
+  color: #ff7b72;
+}
+[data-theme='dark'] .hljs-title,
+[data-theme='dark'] .hljs-title.class_,
+[data-theme='dark'] .hljs-title.class_.inherited__,
+[data-theme='dark'] .hljs-title.function_ {
+  color: #d2a8ff;
+}
+[data-theme='dark'] .hljs-attr,
+[data-theme='dark'] .hljs-attribute,
+[data-theme='dark'] .hljs-literal,
+[data-theme='dark'] .hljs-meta,
+[data-theme='dark'] .hljs-number,
+[data-theme='dark'] .hljs-operator,
+[data-theme='dark'] .hljs-selector-attr,
+[data-theme='dark'] .hljs-selector-class,
+[data-theme='dark'] .hljs-selector-id,
+[data-theme='dark'] .hljs-variable {
+  color: #79c0ff;
+}
+[data-theme='dark'] .hljs-meta .hljs-string,
+[data-theme='dark'] .hljs-regexp,
+[data-theme='dark'] .hljs-string {
+  color: #a5d6ff;
+}
+[data-theme='dark'] .hljs-built_in,
+[data-theme='dark'] .hljs-symbol {
+  color: #ffa657;
+}
+[data-theme='dark'] .hljs-code,
+[data-theme='dark'] .hljs-comment,
+[data-theme='dark'] .hljs-formula {
+  color: #8b949e;
+}
+[data-theme='dark'] .hljs-name,
+[data-theme='dark'] .hljs-quote,
+[data-theme='dark'] .hljs-selector-pseudo,
+[data-theme='dark'] .hljs-selector-tag {
+  color: #7ee787;
+}
+[data-theme='dark'] .hljs-subst,
+[data-theme='dark'] .hljs-emphasis,
+[data-theme='dark'] .hljs-strong {
+  color: #c9d1d9;
+}
+[data-theme='dark'] .hljs-section {
+  color: #58a6ff;
+  font-weight: 700;
+}
+[data-theme='dark'] .hljs-bullet {
+  color: #f2cc60;
+}
+[data-theme='dark'] .hljs-addition {
+  color: #aff5b4;
+  background-color: #033a16;
+}
+[data-theme='dark'] .hljs-deletion {
+  color: #ffdcd7;
+  background-color: #67060c;
+}
+[data-theme='dark'] .hljs-emphasis {
+  font-style: italic;
+}
+[data-theme='dark'] .hljs-strong {
+  font-weight: 700;
+}
+[data-theme='dark'] .vditor-outline {
+  color: var(--text-base);
+}
+[data-theme='dark'] input[type='range'] {
+  accent-color: #818cf8;
+}

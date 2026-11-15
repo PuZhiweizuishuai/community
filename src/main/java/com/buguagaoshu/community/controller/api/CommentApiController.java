@@ -8,6 +8,7 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
+import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.captcha.CaptchaUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +28,12 @@ import static com.buguagaoshu.community.dto.ResultDTO.okOf;
 @Slf4j
 public class CommentApiController {
     private final CommentService commentService;
+    private final SiteCacheService siteCache;
 
     @Autowired
-    public CommentApiController(CommentService commentService) {
+    public CommentApiController(CommentService commentService, SiteCacheService siteCache) {
         this.commentService = commentService;
+        this.siteCache = siteCache;
     }
 
 
@@ -73,6 +76,8 @@ public class CommentApiController {
             log.info("插入评论 Exception 异常：{}", e.getMessage());
             return errorOf(CustomizeErrorCode.SYS_ERROR);
         }
+        // 评论数变化会影响首页列表与热门排序
+        siteCache.invalidate(SiteCacheService.HOME);
         return okOf(comment);
     }
 

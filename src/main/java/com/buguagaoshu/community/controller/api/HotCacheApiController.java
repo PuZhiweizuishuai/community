@@ -5,6 +5,7 @@ import com.buguagaoshu.community.schedule.HotQuestionTasks;
 import com.buguagaoshu.community.schedule.HotTagTasks;
 import com.buguagaoshu.community.schedule.HotUserTasks;
 import com.buguagaoshu.community.schedule.TagClassTasks;
+import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,13 +30,17 @@ public class HotCacheApiController {
     private final HotUserTasks hotUserTasks;
 
     private final TagClassTasks tagClassTasks;
+    private final SiteCacheService siteCache;
 
     @Autowired
-    public HotCacheApiController(HotTagTasks hotTagTasks, HotQuestionTasks hotQuestionTasks, HotUserTasks hotUserTasks, TagClassTasks tagClassTasks) {
+    public HotCacheApiController(HotTagTasks hotTagTasks, HotQuestionTasks hotQuestionTasks,
+                                 HotUserTasks hotUserTasks, TagClassTasks tagClassTasks,
+                                 SiteCacheService siteCache) {
         this.hotTagTasks = hotTagTasks;
         this.hotQuestionTasks = hotQuestionTasks;
         this.hotUserTasks = hotUserTasks;
         this.tagClassTasks = tagClassTasks;
+        this.siteCache = siteCache;
     }
 
     @GetMapping("/api/admin/updateHotTag")
@@ -46,6 +51,7 @@ public class HotCacheApiController {
         }
         log.info("管理员 {} 开始手动更新热门话题", admin.getId());
         hotTagTasks.hotTagsCurrentTime();
+        siteCache.invalidate(SiteCacheService.META + "hots");
         log.info("热门话题手动更新完成！");
         return StringUtil.dealResultMessage(true, "更新成功！");
     }
@@ -58,6 +64,7 @@ public class HotCacheApiController {
         }
         log.info("管理员 {} 开始手动更新热门问题", admin.getId());
         hotQuestionTasks.hotQuestionCurrentTime();
+        siteCache.invalidate(SiteCacheService.META + "hotQuestions");
         log.info("热门问题手动更新完成！");
         return StringUtil.dealResultMessage(true, "更新成功！");
     }
@@ -70,6 +77,7 @@ public class HotCacheApiController {
         }
         log.info("管理员 {} 开始手动更新活跃用户", admin.getId());
         hotUserTasks.hotUserCurrentTime();
+        siteCache.invalidate(SiteCacheService.META + "hotUsers");
         log.info("活跃用户手动更新完成！");
         return StringUtil.dealResultMessage(true, "更新成功！");
     }
@@ -82,6 +90,7 @@ public class HotCacheApiController {
         }
         log.info("管理员 {} 开始手动同步话题页", admin.getId());
         tagClassTasks.TagClassCache();
+        siteCache.invalidate(SiteCacheService.TOPICS);
         log.info("话题同步完成！");
         return StringUtil.dealResultMessage(true, "同步成功！");
     }

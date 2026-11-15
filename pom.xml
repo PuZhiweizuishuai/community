@@ -24,14 +24,10 @@
     </properties>
 
     <dependencies>
-        <!-- Web MVC / 模板引擎 / WebSocket -->
+        <!-- Web MVC（纯 REST）/ WebSocket：前后端分离后不再依赖 Thymeleaf -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -60,14 +56,14 @@
             <artifactId>spring-session-data-redis</artifactId>
         </dependency>
 
-        <!--
-            Spring Boot 4 默认使用 Jackson 3 (tools.jackson.*)，但 jjwt-jackson 仍依赖 Jackson 2，
-            这里显式声明，版本由 Boot 4 引入的 jackson-2-bom 统一管理。
-        -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
+<!--        &lt;!&ndash;-->
+<!--            Spring Boot 4 默认使用 Jackson 3 (tools.jackson.*)，但 jjwt-jackson 仍依赖 Jackson 2，-->
+<!--            这里显式声明，版本由 Boot 4 引入的 jackson-2-bom 统一管理。-->
+<!--        &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.core</groupId>-->
+<!--            <artifactId>jackson-databind</artifactId>-->
+<!--        </dependency>-->
 
         <!-- JWT：0.13.0 为当前主线版本，API 与 0.9.x 不兼容，代码已同步迁移 -->
         <dependency>

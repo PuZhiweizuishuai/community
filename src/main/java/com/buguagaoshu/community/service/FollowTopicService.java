@@ -3,7 +3,6 @@ package com.buguagaoshu.community.service;
 import com.buguagaoshu.community.dto.FollowTopicDTO;
 import com.buguagaoshu.community.model.FollowTopic;
 import com.buguagaoshu.community.model.TagClass;
-import io.jsonwebtoken.Claims;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ public interface FollowTopicService {
      * @param tagClass 话题信息
      * @return 结果
      * */
-    int insertFollowTop(FollowTopicDTO followTopicDTO,  Claims claims, TagClass tagClass);
+    int insertFollowTop(FollowTopicDTO followTopicDTO, long userId, TagClass tagClass);
 
     /**
      * 有没有关注这个话题

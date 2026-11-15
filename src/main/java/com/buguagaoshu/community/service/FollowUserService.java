@@ -3,7 +3,6 @@ package com.buguagaoshu.community.service;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.FollowUser;
 import com.buguagaoshu.community.model.User;
-import io.jsonwebtoken.Claims;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -16,7 +15,7 @@ public interface FollowUserService {
      * @param claims 当前用户信息
      * @return 结果
      * */
-    int insertFollowUser(long followUserId, Claims claims, User follow);
+    int insertFollowUser(long followUserId, long userId, User follow);
 
     /**
      * 判断是否关注该用户

@@ -33,6 +33,11 @@ spring:
 
 server:
   port: 8080
+
+# 前后端分离：仅当 Vue 前端独立部署（非 Vite 代理）时需要放开跨域来源
+app:
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
 #  ssl:
 #    key-store: buguagaoshu.key
 #    key-store-type: PKCS12

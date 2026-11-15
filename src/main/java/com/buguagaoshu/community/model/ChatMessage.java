@@ -12,22 +12,21 @@ public class ChatMessage {
     private String image;
     private String id;
     private int count;
+    /** 每个聊天窗口生成一个随机令牌，用于把「重复登录」提示定向回该窗口 */
+    private String clientToken;
 
     public enum MessageType {
-        /**
-         * 聊天
-         * */
+        /** 聊天 */
         CHAT,
 
-        /**
-         * 加入
-         * */
+        /** 加入 */
         JOIN,
 
-        /**
-         * 离开
-         * */
-        LEAVE
+        /** 离开 */
+        LEAVE,
+
+        /** 同一账号已在其他窗口加入，当前窗口被拒绝 */
+        DUPLICATE
     }
 
     public MessageType getType() {
@@ -76,6 +75,14 @@ public class ChatMessage {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public String getClientToken() {
+        return clientToken;
+    }
+
+    public void setClientToken(String clientToken) {
+        this.clientToken = clientToken;
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.dto.PaginationDto;
-import com.buguagaoshu.community.enums.TagClassTypeEnum;
 import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.TagClassService;
@@ -40,14 +39,23 @@ public class TagClassServiceImpl implements TagClassService {
         int typeCode = 1;
         try {
             typeCode = Integer.parseInt(type);
-            if (typeCode <= 0 || typeCode > TagClassTypeEnum.values().length) {
+            // 话题分类已改为后台动态维护，不再受固定枚举数量限制
+            if (typeCode <= 0) {
                 typeCode = 1;
             }
         } catch (Exception e) {
             typeCode = 1;
         }
         List<TagClass> tagClassList = new ArrayList<>();
-        for (TagClass tagClass : tagClassCache.getTagClassList()) {
+        // 定时任务尚未首次执行时缓存可能为空，直接从数据库兜底
+        List<TagClass> cached = tagClassCache.getTagClassList();
+        if (cached == null) {
+            cached = tagClassMapper.getAllTagClass();
+        }
+        if (cached == null) {
+            return tagClassList;
+        }
+        for (TagClass tagClass : cached) {
             if (tagClass.getType() == typeCode) {
                 tagClassList.add(tagClass);
             }

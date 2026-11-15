@@ -55,7 +55,7 @@ public class SignUpApiController {
         if (StringUtils.isBlank(user.getPassword()) || !StringUtil.checkPassword(user.getPassword())) {
             return StringUtil.dealResultMessage(false, "密码不能为空！或密码格式不正确");
         }
-        if (user.getBirthday() != null || !user.getBirthday().equals("")) {
+        if (StringUtils.isNotBlank(user.getBirthday())) {
             int age = StringUtil.getAge(user.getBirthday());
             if (age == -1) {
                 return StringUtil.dealResultMessage(false, "生日格式不正确");

@@ -4,7 +4,6 @@ import com.buguagaoshu.community.dto.FollowQuestionDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.FollowQuestion;
 import com.buguagaoshu.community.model.Question;
-import io.jsonwebtoken.Claims;
 
 import java.util.List;
 
@@ -20,7 +19,7 @@ public interface FollowQuestionService {
      * @param claims 用户信息
      * @return 结果
      * */
-    int insertFollowQuestion(FollowQuestionDTO followQuestionDTO, Question question, Claims claims);
+    int insertFollowQuestion(FollowQuestionDTO followQuestionDTO, Question question, long userId);
 
     /**
      * 判断是否关注该问题

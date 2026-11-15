@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.cache.AdvertisementCache;
+import com.buguagaoshu.community.dto.AdvertisementBatchDTO;
+import com.buguagaoshu.community.dto.AdvertisementOperationResult;
 import com.buguagaoshu.community.dto.CreateAdvertisement;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.mapper.AdvertisementMapper;
@@ -9,64 +11,88 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.util.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-11-03 20:48
+ * 广告 / 新闻投放服务。
+ *
+ * <p>相比旧实现的改进：
+ * <ul>
+ *   <li>投放位置统一白名单校验，天数限制 1~365，过期数据不占用名额；</li>
+ *   <li>改投放位置时先从旧位置缓存移除，避免一条广告同时出现在多个位置；</li>
+ *   <li>续期同一位置不重复占用名额；容量按「当前有效投放数」计算而不是 Map.size()；</li>
+ *   <li>批量投放 / 批量结束在同一个 synchronized 临界区内逐条处理，容量判断不会被并发请求绕过；</li>
+ *   <li>每条都返回独立回执，前端可以展示哪些成功、哪些因满位被跳过。</li>
+ * </ul>
  */
 @Service
 public class AdvertisementServiceImpl implements AdvertisementService {
-    private final static long DAY_TIME = 86400000L;
+
+    private static final long DAY_TIME = 86_400_000L;
+    private static final long MAX_DAYS = 365L;
+
+    private static final List<String> POSITIONS = List.of(
+            AdvertisementCache.HOME, AdvertisementCache.PUBLISH, AdvertisementCache.QUESTION,
+            AdvertisementCache.CLASS, AdvertisementCache.USER, AdvertisementCache.USER_HOME,
+            AdvertisementCache.MESSAGE, AdvertisementCache.SEARCH, AdvertisementCache.NEWS);
+    private static final Set<String> VALID_POSITIONS = new LinkedHashSet<>(POSITIONS);
 
     private final AdvertisementMapper advertisementMapper;
-
     private final AdvertisementCache advertisementCache;
 
-    @Autowired
-    public AdvertisementServiceImpl(AdvertisementMapper advertisementMapper, AdvertisementCache advertisementCache) {
+    public AdvertisementServiceImpl(AdvertisementMapper advertisementMapper,
+                                    AdvertisementCache advertisementCache) {
         this.advertisementMapper = advertisementMapper;
         this.advertisementCache = advertisementCache;
     }
 
-
     @Override
-    public int insertAdvertisement(CreateAdvertisement createAdvertisement, User user) {
-        if (StringUtils.isNotBlank(createAdvertisement.getTitle())
-                && StringUtils.isNotBlank(createAdvertisement.getUrl())
-                && StringUtils.isNotBlank(createAdvertisement.getImage())) {
-            Advertisement advertisement = new Advertisement();
-            advertisement.setTitle(createAdvertisement.getTitle());
-            advertisement.setUrl(createAdvertisement.getUrl());
-            advertisement.setImage(createAdvertisement.getImage());
-            advertisement.setCreateTime(System.currentTimeMillis());
-            advertisement.setModifiedUser(user.getId());
-            advertisement.setPosition("");
-            advertisement.setStartTime(0);
-            advertisement.setEndTime(0);
-            advertisement.setStatus(0);
-            return advertisementMapper.insertAdvertisement(advertisement);
+    public int insertAdvertisement(CreateAdvertisement dto, User user) {
+        if (!StringUtils.isNoneBlank(dto.getTitle(), dto.getUrl(), dto.getImage())) {
+            return 0;
         }
-        return 0;
-        // return advertisementMapper.insertAdvertisement(advertisement);
+        Advertisement ad = new Advertisement();
+        ad.setTitle(dto.getTitle().trim());
+        ad.setUrl(dto.getUrl().trim());
+        ad.setImage(dto.getImage().trim());
+        ad.setCreateTime(System.currentTimeMillis());
+        ad.setModifiedUser(user.getId());
+        ad.setPosition("");
+        ad.setStartTime(0);
+        ad.setEndTime(0);
+        ad.setStatus(0);
+        return advertisementMapper.insertAdvertisement(ad);
     }
 
     @Override
-    public int alterAdvertisement(CreateAdvertisement createAdvertisement, User user) {
-        Advertisement advertisement = advertisementMapper.selectAdvertisementById(createAdvertisement.getId());
-        if (StringUtils.isNotBlank(createAdvertisement.getTitle())
-                && StringUtils.isNotBlank(createAdvertisement.getUrl())
-                && StringUtils.isNotBlank(createAdvertisement.getImage())) {
-            advertisement.setTitle(createAdvertisement.getTitle());
-            advertisement.setUrl(createAdvertisement.getUrl());
-            advertisement.setImage(createAdvertisement.getImage());
-            advertisement.setModifiedUser(user.getId());
-            return advertisementMapper.alterAdvertisement(advertisement);
+    public int alterAdvertisement(CreateAdvertisement dto, User user) {
+        if (dto.getId() == null) {
+            return 0;
         }
-        return 0;
+        Advertisement ad = advertisementMapper.selectAdvertisementById(dto.getId());
+        if (ad == null || !StringUtils.isNoneBlank(dto.getTitle(), dto.getUrl(), dto.getImage())) {
+            return 0;
+        }
+        ad.setTitle(dto.getTitle().trim());
+        ad.setUrl(dto.getUrl().trim());
+        ad.setImage(dto.getImage().trim());
+        ad.setModifiedUser(user.getId());
+        int rows = advertisementMapper.alterAdvertisement(ad);
+        if (rows > 0) {
+            // 正在投放的广告改了内容，同步刷新缓存里的对象
+            Map<Long, Object> map = mapFor(ad.getPosition());
+            if (map != null && map.containsKey(ad.getId())) {
+                map.put(ad.getId(), ad);
+            }
+        }
+        return rows;
     }
 
     @Override
@@ -76,131 +102,210 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     public PaginationDto<Advertisement> getAdvertisementList(String page, String size) {
-        long allAdvertisementCount = advertisementMapper.selectAdvertisementCount();
-        long[] param = NumberUtils.getPageAndSize(page, size, allAdvertisementCount);
-        List<Advertisement> advertisementList = advertisementMapper.selectAdvertisementList(param[0], param[1]);
-        PaginationDto<Advertisement> paginationDto = new PaginationDto<>();
-        paginationDto.setData(advertisementList);
+        long total = advertisementMapper.selectAdvertisementCount();
+        long[] param = NumberUtils.getPageAndSize(page, size, total);
+        List<Advertisement> list = advertisementMapper.selectAdvertisementList(param[0], param[1]);
+        PaginationDto<Advertisement> dto = new PaginationDto<>();
+        dto.setData(list);
         if (param[2] == 0) {
             param[2] = 1;
         }
-        paginationDto.setPagination(param[2], param[3], param[1]);
-        paginationDto.setAllCount(allAdvertisementCount);
-        return paginationDto;
+        dto.setPagination(param[2], param[3], param[1]);
+        dto.setAllCount(total);
+        return dto;
     }
 
     @Override
     public String updateAdvertisementViewCount(String id) {
-        long adId = -1;
+        long adId;
         try {
             adId = Long.parseLong(id);
         } catch (Exception e) {
-            adId = -1;
-        }
-        if (adId == -1) {
             return "";
         }
-        Advertisement advertisement = advertisementMapper.selectAdvertisementById(adId);
-        if (advertisement != null) {
-            advertisement.setViewCount(1);
-            advertisementMapper.updateAdvertisementViewCount(advertisement);
-            return advertisement.getUrl();
+        Advertisement ad = advertisementMapper.selectAdvertisementById(adId);
+        if (ad == null) {
+            return "";
         }
-        return "";
+        ad.setViewCount(1);
+        advertisementMapper.updateAdvertisementViewCount(ad);
+        return ad.getUrl();
     }
 
     @Override
-    public int settingAdvertisement(CreateAdvertisement createAdvertisement, User user) {
-        if (createAdvertisement.getId() != null && createAdvertisement.getTime() != null && createAdvertisement.getPosition() != null) {
-            Advertisement advertisement = advertisementMapper.selectAdvertisementById(createAdvertisement.getId());
-            if (advertisement != null) {
-                switch (createAdvertisement.getPosition()) {
-                    case AdvertisementCache.HOME:
-                        if (advertisementCache.getHomeAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getHomeAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.PUBLISH:
-                        if (advertisementCache.getPublishAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getPublishAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.QUESTION:
-                        if (advertisementCache.getQuestionAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getQuestionAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.CLASS:
-                        if (advertisementCache.getClassAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getClassAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.USER:
-                        if (advertisementCache.getUserAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getUserAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.USER_HOME:
-                        if (advertisementCache.getUserHomeAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getUserHomeAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.MESSAGE:
-                        if (advertisementCache.getMessageAdvertisementMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getMessageAdvertisementMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.NEWS:
-                        if (advertisementCache.getNewsMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getNewsMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    case AdvertisementCache.SEARCH:
-                        if (advertisementCache.getSearchMap().size() >= advertisementCache.AD_MAX_NUMBER) {
-                            return 2;
-                        }
-                        advertisementCache.getSearchMap().put(advertisement.getId(), advertisement);
-                        return initAdvertisement(advertisement, createAdvertisement, user);
-                    default:
-                }
-            } else {
-                return -1;
+    public int settingAdvertisement(CreateAdvertisement dto, User user) {
+        if (dto == null || dto.getId() == null) {
+            return 0;
+        }
+        return applySetting(dto.getId(), dto.getPosition(), dto.getTime(), user).getCode();
+    }
+
+    @Override
+    public int closeAdvertisement(CreateAdvertisement dto, User user) {
+        if (dto == null || dto.getId() == null) {
+            return 0;
+        }
+        return applyClose(dto.getId(), user).getCode();
+    }
+
+    @Override
+    public synchronized List<AdvertisementOperationResult> batchSetting(AdvertisementBatchDTO batch, User user) {
+        List<AdvertisementOperationResult> results = new ArrayList<>();
+        if (batch == null || batch.getIds() == null || batch.getIds().isEmpty()) {
+            results.add(AdvertisementOperationResult.of(null, null, 0, "请至少选择一条广告"));
+            return results;
+        }
+        if (!VALID_POSITIONS.contains(batch.getPosition())) {
+            results.add(AdvertisementOperationResult.of(null, null, 0, "投放位置不合法"));
+            return results;
+        }
+        if (batch.getTime() == null || batch.getTime() < 1 || batch.getTime() > MAX_DAYS) {
+            results.add(AdvertisementOperationResult.of(null, null, 0, "投放天数需在 1 ~ 365 天之间"));
+            return results;
+        }
+        // 去重，避免同一条广告重复提交占用名额
+        Set<Long> ids = new LinkedHashSet<>(batch.getIds());
+        for (Long id : ids) {
+            results.add(applySetting(id, batch.getPosition(), batch.getTime(), user));
+        }
+        return results;
+    }
+
+    @Override
+    public synchronized List<AdvertisementOperationResult> batchClose(List<Long> ids, User user) {
+        List<AdvertisementOperationResult> results = new ArrayList<>();
+        if (ids == null || ids.isEmpty()) {
+            results.add(AdvertisementOperationResult.of(null, null, 0, "请至少选择一条广告"));
+            return results;
+        }
+        for (Long id : new LinkedHashSet<>(ids)) {
+            results.add(applyClose(id, user));
+        }
+        return results;
+    }
+
+    @Override
+    public List<Map<String, Object>> positionStats() {
+        long now = System.currentTimeMillis();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String position : POSITIONS) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("position", position);
+            item.put("max", advertisementCache.AD_MAX_NUMBER);
+            int used = activeCount(position, now, null);
+            item.put("used", used);
+            item.put("available", Math.max(0, advertisementCache.AD_MAX_NUMBER - used));
+            result.add(item);
+        }
+        return result;
+    }
+
+    // ------------------------------------------------------------------
+    // 内部实现
+    // ------------------------------------------------------------------
+
+    private AdvertisementOperationResult applySetting(Long id, String position, Long days, User user) {
+        if (id == null || !VALID_POSITIONS.contains(position)
+                || days == null || days < 1 || days > MAX_DAYS) {
+            return AdvertisementOperationResult.of(id, null, 0, "参数不合法（位置或天数）");
+        }
+        Advertisement ad = advertisementMapper.selectAdvertisementById(id);
+        if (ad == null) {
+            return AdvertisementOperationResult.of(id, null, -1, "广告不存在");
+        }
+
+        long now = System.currentTimeMillis();
+        boolean renewSamePosition = position.equals(ad.getPosition())
+                && ad.getStatus() == 1 && ad.getEndTime() > now;
+        Map<Long, Object> target = mapFor(position);
+        if (target == null) {
+            return AdvertisementOperationResult.of(id, ad.getTitle(), 0, "投放位置不合法");
+        }
+        // 续期不占新名额；其余情况需要检查剩余容量
+        int used = activeCount(position, now, renewSamePosition ? id : null);
+        if (!renewSamePosition && used >= advertisementCache.AD_MAX_NUMBER) {
+            return AdvertisementOperationResult.of(id, ad.getTitle(), 2,
+                    "「" + position + "」位置已满（上限 " + advertisementCache.AD_MAX_NUMBER + " 条）");
+        }
+
+        // 从旧位置移除，避免同一广告残留在多个位置
+        removeFromAllMaps(id);
+
+        ad.setPosition(position);
+        ad.setStatus(1);
+        ad.setStartTime(now);
+        ad.setEndTime(now + days * DAY_TIME);
+        ad.setModifiedUser(user.getId());
+        advertisementMapper.updateAdvertisementSetting(ad);
+        target.put(ad.getId(), ad);
+        return AdvertisementOperationResult.of(id, ad.getTitle(), 1,
+                renewSamePosition ? "续期成功" : "投放成功，到期 " + new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date(ad.getEndTime())));
+    }
+
+    private AdvertisementOperationResult applyClose(Long id, User user) {
+        if (id == null) {
+            return AdvertisementOperationResult.of(null, null, 0, "参数不合法");
+        }
+        Advertisement ad = advertisementMapper.selectAdvertisementById(id);
+        if (ad == null) {
+            return AdvertisementOperationResult.of(id, null, -1, "广告不存在");
+        }
+        if (ad.getStatus() != 1 && ad.getEndTime() <= 0) {
+            return AdvertisementOperationResult.of(id, ad.getTitle(), 3, "该广告当前未投放");
+        }
+        removeFromAllMaps(id);
+        ad.setStatus(0);
+        ad.setModifiedUser(user.getId());
+        ad.setStartTime(0);
+        ad.setEndTime(0);
+        ad.setPosition("");
+        advertisementMapper.updateAdvertisementSetting(ad);
+        return AdvertisementOperationResult.of(id, ad.getTitle(), 1, "已结束投放");
+    }
+
+    /** 只统计仍在有效期内的广告，过期但缓存未清理的不占名额 */
+    private int activeCount(String position, long now, Long excludeId) {
+        Map<Long, Object> map = mapFor(position);
+        if (map == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Map.Entry<Long, Object> entry : map.entrySet()) {
+            if (excludeId != null && excludeId.equals(entry.getKey())) {
+                continue;
+            }
+            if (entry.getValue() instanceof Advertisement ad
+                    && ad.getStatus() == 1 && ad.getEndTime() > now) {
+                count++;
             }
         }
-        return 0;
+        return count;
     }
 
-    @Override
-    public int closeAdvertisement(CreateAdvertisement createAdvertisement, User user) {
-        Advertisement advertisement = advertisementMapper.selectAdvertisementById(createAdvertisement.getId());
-        if (advertisement != null) {
-            advertisementCache.removeAdvertisement(advertisement);
-            advertisement.setStatus(0);
-            advertisement.setModifiedUser(user.getId());
-            advertisement.setEndTime(0);
-            advertisement.setStartTime(0);
-            advertisement.setPosition("");
-            return advertisementMapper.updateAdvertisementSetting(advertisement);
+    private void removeFromAllMaps(Long id) {
+        for (String position : POSITIONS) {
+            Map<Long, Object> map = mapFor(position);
+            if (map != null) {
+                map.remove(id);
+            }
         }
-        return 0;
     }
 
-    private int initAdvertisement(Advertisement advertisement, CreateAdvertisement createAdvertisement, User user) {
-        advertisement.setPosition(createAdvertisement.getPosition());
-        advertisement.setStatus(1);
-        advertisement.setStartTime(System.currentTimeMillis());
-        advertisement.setEndTime(System.currentTimeMillis() + createAdvertisement.getTime() * DAY_TIME);
-        advertisement.setModifiedUser(user.getId());
-
-        return advertisementMapper.updateAdvertisementSetting(advertisement);
+    private Map<Long, Object> mapFor(String position) {
+        if (position == null) {
+            return null;
+        }
+        return switch (position) {
+            case AdvertisementCache.HOME -> advertisementCache.getHomeAdvertisementMap();
+            case AdvertisementCache.PUBLISH -> advertisementCache.getPublishAdvertisementMap();
+            case AdvertisementCache.QUESTION -> advertisementCache.getQuestionAdvertisementMap();
+            case AdvertisementCache.CLASS -> advertisementCache.getClassAdvertisementMap();
+            case AdvertisementCache.USER -> advertisementCache.getUserAdvertisementMap();
+            case AdvertisementCache.USER_HOME -> advertisementCache.getUserHomeAdvertisementMap();
+            case AdvertisementCache.MESSAGE -> advertisementCache.getMessageAdvertisementMap();
+            case AdvertisementCache.SEARCH -> advertisementCache.getSearchMap();
+            case AdvertisementCache.NEWS -> advertisementCache.getNewsMap();
+            default -> null;
+        };
     }
-
 }

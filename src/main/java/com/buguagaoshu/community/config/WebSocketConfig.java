@@ -16,7 +16,10 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").withSockJS();
+        registry.addEndpoint("/ws")
+                // Vue 开发服务器（5173）与后端不同源，SockJS 握手需放开来源
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 
     @Override

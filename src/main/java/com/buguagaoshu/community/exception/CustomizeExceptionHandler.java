@@ -1,54 +1,31 @@
 package com.buguagaoshu.community.exception;
 
 import com.buguagaoshu.community.dto.ResultDTO;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-08-25 17:25
- * 处理页面啊异常
+ * 全局异常处理：前后端分离后所有异常统一返回 JSON，不再跳转 Thymeleaf 错误页。
  */
-// Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [duplicate]
-@ControllerAdvice
+@Slf4j
+@RestControllerAdvice
 public class CustomizeExceptionHandler {
-    @ExceptionHandler(value = CustomizeException.class)
-    @ResponseBody
-    public Object handle(Throwable e, Model model, HttpServletRequest request, HttpServletResponse response) {
-        String contentType = request.getContentType();
-        if ("application/json".equals(contentType)) {
-            try {
-                ResultDTO resultDTO;
-                // 返回 JSON
-                if (e instanceof CustomizeException) {
-                    resultDTO = ResultDTO.errorOf((CustomizeException) e);
-                } else {
-                    resultDTO = ResultDTO.errorOf(CustomizeErrorCode.SYS_ERROR);
-                }
-                response.setContentType("application/json");
-                response.setStatus(200);
-                response.setCharacterEncoding("utf-8");
-                return resultDTO;
-            } catch (Exception ignore) {
 
-            }
-            return null;
-        } else {
-            // 错误页面跳转
-            if (e instanceof CustomizeException) {
-                model.addAttribute("message", e.getMessage());
-            } else {
-                model.addAttribute("message", CustomizeErrorCode.SYS_ERROR.getMessage());
-            }
-            return new ModelAndView("error");
-        }
+    @ExceptionHandler(CustomizeException.class)
+    public ResponseEntity<ResultDTO<Object>> handleCustomize(CustomizeException e) {
+        HttpStatus status = (e.getCode() != null && (e.getCode() == 401 || e.getCode() == 2003))
+                ? HttpStatus.UNAUTHORIZED
+                : HttpStatus.OK;
+        return ResponseEntity.status(status).body(ResultDTO.errorOf(e));
+    }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ResultDTO<Object>> handleOther(Exception e) {
+        log.error("未处理的接口异常", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ResultDTO.errorOf(CustomizeErrorCode.SYS_ERROR));
     }
 }

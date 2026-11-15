@@ -22,7 +22,16 @@ public enum CustomizeErrorCode implements ICustomizeErrorCode {
     NOTIFICATION_NOT_FOUND(2009, "消息莫非是不翼而飞了？"),
     FILE_UPLOAD_FAIL(2010, "图片上传失败"),
     INVALID_INPUT(2011, "非法输入"),
-    INVALID_OPERATION(2012, "你正在尝试修改不属于你的问题！");
+    INVALID_OPERATION(2012, "你正在尝试修改不属于你的问题！"),
+    /** 前后端分离后新增的通用错误码 */
+    NO_ADMIN(401, "请先登录管理员账号"),
+    PARAM_ERROR(400, "请求参数不正确"),
+    NOT_FOUND(404, "内容不存在或已被删除"),
+    QUESTION_DELETED(2014, "这个问题已经被删除了！如需恢复，请联系管理员！"),
+    CAPTCHA_REQUIRED(2015, "验证码错误或已过期，请刷新后重试"),
+    TAG_LIMIT(2016, "标签不能为空且最多只能输入 6 个标签"),
+    TITLE_INVALID(2017, "标题不能为空，且不能超过 50 个字符"),
+    CLASS_INVALID(2018, "请选择问题分类");
 
     @Override
     public String getMessage() {

@@ -9,7 +9,6 @@ import com.buguagaoshu.community.service.FollowQuestionService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
-import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,12 +31,12 @@ public class FollowQuestionServiceImpl implements FollowQuestionService {
     }
 
     @Override
-    public int insertFollowQuestion(FollowQuestionDTO followQuestionDTO, Question question, Claims claims) {
+    public int insertFollowQuestion(FollowQuestionDTO followQuestionDTO, Question question, long userId) {
         FollowQuestion followQuestion = new FollowQuestion();
         followQuestion.setFollowQuestionId(question.getQuestionId());
         followQuestion.setFollowQuestionAuthor(question.getUserId());
         followQuestion.setFollowQuestionTitle(question.getTitle());
-        followQuestion.setUserId(Long.parseLong(claims.getId()));
+        followQuestion.setUserId(userId);
         followQuestion.setCreateTime(System.currentTimeMillis());
         FollowQuestion temp = followQuestionMapper.selectFollowQuestion(followQuestion);
         if (temp == null) {
