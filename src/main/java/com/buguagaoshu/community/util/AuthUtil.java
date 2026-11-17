@@ -17,6 +17,18 @@ public final class AuthUtil {
     public static final String SESSION_USER = "user";
     public static final String SESSION_ADMIN = "admin";
 
+    /** 管理员权限复核器，由 AdminPermissionChecker 启动时注入 */
+    private static volatile AdminPermissionCheckerRef adminPermissionChecker;
+
+    /** 避免 util 包反向依赖 component 包的接口 */
+    public interface AdminPermissionCheckerRef {
+        boolean isAdmin(long userId);
+    }
+
+    public static void setAdminPermissionChecker(AdminPermissionCheckerRef checker) {
+        adminPermissionChecker = checker;
+    }
+
     private AuthUtil() {
     }
 
@@ -49,6 +61,15 @@ public final class AuthUtil {
     public static User requireAdmin(HttpServletRequest request) {
         User admin = currentAdmin(request);
         if (admin == null) {
+            throw new CustomizeException(CustomizeErrorCode.NO_ADMIN);
+        }
+        // 每次复核权限（带短 TTL 缓存）：被降权的旧管理员会话立即失效
+        AdminPermissionCheckerRef checker = adminPermissionChecker;
+        if (checker != null && !checker.isAdmin(admin.getId())) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.removeAttribute(SESSION_ADMIN);
+            }
             throw new CustomizeException(CustomizeErrorCode.NO_ADMIN);
         }
         return admin;

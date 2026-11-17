@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.service.impl;
 
+import com.buguagaoshu.community.component.RateLimitService;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.OnlineUser;
@@ -27,6 +28,10 @@ import java.util.HashMap;
  */
 @Service
 public class SignInServiceImpl implements SignInService {
+
+    /** 「记住我」token 有效期：7 天 */
+    private static final long REMEMBER_ME_TTL_MILLIS = 7 * 24 * 3600 * 1000L;
+
     private final UserService userService;
 
     private final UserPermissionService userPermissionService;
@@ -35,59 +40,63 @@ public class SignInServiceImpl implements SignInService {
 
     private final JwtUtil jwtUtil;
 
+    private final RateLimitService rateLimitService;
+
+    /** 非「记住我」token 有效期，默认 2 小时 */
+    @Value("${jwt.ttl}")
+    private long defaultTtlMillis;
+
     @Autowired
     public SignInServiceImpl(UserPermissionService userPermissionService, UserService userService,
-                             OnlineUserService onlineUserService, JwtUtil jwtUtil) {
+                             OnlineUserService onlineUserService, JwtUtil jwtUtil,
+                             RateLimitService rateLimitService) {
         this.userPermissionService = userPermissionService;
         this.userService = userService;
         this.onlineUserService = onlineUserService;
         this.jwtUtil = jwtUtil;
+        this.rateLimitService = rateLimitService;
     }
 
     @Override
     public HashMap<String, Object> signIn(String email, String password, String remember, String captcha, HttpServletRequest request) {
         if (!CaptchaUtil.ver(captcha, request)) {
-            // 清除失效的验证码
-            CaptchaUtil.clear(request);
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
         }
-        CaptchaUtil.clear(request);
         if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_EMAIL_OR_PASSWORD_NULL);
         }
-        boolean rememberMe = false;
-        if (remember != null) {
-            rememberMe = true;
+        String limitKey = "login:" + email.toLowerCase();
+        if (rateLimitService.isLocked(limitKey)) {
+            throw new CustomizeException(CustomizeErrorCode.TOO_MANY_ATTEMPTS);
         }
+        boolean rememberMe = remember != null;
         User user = userService.selectUserByEmail(email);
-        if (user != null) {
-            if (StringUtil.judgePassword(password, user.getPassword())) {
-                int ttl = -1;
-                UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-                // 如果选择记住密码，则持久化 cookie
-                // 否则设置关闭浏览器直接清除 cookie
-                if (rememberMe) {
-                    // token 有效期为七天
-                    ttl = 604800;
-                    jwtUtil.setTtl(604800000);
-                }
-                String token = jwtUtil.createJWT(user.getId(), user.getUserId(), user.getUserName(), email, userPermission.getPower());
-                onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), token, IpUtil.getIpAddr(request), System.currentTimeMillis(), System.currentTimeMillis()+jwtUtil.getTtl()));
-                user.setPower(userPermission.getPower());
-                HashMap<String, Object> hashMap = new HashMap<>(3);
-                hashMap.put("success", true);
-                hashMap.put("token", token);
-                user.clean();
-                hashMap.put("user", user);
-                hashMap.put("time", ttl);
-                // 跟新登陆时间
-                userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
-                return hashMap;
-            } else {
-                throw new CustomizeException(CustomizeErrorCode.SIGN_IN_PASSWORD_ERROR);
-            }
-        } else {
+        if (user == null) {
+            rateLimitService.recordFailure(limitKey);
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_EMAIL_ERROR);
         }
+        if (!StringUtil.judgePassword(password, user.getPassword())) {
+            rateLimitService.recordFailure(limitKey);
+            throw new CustomizeException(CustomizeErrorCode.SIGN_IN_PASSWORD_ERROR);
+        }
+        rateLimitService.reset(limitKey);
+
+        long ttlMillis = rememberMe ? REMEMBER_ME_TTL_MILLIS : defaultTtlMillis;
+        UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
+        String token = jwtUtil.createJWT(user.getId(), user.getUserId(), user.getUserName(), email,
+                userPermission.getPower(), ttlMillis);
+        long now = System.currentTimeMillis();
+        onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), token,
+                IpUtil.getIpAddr(request), now, now + ttlMillis));
+        user.setPower(userPermission.getPower());
+        HashMap<String, Object> hashMap = new HashMap<>(4);
+        hashMap.put("success", true);
+        hashMap.put("token", token);
+        user.clean();
+        hashMap.put("user", user);
+        // cookie MaxAge（秒）：非记住我为会话级 cookie
+        hashMap.put("time", rememberMe ? (int) (ttlMillis / 1000) : -1);
+        userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
+        return hashMap;
     }
 }

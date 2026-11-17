@@ -1,7 +1,9 @@
 package com.buguagaoshu.community.util;
 
 
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -30,7 +32,9 @@ public class DateFormatUtil {
 
     private final static  long FOUR_DAY = 345600000L;
 
-    private final static SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    /** DateTimeFormatter 线程安全，替代静态共享的 SimpleDateFormat */
+    private final static DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 
     /**
      * 获取发帖时间差
@@ -49,6 +53,6 @@ public class DateFormatUtil {
         if (time < FOUR_DAY) {
             return (time / DAY) + " 天前";
         }
-        return SIMPLE_DATE_FORMAT.format(createTime);
+        return DATE_TIME_FORMATTER.format(Instant.ofEpochMilli(createTime));
     }
 }

@@ -11,6 +11,7 @@ import SidePanel from '@/components/SidePanel.vue'
 const route = useRoute()
 const router = useRouter()
 const meta = useMetaStore()
+meta.loadHotUsers()
 const page = computed(() => route.query.page || '1')
 const data = ref(null)
 
@@ -25,25 +26,25 @@ watch([page, () => route.query.class], load, { immediate: true })
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
       <div class="min-w-0">
         <section v-if="page === '1' && meta.hotUsers.length" class="surface mb-5 p-4">
-          <h2 class="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-800"><Flame class="size-4 text-orange-500" />活跃用户</h2>
+          <h2 class="mb-3 flex items-center gap-1.5 text-base font-semibold ui-text-strong"><Flame class="size-4 text-orange-500" />活跃用户</h2>
           <div class="grid gap-3 sm:grid-cols-2">
-            <RouterLink v-for="user in meta.hotUsers.slice(0, 6)" :key="user.userId" :to="`/user/${user.userId}`" class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:border-indigo-200">
+            <RouterLink v-for="user in meta.hotUsers.slice(0, 6)" :key="user.userId" :to="`/user/${user.userId}`" class="flex items-center gap-3 rounded-lg border ui-border p-3 hover:border-indigo-200">
               <Avatar :src="user.headUrl" :name="user.userName" :size="40" />
               <div class="min-w-0">
-                <p class="font-medium text-slate-800">{{ user.userName }}</p>
-                <p class="line-clamp-1 text-xs text-slate-400">{{ user.simpleSelfIntroduction || '暂无签名' }}</p>
+                <p class="font-medium ui-text-strong">{{ user.userName }}</p>
+                <p class="line-clamp-1 text-xs ui-text-muted">{{ user.simpleSelfIntroduction || '暂无签名' }}</p>
               </div>
             </RouterLink>
           </div>
         </section>
 
-        <h2 class="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-800"><UserRoundPlus class="size-4 text-indigo-500" />最新加入</h2>
+        <h2 class="mb-3 flex items-center gap-1.5 text-base font-semibold ui-text-strong"><UserRoundPlus class="size-4 ui-text-brand" />最新加入</h2>
         <div class="grid gap-3 sm:grid-cols-2">
           <RouterLink v-for="user in data?.users?.data || []" :key="user.userId" :to="`/user/${user.userId}`" class="surface flex items-center gap-3 p-4 hover:border-indigo-200">
             <Avatar :src="user.headUrl" :name="user.userName" :size="44" />
             <div class="min-w-0">
-              <p class="font-medium text-slate-800">{{ user.userName }}</p>
-              <p class="line-clamp-1 text-xs text-slate-400">{{ user.simpleSelfIntroduction || '这个人很懒，什么都没写' }}</p>
+              <p class="font-medium ui-text-strong">{{ user.userName }}</p>
+              <p class="line-clamp-1 text-xs ui-text-muted">{{ user.simpleSelfIntroduction || '这个人很懒，什么都没写' }}</p>
             </div>
           </RouterLink>
         </div>

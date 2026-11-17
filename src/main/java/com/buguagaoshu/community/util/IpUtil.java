@@ -1,50 +1,38 @@
 package com.buguagaoshu.community.util;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+
+import java.util.Set;
 
 /**
+ * 客户端 IP 解析：只有请求来自可信代理层时才解析 X-Forwarded-For，
+ * 否则一律使用 TCP 层 remoteAddr，防止客户端伪造 IP 绕过限流/审计。
+ * 兼容 IPv6（不再按长度 15 截断）。
+ *
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-13 13:29
  */
 public class IpUtil {
-    /**
-     * 获取用户登陆IP
-     * */
+
+    /** 可信代理地址，由 app.trusted-proxies 配置注入；默认只信任本机（开发代理） */
+    private static volatile Set<String> trustedProxies = Set.of("127.0.0.1", "::1", "0:0:0:0:0:0:0:1");
+
+    public static void setTrustedProxies(Set<String> proxies) {
+        trustedProxies = proxies == null ? Set.of() : Set.copyOf(proxies);
+    }
+
     public static String getIpAddr(HttpServletRequest request) {
-        String ipAddress = null;
-        try {
-            ipAddress = request.getHeader("x-forwarded-for");
-            if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getHeader("Proxy-Client-IP");
-            }
-            if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getHeader("WL-Proxy-Client-IP");
-            }
-            if (ipAddress == null || ipAddress.length() == 0 || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getRemoteAddr();
-                if (ipAddress.equals("127.0.0.1")) {
-                    // 根据网卡取本机配置的IP
-                    InetAddress inet = null;
-                    try {
-                        inet = InetAddress.getLocalHost();
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                    ipAddress = inet.getHostAddress();
+        String remoteAddr = request.getRemoteAddr();
+        if (remoteAddr != null && trustedProxies.contains(remoteAddr)) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                // 多级代理时第一个地址是客户端 IP
+                String first = forwarded.split(",")[0].trim();
+                if (!first.isEmpty() && !"unknown".equalsIgnoreCase(first)) {
+                    return first;
                 }
             }
-            // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
-            if (ipAddress != null && ipAddress.length() > 15) {
-                if (ipAddress.indexOf(",") > 0) {
-                    ipAddress = ipAddress.substring(0, ipAddress.indexOf(","));
-                }
-            }
-        } catch (Exception e) {
-            ipAddress="";
         }
-        // ipAddress = this.getRequest().getRemoteAddr();
-        return ipAddress;
+        return remoteAddr == null ? "" : remoteAddr;
     }
 }

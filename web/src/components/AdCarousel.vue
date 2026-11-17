@@ -51,9 +51,9 @@ async function openAd(ad) {
 
 <template>
   <section v-if="list.length" class="surface overflow-hidden">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-      <h3 class="flex items-center gap-1.5 text-sm font-semibold text-slate-700"><Megaphone class="size-4 text-indigo-500" />{{ title }}</h3>
-      <span class="text-xs text-slate-400">{{ index + 1 }} / {{ list.length }}</span>
+    <div class="flex items-center justify-between border-b ui-border px-4 py-2.5">
+      <h3 class="section-title"><Megaphone class="size-4 ui-text-brand" />{{ title }}</h3>
+      <span class="text-xs ui-text-muted">{{ index + 1 }} / {{ list.length }}</span>
     </div>
     <div class="relative" @mouseenter="stop" @mouseleave="start">
       <button
@@ -63,18 +63,19 @@ async function openAd(ad) {
         @click="openAd(current)"
       >
         <img :src="assetUrl(current.image)" :alt="current.title" class="h-36 w-full object-cover" />
-        <span class="line-clamp-1 block px-4 py-2 text-sm text-slate-700 group-hover:text-indigo-600">
+        <span class="line-clamp-1 block px-4 py-2 text-sm ui-text-strong group-hover:text-indigo-600">
           {{ current.title }}
         </span>
       </button>
       <div v-if="list.length > 1" class="absolute inset-x-0 bottom-9 flex items-center justify-between px-2">
-        <button class="btn btn-circle btn-xs bg-white/80" type="button" aria-label="上一条" @click.stop="index = (index - 1 + list.length) % list.length"><ChevronLeft class="size-4" /></button>
-        <button class="btn btn-circle btn-xs bg-white/80" type="button" aria-label="下一条" @click.stop="index = (index + 1) % list.length"><ChevronRight class="size-4" /></button>
+        <button class="btn btn-circle btn-xs ui-bg shadow-sm" type="button" aria-label="上一条" @click.stop="index = (index - 1 + list.length) % list.length"><ChevronLeft class="size-4" /></button>
+        <button class="btn btn-circle btn-xs ui-bg shadow-sm" type="button" aria-label="下一条" @click.stop="index = (index + 1) % list.length"><ChevronRight class="size-4" /></button>
       </div>
     </div>
   </section>
-  <section v-else class="surface px-4 py-6 text-center text-sm text-slate-400">
-    <p class="font-medium text-slate-500">{{ title }}</p>
-    <p class="mt-1">广告位招租 · 虚位以待</p>
+  <section v-else class="surface empty-state py-8">
+    <Megaphone class="size-8" :stroke-width="1.5" />
+    <p class="font-medium ui-text-base">{{ title }}</p>
+    <p>广告位招租 · 虚位以待</p>
   </section>
 </template>

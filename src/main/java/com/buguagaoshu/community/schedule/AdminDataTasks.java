@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.schedule;
 
+import com.buguagaoshu.community.component.RedisSchedulerLock;
 import com.buguagaoshu.community.model.AdminData;
 import com.buguagaoshu.community.service.AdminDataService;
 import com.buguagaoshu.community.service.QuestionService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Date;
 
 /**
@@ -28,11 +30,15 @@ public class AdminDataTasks {
     final
     QuestionService questionService;
 
+    private final RedisSchedulerLock schedulerLock;
+
     @Autowired
-    public AdminDataTasks(AdminDataService adminDataService, UserService userService, QuestionService questionService) {
+    public AdminDataTasks(AdminDataService adminDataService, UserService userService, QuestionService questionService,
+                          RedisSchedulerLock schedulerLock) {
         this.adminDataService = adminDataService;
         this.userService = userService;
         this.questionService = questionService;
+        this.schedulerLock = schedulerLock;
     }
 
     /**
@@ -41,24 +47,30 @@ public class AdminDataTasks {
      */
     @Scheduled(fixedRate = 21600000)
     public void setAdminData() {
-        AdminData adminData = new AdminData();
-        adminData.setTime(System.currentTimeMillis());
-        adminData.setQuestionCount(questionService.getAllQuestionCount());
-        adminData.setUserCount(userService.getAlluserCount());
-        try {
-            AdminData lastData = adminDataService.getBestNetAdminData();
-            if (lastData == null) {
-                adminData.setUserAddCount(adminData.getUserCount());
-                adminData.setQuestionAddCount(adminData.getQuestionCount());
-            } else {
-                adminData.setUserAddCount(adminData.getUserCount() - lastData.getUserCount());
-                adminData.setQuestionAddCount(adminData.getQuestionCount() - lastData.getQuestionCount());
-            }
-            adminDataService.insertAdminData(adminData);
-            log.info("管理员数据同步完成 {}", new Date());
-        } catch (Exception e) {
-            log.error("管理员数据同步失败 {}", e.getMessage());
+        if (!schedulerLock.tryLock("adminData", Duration.ofMinutes(5))) {
+            return;
         }
-
+        try {
+            AdminData adminData = new AdminData();
+            adminData.setTime(System.currentTimeMillis());
+            adminData.setQuestionCount(questionService.getAllQuestionCount());
+            adminData.setUserCount(userService.getAlluserCount());
+            try {
+                AdminData lastData = adminDataService.getBestNetAdminData();
+                if (lastData == null) {
+                    adminData.setUserAddCount(adminData.getUserCount());
+                    adminData.setQuestionAddCount(adminData.getQuestionCount());
+                } else {
+                    adminData.setUserAddCount(adminData.getUserCount() - lastData.getUserCount());
+                    adminData.setQuestionAddCount(adminData.getQuestionCount() - lastData.getQuestionCount());
+                }
+                adminDataService.insertAdminData(adminData);
+                log.info("管理员数据同步完成 {}", new Date());
+            } catch (Exception e) {
+                log.error("管理员数据同步失败 {}", e.getMessage());
+            }
+        } finally {
+            schedulerLock.unlock("adminData");
+        }
     }
 }

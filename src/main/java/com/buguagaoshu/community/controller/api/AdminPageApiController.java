@@ -7,6 +7,7 @@ import com.buguagaoshu.community.dto.CreateAdvertisement;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.dto.ResultDTO;
+import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.model.Advertisement;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.AdminDataService;
@@ -16,7 +17,6 @@ import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
-import com.buguagaoshu.community.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,11 +27,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 后台管理页面数据接口（对应原 admin/*.html）。
@@ -123,15 +121,11 @@ public class AdminPageApiController {
             data.put("users", null);
             return ResultDTO.okOf(data);
         }
-        String regex = Arrays.stream(keyword.split(" "))
-                .filter(StringUtils::isNotBlank)
-                .map(t -> t.replace("+", "").replace("*", "").replace("?", ""))
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.joining("|"));
+        // LIKE 搜索：关键字清洗在各 Service 内完成，这里不再拼接正则
         data.put("questions", "question".equals(type)
-                ? questionService.searchAllQuestionList(regex, page, size) : null);
+                ? questionService.searchAllQuestionList(keyword, page, size) : null);
         data.put("users", "user".equals(type)
-                ? userService.searchUser(regex, page, size) : null);
+                ? userService.searchUser(keyword, page, size) : null);
         return ResultDTO.okOf(data);
     }
 
@@ -165,17 +159,15 @@ public class AdminPageApiController {
     // ------------------------------------------------------------------
 
     @PostMapping("/advertisement/add")
-    public Map<String, Object> add(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
-        return StringUtil.dealResultMessage(
-                advertisementService.insertAdvertisement(body, AuthUtil.requireAdmin(request)) == 1,
-                "创建成功");
+    public ResultDTO<Object> add(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+        boolean ok = advertisementService.insertAdvertisement(body, AuthUtil.requireAdmin(request)) == 1;
+        return ok ? ResultDTO.okOf() : ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
     }
 
     @PostMapping("/advertisement/alter")
-    public Map<String, Object> alter(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
-        return StringUtil.dealResultMessage(
-                advertisementService.alterAdvertisement(body, AuthUtil.requireAdmin(request)) == 1,
-                "修改成功");
+    public ResultDTO<Object> alter(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+        boolean ok = advertisementService.alterAdvertisement(body, AuthUtil.requireAdmin(request)) == 1;
+        return ok ? ResultDTO.okOf() : ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
     }
 
     /** 各投放位置容量 / 已用 / 剩余，供后台批量投放前查看 */
@@ -186,27 +178,29 @@ public class AdminPageApiController {
     }
 
     @PostMapping("/advertisement/setting")
-    public Map<String, Object> setting(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+    public ResultDTO<Object> setting(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
         if (body.getId() == null) {
-            return StringUtil.dealResultMessage(false, "缺少广告 ID");
+            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
         }
         AdvertisementBatchDTO batch = new AdvertisementBatchDTO();
         batch.setIds(List.of(body.getId()));
         batch.setPosition(body.getPosition());
         batch.setTime(body.getTime());
         AdvertisementOperationResult result = advertisementService.batchSetting(batch, admin).get(0);
-        return StringUtil.dealResultMessage(result.isSuccess(), result.getMessage());
+        return result.isSuccess() ? ResultDTO.okOf()
+                : ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), result.getMessage());
     }
 
     @PostMapping("/advertisement/close")
-    public Map<String, Object> close(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+    public ResultDTO<Object> close(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
         if (body.getId() == null) {
-            return StringUtil.dealResultMessage(false, "缺少广告 ID");
+            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
         }
         AdvertisementOperationResult result = advertisementService.batchClose(
                 List.of(body.getId()), AuthUtil.requireAdmin(request)).get(0);
-        return StringUtil.dealResultMessage(result.isSuccess(), result.getMessage());
+        return result.isSuccess() ? ResultDTO.okOf()
+                : ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), result.getMessage());
     }
 
     /** 批量投放：返回逐条回执 + 汇总 */

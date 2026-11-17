@@ -1,240 +1,173 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.dto.FileDTO;
-import com.buguagaoshu.community.enums.FileTypeEnum;
+import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.UserMapper;
+import com.buguagaoshu.community.model.FileRecord;
 import com.buguagaoshu.community.model.User;
-import com.buguagaoshu.community.repository.FileStorageRepository;
+import com.buguagaoshu.community.repository.FileRepository;
 import com.buguagaoshu.community.util.AuthUtil;
-import com.buguagaoshu.community.util.FileUtil;
-import com.buguagaoshu.community.util.ImageUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
- * create          2019-09-03 18:43
- * 文件上传
+ * 统一文件接口：上传 POST /api/file/upload，读取 GET /api/file/{storageId}/{key}。
+ * 不再区分 image/video/file 类型，storageId=0 为本地存储，>=1 为对象存储。
+ * 业务逻辑在 FileRepository，这里只做协议适配（editormd / Vditor 两种上传响应）。
  */
-@Controller
+@RestController
+@RequestMapping("/api/file")
 @Slf4j
 public class FileApiController {
-    @Value("${File.ROOT.PATH}")
-    private String ROOT;
 
-    private final ResourceLoader resourceLoader;
+    private static final int MAX_BATCH_SIZE = 9;
 
+    private final FileRepository fileRepository;
     private final UserMapper userMapper;
 
-    private final FileStorageRepository fileStorageRepository;
-
-
-    @Autowired
-    public FileApiController(ResourceLoader resourceLoader, UserMapper userMapper, FileStorageRepository fileStorageRepository) {
-        this.resourceLoader = resourceLoader;
+    public FileApiController(FileRepository fileRepository, UserMapper userMapper) {
+        this.fileRepository = fileRepository;
         this.userMapper = userMapper;
-        this.fileStorageRepository = fileStorageRepository;
     }
 
-    @PostMapping(value = "/api/file/image/upload")
-    @ResponseBody
-    public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile file, String type,
+    /**
+     * 统一上传入口，兼容三种表单字段：
+     * editormd-image-file（editor.md 单图）、file[]（Vditor 批量）、file（通用单文件）。
+     * type=top 时同时把文件设为用户主页封面。
+     */
+    @PostMapping("/upload")
+    public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile editorFile,
+                         @RequestParam(value = "file[]", required = false) MultipartFile[] vditorFiles,
+                         @RequestParam(value = "file", required = false) MultipartFile singleFile,
+                         @RequestParam(value = "type", required = false) String type,
                          HttpServletRequest request) {
-        // 后台登录态保存在 session.admin，编辑话题图标时同样需要允许上传
+        boolean editorMd = editorFile != null;
+        // 后台登录态保存在 session.admin，编辑话题图标/广告图时同样需要允许上传
         User user = AuthUtil.currentUser(request);
         if (user == null) {
             user = AuthUtil.currentAdmin(request);
         }
         if (user == null) {
-            return new FileDTO(0, "未登陆用户禁止上传图片", "");
-        }
-        if (file == null || file.isEmpty()) {
-            return new FileDTO(0, "没有收到图片文件", "");
-        }
-        String fileName = file.getOriginalFilename();
-        if (!ImageUtil.checkFileType(fileName)) {
-            return new FileDTO(0, "图片格式错误", "");
+            return uploadError(editorMd, "未登录用户禁止上传文件");
         }
 
-        String name = ImageUtil.createNewFileName(fileName);
-        String path = ROOT + "/" + user.getUserId() + "/image/";
-        String pathName = "/" + path + name;
-        File dest = new File(path);
-        //判断文件父目录是否存在
-        if (!dest.exists() && !dest.mkdirs()) {
-            return new FileDTO(0, "上传失败，请重试", "");
+        List<MultipartFile> files = new ArrayList<>();
+        if (editorFile != null) {
+            files.add(editorFile);
+        }
+        if (vditorFiles != null) {
+            files.addAll(List.of(vditorFiles));
+        }
+        if (singleFile != null) {
+            files.add(singleFile);
+        }
+        if (files.isEmpty()) {
+            return uploadError(editorMd, "没有收到任何文件");
+        }
+        if (files.size() > MAX_BATCH_SIZE) {
+            return uploadError(editorMd, "一次最多只能上传" + MAX_BATCH_SIZE + "个文件，你已超过了这个数量");
         }
 
-        // TODO 思考如何标记未使用图片
         try {
-            // 保存图片
-            Files.copy(file.getInputStream(), Paths.get(path, name));
-
-            //fileStorageRepository.saveFile(pathName, file);
-
-            if ("top".equals(type) && AuthUtil.currentUser(request) != null) {
-                userMapper.updateUserTopPhotoUrl(user.getId(), pathName);
-                user.setUserTopPhotoUrl(pathName);
+            // 先整体校验再保存，避免批量上传中途失败留下半截文件
+            files.forEach(fileRepository::validate);
+            Map<String, String> succMap = new LinkedHashMap<>();
+            String firstUrl = null;
+            for (MultipartFile file : files) {
+                FileRecord record = fileRepository.upload(file, user);
+                succMap.put(file.getOriginalFilename(), record.getUrl());
+                if (firstUrl == null) {
+                    firstUrl = record.getUrl();
+                }
+            }
+            if ("top".equals(type) && AuthUtil.currentUser(request) != null && firstUrl != null) {
+                userMapper.updateUserTopPhotoUrl(user.getId(), firstUrl);
+                user.setUserTopPhotoUrl(firstUrl);
                 request.getSession().setAttribute("user", user);
             }
-
-            // 使用 Jackson（Spring Boot 默认 HTTP 转换器）可直接序列化的 Map 替代 fastjson
-            Map<String, Object> res = new HashMap<>(3);
-            res.put("url", pathName);
-            res.put("success", 1);
-            res.put("message", "success");
-            return res;
-        } catch (Exception e) {
-            log.error("文件保存失败：  {}", e.getMessage());
-            return new FileDTO(0, "上传失败，请重试", "");
+            if (editorMd) {
+                return new FileDTO(1, "success", firstUrl);
+            }
+            // Vditor 约定 code == 0 表示成功，非 0 会把 msg 当作错误提示
+            Map<String, Object> data = new LinkedHashMap<>(2);
+            data.put("errFiles", new String[0]);
+            data.put("succMap", succMap);
+            Map<String, Object> result = new LinkedHashMap<>(3);
+            result.put("msg", "上传成功！");
+            result.put("code", 0);
+            result.put("data", data);
+            return result;
+        } catch (CustomizeException e) {
+            return uploadError(editorMd, e.getMessage());
         }
     }
 
-
-    @PostMapping(value = "/api/file/upload")
-    @ResponseBody
-    public Map<String, Object> newUpload(@RequestParam(value = "file[]", required = false) MultipartFile[] files,
-                                         HttpServletRequest request) {
-        Map<String, Object> map = new HashMap<>(4);
-        map.put("msg", "你还没有登陆，请登陆后重试！");
-        map.put("code", 1);
-        User user = (User) request.getSession().getAttribute("user");
-        if (user == null) {
-            return map;
-        }
-        if (files == null || files.length == 0) {
-            map.put("msg", "没有收到任何文件！");
-            return map;
-        }
-        if (files.length > 9) {
-            map.put("msg", "一次最多只能上传9个文件，你已超过了这个数量！");
-            return map;
-        }
-
-        for (MultipartFile file : files) {
-            String fileName = file.getOriginalFilename();
-            if (!FileUtil.checkFileType(fileName)) {
-                map.put("msg", "不支持的文件格式！");
-                return map;
-            }
-        }
-
-        Map<String, Object> succMap = new HashMap<>(2);
-        Map<String, Object> data = new HashMap<>(2);
-        for (MultipartFile file : files) {
-            String fileName = file.getOriginalFilename();
-            String name = ImageUtil.createNewFileName(fileName);
-            String path = ROOT + "/" + user.getUserId() + "/file/";
-            if (ImageUtil.checkFileType(fileName)) {
-                path = ROOT + "/" + user.getUserId() + "/image/";
-            }
-            String pathName = "/" + path + name;
-            File dest = new File(path);
-            //判断文件父目录是否存在
-            if (!dest.exists() && !dest.mkdirs()) {
-                map.put("msg", "上传失败，请重试");
-                return map;
-            }
-            try {
-                Files.copy(file.getInputStream(), Paths.get(path, name));
-                succMap.put(fileName, pathName);
-            } catch (Exception e) {
-                map.put("msg", "上传失败，请重试");
-                return map;
-            }
-        }
-        map.put("msg", "上传成功！");
-        // Vditor 约定 code == 0 表示成功，非 0 会把 msg 当作错误提示
-        map.put("code", 0);
-        data.put("errFiles", new String[0]);
-        data.put("succMap", succMap);
-        map.put("data", data);
-        return map;
-    }
-
-    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/image/{filename:.+}", produces = "image/png")
-    @ResponseBody
-    public ResponseEntity<?> getImage(@PathVariable("filename") String filename,
-                                      @PathVariable("userId") String userId) {
+    /**
+     * 统一读取：本地存储流式输出，对象存储 302 到预签名 URL。
+     * key 为存储内相对路径，如 MJM/image/xxx.jpg、MJM/image/head/xxx.jpeg。
+     */
+    @GetMapping("/{storageId}/{*key}")
+    public ResponseEntity<?> read(@PathVariable("storageId") long storageId,
+                                  @PathVariable("key") String key) {
         try {
-            String path = ROOT + "/" + userId + "/image/";
-            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
+            FileRepository.StoredFile file = fileRepository.resolve(storageId, key);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+            if (file.redirectUrl() != null) {
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .location(URI.create(file.redirectUrl()))
+                        .build();
+            }
+            return localResponse(file);
         } catch (Exception e) {
-            log.error("图片文件获取失败:  {}", e.getMessage());
+            log.error("文件获取失败, storageId={}, key={}: {}", storageId, key, e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
 
-
-    @RequestMapping(method = RequestMethod.GET, value = "/file/{userId}/video/{filename:.+}", produces = "video/mp4")
-    @ResponseBody
-    public ResponseEntity<?> getVideo(@PathVariable("filename") String filename,
-                                      @PathVariable("userId") String userId) {
-        try {
-            String path = ROOT + "/" + userId + "/video/";
-            return ResponseEntity.ok(resourceLoader.getResource("file:" + Paths.get(path, filename)));
-        } catch (Exception e) {
-            log.error("视频文件获取失败:  {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+    private ResponseEntity<Resource> localResponse(FileRepository.StoredFile file) {
+        String contentType = file.contentType();
+        boolean inline = contentType.startsWith("image/") || contentType.startsWith("video/")
+                || contentType.startsWith("audio/") || "application/pdf".equals(contentType);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_TYPE, contentType);
+        headers.setContentDisposition((inline ? ContentDisposition.inline() : ContentDisposition.attachment())
+                .filename(file.downloadName(), StandardCharsets.UTF_8)
+                .build());
+        // 文件名含 UUID，内容不可变，允许浏览器长期缓存
+        headers.setCacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable());
+        return new ResponseEntity<>(file.resource(), headers, HttpStatus.OK);
     }
 
-
-    @GetMapping("/file/{userId}/file/{filename:.+}")
-    @ResponseBody
-    public ResponseEntity<Object> getFile(@PathVariable("filename") String filename,
-                                     @PathVariable("userId") String userId) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            FileTypeEnum type = FileUtil.getFileType(filename);
-            switch (type) {
-                case IMAGE_FILE:
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"image" + ImageUtil.getSuffix(filename) + "\"");
-                    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE);
-                    headers.add(HttpHeaders.ACCEPT, MediaType.IMAGE_PNG_VALUE);
-                    break;
-                case MUSIC_FILE:
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"video" + ImageUtil.getSuffix(filename) + "\"");
-                    headers.add(HttpHeaders.CONTENT_TYPE, "audio/mp3");
-                    headers.add(HttpHeaders.ACCEPT, "audio/mp3");
-                    break;
-                case VIDEO_FILE:
-                    headers.add(HttpHeaders.ACCEPT, "video/mp4");
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"video" + ImageUtil.getSuffix(filename) + "\"");
-                    headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
-                    break;
-                case PDF_FILE:
-                    headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_PDF_VALUE);
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline;filename=\"document" + ImageUtil.getSuffix(filename) + "\"");
-                    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE);
-                    break;
-                default:
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"file" + ImageUtil.getSuffix(filename) + "\"");
-                    headers.add(HttpHeaders.CONTENT_TYPE, MediaType.MULTIPART_FORM_DATA_VALUE);
-            }
-            String path = ROOT + "/" + userId + "/file/";
-            Resource file = resourceLoader.getResource("file:" + Paths.get(path, filename));
-            return new ResponseEntity<Object>(file, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("文件获取失败:  {}", e.getMessage());
-            return ResponseEntity.notFound().build();
+    private Object uploadError(boolean editorMd, String message) {
+        if (editorMd) {
+            return new FileDTO(0, message, "");
         }
+        Map<String, Object> result = new LinkedHashMap<>(2);
+        result.put("msg", message);
+        result.put("code", 1);
+        return result;
     }
 }

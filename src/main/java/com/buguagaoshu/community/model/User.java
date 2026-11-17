@@ -1,5 +1,9 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 
@@ -10,7 +14,9 @@ import lombok.Data;
  * 使用 JSR-303 进行数据检验
  */
 @Data
+@Table(value = "users", camelToUnderline = false)
 public class User {
+    @Id(keyType = KeyType.Auto)
     private long id = -1;
 
 
@@ -64,6 +70,7 @@ public class User {
 
     private long likeCount;
 
+    @Column(ignore = true)
     private int power;
 
     /**

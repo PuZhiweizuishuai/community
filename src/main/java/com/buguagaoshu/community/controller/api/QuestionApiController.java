@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.captcha.CaptchaUtil;
+import com.buguagaoshu.community.component.ViewCountBuffer;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionCreateDTO;
@@ -21,6 +22,7 @@ import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,17 +47,20 @@ public class QuestionApiController {
     private final ClickLikeService clickLikeService;
     private final FollowQuestionService followQuestionService;
     private final SiteCacheService siteCache;
+    private final ViewCountBuffer viewCountBuffer;
 
     public QuestionApiController(QuestionService questionService,
                                  CommentService commentService,
                                  ClickLikeService clickLikeService,
                                  FollowQuestionService followQuestionService,
-                                 SiteCacheService siteCache) {
+                                 SiteCacheService siteCache,
+                                 ViewCountBuffer viewCountBuffer) {
         this.questionService = questionService;
         this.commentService = commentService;
         this.clickLikeService = clickLikeService;
         this.followQuestionService = followQuestionService;
         this.siteCache = siteCache;
+        this.viewCountBuffer = viewCountBuffer;
     }
 
     /**
@@ -81,7 +86,9 @@ public class QuestionApiController {
         PaginationDto<CommentDto> comments = commentService.getCommentDtoByQuestionIdForQuestion(
                 questionId, page, size, CommentSortTypeEnum.getType(sort));
         if (question.getStatus() != 0) {
-            questionService.updateQuestionViewCount(question.getQuestionId());
+            // 浏览数先累加到 Redis，定时批量回写，读接口不再同步写库
+            viewCountBuffer.increment(question.getQuestionId());
+            question.setViewCount(question.getViewCount() + viewCountBuffer.pending(question.getQuestionId()));
         }
 
         User user = AuthUtil.currentUser(request);
@@ -130,15 +137,13 @@ public class QuestionApiController {
      * 发布或编辑问题（questionId > 0 且 createTime 与库内一致时为编辑）。
      */
     @PostMapping
-    public ResultDTO<Map<String, Object>> publish(@RequestBody QuestionCreateDTO body,
+    public ResultDTO<Map<String, Object>> publish(@Valid @RequestBody QuestionCreateDTO body,
                                                   HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         String captcha = body.getCaptchaValue();
         if (!CaptchaUtil.ver(captcha, request)) {
-            CaptchaUtil.clear(request);
             throw new CustomizeException(CustomizeErrorCode.CAPTCHA_REQUIRED);
         }
-        CaptchaUtil.clear(request);
 
         if (body.getTitle() == null || body.getTitle().isBlank() || body.getTitle().length() > 50) {
             throw new CustomizeException(CustomizeErrorCode.TITLE_INVALID);

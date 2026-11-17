@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -7,10 +10,12 @@ import lombok.Data;
  * create          2019-08-25 18:57
  */
 @Data
+@Table(value = "comment", camelToUnderline = false)
 public class Comment {
     /**
      * 评论 id
      * */
+    @Id(keyType = KeyType.Auto)
     private long commentId;
 
     /**

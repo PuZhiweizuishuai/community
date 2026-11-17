@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.schedule;
 
 import com.buguagaoshu.community.cache.HotTagCache;
+import com.buguagaoshu.community.component.RedisSchedulerLock;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.util.HotRankingUtil;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -35,47 +37,57 @@ public class HotTagTasks {
 
     private final QuestionService questionService;
     private final HotTagCache hotTagCache;
+    private final RedisSchedulerLock schedulerLock;
 
-    public HotTagTasks(QuestionService questionService, HotTagCache hotTagCache) {
+    public HotTagTasks(QuestionService questionService, HotTagCache hotTagCache,
+                       RedisSchedulerLock schedulerLock) {
         this.questionService = questionService;
         this.hotTagCache = hotTagCache;
+        this.schedulerLock = schedulerLock;
     }
 
     @Scheduled(fixedRate = 3600000)
     public void hotTagsCurrentTime() {
-        log.info("开始计算热门标签");
-        long now = System.currentTimeMillis();
-        List<Question> questions = questionService.getQuestionListForTag(0, HotRankingUtil.CANDIDATE_LIMIT);
-
-        Map<String, Double> scores = new HashMap<>();
-        Map<String, String> displayNames = new LinkedHashMap<>();
-
-        for (Question question : questions) {
-            if (question == null || question.getStatus() == 0 || question.getTag() == null) {
-                continue;
-            }
-            double contribution = HotRankingUtil.tagContribution(question, now);
-            Set<String> normalized = new LinkedHashSet<>();
-            for (String raw : question.getTag().split("[,，]")) {
-                String tag = raw == null ? "" : raw.trim();
-                if (tag.isEmpty()) {
-                    continue;
-                }
-                String key = tag.toLowerCase(Locale.ROOT);
-                if (!normalized.add(key)) {
-                    continue;
-                }
-                scores.merge(key, contribution, Double::sum);
-                displayNames.putIfAbsent(key, tag);
-            }
+        if (!schedulerLock.tryLock("hotTag", Duration.ofMinutes(10))) {
+            return;
         }
+        try {
+            log.info("开始计算热门标签");
+            long now = System.currentTimeMillis();
+            List<Question> questions = questionService.getQuestionListForTag(0, HotRankingUtil.CANDIDATE_LIMIT);
 
-        Map<String, Long> priorities = new HashMap<>();
-        scores.forEach((key, value) ->
-                priorities.put(displayNames.getOrDefault(key, key),
-                        HotRankingUtil.scaled(1 + Math.log1p(value))));
+            Map<String, Double> scores = new HashMap<>();
+            Map<String, String> displayNames = new LinkedHashMap<>();
 
-        hotTagCache.updateTags(priorities);
-        log.info("热门标签计算完成，候选标签 {} 个，上榜 {} 个", priorities.size(), hotTagCache.getHots().size());
+            for (Question question : questions) {
+                if (question == null || question.getStatus() == 0 || question.getTag() == null) {
+                    continue;
+                }
+                double contribution = HotRankingUtil.tagContribution(question, now);
+                Set<String> normalized = new LinkedHashSet<>();
+                for (String raw : question.getTag().split("[,，]")) {
+                    String tag = raw == null ? "" : raw.trim();
+                    if (tag.isEmpty()) {
+                        continue;
+                    }
+                    String key = tag.toLowerCase(Locale.ROOT);
+                    if (!normalized.add(key)) {
+                        continue;
+                    }
+                    scores.merge(key, contribution, Double::sum);
+                    displayNames.putIfAbsent(key, tag);
+                }
+            }
+
+            Map<String, Long> priorities = new HashMap<>();
+            scores.forEach((key, value) ->
+                    priorities.put(displayNames.getOrDefault(key, key),
+                            HotRankingUtil.scaled(1 + Math.log1p(value))));
+
+            hotTagCache.updateTags(priorities);
+            log.info("热门标签计算完成，候选标签 {} 个，上榜 {} 个", priorities.size(), hotTagCache.getHots().size());
+        } finally {
+            schedulerLock.unlock("hotTag");
+        }
     }
 }

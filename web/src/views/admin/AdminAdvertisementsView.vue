@@ -125,23 +125,23 @@ function capacityOf(pos) {
     <!-- 概览 -->
     <div class="grid gap-3 sm:grid-cols-3">
       <div class="surface flex items-center justify-between p-4">
-        <div><p class="text-xs text-slate-400">广告总数</p><p class="mt-1 text-2xl font-bold text-slate-800">{{ data?.allCount ?? 0 }}</p></div>
-        <Megaphone class="size-7 text-indigo-500 opacity-40" />
+        <div><p class="text-xs ui-text-muted">广告总数</p><p class="mt-1 text-2xl font-bold ui-text-strong">{{ data?.allCount ?? 0 }}</p></div>
+        <Megaphone class="size-7 ui-text-brand opacity-40" />
       </div>
       <div class="surface flex items-center justify-between p-4">
-        <div><p class="text-xs text-slate-400">本页投放中</p><p class="mt-1 text-2xl font-bold text-emerald-600">{{ activeCount }}</p></div>
+        <div><p class="text-xs ui-text-muted">本页投放中</p><p class="mt-1 text-2xl font-bold text-emerald-600">{{ activeCount }}</p></div>
         <CirclePlay class="size-7 text-emerald-500 opacity-40" />
       </div>
       <div class="surface flex items-center justify-between p-4">
-        <div><p class="text-xs text-slate-400">已选广告</p><p class="mt-1 text-2xl font-bold text-indigo-600">{{ selected.length }}</p></div>
-        <ListChecks class="size-7 text-indigo-500 opacity-40" />
+        <div><p class="text-xs ui-text-muted">已选广告</p><p class="mt-1 text-2xl font-bold ui-text-brand">{{ selected.length }}</p></div>
+        <ListChecks class="size-7 ui-text-brand opacity-40" />
       </div>
     </div>
 
     <div class="surface flex flex-wrap items-center gap-2 p-4">
       <div class="mr-auto">
-        <h2 class="text-sm font-semibold text-slate-700">广告与新闻投放</h2>
-        <p class="mt-1 text-xs text-slate-400">支持勾选多条后统一设置投放位置与天数</p>
+        <h2 class="section-title">广告与新闻投放</h2>
+        <p class="mt-1 text-xs ui-text-muted">支持勾选多条后统一设置投放位置与天数</p>
       </div>
       <RouterLink to="/admin/advertisements/new" class="btn btn-primary btn-sm"><Plus class="size-4" />新增广告</RouterLink>
     </div>
@@ -159,8 +159,8 @@ function capacityOf(pos) {
       </select>
       <button class="btn btn-ghost btn-sm" type="button" @click="go({ page: 1, position: position || undefined, status: status || undefined })"><Filter class="size-4" />应用筛选</button>
 
-      <div v-if="selected.length" class="ml-auto flex flex-wrap items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5">
-        <span class="text-xs font-medium text-indigo-700">已选 {{ selected.length }} 条</span>
+      <div v-if="selected.length" class="ml-auto flex flex-wrap items-center gap-2 rounded-lg ui-bg-brand px-3 py-1.5">
+        <span class="text-xs font-medium ui-text-brand">已选 {{ selected.length }} 条</span>
         <button class="btn btn-primary btn-xs" type="button" @click="openBatchSetting">批量投放</button>
         <button class="btn btn-outline btn-xs" type="button" @click="batchClose">批量结束</button>
         <button class="btn btn-ghost btn-xs" type="button" @click="selected = []">取消选择</button>
@@ -169,20 +169,20 @@ function capacityOf(pos) {
 
     <!-- 位置容量 -->
     <div class="surface p-4">
-      <h3 class="mb-3 text-sm font-semibold text-slate-700">各投放位置容量</h3>
+      <h3 class="mb-3 section-title">各投放位置容量</h3>
       <div class="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <button
           v-for="p in positions"
           :key="p.position"
           class="rounded-lg border p-2 text-left transition"
-          :class="targetPosition === p.position ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 hover:border-indigo-200'"
+          :class="targetPosition === p.position ? 'border-indigo-400 ui-bg-brand' : 'ui-border hover:border-indigo-200'"
           type="button"
           @click="targetPosition = p.position"
         >
-          <p class="truncate text-xs font-medium text-slate-700">{{ p.position }}</p>
+          <p class="truncate text-xs font-medium ui-text-strong">{{ p.position }}</p>
           <div class="mt-1 flex items-center gap-2">
             <progress class="progress progress-primary h-1 flex-1" :value="p.used" :max="p.max" />
-            <span class="text-xs" :class="p.available > 0 ? 'text-slate-400' : 'text-rose-500'">{{ p.used }}/{{ p.max }}</span>
+            <span class="text-xs" :class="p.available > 0 ? 'ui-text-muted' : 'text-rose-500'">{{ p.used }}/{{ p.max }}</span>
           </div>
         </button>
       </div>
@@ -209,17 +209,17 @@ function capacityOf(pos) {
             <td>
               <div class="flex gap-1">
                 <RouterLink :to="`/admin/advertisements/${item.id}`" class="btn btn-ghost btn-xs"><SquarePen class="size-3.5" />编辑</RouterLink>
-                <button class="btn btn-ghost btn-xs text-indigo-600" type="button" @click="openSingleSetting(item)">投放</button>
+                <button class="btn btn-ghost btn-xs ui-text-brand" type="button" @click="openSingleSetting(item)">投放</button>
                 <button v-if="item.status === 1" class="btn btn-ghost btn-xs text-rose-500" type="button" @click="closeOne(item)">结束</button>
               </div>
             </td>
           </tr>
-          <tr v-if="!rows.length"><td colspan="8" class="text-center text-slate-400">暂无广告</td></tr>
+          <tr v-if="!rows.length"><td colspan="8" class="text-center ui-text-muted">暂无广告</td></tr>
         </tbody>
       </table>
       <div class="mt-3 flex items-center gap-2">
         <button class="btn btn-ghost btn-xs" :disabled="Number(page) <= 1" type="button" @click="go({ page: Number(page) - 1 })"><ChevronLeft class="size-3.5" />上一页</button>
-        <span class="text-xs text-slate-400">第 {{ page }} / {{ data?.totalPage || 1 }} 页</span>
+        <span class="text-xs ui-text-muted">第 {{ page }} / {{ data?.totalPage || 1 }} 页</span>
         <button class="btn btn-ghost btn-xs" :disabled="Number(page) >= Number(data?.totalPage || 1)" type="button" @click="go({ page: Number(page) + 1 })">下一页<ChevronRight class="size-3.5" /></button>
       </div>
     </div>
@@ -228,14 +228,14 @@ function capacityOf(pos) {
     <dialog v-if="setting" class="modal modal-open">
       <div class="modal-box max-w-md">
         <h3 class="text-base font-semibold">批量投放（{{ selected.length }} 条）</h3>
-        <p class="mt-1 text-xs text-slate-400">同一广告续期到相同位置不会重复占用名额</p>
+        <p class="mt-1 text-xs ui-text-muted">同一广告续期到相同位置不会重复占用名额</p>
         <label class="form-control mt-4">
           <span class="label-text mb-1 font-medium">投放位置</span>
           <select v-model="targetPosition" class="select select-bordered select-sm">
             <option v-for="p in positions" :key="p.position" :value="p.position">{{ p.position }}</option>
           </select>
         </label>
-        <p v-if="capacityOf(targetPosition)" class="mt-1 text-xs" :class="capacityOf(targetPosition).available > 0 ? 'text-slate-400' : 'text-rose-500'">
+        <p v-if="capacityOf(targetPosition)" class="mt-1 text-xs" :class="capacityOf(targetPosition).available > 0 ? 'ui-text-muted' : 'text-rose-500'">
           该位置剩余 {{ capacityOf(targetPosition).available }} / {{ capacityOf(targetPosition).max }} 个名额
         </p>
         <label class="form-control mt-3">
@@ -253,9 +253,9 @@ function capacityOf(pos) {
     <dialog v-if="batchResult" class="modal modal-open">
       <div class="modal-box max-w-lg">
         <h3 class="text-base font-semibold">{{ batchResult.action }}结果</h3>
-        <p class="mt-1 text-sm text-slate-500">成功 {{ batchResult.successCount }} 条，失败 {{ batchResult.failedCount }} 条</p>
+        <p class="mt-1 text-sm ui-text-base">成功 {{ batchResult.successCount }} 条，失败 {{ batchResult.failedCount }} 条</p>
         <ul class="mt-3 max-h-64 space-y-1 overflow-y-auto">
-          <li v-for="(r, i) in batchResult.results" :key="i" class="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs">
+          <li v-for="(r, i) in batchResult.results" :key="i" class="flex items-start gap-2 rounded-lg ui-bg-soft px-3 py-2 text-xs">
             <span class="shrink-0" :class="r.success ? 'text-emerald-600' : 'text-rose-500'"><component :is="r.success ? CircleCheck : CircleX" class="size-4" /></span>
             <span class="min-w-0 flex-1"><b>{{ r.title || `ID ${r.id}` }}</b> · {{ r.message }}</span>
           </li>

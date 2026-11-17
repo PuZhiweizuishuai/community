@@ -64,7 +64,7 @@ defineExpose({ render })
 
 <template>
   <section v-show="hasToc" class="surface p-4">
-    <h3 class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+    <h3 class="mb-2 flex items-center gap-2 section-title">
       <span class="h-3.5 w-1 rounded-full bg-indigo-500" />
       目录
     </h3>

@@ -7,7 +7,6 @@ const EMPTY = {
   hotQuestions: [],
   hotUsers: [],
   tagCategories: [],
-  tagClasses: {},
   classifications: [],
   sorts: [],
   topicTypes: [],
@@ -16,29 +15,73 @@ const EMPTY = {
 }
 
 /**
- * 全站公共数据：侧边栏（热门标签 / 热门问题 / 广告轮播 / 新闻）、下拉选项。
- * 只拉取一次，多个页面共享。
+ * 全站公共数据按用途分片懒加载：
+ * load()            基础字典（分类/排序/话题分类/在线人数），启动时调用
+ * loadHot()         热门标签 / 热门问题（侧边栏、登录页统计）
+ * loadHotUsers()    热门用户（仅用户列表页）
+ * loadTagCategories() 标签分类（仅发布页）
+ * loadAds(position) 按广告位拉取广告
+ * 每个分片只请求一次，多个组件共享并自动去重并发请求。
  */
 export const useMetaStore = defineStore('meta', () => {
   const data = ref({ ...EMPTY })
   const loaded = ref(false)
-  let pending = null
+  const done = new Set()
+  const pending = new Map()
 
-  async function load(force = false) {
-    if (loaded.value && !force) return data.value
-    if (pending) return pending
-    pending = metaApi
-      .get()
+  function section(key, request, merge, force = false) {
+    if (done.has(key) && !force) return Promise.resolve(data.value)
+    if (pending.has(key)) return pending.get(key)
+    const task = request()
       .then((result) => {
-        data.value = { ...EMPTY, ...result }
-        loaded.value = true
+        merge(result)
+        done.add(key)
         return data.value
       })
       .catch(() => data.value)
       .finally(() => {
-        pending = null
+        pending.delete(key)
       })
-    return pending
+    pending.set(key, task)
+    return task
+  }
+
+  function load(force = false) {
+    return section('base', () => metaApi.get(), (result) => {
+      data.value = { ...data.value, ...result }
+      loaded.value = true
+    }, force)
+  }
+
+  function loadHot() {
+    return section('hot', () => metaApi.hot(), (result) => {
+      data.value = {
+        ...data.value,
+        hots: result?.hots || [],
+        hotQuestions: result?.hotQuestions || [],
+      }
+    })
+  }
+
+  function loadHotUsers() {
+    return section('hotUsers', () => metaApi.hotUsers(), (result) => {
+      data.value = { ...data.value, hotUsers: result || [] }
+    })
+  }
+
+  function loadTagCategories() {
+    return section('tagCategories', () => metaApi.tagCategories(), (result) => {
+      data.value = { ...data.value, tagCategories: result || [] }
+    })
+  }
+
+  function loadAds(position) {
+    return section(`ads:${position}`, () => metaApi.ads(position), (result) => {
+      data.value = {
+        ...data.value,
+        advertisements: { ...data.value.advertisements, [position]: result || [] },
+      }
+    })
   }
 
   const ads = computed(() => data.value.advertisements || {})
@@ -59,6 +102,10 @@ export const useMetaStore = defineStore('meta', () => {
     data,
     loaded,
     load,
+    loadHot,
+    loadHotUsers,
+    loadTagCategories,
+    loadAds,
     ads,
     adsFor,
     hots,

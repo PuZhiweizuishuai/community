@@ -10,15 +10,24 @@ import com.buguagaoshu.community.model.Advertisement;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.util.NumberUtils;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.buguagaoshu.community.model.table.AdvertisementTableDef.ADVERTISEMENT;
 
 /**
  * 广告 / 新闻投放服务。
@@ -37,6 +46,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     private static final long DAY_TIME = 86_400_000L;
     private static final long MAX_DAYS = 365L;
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault());
 
     private static final List<String> POSITIONS = List.of(
             AdvertisementCache.HOME, AdvertisementCache.PUBLISH, AdvertisementCache.QUESTION,
@@ -68,15 +79,16 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         ad.setStartTime(0);
         ad.setEndTime(0);
         ad.setStatus(0);
-        return advertisementMapper.insertAdvertisement(ad);
+        return advertisementMapper.insertSelective(ad);
     }
 
     @Override
+    @Transactional
     public int alterAdvertisement(CreateAdvertisement dto, User user) {
         if (dto.getId() == null) {
             return 0;
         }
-        Advertisement ad = advertisementMapper.selectAdvertisementById(dto.getId());
+        Advertisement ad = advertisementMapper.selectOneById(dto.getId());
         if (ad == null || !StringUtils.isNoneBlank(dto.getTitle(), dto.getUrl(), dto.getImage())) {
             return 0;
         }
@@ -86,10 +98,10 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         ad.setModifiedUser(user.getId());
         int rows = advertisementMapper.alterAdvertisement(ad);
         if (rows > 0) {
-            // 正在投放的广告改了内容，同步刷新缓存里的对象
+            // 正在投放的广告改了内容，事务提交后再刷新缓存里的对象
             Map<Long, Object> map = mapFor(ad.getPosition());
             if (map != null && map.containsKey(ad.getId())) {
-                map.put(ad.getId(), ad);
+                runAfterCommit(() -> map.put(ad.getId(), ad));
             }
         }
         return rows;
@@ -97,14 +109,15 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     public Advertisement selectAdvertisementById(long id) {
-        return advertisementMapper.selectAdvertisementById(id);
+        return advertisementMapper.selectOneById(id);
     }
 
     @Override
     public PaginationDto<Advertisement> getAdvertisementList(String page, String size) {
-        long total = advertisementMapper.selectAdvertisementCount();
+        long total = advertisementMapper.selectCountByQuery(QueryWrapper.create());
         long[] param = NumberUtils.getPageAndSize(page, size, total);
-        List<Advertisement> list = advertisementMapper.selectAdvertisementList(param[0], param[1]);
+        List<Advertisement> list = advertisementMapper.selectListByQuery(QueryWrapper.create()
+                .orderBy(ADVERTISEMENT.ID.desc()).limit(param[0], param[1]));
         PaginationDto<Advertisement> dto = new PaginationDto<>();
         dto.setData(list);
         if (param[2] == 0) {
@@ -123,7 +136,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         } catch (Exception e) {
             return "";
         }
-        Advertisement ad = advertisementMapper.selectAdvertisementById(adId);
+        Advertisement ad = advertisementMapper.selectOneById(adId);
         if (ad == null) {
             return "";
         }
@@ -133,6 +146,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
+    @Transactional
     public int settingAdvertisement(CreateAdvertisement dto, User user) {
         if (dto == null || dto.getId() == null) {
             return 0;
@@ -141,6 +155,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
+    @Transactional
     public int closeAdvertisement(CreateAdvertisement dto, User user) {
         if (dto == null || dto.getId() == null) {
             return 0;
@@ -149,6 +164,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
+    @Transactional
     public synchronized List<AdvertisementOperationResult> batchSetting(AdvertisementBatchDTO batch, User user) {
         List<AdvertisementOperationResult> results = new ArrayList<>();
         if (batch == null || batch.getIds() == null || batch.getIds().isEmpty()) {
@@ -172,6 +188,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
+    @Transactional
     public synchronized List<AdvertisementOperationResult> batchClose(List<Long> ids, User user) {
         List<AdvertisementOperationResult> results = new ArrayList<>();
         if (ids == null || ids.isEmpty()) {
@@ -192,7 +209,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("position", position);
             item.put("max", advertisementCache.AD_MAX_NUMBER);
-            int used = activeCount(position, now, null);
+            int used = advertisementMapper.countActiveByPosition(position, now, null);
             item.put("used", used);
             item.put("available", Math.max(0, advertisementCache.AD_MAX_NUMBER - used));
             result.add(item);
@@ -209,7 +226,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 || days == null || days < 1 || days > MAX_DAYS) {
             return AdvertisementOperationResult.of(id, null, 0, "参数不合法（位置或天数）");
         }
-        Advertisement ad = advertisementMapper.selectAdvertisementById(id);
+        Advertisement ad = advertisementMapper.selectOneById(id);
         if (ad == null) {
             return AdvertisementOperationResult.of(id, null, -1, "广告不存在");
         }
@@ -221,15 +238,12 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         if (target == null) {
             return AdvertisementOperationResult.of(id, ad.getTitle(), 0, "投放位置不合法");
         }
-        // 续期不占新名额；其余情况需要检查剩余容量
-        int used = activeCount(position, now, renewSamePosition ? id : null);
+        // 续期不占新名额；容量以数据库当前有效投放数为准，而不是本地缓存
+        int used = advertisementMapper.countActiveByPosition(position, now, renewSamePosition ? id : null);
         if (!renewSamePosition && used >= advertisementCache.AD_MAX_NUMBER) {
             return AdvertisementOperationResult.of(id, ad.getTitle(), 2,
                     "「" + position + "」位置已满（上限 " + advertisementCache.AD_MAX_NUMBER + " 条）");
         }
-
-        // 从旧位置移除，避免同一广告残留在多个位置
-        removeFromAllMaps(id);
 
         ad.setPosition(position);
         ad.setStatus(1);
@@ -237,49 +251,48 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         ad.setEndTime(now + days * DAY_TIME);
         ad.setModifiedUser(user.getId());
         advertisementMapper.updateAdvertisementSetting(ad);
-        target.put(ad.getId(), ad);
+        // 事务提交后再动缓存：先从旧位置移除，再放入新位置，回滚时缓存不受影响
+        runAfterCommit(() -> {
+            removeFromAllMaps(id);
+            target.put(ad.getId(), ad);
+        });
         return AdvertisementOperationResult.of(id, ad.getTitle(), 1,
-                renewSamePosition ? "续期成功" : "投放成功，到期 " + new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date(ad.getEndTime())));
+                renewSamePosition ? "续期成功" : "投放成功，到期 " + DATE_FORMATTER.format(Instant.ofEpochMilli(ad.getEndTime())));
     }
 
     private AdvertisementOperationResult applyClose(Long id, User user) {
         if (id == null) {
             return AdvertisementOperationResult.of(null, null, 0, "参数不合法");
         }
-        Advertisement ad = advertisementMapper.selectAdvertisementById(id);
+        Advertisement ad = advertisementMapper.selectOneById(id);
         if (ad == null) {
             return AdvertisementOperationResult.of(id, null, -1, "广告不存在");
         }
         if (ad.getStatus() != 1 && ad.getEndTime() <= 0) {
             return AdvertisementOperationResult.of(id, ad.getTitle(), 3, "该广告当前未投放");
         }
-        removeFromAllMaps(id);
         ad.setStatus(0);
         ad.setModifiedUser(user.getId());
         ad.setStartTime(0);
         ad.setEndTime(0);
         ad.setPosition("");
         advertisementMapper.updateAdvertisementSetting(ad);
+        runAfterCommit(() -> removeFromAllMaps(id));
         return AdvertisementOperationResult.of(id, ad.getTitle(), 1, "已结束投放");
     }
 
-    /** 只统计仍在有效期内的广告，过期但缓存未清理的不占名额 */
-    private int activeCount(String position, long now, Long excludeId) {
-        Map<Long, Object> map = mapFor(position);
-        if (map == null) {
-            return 0;
+    /** 事务提交后再执行缓存变更；无事务上下文时立即执行 */
+    private void runAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
         }
-        int count = 0;
-        for (Map.Entry<Long, Object> entry : map.entrySet()) {
-            if (excludeId != null && excludeId.equals(entry.getKey())) {
-                continue;
-            }
-            if (entry.getValue() instanceof Advertisement ad
-                    && ad.getStatus() == 1 && ad.getEndTime() > now) {
-                count++;
-            }
-        }
-        return count;
     }
 
     private void removeFromAllMaps(Long id) {

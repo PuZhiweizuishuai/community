@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -8,7 +11,9 @@ import lombok.Data;
  * 管理数据
  */
 @Data
+@Table(value = "admin", camelToUnderline = false)
 public class AdminData {
+    @Id(keyType = KeyType.Auto)
     private Long adminId;
     private Long time;
     private Long questionCount;

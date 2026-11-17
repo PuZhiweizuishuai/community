@@ -30,7 +30,6 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': { target: BACKEND, changeOrigin: false },
-      '/file': { target: BACKEND, changeOrigin: false },
       '/image': { target: BACKEND, changeOrigin: false },
       '/captche': { target: BACKEND, changeOrigin: false },
       '/adUrl': { target: BACKEND, changeOrigin: false },

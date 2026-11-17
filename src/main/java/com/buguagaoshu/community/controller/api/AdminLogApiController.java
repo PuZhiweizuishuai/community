@@ -1,9 +1,12 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.dto.LogDTO;
+import com.buguagaoshu.community.dto.ResultDTO;
+import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.LogService;
 import com.buguagaoshu.community.service.UserService;
+import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.FileUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +20,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Map;
 
 
 /**
@@ -79,26 +81,20 @@ class AdminLogApiController {
 
     @PostMapping({"/api/admin/log/delete", "/admin/log/delete"})
     @ResponseBody
-    public Map<String, Object> deleteLog(@RequestBody LogDTO logDTO, HttpServletRequest request) {
-        User user = (User) request.getSession().getAttribute("admin");
-        if (user == null) {
-            return StringUtil.dealResultMessage(false, "权限不足！");
+    public ResultDTO<Object> deleteLog(@RequestBody LogDTO logDTO, HttpServletRequest request) {
+        User admin = AuthUtil.requireAdmin(request);
+        User user = userService.selectUserById(admin.getId());
+        if (user == null || !StringUtil.judgePassword(logDTO.getPassword(), user.getPassword())) {
+            return ResultDTO.errorOf(CustomizeErrorCode.FORBIDDEN.getCode(), "密码错误");
         }
-        user = userService.selectUserById(user.getId());
-        if (StringUtil.judgePassword(logDTO.getPassword(), user.getPassword())) {
-            if (FileUtil.checkLogDelete(logDTO.getTitle())) {
-                if (logService.deleteLog(logDTO.getTitle())) {
-                    log.error("管理员 {} 删除了日志 {}", user.getId(), logDTO.getTitle());
-                    return StringUtil.dealResultMessage(true, "删除成功");
-                } else {
-                    return StringUtil.dealResultMessage(false, "未发现此文件");
-                }
-            } else {
-                return StringUtil.dealResultMessage(false, "不支持格式，或非法字符！");
-            }
-        } else {
-            return StringUtil.dealResultMessage(false, "密码错误");
+        if (!FileUtil.checkLogDelete(logDTO.getTitle())) {
+            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR.getCode(), "不支持格式，或非法字符！");
         }
+        if (logService.deleteLog(logDTO.getTitle())) {
+            log.error("管理员 {} 删除了日志 {}", user.getId(), logDTO.getTitle());
+            return ResultDTO.okOf();
+        }
+        return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "未发现此文件");
     }
 
     private void setHttpHead(HttpHeaders headers, String filename, String contentDisposition) {

@@ -88,62 +88,62 @@ async function save() {
     <!-- 标题栏 -->
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <div class="flex items-center gap-1.5 text-xs text-slate-400">
+        <div class="flex items-center gap-1.5 text-xs ui-text-muted">
           <RouterLink to="/admin/advertisements" class="hover:text-indigo-600">广告与新闻</RouterLink>
           <span>/</span>
           <span>{{ isEdit ? '编辑' : '新增' }}</span>
         </div>
-        <h1 class="mt-1 text-xl font-bold text-slate-800">{{ isEdit ? '编辑广告' : '新增广告' }}</h1>
-        <p class="mt-1 text-sm text-slate-500">配置展示素材与跳转地址，保存后在「广告列表」里设置投放位置与时间。</p>
+        <h1 class="mt-1 text-xl font-bold ui-text-strong">{{ isEdit ? '编辑广告' : '新增广告' }}</h1>
+        <p class="mt-1 text-sm ui-text-base">配置展示素材与跳转地址，保存后在「广告列表」里设置投放位置与时间。</p>
       </div>
       <RouterLink to="/admin/advertisements" class="btn btn-ghost btn-sm"><ArrowLeft class="size-4" />返回列表</RouterLink>
     </div>
 
-    <div v-if="loading" class="surface p-10 text-center text-sm text-slate-400">正在载入广告信息…</div>
+    <div v-if="loading" class="surface empty-state">正在载入广告信息…</div>
 
     <div v-else class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
       <!-- 主表单 -->
       <div class="min-w-0 space-y-5">
         <section class="surface p-5">
-          <div class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-xs font-bold text-indigo-600">1</span>
-            <h2 class="text-sm font-semibold text-slate-700">基础信息</h2>
+          <div class="mb-4 flex items-center gap-2 border-b ui-border pb-3">
+            <span class="flex h-6 w-6 items-center justify-center rounded-md ui-bg-brand text-xs font-bold ui-text-brand">1</span>
+            <h2 class="section-title">基础信息</h2>
           </div>
 
           <label class="form-control">
-            <span class="label-text mb-1.5 flex justify-between font-medium text-slate-700">
-              广告标题 <span class="text-xs font-normal text-slate-400">{{ form.title.length }} / 60</span>
+            <span class="label-text mb-1.5 flex justify-between font-medium ui-text-strong">
+              广告标题 <span class="text-xs font-normal ui-text-muted">{{ form.title.length }} / 60</span>
             </span>
             <input v-model="form.title" maxlength="60" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="例如：社区年度技术沙龙" />
-            <span class="label-text-alt mt-1 text-slate-400">会显示在图片下方，也会用于后台检索</span>
+            <span class="label-text-alt mt-1 ui-text-muted">会显示在图片下方，也会用于后台检索</span>
           </label>
 
           <label class="form-control mt-4">
-            <span class="label-text mb-1.5 font-medium text-slate-700">跳转链接</span>
+            <span class="label-text mb-1.5 font-medium ui-text-strong">跳转链接</span>
             <input v-model="form.url" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="https://example.com 或 /about" />
-            <span class="label-text-alt mt-1" :class="urlValid ? 'text-slate-400' : 'text-rose-500'">
+            <span class="label-text-alt mt-1" :class="urlValid ? 'ui-text-muted' : 'text-rose-500'">
               {{ urlValid ? '用户点击广告图时打开，统计浏览量后由服务端跳转' : '请填写以 http(s):// 或 / 开头的合法地址' }}
             </span>
           </label>
         </section>
 
         <section class="surface p-5">
-          <div class="mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
-            <span class="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-xs font-bold text-indigo-600">2</span>
-            <h2 class="text-sm font-semibold text-slate-700">展示素材</h2>
-            <span class="ml-auto text-xs text-slate-400">建议 16:6 宽幅图</span>
+          <div class="mb-4 flex items-center gap-2 border-b ui-border pb-3">
+            <span class="flex h-6 w-6 items-center justify-center rounded-md ui-bg-brand text-xs font-bold ui-text-brand">2</span>
+            <h2 class="section-title">展示素材</h2>
+            <span class="ml-auto text-xs ui-text-muted">建议 16:6 宽幅图</span>
           </div>
 
           <div
             class="relative flex h-44 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition"
-            :class="dragging ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-50'"
+            :class="dragging ? 'border-indigo-400 ui-bg-brand' : 'ui-border ui-bg-soft'"
             @dragover.prevent="dragging = true"
             @dragleave.prevent="dragging = false"
             @drop.prevent="onDrop"
           >
             <img v-if="imageUrl" :src="imageUrl" alt="广告图片预览" class="h-full w-full object-cover" />
-            <div v-else class="text-center text-xs text-slate-400">
-              <ImagePlus class="mx-auto size-8 text-slate-300" :stroke-width="1.5" />
+            <div v-else class="text-center text-xs ui-text-muted">
+              <ImagePlus class="mx-auto size-8 ui-text-muted" :stroke-width="1.5" />
               <p class="mt-1">拖拽图片到这里，或点击下方按钮上传</p>
             </div>
             <span v-if="uploading" class="absolute inset-0 flex items-center justify-center bg-slate-900/40 text-sm text-white">上传中…</span>
@@ -152,11 +152,11 @@ async function save() {
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onPick" />
             <button class="btn btn-outline btn-sm" type="button" :disabled="uploading" @click="fileInput?.click()"><Upload class="size-4" />选择图片</button>
-            <span v-if="form.image" class="truncate text-xs text-slate-400">{{ form.image }}</span>
+            <span v-if="form.image" class="truncate text-xs ui-text-muted">{{ form.image }}</span>
           </div>
 
           <label class="form-control mt-3">
-            <span class="label-text mb-1.5 text-slate-600">或直接填写图片地址</span>
+            <span class="label-text mb-1.5 ui-text-base">或直接填写图片地址</span>
             <input v-model="form.image" class="input input-bordered input-sm w-full focus:border-indigo-400 focus:outline-none" placeholder="/image/… 或 https://…" @input="preview = ''" />
           </label>
         </section>
@@ -165,29 +165,29 @@ async function save() {
       <!-- 右侧：预览 / 检查 / 操作 -->
       <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
         <section class="surface p-4">
-          <h2 class="mb-3 text-sm font-semibold text-slate-700">前台效果预览</h2>
-          <div class="overflow-hidden rounded-lg border border-slate-200">
-            <div class="h-24 bg-slate-100">
+          <h2 class="mb-3 section-title">前台效果预览</h2>
+          <div class="overflow-hidden rounded-lg border ui-border">
+            <div class="h-24 ui-bg-soft">
               <img v-if="imageUrl" :src="imageUrl" alt="" class="h-full w-full object-cover" />
-              <div v-else class="flex h-full items-center justify-center text-xs text-slate-400">暂无图片</div>
+              <div v-else class="flex h-full items-center justify-center text-xs ui-text-muted">暂无图片</div>
             </div>
-            <p class="truncate bg-white px-3 py-2 text-xs text-slate-700">{{ form.title || '（未填写标题）' }}</p>
+            <p class="truncate ui-bg px-3 py-2 text-xs ui-text-strong">{{ form.title || '（未填写标题）' }}</p>
           </div>
-          <p class="mt-2 text-xs text-slate-400">这是侧边栏推广位的展示效果，实际投放位置在列表中设置。</p>
+          <p class="mt-2 text-xs ui-text-muted">这是侧边栏推广位的展示效果，实际投放位置在列表中设置。</p>
         </section>
 
         <section class="surface p-4">
-          <h2 class="mb-1 text-sm font-semibold text-slate-700">保存前检查</h2>
-          <p class="mb-3 text-xs text-slate-400">{{ checks.filter((c) => c.ok).length }} / {{ checks.length }} 项已完成</p>
+          <h2 class="mb-1 section-title">保存前检查</h2>
+          <p class="mb-3 text-xs ui-text-muted">{{ checks.filter((c) => c.ok).length }} / {{ checks.length }} 项已完成</p>
           <div class="space-y-1.5">
             <div v-for="check in checks" :key="check.label" class="flex items-center gap-2 text-xs">
-              <span class="flex h-4 w-4 items-center justify-center rounded-full" :class="check.ok ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'">
+              <span class="flex h-4 w-4 items-center justify-center rounded-full" :class="check.ok ? 'bg-emerald-100 text-emerald-600' : 'ui-bg-soft ui-text-muted'">
                 <component :is="check.ok ? Check : Minus" class="size-3" />
               </span>
-              <span :class="check.ok ? 'text-slate-500' : 'text-slate-700'">{{ check.label }}</span>
+              <span :class="check.ok ? 'ui-text-base' : 'ui-text-strong'">{{ check.label }}</span>
             </div>
           </div>
-          <div class="mt-4 space-y-2 border-t border-slate-100 pt-3">
+          <div class="mt-4 space-y-2 border-t ui-border pt-3">
             <button class="btn btn-primary btn-sm w-full" :disabled="saving || !ready" type="button" @click="save">
               {{ saving ? '保存中…' : isEdit ? '保存修改' : '创建广告' }}
             </button>
@@ -196,8 +196,8 @@ async function save() {
         </section>
 
         <section class="surface p-4">
-          <h2 class="mb-2 text-sm font-semibold text-slate-700">小贴士</h2>
-          <ul class="list-inside list-disc space-y-1.5 text-xs leading-relaxed text-slate-500">
+          <h2 class="mb-2 section-title">小贴士</h2>
+          <ul class="list-inside list-disc space-y-1.5 text-xs leading-relaxed ui-text-base">
             <li>图片会自动裁剪填充，重要内容请放在中间。</li>
             <li>创建后默认为「未投放」，需要在列表中点击「投放」。</li>
             <li>每个位置可投放的广告数由后台配置限制。</li>

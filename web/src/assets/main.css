@@ -3,19 +3,41 @@
   themes: light --default, dark;
 }
 
+/* ===========================================================================
+   1. 设计令牌：全站唯一的颜色 / 圆角 / 阴影 / 层级来源
+   组件里一律使用语义类（ui-*），不再直接写 slate / indigo 等色值
+   =========================================================================== */
 :root {
   --brand: #4f46e5;
+  --brand-strong: #4338ca;
   --brand-soft: #eef2ff;
-  --page-bg: #f5f7fb;
+  --brand-ring: rgb(79 70 229 / 18%);
+  --brand-grad-from: #6366f1;
+  --brand-grad-to: #4338ca;
+
+  --page-bg: #f6f7fb;
+  --page-glow: radial-gradient(1200px 460px at 50% -220px, rgb(99 102 241 / 9%), transparent 70%);
+  --header-bg: rgb(255 255 255 / 88%);
+
   --surface-bg: #ffffff;
-  --surface-border: #e9edf3;
-  --surface-shadow: 0 2px 10px rgb(31 41 55 / 4%);
+  --surface-border: #e8ecf3;
+  --surface-shadow: 0 1px 2px rgb(16 24 40 / 4%), 0 10px 28px -18px rgb(16 24 40 / 22%);
+  --shadow-1: 0 1px 2px rgb(16 24 40 / 6%);
+  --shadow-2: 0 6px 18px -8px rgb(16 24 40 / 18%);
+  --shadow-3: 0 20px 48px -16px rgb(16 24 40 / 28%);
+
+  --radius-xs: 6px;
+  --radius-sm: 9px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
   --text-body: #1f2937;
-  --text-strong: #1f2937;
-  --text-base: #475569;
-  --text-muted: #64748b;
-  --soft-bg: #f1f5f9;
-  --soft-border: #e2e8f0;
+  --text-strong: #111827;
+  --text-base: #4b5563;
+  --text-muted: #8590a2;
+  --soft-bg: #f3f5f9;
+  --soft-border: #e3e8f0;
   --inline-code-bg: #f1f5f9;
   --md-blockquote-bg: #eef2ff;
   /* 代码块底色必须与 Vditor 当前高亮主题一致，否则 pre 的 padding 会形成深色边框 */
@@ -25,16 +47,28 @@
 
 [data-theme='dark'] {
   --brand: #818cf8;
+  --brand-strong: #a5b4fc;
   --brand-soft: #312e81;
+  --brand-ring: rgb(129 140 248 / 28%);
+  --brand-grad-from: #818cf8;
+  --brand-grad-to: #6366f1;
+
   --page-bg: #0f172a;
+  --page-glow: radial-gradient(1200px 460px at 50% -220px, rgb(129 140 248 / 12%), transparent 70%);
+  --header-bg: rgb(15 23 42 / 88%);
+
   --surface-bg: #1e293b;
   --surface-border: #334155;
-  --surface-shadow: 0 2px 14px rgb(0 0 0 / 22%);
+  --surface-shadow: 0 1px 2px rgb(0 0 0 / 18%), 0 14px 32px -18px rgb(0 0 0 / 55%);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 24%);
+  --shadow-2: 0 8px 22px -8px rgb(0 0 0 / 48%);
+  --shadow-3: 0 22px 52px -16px rgb(0 0 0 / 65%);
+
   --text-body: #e2e8f0;
   --text-strong: #f1f5f9;
   --text-base: #cbd5e1;
-  --text-muted: #94a3b8;
-  --soft-bg: #273449;
+  --text-muted: #a4b2c6;
+  --soft-bg: #2b3a51;
   --soft-border: #334155;
   --inline-code-bg: #334155;
   --md-blockquote-bg: #312e81;
@@ -42,29 +76,81 @@
   --code-block-color: #c9d1d9;
 }
 
-html,
-body,
-#app {
-  min-height: 100%;
+/* ===========================================================================
+   2. 基础层：浏览器默认样式、全局排版与可访问性
+   =========================================================================== */
+@layer base {
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--soft-border) transparent;
+  }
+
+  body {
+    margin: 0;
+    max-width: 100%;
+    overflow-x: clip;
+    background-color: var(--page-bg);
+    background-image: var(--page-glow);
+    color: var(--text-body);
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+      'Microsoft YaHei', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.012em;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+  }
+
+  :where(a, button, [tabindex]):focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--soft-border);
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
-body {
-  margin: 0;
-  background: var(--page-bg);
-  color: var(--text-body);
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', sans-serif;
-  transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
-}
-
-/* Lucide 图标：统一不被 flex 压缩，并跟随当前文字颜色 */
-svg.lucide {
-  flex-shrink: 0;
-}
-
+/* ===========================================================================
+   3. 项目自定义布局类
+   =========================================================================== */
 .page-container {
   width: min(1180px, 100% - 2rem);
   margin: 0 auto;
@@ -73,17 +159,84 @@ svg.lucide {
 .surface {
   background: var(--surface-bg);
   border: 1px solid var(--surface-border);
-  border-radius: 0.9rem;
+  border-radius: var(--radius-card);
   box-shadow: var(--surface-shadow);
   transition:
     background-color 0.25s ease,
-    border-color 0.25s ease;
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* 可点击卡片：轻微上浮，静态容器保持安静 */
+a.surface:hover,
+.surface[class*='hover:']:hover {
+  box-shadow: var(--shadow-2);
+  transform: translateY(-1px);
 }
 
 .side-panel {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* 统一的区块标题：左侧品牌色竖条 */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-strong);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+}
+
+/* 统一的空状态：图标 + 主文案 + 辅助说明 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 2.75rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.empty-state > svg {
+  color: var(--soft-border);
+}
+
+/* 统一的标签 / 筛选胶囊 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-pill);
+  background: var(--soft-bg);
+  color: var(--text-base);
+  padding: 0.28rem 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+.chip:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
 }
 
 .link-muted {
@@ -97,6 +250,95 @@ svg.lucide {
 .theme-menu {
   background: var(--surface-bg);
   border-color: var(--surface-border);
+  box-shadow: var(--shadow-3);
+}
+
+.site-footer {
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+}
+
+/* 后台侧栏：桌面常驻，小屏抽屉 */
+.admin-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 15rem;
+  flex-shrink: 0;
+  color: #cbd5e1;
+  background: linear-gradient(180deg, #131c31, #0d1527);
+  border-right: 1px solid rgb(255 255 255 / 8%);
+}
+.admin-nav-link {
+  color: #cbd5e1;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+.admin-nav-link:hover {
+  background-color: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+.admin-nav-link.is-active {
+  background-image: linear-gradient(135deg, var(--brand-grad-from), var(--brand-grad-to));
+  background-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 6px 16px -8px var(--brand-ring);
+}
+@media (max-width: 767px) {
+  .admin-sidebar {
+    position: fixed;
+    inset-block: 0;
+    left: 0;
+    z-index: 60;
+    width: 17rem;
+    max-width: 84vw;
+    transform: translateX(-102%);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: var(--shadow-3);
+  }
+  .admin-sidebar.is-open {
+    transform: none;
+  }
+}
+
+.ui-header {
+  background: var(--header-bg);
+  border-color: var(--surface-border);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-1);
+}
+
+.mobile-tabbar {
+  background: var(--header-bg);
+  border-color: var(--surface-border);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -6px 24px -14px rgb(16 24 40 / 30%);
+}
+
+/* 底部导航中间的「发起」按钮 */
+.rank-top {
+  background-image: linear-gradient(135deg, var(--brand-grad-from), var(--brand-grad-to));
+  background-color: var(--brand);
+  color: #fff;
+}
+
+.tab-fab {
+  background-image: linear-gradient(135deg, var(--brand-grad-from), var(--brand-grad-to));
+  background-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 8px 20px -6px var(--brand-ring);
+  border: 3px solid var(--page-bg);
+}
+
+/* 聊天室：适配移动端浏览器地址栏与底部安全区 */
+.chat-shell {
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+}
+.chat-composer {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
 }
 
 /* 聊天室消息气泡：互斥类名，避免背景/文字颜色互相覆盖 */
@@ -109,7 +351,7 @@ svg.lucide {
   border: 1px solid var(--surface-border);
 }
 .chat-bubble-mine {
-  background: #4f46e5;
+  background: var(--brand-grad-from);
   color: #ffffff;
 }
 [data-theme='dark'] .chat-bubble-mine {
@@ -136,7 +378,343 @@ svg.lucide {
   overflow: hidden;
 }
 
-/* Markdown 渲染区域（Vditor.preview 输出） */
+/* Lucide 图标：统一不被 flex 压缩，并跟随当前文字颜色 */
+svg.lucide {
+  flex-shrink: 0;
+}
+
+/* ===========================================================================
+   4. 语义工具类与组件统一外观
+   放在 utilities 层：既能覆盖 Tailwind / daisyUI，又不破坏 hover 变体
+   =========================================================================== */
+@layer utilities {
+  .ui-text-strong {
+    color: var(--text-strong);
+  }
+  .ui-text-base {
+    color: var(--text-base);
+  }
+  .ui-text-muted {
+    color: var(--text-muted);
+  }
+  .ui-text-brand {
+    color: var(--brand);
+  }
+  .ui-bg {
+    background-color: var(--surface-bg);
+  }
+  .ui-bg-page {
+    background-color: var(--page-bg);
+  }
+  .ui-bg-soft {
+    background-color: var(--soft-bg);
+  }
+  .ui-bg-brand {
+    background-color: var(--brand-soft);
+  }
+  .ui-border {
+    border-color: var(--surface-border);
+  }
+  .ui-bg,
+  .ui-bg-soft,
+  .ui-bg-brand,
+  .ui-border {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  /* 圆角归一化：同类元素无论写 rounded-lg / xl / box 都得到一致结果 */
+  .rounded-lg {
+    border-radius: var(--radius-sm);
+  }
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-box {
+    border-radius: var(--radius-md);
+  }
+  .shadow-sm {
+    box-shadow: var(--shadow-1);
+  }
+  .shadow-md,
+  .shadow-lg {
+    box-shadow: var(--shadow-2);
+  }
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: var(--shadow-3);
+  }
+
+  /* 按钮：统一圆角、字重与焦点环；主按钮使用品牌渐变 */
+  .btn {
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition:
+      background-color 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease,
+      filter 0.18s ease;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .btn-primary,
+  .btn.btn-ghost.btn-primary,
+  .btn.btn-active.btn-primary {
+    background-image: linear-gradient(135deg, var(--brand-grad-from), var(--brand-grad-to));
+    background-color: var(--brand);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 12px -4px var(--brand-ring);
+  }
+  .btn-primary:hover,
+  .btn.btn-ghost.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 16px -4px var(--brand-ring);
+  }
+  .btn-outline:not(.btn-primary) {
+    border-color: var(--soft-border);
+    color: var(--brand);
+  }
+  .btn-outline:not(.btn-primary):hover {
+    border-color: var(--brand);
+    background-color: var(--brand-soft);
+    color: var(--brand-strong);
+  }
+  /* 按钮上的语义色需要压过 daisyUI 的按钮默认色，但主按钮始终保留白字 */
+  .btn.ui-text-strong:not(.btn-primary) {
+    color: var(--text-strong);
+  }
+  .btn.ui-text-base:not(.btn-primary) {
+    color: var(--text-base);
+  }
+  .btn.ui-text-muted:not(.btn-primary) {
+    color: var(--text-muted);
+  }
+  .btn.ui-text-brand:not(.btn-primary) {
+    color: var(--brand);
+  }
+  /* 未显式指定语义色的 ghost 按钮统一使用次级文字色（低特异性，不覆盖 hover 与语义色） */
+  :where(.btn-ghost:not(.btn-primary):not([class*='ui-text-']):not([class*='text-rose'])) {
+    color: var(--text-base);
+  }
+  .btn-ghost:not(.btn-primary):hover {
+    background-color: var(--soft-bg);
+  }
+
+  /* 表单控件：统一边框、圆角、聚焦反馈 */
+  .input,
+  .select,
+  .textarea,
+  .file-input {
+    border-color: var(--soft-border);
+    background-color: var(--surface-bg);
+    border-radius: var(--radius-sm);
+    color: var(--text-body);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .input:focus,
+  .select:focus,
+  .textarea:focus,
+  .file-input:focus,
+  .input:focus-within,
+  .textarea:focus-within {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-ring);
+    outline: none;
+  }
+  .input::placeholder,
+  .textarea::placeholder {
+    color: var(--text-muted);
+  }
+  .join > .input:focus,
+  .join > .select:focus {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 徽标、选项卡、菜单、弹窗、提示 */
+  .badge {
+    border-radius: var(--radius-pill);
+    font-weight: 500;
+  }
+  .tab.tab-active {
+    color: var(--brand);
+    font-weight: 600;
+  }
+  .dropdown-content,
+  .menu {
+    border-radius: var(--radius-md);
+    background: var(--surface-bg);
+    color: var(--text-body);
+  }
+  .dropdown-content {
+    border-color: var(--surface-border);
+    box-shadow: var(--shadow-3);
+  }
+  .menu :where(li > *:not(ul):not(details):not(.menu-title)):hover,
+  .menu :where(li > *:not(ul):not(details):not(.menu-title)).active {
+    background-color: var(--soft-bg);
+    color: var(--text-strong);
+  }
+  .menu-title {
+    color: var(--text-muted);
+  }
+  .alert {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
+  }
+  .modal-box {
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-card);
+    background: var(--surface-bg);
+    box-shadow: var(--shadow-3);
+  }
+  .skeleton {
+    background-color: var(--soft-bg);
+  }
+  .divider {
+    color: var(--text-muted);
+  }
+  .table :where(th, td) {
+    border-color: var(--surface-border);
+  }
+  .table thead th {
+    background: var(--soft-bg);
+    color: var(--text-base);
+    font-weight: 600;
+  }
+  .table tbody tr:hover {
+    background-color: var(--soft-bg);
+  }
+
+  /* 夜间模式：保留模板里少量半透明 / hover 变体类的修正 */
+  [data-theme='dark'] .bg-white\/95,
+  [data-theme='dark'] .bg-white\/80,
+  [data-theme='dark'] .bg-white\/30 {
+    background-color: var(--surface-bg);
+  }
+  [data-theme='dark'] .bg-slate-900 {
+    background-color: #111827;
+  }
+  [data-theme='dark'] .hover\:bg-slate-50:hover,
+  [data-theme='dark'] .hover\:bg-slate-100:hover,
+  [data-theme='dark'] .hover\:bg-white:hover,
+  [data-theme='dark'] .hover\:text-slate-700:hover {
+    background-color: var(--soft-bg);
+  }
+  [data-theme='dark'] .hover\:bg-indigo-50:hover {
+    background-color: var(--brand-soft);
+  }
+  [data-theme='dark'] .hover\:text-indigo-600:hover,
+  [data-theme='dark'] .hover\:text-indigo-700:hover,
+  [data-theme='dark'] .group-hover\:text-indigo-600:hover {
+    color: var(--brand-strong);
+  }
+  [data-theme='dark'] .hover\:border-indigo-200:hover,
+  [data-theme='dark'] .hover\:border-indigo-300:hover {
+    border-color: #6366f1;
+  }
+  [data-theme='dark'] .border-dashed {
+    border-color: var(--surface-border);
+  }
+  [data-theme='dark'] .border-white {
+    border-color: var(--surface-bg);
+  }
+  /* 语义强调色在夜间模式下的可读性 */
+  [data-theme='dark'] .bg-amber-50 {
+    background-color: rgb(120 53 15 / 35%);
+  }
+  [data-theme='dark'] .text-amber-800 {
+    color: #fcd34d;
+  }
+  [data-theme='dark'] .border-amber-200 {
+    border-color: rgb(251 191 36 / 30%);
+  }
+  [data-theme='dark'] .bg-emerald-100 {
+    background-color: rgb(6 78 59 / 45%);
+  }
+  [data-theme='dark'] .text-emerald-600 {
+    color: #6ee7b7;
+  }
+  [data-theme='dark'] .text-rose-500 {
+    color: #fb7185;
+  }
+  [data-theme='dark'] .text-amber-600 {
+    color: #fbbf24;
+  }
+  [data-theme='dark'] .text-orange-500 {
+    color: #fdba74;
+  }
+
+  /* -------------------------------------------------------------------------
+     移动端：更紧凑的容器、足够大的点击区域、iOS 输入框不缩放、弹窗不出界
+     ------------------------------------------------------------------------- */
+  @media (max-width: 640px) {
+    .page-container {
+      width: min(1180px, 100% - 1.25rem);
+    }
+    .ui-header .navbar {
+      min-height: 3.5rem;
+    }
+    .surface {
+      border-radius: 13px;
+    }
+    .surface.p-4,
+    .surface.p-5,
+    .surface.p-6,
+    .surface.p-7,
+    .surface.sm\:p-6,
+    .surface.sm\:p-8,
+    .surface.sm\:p-9 {
+      padding: 1rem;
+    }
+    .btn {
+      min-height: 2.25rem;
+    }
+    .btn-sm {
+      min-height: 2.125rem;
+    }
+    .btn-xs {
+      min-height: 1.875rem;
+    }
+    .btn-circle {
+      min-width: 2.25rem;
+    }
+    :where(.input, .select, .textarea, .file-input) {
+      font-size: 16px;
+    }
+    .modal-box {
+      max-width: calc(100vw - 1.5rem);
+      max-height: calc(100dvh - 2rem);
+      padding: 1.25rem;
+    }
+    .toast {
+      left: 1rem;
+      right: 1rem;
+      align-items: stretch;
+    }
+    /* 提示条下移，避免盖住顶部导航 */
+    .toast.toast-top {
+      top: calc(3.5rem + env(safe-area-inset-top));
+      inset-block-start: calc(3.5rem + env(safe-area-inset-top));
+    }
+    .toast > * {
+      max-width: 100%;
+    }
+    .table {
+      font-size: 0.8125rem;
+    }
+  }
+}
+
+/* ===========================================================================
+   5. Markdown 渲染区域（Vditor.preview 输出）
+   =========================================================================== */
 .markdown-body {
   line-height: 1.75;
   color: var(--text-body);
@@ -159,12 +737,38 @@ svg.lucide {
 .markdown-body h3 {
   font-size: 1.15rem;
 }
+/* Vditor 运行时注入的 .vditor-reset 字号偏大，统一到与页面层级一致 */
+.markdown-body.vditor-reset h1 {
+  font-size: 1.5rem;
+}
+.markdown-body.vditor-reset h2 {
+  font-size: 1.3rem;
+}
+.markdown-body.vditor-reset h3 {
+  font-size: 1.1rem;
+}
+@media (max-width: 640px) {
+  .markdown-body.vditor-reset h1 {
+    font-size: 1.3rem;
+  }
+  .markdown-body.vditor-reset h2 {
+    font-size: 1.15rem;
+  }
+  .markdown-body.vditor-reset h3 {
+    font-size: 1.02rem;
+  }
+  .markdown-body.vditor-reset h1,
+  .markdown-body.vditor-reset h2,
+  .markdown-body.vditor-reset h3 {
+    margin-top: 0.9em;
+  }
+}
 .markdown-body p {
   margin: 0.7em 0;
 }
 .markdown-body img {
   max-width: 100%;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-sm);
 }
 .markdown-body pre {
   overflow-x: auto;
@@ -173,7 +777,7 @@ svg.lucide {
   color: var(--code-block-color);
   border: 1px solid var(--soft-border);
   padding: 1rem;
-  border-radius: 0.6rem;
+  border-radius: var(--radius-sm);
 }
 /* Vditor 的 github / github-dark 主题会给 code.hljs 单独设置背景与 padding，
    与 pre 叠加会出现「外框 + 内白块」；统一由 pre 提供底色与内边距 */
@@ -194,13 +798,14 @@ svg.lucide {
   background: var(--inline-code-bg);
   color: #c026d3;
   padding: 0.1em 0.35em;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-xs);
 }
 .markdown-body blockquote {
   border-left: 3px solid var(--brand);
   background: var(--md-blockquote-bg);
   margin: 1em 0;
   padding: 0.6em 1em;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 .markdown-body table {
   border-collapse: collapse;
@@ -214,7 +819,7 @@ svg.lucide {
 
 /* Vditor 在 daisyUI 下的高度与字体修正 */
 .vditor {
-  border-radius: 0.6rem;
+  border-radius: var(--radius-sm);
   border-color: var(--soft-border);
 }
 .vditor-reset {
@@ -235,7 +840,7 @@ svg.lucide {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-xs);
   padding: 0.3rem 0.5rem;
   color: var(--text-muted);
   cursor: pointer;
@@ -263,13 +868,9 @@ svg.lucide {
   display: none;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
-/* ---------------------------------------------------------------------------
-   页面切换动画：淡入 + 轻微上移，out-in 模式避免两屏内容重叠
-   --------------------------------------------------------------------------- */
+/* ===========================================================================
+   6. 过渡动画
+   =========================================================================== */
 .page-enter-active {
   transition:
     opacity 0.28s ease,
@@ -302,80 +903,19 @@ html {
   .page-enter-active,
   .page-leave-active,
   .fade-enter-active,
-  .fade-leave-active {
+  .fade-leave-active,
+  .surface,
+  .btn {
     transition: none;
   }
 }
 
-/* ---------------------------------------------------------------------------
-   夜间模式：覆盖项目里显式写死的 slate / white 工具类
-   daisyUI 的 btn / input / modal / table / badge 等由内置 dark 主题自行适配
-   --------------------------------------------------------------------------- */
-[data-theme='dark'] .text-slate-900,
-[data-theme='dark'] .text-slate-800,
-[data-theme='dark'] .text-slate-700 {
-  color: var(--text-strong);
-}
-[data-theme='dark'] .text-slate-600,
-[data-theme='dark'] .text-slate-500 {
-  color: var(--text-base);
-}
-[data-theme='dark'] .text-slate-400,
-[data-theme='dark'] .text-slate-300 {
-  color: var(--text-muted);
-}
-[data-theme='dark'] .text-indigo-600,
-[data-theme='dark'] .text-indigo-700 {
-  color: #a5b4fc;
-}
-[data-theme='dark'] .text-rose-500 {
-  color: #fb7185;
-}
-[data-theme='dark'] .text-emerald-600 {
-  color: #6ee7b7;
-}
-[data-theme='dark'] .text-amber-600 {
-  color: #fbbf24;
-}
-
-[data-theme='dark'] .bg-white,
-[data-theme='dark'] .bg-white\/95,
-[data-theme='dark'] .bg-white\/80,
-[data-theme='dark'] .bg-white\/30 {
-  background-color: var(--surface-bg);
-}
-[data-theme='dark'] .bg-slate-50,
-[data-theme='dark'] .bg-slate-100,
-[data-theme='dark'] .bg-slate-200,
-[data-theme='dark'] .bg-indigo-50,
-[data-theme='dark'] .bg-emerald-100 {
-  background-color: var(--soft-bg);
-}
-[data-theme='dark'] .bg-slate-900 {
-  background-color: #111827;
-}
-
-[data-theme='dark'] .border-slate-100,
-[data-theme='dark'] .border-slate-200,
-[data-theme='dark'] .border-indigo-200,
-[data-theme='dark'] .border-dashed {
-  border-color: var(--surface-border);
-}
-[data-theme='dark'] .divide-slate-100 > * {
-  border-color: var(--surface-border);
-}
-[data-theme='dark'] .hover\:bg-slate-50:hover,
-[data-theme='dark'] .hover\:bg-white:hover {
-  background-color: var(--soft-bg);
-}
-[data-theme='dark'] .hover\:bg-indigo-50:hover {
-  background-color: var(--brand-soft);
-}
-[data-theme='dark'] .hover\:border-indigo-200:hover,
-[data-theme='dark'] .hover\:border-indigo-300:hover {
-  border-color: #6366f1;
-}
-
+/* ===========================================================================
+   7. 夜间模式代码块兜底
+   Vditor 会动态从 CDN 注入 <link id="vditorHljsStyle">，网络不可达时会缺失；
+   这里用 [data-theme='dark'] 前缀（更高优先级）保证无论 CDN 是否加载成功，
+   代码块与高亮 token 都是暗色，不会退回白底深字的 github 亮色主题。
+   =========================================================================== */
 [data-theme='dark'] .markdown-body :not(pre) > code {
   color: #f0abfc;
 }
@@ -383,13 +923,6 @@ html {
 [data-theme='dark'] .markdown-body {
   color: var(--text-body);
 }
-
-/* ---------------------------------------------------------------------------
-   夜间模式代码块：本地兜底的 GitHub Dark 配色
-   Vditor 会动态从 CDN 注入 <link id="vditorHljsStyle">，网络不可达时会缺失；
-   这里用 [data-theme='dark'] 前缀（更高优先级）保证无论 CDN 是否加载成功，
-   代码块与高亮 token 都是暗色，不会退回白底深字的 github 亮色主题。
-   --------------------------------------------------------------------------- */
 [data-theme='dark'] .markdown-body pre,
 [data-theme='dark'] .vditor-reset pre,
 [data-theme='dark'] pre code.hljs {

@@ -33,7 +33,7 @@ async function recover(id) {
 
 <template>
   <div class="surface overflow-x-auto p-5">
-    <h2 class="mb-4 text-sm font-semibold text-slate-700">所有问题（{{ data?.allCount ?? 0 }}）</h2>
+    <h2 class="mb-4 section-title">所有问题（{{ data?.allCount ?? 0 }}）</h2>
     <table class="table table-sm">
       <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>发起人</th><th>发布时间</th><th>状态</th><th>操作</th></tr></thead>
       <tbody>
@@ -49,7 +49,7 @@ async function recover(id) {
             <button v-else class="btn btn-ghost btn-xs text-emerald-600" type="button" @click="recover(item.questionId)"><RotateCcw class="size-3.5" />恢复</button>
           </td>
         </tr>
-        <tr v-if="!data?.data?.length"><td colspan="7" class="text-center text-slate-400">暂无问题</td></tr>
+        <tr v-if="!data?.data?.length"><td colspan="7" class="text-center ui-text-muted">暂无问题</td></tr>
       </tbody>
     </table>
     <Pagination :pagination="data" @change="router.push({ name: 'admin-questions', query: { page: $event } })" />

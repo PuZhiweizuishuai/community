@@ -1,5 +1,5 @@
 <script setup>
-import { Eye, MessageCircle, ThumbsUp } from '@lucide/vue'
+import { Eye, Inbox, MessageCircle, ThumbsUp } from '@lucide/vue'
 import Avatar from '@/components/Avatar.vue'
 import { splitTags, shortNumber } from '@/utils/format'
 
@@ -15,13 +15,14 @@ defineProps({
 
 <template>
   <div>
-    <div v-if="!items.length" class="surface px-6 py-14 text-center text-sm text-slate-400">
-      {{ emptyText }}
+    <div v-if="!items.length" class="surface empty-state">
+      <Inbox class="size-9" :stroke-width="1.5" />
+      <span>{{ emptyText }}</span>
     </div>
     <article
       v-for="item in items"
       :key="item.questionId"
-      class="surface mb-3 p-4 transition hover:border-indigo-200 hover:shadow-sm"
+      class="surface mb-3 p-4 hover:border-indigo-200 sm:p-5"
     >
       <div class="flex items-start gap-3">
         <RouterLink v-if="authorPath(item)" :to="authorPath(item)" class="shrink-0">
@@ -30,12 +31,12 @@ defineProps({
         <Avatar v-else :src="item.user?.headUrl" :name="item.user?.userName" :size="38" />
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
-            <span v-if="item.classification" class="badge badge-sm badge-outline border-indigo-200 text-indigo-600">
+            <span v-if="item.classification" class="badge badge-sm badge-primary badge-outline">
               {{ item.classification }}
             </span>
             <RouterLink
               :to="`/question/${item.questionId}`"
-              class="line-clamp-1 flex-1 font-medium text-slate-800 hover:text-indigo-600"
+              class="line-clamp-2 flex-1 text-[15px] font-semibold ui-text-strong hover:text-indigo-600 sm:line-clamp-1"
             >
               {{ item.title }}
             </RouterLink>
@@ -44,7 +45,7 @@ defineProps({
             </span>
           </div>
 
-          <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+          <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ui-text-muted">
             <RouterLink v-if="authorPath(item)" :to="authorPath(item)" class="hover:text-indigo-600">
               {{ item.user?.userName || '匿名用户' }}
             </RouterLink>
@@ -60,7 +61,7 @@ defineProps({
               v-for="tag in splitTags(item.tag)"
               :key="tag"
               :to="{ name: 'home', query: { tag } }"
-              class="badge badge-sm bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+              class="chip"
             >
               # {{ tag }}
             </RouterLink>

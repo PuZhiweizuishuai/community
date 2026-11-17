@@ -3,6 +3,7 @@ package com.buguagaoshu.community.service;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.User;
 
 import java.util.List;
 
@@ -22,10 +23,11 @@ public interface QuestionService {
     /**
      * @param page 页码
      * @param size 每页显示数量
+     * @param cursor 游标（非空时走游标分页，忽略 page）
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
-    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort, Integer classification);
+    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort, Integer classification, String cursor);
 
 
     /**
@@ -112,4 +114,17 @@ public interface QuestionService {
      * @return 结果
      * */
     int updateFollowCount(Question question);
+
+    /**
+     * 删除问题（作者自删或管理员删除）：通知作者与评论者、话题计数 -1、置为删除态，整体事务。
+     * @param questionId 问题 id
+     * @param operator 操作者（会话用户或管理员）
+     * @param isAdmin 是否管理员操作
+     */
+    void deleteQuestion(long questionId, User operator, boolean isAdmin);
+
+    /**
+     * 恢复被删除的问题（仅管理员）：通知作者与评论者、话题计数 +1、恢复正常态，整体事务。
+     */
+    void recoveryQuestion(long questionId, User admin);
 }

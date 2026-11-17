@@ -5,6 +5,10 @@ package com.buguagaoshu.community.util;
  * create          2019-09-03 13:55
  */
 public class NumberUtils {
+
+    /** offset 上限：后台跳页场景保留 offset，但禁止无限深分页（LIMIT 100000, n 会扫描丢弃大量行） */
+    private static final long MAX_OFFSET = 100_000L;
+
     /**
      * 返回分页参数
      * */
@@ -45,8 +49,8 @@ public class NumberUtils {
         }
 
 
-        // 计算分页公式 size * (page - 1)
-        long pageParam = sizeNumber * (offset - 1);
+        // 计算分页公式 size * (page - 1)，并钳制最大偏移
+        long pageParam = Math.min(sizeNumber * (offset - 1), MAX_OFFSET);
         long[] param = new long[4];
         // 页码
         param[0] = pageParam;

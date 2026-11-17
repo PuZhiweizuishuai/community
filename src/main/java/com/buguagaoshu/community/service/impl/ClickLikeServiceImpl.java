@@ -4,16 +4,19 @@ import com.buguagaoshu.community.dto.ClickLikeDTO;
 import com.buguagaoshu.community.enums.ClickLikeTypeEnum;
 import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
-import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.*;
 import com.buguagaoshu.community.model.ClickLike;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.Notification;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.ClickLikeService;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.buguagaoshu.community.model.table.ClickLikeTableDef.CLICK_LIKE;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -43,7 +46,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
     }
 
     @Override
-    @Transactional(rollbackFor = CustomizeException.class)
+    @Transactional
     public ClickLikeTypeEnum createClickLike(ClickLikeDTO clickLikeDTO) {
         ClickLike clickLike = new ClickLike();
         clickLike.setNotifier(clickLikeDTO.getNotifier());
@@ -63,16 +66,18 @@ public class ClickLikeServiceImpl implements ClickLikeService {
                 return ClickLikeTypeEnum.CLICK_LIKE_IS_NOT_USER;
             }
             // 取消点赞
-            ClickLike oldClick = clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), -1);
+            ClickLike oldClick = findLike(clickLike.getNotifier(), clickLike.getQuestionId(), -1);
             if(oldClick != null) {
-                clickLikeMapper.deleteClickLike(oldClick.getLikeId());
-                // 问题点赞 -1
-                question.setLikeCount(-1);
-                questionMapper.updateQuestionLikeCount(question);
-                // 用户点赞 -1
-                userMapper.updateUserLikeCount(-1, oldClick.getReceiver());
-                // 删除通知
-                notificationMapper.deleteNotification(oldClick.getNotificationId());
+                // 删除成功才减计数，避免并发取消导致计数多减
+                if (clickLikeMapper.deleteById(oldClick.getLikeId()) == 1) {
+                    // 问题点赞 -1
+                    question.setLikeCount(-1);
+                    questionMapper.updateQuestionLikeCount(question);
+                    // 用户点赞 -1
+                    userMapper.updateUserLikeCount(-1, oldClick.getReceiver());
+                    // 删除通知
+                    notificationMapper.deleteById(oldClick.getNotificationId());
+                }
                 return ClickLikeTypeEnum.SUCCESS_CANCEL;
             }
             clickLike.setReceiver(question.getUserId());
@@ -82,8 +87,15 @@ public class ClickLikeServiceImpl implements ClickLikeService {
             Long notificationId = createNotification(clickLike, NotificationTypeEnum.LIKE_QUESTION, clickLike.getQuestionId());
             clickLike.setNotificationId(notificationId);
 
-            // 插入点赞表
-            clickLikeMapper.createClickLike(clickLike);
+            // 插入点赞表：唯一索引兜底并发重复点赞
+            try {
+                clickLikeMapper.insertSelective(clickLike);
+            } catch (DuplicateKeyException e) {
+                if (notificationId > 0) {
+                    notificationMapper.deleteById(notificationId);
+                }
+                return ClickLikeTypeEnum.SUCCESS;
+            }
             // 更新问题点赞数
             question.setLikeCount(1);
             questionMapper.updateQuestionLikeCount(question);
@@ -99,18 +111,19 @@ public class ClickLikeServiceImpl implements ClickLikeService {
             if(clickLike.getNotifier() == comment.getCommentator()) {
                 return ClickLikeTypeEnum.CLICK_LIKE_IS_NOT_USER;
             }
-            ClickLike oldClick = clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), clickLike.getCommentId());
+            ClickLike oldClick = findLike(clickLike.getNotifier(), clickLike.getQuestionId(), clickLike.getCommentId());
 
             if(oldClick != null) {
-                // 删除点赞
-                clickLikeMapper.deleteClickLike(oldClick.getLikeId());
-                // 用户点赞 -1
-                userMapper.updateUserLikeCount(-1, oldClick.getReceiver());
-                // 删除通知
-                notificationMapper.deleteNotification(oldClick.getNotificationId());
-                // 评论点赞 -1
-                comment.setLikeCount(-1);
-                commentMapper.updateCommentLikeCount(comment);
+                // 删除成功才减计数，避免并发取消导致计数多减
+                if (clickLikeMapper.deleteById(oldClick.getLikeId()) == 1) {
+                    // 用户点赞 -1
+                    userMapper.updateUserLikeCount(-1, oldClick.getReceiver());
+                    // 删除通知
+                    notificationMapper.deleteById(oldClick.getNotificationId());
+                    // 评论点赞 -1
+                    comment.setLikeCount(-1);
+                    commentMapper.updateCommentLikeCount(comment);
+                }
                 return ClickLikeTypeEnum.SUCCESS_CANCEL;
             }
             clickLike.setReceiver(comment.getCommentator());
@@ -119,7 +132,15 @@ public class ClickLikeServiceImpl implements ClickLikeService {
             // 创建通知
             Long notificationId = createNotification(clickLike, NotificationTypeEnum.LIKE_COMMENT, clickLike.getQuestionId());
             clickLike.setNotificationId(notificationId);
-            clickLikeMapper.createClickLike(clickLike);
+            // 唯一索引兜底并发重复点赞
+            try {
+                clickLikeMapper.insertSelective(clickLike);
+            } catch (DuplicateKeyException e) {
+                if (notificationId > 0) {
+                    notificationMapper.deleteById(notificationId);
+                }
+                return ClickLikeTypeEnum.SUCCESS;
+            }
             // 更新评论点赞数
             comment.setLikeCount(1);
             commentMapper.updateCommentLikeCount(comment);
@@ -131,10 +152,15 @@ public class ClickLikeServiceImpl implements ClickLikeService {
 
     @Override
     public Boolean isClickLikeQuestion(ClickLike clickLike) {
-        if(clickLikeMapper.getClickLikePreventRepeat(clickLike.getNotifier(), clickLike.getQuestionId(), clickLike.getCommentId()) != null) {
-            return true;
-        }
-        return false;
+        return findLike(clickLike.getNotifier(), clickLike.getQuestionId(), clickLike.getCommentId()) != null;
+    }
+
+    /** 防重复点赞判断：同一人对同一问题/评论只允许一条点赞记录 */
+    private ClickLike findLike(long notifier, long questionId, long commentId) {
+        return clickLikeMapper.selectOneByQuery(QueryWrapper.create()
+                .where(CLICK_LIKE.NOTIFIER.eq(notifier))
+                .and(CLICK_LIKE.QUESTION_ID.eq(questionId))
+                .and(CLICK_LIKE.COMMENT_ID.eq(commentId)));
     }
 
 
@@ -159,7 +185,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
         notification.setStatus(NotificationStatusEnum.UNREAD.getStatus());
         // 通知接收人
         notification.setReceiver(clickLike.getReceiver());
-        notificationMapper.insertNotification(notification);
+        notificationMapper.insertSelective(notification);
         return notification.getId();
     }
 }

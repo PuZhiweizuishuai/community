@@ -28,9 +28,12 @@ const adminArea = computed(() => !!route.meta.adminArea && !bare.value)
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
-    <div v-if="loading" class="fixed top-0 left-0 right-0 z-[100] h-0.5 bg-indigo-100">
-      <div class="h-full w-1/3 animate-pulse bg-indigo-600" />
+  <div class="min-h-[100dvh] flex flex-col">
+    <div v-if="loading" class="fixed top-0 left-0 right-0 z-[100] h-0.5 ui-bg-soft">
+      <div
+        class="h-full w-1/3 animate-pulse"
+        style="background-image: linear-gradient(90deg, var(--brand-grad-from), var(--brand-grad-to))"
+      />
     </div>
 
     <template v-if="bare">
@@ -53,7 +56,8 @@ const adminArea = computed(() => !!route.meta.adminArea && !bare.value)
 
     <template v-else>
       <AppHeader />
-      <main class="flex-1 py-6">
+      <!-- 底部导航栏在 lg 以下常驻，预留空间避免遮挡内容与页脚 -->
+      <main class="flex-1 pt-4 pb-24 sm:pt-6 lg:pb-6">
         <RouterView v-slot="{ Component }">
           <Transition name="page" mode="out-in" appear>
             <component :is="Component" :key="route.path" />

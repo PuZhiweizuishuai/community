@@ -4,12 +4,13 @@ import com.buguagaoshu.community.dto.CommentCreateDto;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
-import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.SiteCacheService;
+import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.captcha.CaptchaUtil;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static com.buguagaoshu.community.dto.ResultDTO.errorOf;
 import static com.buguagaoshu.community.dto.ResultDTO.okOf;
 
 /**
@@ -38,21 +38,12 @@ public class CommentApiController {
 
 
     @PostMapping("/api/comment")
-    public ResultDTO insertComment(@RequestBody CommentCreateDto commentDto,
-                                   HttpServletRequest request) {
-        User user = (User) request.getSession().getAttribute("user");
-        if (user == null) {
-            return ResultDTO.errorOf(CustomizeErrorCode.NO_LOGIN);
-        }
-        // 检查验证码
+    public ResultDTO<Comment> insertComment(@Valid @RequestBody CommentCreateDto commentDto,
+                                            HttpServletRequest request) {
+        User user = AuthUtil.requireUser(request);
+        // 检查验证码（校验即清除）
         if (!CaptchaUtil.ver(commentDto.getCaptcha(), request)) {
-            // 清除失效的验证码
-            CaptchaUtil.clear(request);
             return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
-        }
-        CaptchaUtil.clear(request);
-        if (commentDto == null || commentDto.getContent() == null || commentDto.getContent().equals("") || commentDto.getContent().equals("\n")) {
-            return ResultDTO.errorOf(CustomizeErrorCode.CONTENT_IS_EMPTY);
         }
 
         Comment comment = new Comment();
@@ -65,17 +56,7 @@ public class CommentApiController {
         comment.setCreateTime(System.currentTimeMillis());
         comment.setModifiedTime(System.currentTimeMillis());
 
-
-        try {
-            commentService.insertComment(comment);
-        } catch (CustomizeException e) {
-            log.info("插入评论异常：{}", e.getMessage());
-            log.info("问题或评论id：{}", commentDto.getQuestionId() + "    " + commentDto.getParentCommentId());
-            return errorOf(e);
-        } catch (Exception e) {
-            log.info("插入评论 Exception 异常：{}", e.getMessage());
-            return errorOf(CustomizeErrorCode.SYS_ERROR);
-        }
+        commentService.insertComment(comment);
         // 评论数变化会影响首页列表与热门排序
         siteCache.invalidate(SiteCacheService.HOME);
         return okOf(comment);

@@ -53,11 +53,11 @@ async function setPower(user, power) {
     </form>
 
     <div class="tabs tabs-bordered mb-4">
-      <button class="tab" :class="type === 'question' ? 'tab-active text-indigo-600' : ''" type="button" @click="go({ type: 'question', page: 1 })">问题</button>
-      <button class="tab" :class="type === 'user' ? 'tab-active text-indigo-600' : ''" type="button" @click="go({ type: 'user', page: 1 })">用户</button>
+      <button class="tab" :class="type === 'question' ? 'tab-active ui-text-brand' : ''" type="button" @click="go({ type: 'question', page: 1 })">问题</button>
+      <button class="tab" :class="type === 'user' ? 'tab-active ui-text-brand' : ''" type="button" @click="go({ type: 'user', page: 1 })">用户</button>
     </div>
 
-    <div v-if="!keyword" class="py-12 text-center text-sm text-slate-400">输入关键词开始搜索</div>
+    <div v-if="!keyword" class="empty-state">输入关键词开始搜索</div>
 
     <div v-else-if="type === 'question'" class="overflow-x-auto">
       <table class="table table-sm">
@@ -73,7 +73,7 @@ async function setPower(user, power) {
               <button v-else class="btn btn-ghost btn-xs text-emerald-600" type="button" @click="recover(item.questionId)"><RotateCcw class="size-3.5" />恢复</button>
             </td>
           </tr>
-          <tr v-if="!data?.questions?.data?.length"><td colspan="5" class="text-center text-slate-400">没有匹配的问题</td></tr>
+          <tr v-if="!data?.questions?.data?.length"><td colspan="5" class="text-center ui-text-muted">没有匹配的问题</td></tr>
         </tbody>
       </table>
       <Pagination :pagination="data?.questions" @change="go({ page: $event })" />
@@ -91,7 +91,7 @@ async function setPower(user, power) {
             <td>
               <div class="dropdown">
                 <button tabindex="0" class="btn btn-ghost btn-xs">权限 <ChevronDown class="size-3" /></button>
-                <ul tabindex="0" class="menu dropdown-content menu-xs z-30 w-32 rounded-box border border-slate-200 bg-white p-2 shadow-lg">
+                <ul tabindex="0" class="menu dropdown-content menu-xs z-30 w-32 rounded-box border ui-border ui-bg p-2 shadow-lg">
                   <li><button type="button" @click="setPower(user, 0)"><ShieldCheck class="size-3.5" />管理员</button></li>
                   <li><button type="button" @click="setPower(user, 2)"><Crown class="size-3.5" />VIP</button></li>
                   <li><button type="button" @click="setPower(user, 1)"><UserRound class="size-3.5" />普通</button></li>
@@ -99,7 +99,7 @@ async function setPower(user, power) {
               </div>
             </td>
           </tr>
-          <tr v-if="!data?.users?.data?.length"><td colspan="5" class="text-center text-slate-400">没有匹配的用户</td></tr>
+          <tr v-if="!data?.users?.data?.length"><td colspan="5" class="text-center ui-text-muted">没有匹配的用户</td></tr>
         </tbody>
       </table>
       <Pagination :pagination="data?.users" @change="go({ page: $event })" />

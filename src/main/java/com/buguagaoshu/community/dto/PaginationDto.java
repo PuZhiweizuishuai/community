@@ -22,6 +22,8 @@ public class PaginationDto<T> {
     private long nowPage = 1;
     private long allCount;
     private String search;
+    /** 游标分页：下一页游标，null 表示没有更多数据 */
+    private String nextCursor;
     private List<Long> pages = new ArrayList<>();
 
     public void setPagination(long totalPage, long page, long size) {

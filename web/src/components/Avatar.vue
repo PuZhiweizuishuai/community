@@ -17,7 +17,7 @@ const url = () => (fallback.value ? '/image/head/nohead.png' : assetUrl(props.sr
 
 <template>
   <span
-    class="inline-flex shrink-0 items-center justify-center overflow-hidden bg-indigo-50 font-semibold text-indigo-600"
+    class="inline-flex shrink-0 items-center justify-center overflow-hidden ui-bg-brand font-semibold ui-text-brand"
     :class="rounded ? 'rounded-full' : 'rounded-lg'"
     :style="{ width: size + 'px', height: size + 'px', fontSize: Math.max(11, size / 2.6) + 'px' }"
   >

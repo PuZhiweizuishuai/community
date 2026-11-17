@@ -230,7 +230,9 @@ export const api = {
 export function assetUrl(path) {
   if (!path) return `${ASSET_BASE}/image/head/nohead.png`
   if (/^https?:\/\//i.test(path) || path.startsWith('data:')) return path
-  const normalized = path.startsWith('/') ? path : `/${path}`
+  let normalized = path.startsWith('/') ? path : `/${path}`
+  // 历史本地文件链接 /file/... 统一映射到新接口 /api/file/0/...
+  if (normalized.startsWith('/file/')) normalized = `/api/file/0${normalized}`
   return `${ASSET_BASE}${normalized}`
 }
 

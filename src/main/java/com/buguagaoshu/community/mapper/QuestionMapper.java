@@ -1,21 +1,43 @@
 package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Question;
-import org.apache.ibatis.annotations.*;
+import com.mybatisflex.core.BaseMapper;
+import com.mybatisflex.core.query.QueryColumn;
+import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.util.UpdateEntity;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+
+import static com.buguagaoshu.community.model.table.QuestionTableDef.QUESTION;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-15 15:47
  */
 @Mapper
-public interface QuestionMapper {
+public interface QuestionMapper extends BaseMapper<Question> {
+
+    /** 列表查询专用列：不含 description 正文，避免列表页传输/读取大字段 */
+    String LIST_COLUMNS = "questionId, userId, title, classification, fileUrl, viewCount, " +
+            "commentCount, likeCount, followCount, tag, createTime, alterTime, status";
+
+    /** 与 LIST_COLUMNS 对应的类型安全查询列，供 QueryWrapper.select 使用 */
+    QueryColumn[] LIST_QUERY_COLUMNS = {
+            QUESTION.QUESTION_ID, QUESTION.USER_ID, QUESTION.TITLE, QUESTION.CLASSIFICATION, QUESTION.FILE_URL,
+            QUESTION.VIEW_COUNT, QUESTION.COMMENT_COUNT, QUESTION.LIKE_COUNT, QUESTION.FOLLOW_COUNT, QUESTION.TAG,
+            QUESTION.CREATE_TIME, QUESTION.ALTER_TIME, QUESTION.STATUS
+    };
+
     /**
-     * 插入问题
-     *
-     * @param question 问题
-     * @return 结果
+     * 插入问题。viewCount/status 等列依赖数据库默认值，不能按实体全字段插入，保留显式列 SQL。
      */
     @Insert("insert into Questions(userId, title, classification, description, fileUrl, tag, createTime, alterTime) " +
             "values (#{userId}, #{title}, #{classification}, #{description}, #{fileUrl}, #{tag}, #{createTime}, #{alterTime})")
@@ -23,336 +45,128 @@ public interface QuestionMapper {
     int createQuestion(Question question);
 
     /**
-     * 更新问题
+     * 更新问题内容
      */
-    @Update("update Questions set title=#{title}, classification=#{classification}, description=#{description}, fileUrl=#{fileUrl}, tag=#{tag}, " +
-            "alterTime=#{alterTime} where questionId=#{questionId}")
-    int updateQuestion(Question question);
+    default int updateQuestion(Question question) {
+        Question update = UpdateEntity.of(Question.class, question.getQuestionId());
+        update.setTitle(question.getTitle());
+        update.setClassification(question.getClassification());
+        update.setDescription(question.getDescription());
+        update.setFileUrl(question.getFileUrl());
+        update.setTag(question.getTag());
+        update.setAlterTime(question.getAlterTime());
+        return update(update);
+    }
 
+    default Question selectQuestionById(long questionId, int status) {
+        return selectOneByQuery(QueryWrapper.create()
+                .where(QUESTION.QUESTION_ID.eq(questionId)).and(QUESTION.STATUS.eq(status)));
+    }
 
     /**
-     * 查找问题
-     *
-     * @param questionId 问题id
-     * @param status 状态
-     * @return 问题
+     * 修改问题状态
      */
-    @Select("SELECT * FROM Questions where questionId=#{questionId} AND status=#{status}")
-    Question selectQuestionById(@Param("questionId") long questionId, @Param("status") int status);
+    default int alterStatus(long questionId, int status) {
+        Question update = UpdateEntity.of(Question.class, questionId);
+        update.setStatus(status);
+        return update(update);
+    }
 
     /**
-     * TODO 优化分页
-     * 获取问题列表 倒序
-     *
-     * @param page 页码
-     * @param size 每页显示数量
-     * @param status 状态
-     * @return 问题列表
+     * 修改帖子时间
      */
-    @Select("select * from Questions where status=#{status} ORDER BY alterTime DESC limit #{page}, #{size}")
-    List<Question> getSomeQuestion(@Param("page") long page, @Param("size") long size, @Param("status") int status);
-
+    default int alterQuestionAlterTime(long alterTime, long questionId) {
+        Question update = UpdateEntity.of(Question.class, questionId);
+        update.setAlterTime(alterTime);
+        return update(update);
+    }
 
     /**
-     * TODO 优化分页
-     * 获取当前用户发布的问题列表 倒序
-     *
-     * @param page 页码
-     * @param size 每页显示数量
-     * @param id   用户id
-     * @param status 状态
-     * @return 问题列表
-     */
-    @Select("select * from Questions where userId=#{userId} AND status=#{status} ORDER BY questionId DESC  limit #{page}, #{size}")
-    List<Question> getQuestionByUserId(@Param("page") long page, @Param("size") long size, @Param("userId") long id, @Param("status") int status);
-
-    /**
-     * 带状态的计算问题数量
-     * @param status 状态
-     * @return 返回问题总数
-     */
-    @Select("SELECT COUNT(1) FROM Questions where status=#{status}")
-    long getQuestionCount(@Param("status") int status);
-
-    /**
-     * 带状态的计算该用户发布的问题数量
-     * @param id 用户 id
-     * @param status 状态
-     * @return 返回问题总数
-     */
-    @Select("SELECT COUNT(1) FROM Questions where userId=#{id} AND status=#{status}")
-    long getUserQuestionCount(@Param("id") long id, @Param("status") int status);
-
-
-    /**
-     * 阅读数加1
-     *
-     * @param questionId 问题 id
-     * @return 阅读数加 1
+     * 阅读数加1（原子增量）
      */
     @Update("update Questions set viewCount=viewCount+1 where questionId=#{questionId}")
     int updateQuestionViewCount(long questionId);
 
     /**
-     * 评论数加 n
-     *
-     * @param question 问题
-     * @return 评论数加 n
+     * 浏览数批量回写（Redis 缓冲定时落库）
+     */
+    @Update("update Questions set viewCount=viewCount+#{delta} where questionId=#{questionId}")
+    int increaseViewCount(@Param("questionId") long questionId, @Param("delta") long delta);
+
+    /**
+     * 评论数加 n（原子增量）
      */
     @Update("update Questions set commentCount=commentCount+#{commentCount} where questionId=#{questionId}")
     int updateQuestionCommentCount(Question question);
 
     /**
-     * 点赞数加 n
-     * @param question 问题
-     * @return 点赞数加 n
-     * */
+     * 点赞数加 n（原子增量）
+     */
     @Update("update Questions set likeCount=likeCount+#{likeCount} where questionId=#{questionId}")
     int updateQuestionLikeCount(Question question);
 
-
     /**
-     * 关注数加 n
-     * @param question 问题
-     * @return 关注数加 n
-     * */
+     * 关注数加 n（原子增量）
+     */
     @Update("update Questions set followCount=followCount+#{followCount} where questionId=#{questionId}")
     int updateQuestionFollowCount(Question question);
 
     /**
-     * 根据正则匹配相关问题（带状态，不匹配删除的问题）
-     *
-     * @param tag        标签
-     * @param questionId 当前问题id
-     * @param size       返回最大数量
-     * @param status 状态
-     * @return 相关问题
+     * 根据标签匹配相关问题（LIKE 匹配，标签列表由服务端拆分，避免用户输入直接进入正则）
      */
-    @Select("select * from Questions where tag regexp #{tag} and questionId!=#{questionId} and status=#{status} order by questionId desc limit #{size}")
-    List<Question> getRelevantQuestion(@Param("tag") String tag, @Param("questionId") long questionId, @Param("size") int size, @Param("status") int status);
+    @Select("<script>select * from Questions where " +
+            "<foreach collection='tags' item='t' open='(' separator=' OR ' close=')'>tag like concat('%', #{t}, '%')</foreach>" +
+            " and questionId!=#{questionId} and status=#{status} order by questionId desc limit #{size}</script>")
+    List<Question> getRelevantQuestion(@Param("tags") List<String> tags, @Param("questionId") long questionId, @Param("size") int size, @Param("status") int status);
 
+    // ------------------------------------------------------------------
+    // 关键字搜索：FULLTEXT(ngram) 布尔模式，走 ft_questions_title_tag 索引
+    // ------------------------------------------------------------------
+
+    @Select("select * from Questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} order by questionId desc limit #{page}, #{size}")
+    List<Question> fulltextSearchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
+
+    @Select("select COUNT(*) from Questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status}")
+    long fulltextSearchQuestionCount(@Param("search") String search, @Param("status") int status);
+
+    @Select("select * from Questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) order by questionId desc limit #{page}, #{size}")
+    List<Question> fulltextSearchAllQuestionList(@Param("search") String search, @Param("page") long page, @Param("size") long size);
+
+    @Select("select COUNT(*) from Questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE)")
+    long fulltextSearchAllQuestionListCount(@Param("search") String search);
+
+    // ------------------------------------------------------------------
+    // 游标分页：WHERE 游标条件 + LIMIT n，避免深 offset 扫描丢弃大量行
+    // 「最新」按 (alterTime, questionId) 复合游标，「零回复」按 questionId 游标
+    // ------------------------------------------------------------------
+
+    @Select("<script>select " + LIST_COLUMNS + " from Questions where status=#{status} " +
+            "and (alterTime &lt; #{alterTime} or (alterTime = #{alterTime} and questionId &lt; #{questionId})) " +
+            "<if test='classification != null'>and classification=#{classification} </if>" +
+            "<if test='tag != null'>and (title like concat('%', #{tag}, '%') or tag like concat('%', #{tag}, '%')) </if>" +
+            "order by alterTime desc, questionId desc limit #{size}</script>")
+    List<Question> getQuestionsByAlterTimeCursor(@Param("alterTime") long alterTime,
+                                                 @Param("questionId") long questionId,
+                                                 @Param("classification") String classification,
+                                                 @Param("tag") String tag,
+                                                 @Param("size") long size,
+                                                 @Param("status") int status);
+
+    @Select("<script>select " + LIST_COLUMNS + " from Questions where status=#{status} and commentCount=0 and questionId &lt; #{questionId} " +
+            "<if test='classification != null'>and classification=#{classification} </if>" +
+            "<if test='tag != null'>and (title like concat('%', #{tag}, '%') or tag like concat('%', #{tag}, '%')) </if>" +
+            "order by questionId desc limit #{size}</script>")
+    List<Question> getNoCommentQuestionsByCursor(@Param("questionId") long questionId,
+                                                 @Param("classification") String classification,
+                                                 @Param("tag") String tag,
+                                                 @Param("size") long size,
+                                                 @Param("status") int status);
 
     /**
-     * 根据正则实现简单的搜索功能（带状态，不搜索删除的问题）
-     *
-     * @param search 搜索参数
-     * @param page 页码
-     * @param size 数量
-     * @param status 状态
-     * @return 搜索结果
-     * */
-    @Select("select * from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status} order by questionId desc limit #{page}, #{size}")
-    List<Question> searchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-
-    /**
-     * 只统计不删除的问题
-     * @param search 关键字
-     * @param status 状态
-     * @return  返回正则搜索的数量
-     * */
-    @Select("select COUNT(*) from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status}")
-    long searchQuestionCount(@Param("search") String search, @Param("status") int status);
-
-
-    /**
-     * 修改帖子时间
-     * @param alterTime 修改时间
-     * @param questionId 问题ID
-     * @return 结果
-     * */
-    @Update("update Questions set alterTime=#{alterTime} where questionId=#{questionId}")
-    int alterQuestionAlterTime(@Param("alterTime") long alterTime, @Param("questionId") long questionId);
-
-
-    /**
-     * TODO 优化分页
-     * 获取零回复的 问题列表 倒序
-     *
-     * @param page 页码
-     * @param size 每页显示数量
-     * @param status 状态
-     * @return 问题列表
+     * 批量统计各用户的问题数（活跃用户榜单装配用）
      */
-    @Select("select * from Questions where status=#{status} AND commentCount=0 ORDER BY questionId DESC limit #{page}, #{size}")
-    List<Question> selectQuestionUseCommentCount(@Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-
-    /**
-     * @param status 状态
-     * @return  返回 0 回复的问题数量
-     * */
-    @Select("select COUNT(*) from Questions where status=#{status} AND commentCount=0")
-    long selectQuestionUseCommentCountNumber(@Param("status") int status);
-
-
-    /**
-     * 根据正则搜索零回复的问题
-     *
-     * @param search 搜索参数
-     * @param page 页码
-     * @param size 数量
-     * @param status 状态
-     * @return 搜索结果
-     * */
-    @Select("select * from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
-    List<Question> selectQuestionUseCommentCountBySearch(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-
-    /**
-     * 返回正则搜索的零回复数量
-     * */
-    @Select("select COUNT(*) from Questions where (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0")
-    long selectQuestionUseCommentCountBySearchNumber(@Param("search") String search, @Param("status") int status);
-
-
-    /**
-     * @return 所有问题数
-     * */
-    @Select("select COUNT(*) from Questions")
-    long getAllQuestionCount();
-
-    /**
-     * TODO 优化分页
-     * 获取所有问题列表，包括以及删除的 倒序
-     *
-     * @param page 页码
-     * @param size 每页显示数量
-     * @return 问题列表
-     */
-    @Select("select * from Questions ORDER BY questionId DESC limit #{page}, #{size}")
-    List<Question> getAllQuestionList(@Param("page") long page, @Param("size") long size);
-
-
-    /**
-     * 根据正则搜索所有状态的问题
-     *
-     * @param search 搜索参数
-     * @param page 页码
-     * @param size 数量
-     * @return 搜索结果
-     * */
-    @Select("select * from Questions where title regexp #{search} or tag regexp #{search} order by questionId desc limit #{page}, #{size}")
-    List<Question> searchAllQuestionList(@Param("search") String search, @Param("page") long page, @Param("size") long size);
-
-
-    /**
-     * 包括删除的问题
-     * @return  返回正则搜索的数量
-     * */
-    @Select("select COUNT(*) from Questions where title regexp #{search} or tag regexp #{search}")
-    long searchAllQuestionListCount(@Param("search") String search);
-
-
-    /**
-     * 查找问题，忽略问题状态
-     * @param questionId 问题id
-     * @return 结果
-     * */
-    @Select("SELECT * FROM Questions where questionId=#{questionId}")
-    Question getQuestionIgnoreStatus(long questionId);
-
-
-    /**
-     * 跟新问题状态
-     * @param questionId 问题Id
-     * @param status 状态
-     * @return 结果
-     * */
-    @Update("update Questions set status=#{status} where questionId=#{questionId}")
-    int alterStatus(@Param("questionId") long questionId, @Param("status") int status);
-
-
-
-
-    /**
-     *
-     * 以下内容用于首页分类获取
-     *
-     * */
-
-
-    /**
-     * 查找该分类下的所有问题
-     * @param classification 分类
-     * @param page 页码
-     * @param size 每页显示数量
-     * @param status 状态
-     * @return 问题列表
-     * */
-    @Select("select * FROM Questions where classification=#{classification} AND status=#{status} ORDER BY alterTime DESC limit #{page}, #{size}")
-    List<Question> getQuestionListUseClassC(@Param("classification") String classification, @Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-    /**
-     * 返回该分类下问题数量
-     * */
-    @Select("select COUNT(*) FROM Questions where classification=#{classification} AND status=#{status}")
-    long getQuestionListUseClassCountC(@Param("classification") String classification, @Param("status") int status);
-
-
-    /**
-     * 查找分类（带状态，不搜索删除的问题）
-     *
-     * @param search 搜索参数
-     * @param classification 分类
-     * @param page 页码
-     * @param size 数量
-     * @param status 状态
-     * @return 搜索结果
-     * */
-    @Select("select * from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status} order by questionId desc limit #{page}, #{size}")
-    List<Question> searchQuestionC(@Param("search") String search, @Param("classification") String classification, @Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-
-    /**
-     * 只统计不删除的问题
-     * @param search 关键字
-     * @param classification 分类
-     * @param status 状态
-     * @return  返回正则搜索的数量
-     * */
-    @Select("select COUNT(*) from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status}")
-    long searchQuestionCountC(@Param("search") String search, @Param("classification") String classification, @Param("status") int status);
-
-
-    /**
-     * 查找当前分类且和标签下零回复问题
-     *
-     * @param search 搜索参数
-     * @param page 页码
-     * @param size 数量
-     * @param status 状态
-     * @return 搜索结果
-     * */
-    @Select("select * from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0 order by questionId desc limit #{page}, #{size}")
-    List<Question> selectQuestionUseCommentCountBySearchC(@Param("search") String search, @Param("classification") String classification, @Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-
-    /**
-     * 查找当前分类且和标签下零回复问题数量
-     * */
-    @Select("select COUNT(*) from Questions where classification=#{classification} AND (title regexp #{search} or tag regexp #{search}) and status=#{status} AND commentCount=0")
-    long selectQuestionUseCommentCountBySearchNumberC(@Param("search") String search, @Param("classification") String classification, @Param("status") int status);
-
-
-    /**
-     * 查找当前分类零回复的问题
-     *
-     * @param page 页码
-     * @param size 每页显示数量
-     * @param status 状态
-     * @return 问题列表
-     */
-    @Select("select * from Questions where classification=#{classification} AND status=#{status} AND commentCount=0 ORDER BY questionId DESC limit #{page}, #{size}")
-    List<Question> selectQuestionUseCommentC(@Param("classification") String classification, @Param("page") long page, @Param("size") long size, @Param("status") int status);
-
-
-    /**
-     * 查找当前分类零回复的问题数量
-     * @param status 状态
-     * @param classification 分类
-     * @return  返回 0 回复的问题数量
-     * */
-    @Select("select COUNT(*) from Questions where classification=#{classification} AND status=#{status} AND commentCount=0")
-    long selectQuestionUseCommentCountCountC(@Param("classification") String classification, @Param("status") int status);
+    @Select("<script>select userId, COUNT(*) as cnt from Questions where status=1 and userId in " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            " group by userId</script>")
+    List<Map<String, Object>> countQuestionByUserIds(@Param("ids") Collection<Long> ids);
 }

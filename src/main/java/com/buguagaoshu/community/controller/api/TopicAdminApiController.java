@@ -9,6 +9,7 @@ import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.schedule.TagClassTasks;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.AuthUtil;
+import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,8 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.buguagaoshu.community.model.table.TagClassTableDef.TAG_CLASS;
 
 /**
  * 后台「话题分类」维护接口。
@@ -56,7 +59,7 @@ public class TopicAdminApiController {
             @RequestParam(value = "keyword", required = false) String keyword,
             HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        List<TagClass> all = tagClassMapper.getAllTagClass();
+        List<TagClass> all = tagClassMapper.selectAll();
         if (all == null) {
             all = List.of();
         }
@@ -99,7 +102,8 @@ public class TopicAdminApiController {
             body.setImage("/image/topicicon/default.svg");
         }
 
-        TagClass sameTitle = tagClassMapper.getTagClassByTitle(title);
+        TagClass sameTitle = tagClassMapper.selectOneByQuery(
+                QueryWrapper.create().where(TAG_CLASS.TITLE.eq(title)));
         boolean isNew = body.getId() <= 0;
         if (sameTitle != null && (isNew || sameTitle.getId() != body.getId())) {
             return ResultDTO.errorOf(409, "话题名称「" + title + "」已存在");
@@ -109,9 +113,9 @@ public class TopicAdminApiController {
             body.setCreateTime(now);
             body.setTalkCount(0);
             body.setFollowCount(0);
-            tagClassMapper.insertTagClass(body);
+            tagClassMapper.insertSelective(body);
         } else {
-            TagClass old = tagClassMapper.selectTagClassById(body.getId());
+            TagClass old = tagClassMapper.selectOneById(body.getId());
             if (old == null) {
                 throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
             }
@@ -137,7 +141,7 @@ public class TopicAdminApiController {
         if (id <= 0) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
         }
-        int rows = tagClassMapper.deleteTagClassById(id);
+        int rows = tagClassMapper.deleteById(id);
         tagClassTasks.TagClassCache();
         siteCache.invalidate(SiteCacheService.TOPICS);
         siteCache.invalidate(SiteCacheService.META + "tagClasses");

@@ -56,7 +56,8 @@ public class HomeApiController {
             @RequestParam(value = "size", defaultValue = "15") String size,
             @RequestParam(value = "tag", required = false) String tag,
             @RequestParam(value = "sort", defaultValue = "3") String sort,
-            @RequestParam(value = "class", defaultValue = "0") String classification) {
+            @RequestParam(value = "class", defaultValue = "0") String classification,
+            @RequestParam(value = "cursor", required = false) String cursor) {
 
         int sortValue = parseInt(sort, QuestionSortType.NEW_QUESTION.getType());
         int classValue = parseInt(classification, QuestionClassType.ALL.getType());
@@ -64,9 +65,9 @@ public class HomeApiController {
         // 列表、置顶、话题卡片是公共数据，按查询条件缓存 20 秒；
         // followTag 与登录用户相关，必须每次请求单独计算，不能进缓存。
         String key = SiteCacheService.HOME + String.join("|", page, size,
-                tag == null ? "" : tag, sort, classification);
+                tag == null ? "" : tag, sort, classification, cursor == null ? "" : cursor);
         Map<String, Object> data = new LinkedHashMap<>(siteCache.get(key, 20_000,
-                () -> buildPublicData(page, size, tag, sort, classification, sortValue, classValue)));
+                () -> buildPublicData(page, size, tag, sort, classification, sortValue, classValue, cursor)));
 
         TagClass tagClass = (TagClass) data.get("tagClass");
         boolean followed = false;
@@ -85,10 +86,10 @@ public class HomeApiController {
 
     private Map<String, Object> buildPublicData(String page, String size, String tag,
                                                 String sort, String classification,
-                                                int sortValue, int classValue) {
+                                                int sortValue, int classValue, String cursor) {
         Map<String, Object> data = new LinkedHashMap<>();
         PaginationDto<QuestionDto> pagination = questionService.getSomeQuestionDto(
-                page, size, tag, sortValue, classValue);
+                page, size, tag, sortValue, classValue, cursor);
         data.put("pagination", pagination);
         data.put("tag", tag);
         data.put("sort", sort);
@@ -97,8 +98,9 @@ public class HomeApiController {
         boolean defaultPage = "1".equals(page) && (tag == null || tag.isBlank())
                 && "3".equals(sort) && "0".equals(classification);
         data.put("topQuestions", defaultPage ? indexTopQuestion.getTopQuestion() : List.of());
-        data.put("tagClass", tagClassCache.getTagClassMap() == null
-                ? null : tagClassCache.getTagClassMap().get(tag));
+        // 缓存快照是不可变 Map，get(null) 会 NPE，先判空
+        Map<String, TagClass> tagMap = tagClassCache.getTagClassMap();
+        data.put("tagClass", tagMap == null || tag == null ? null : tagMap.get(tag));
         return data;
     }
 

@@ -18,9 +18,11 @@
         <!-- Spring Boot 4 基线 17，本升级使用最新的 LTS Java 25 -->
         <java.version>25</java.version>
         <!-- 4.x 分支才是适配 Spring Boot 4 / Spring Framework 7 的 MyBatis starter -->
-        <mybatis-spring-boot.version>4.1.0</mybatis-spring-boot.version>
+        <mybatis-flex.version>1.11.8</mybatis-flex.version>
         <jjwt.version>0.13.0</jjwt.version>
         <awssdk.version>2.59.1</awssdk.version>
+        <!-- 3.x 分支适配 Spring Boot 4 / Spring Framework 7 -->
+        <springdoc.version>3.2.0</springdoc.version>
     </properties>
 
     <dependencies>
@@ -33,12 +35,33 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
-
-        <!-- 持久层：MyBatis + MySQL Connector/J，连接池使用 Spring Boot 4 默认的 HikariCP -->
+        <!-- 声明式参数校验（jakarta.validation） -->
         <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>${mybatis-spring-boot.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- BCrypt：只用加密模块，不引入整个 Spring Security -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- 持久层：MyBatis-Flex（MyBatis 超集，BaseMapper/QueryWrapper 简化 CRUD）+ MySQL Connector/J，连接池使用 Spring Boot 4 默认的 HikariCP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mybatis-flex</groupId>
+            <artifactId>mybatis-flex-spring-boot4-starter</artifactId>
+            <version>${mybatis-flex.version}</version>
+        </dependency>
+        <!-- APT：编译期生成类型安全的 TableDef 查询列 -->
+        <dependency>
+            <groupId>com.mybatis-flex</groupId>
+            <artifactId>mybatis-flex-processor</artifactId>
+            <version>${mybatis-flex.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -54,6 +77,33 @@
         <dependency>
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-data-redis</artifactId>
+        </dependency>
+
+        <!-- 数据库版本化迁移：V1 基线 schema，V2/V3 对应 SQL_Upgrade 001/002，V4 起为新迁移 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
+        <!-- 邮件（找回密码 / 邮箱验证码），SMTP 通过环境变量配置 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- API 文档：Swagger UI（/swagger-ui.html）+ OpenAPI JSON（/v3/api-docs） -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
 <!--        &lt;!&ndash;-->
@@ -129,6 +179,11 @@
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                             <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>com.mybatis-flex</groupId>
+                            <artifactId>mybatis-flex-processor</artifactId>
+                            <version>${mybatis-flex.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

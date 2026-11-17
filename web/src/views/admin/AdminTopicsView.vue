@@ -136,8 +136,8 @@ async function uploadImage(event) {
   <div class="space-y-4">
     <div class="surface flex flex-wrap items-center gap-2 p-4">
       <div class="mr-auto">
-        <h2 class="text-sm font-semibold text-slate-700">话题管理</h2>
-        <p class="mt-1 text-xs text-slate-400">按所属分类分组展示，可直接修改话题的分类、名称、图标与简介</p>
+        <h2 class="section-title">话题管理</h2>
+        <p class="mt-1 text-xs ui-text-muted">按所属分类分组展示，可直接修改话题的分类、名称、图标与简介</p>
       </div>
       <RouterLink to="/admin/classifications" class="btn btn-ghost btn-sm"><Tags class="size-4" />管理分类</RouterLink>
       <button class="btn btn-ghost btn-sm" type="button" @click="refreshCache"><RefreshCw class="size-4" />同步缓存</button>
@@ -154,7 +154,7 @@ async function uploadImage(event) {
         <button class="btn btn-sm btn-primary join-item" type="submit"><Search class="size-4" />搜索</button>
       </form>
       <div class="ml-auto flex items-center gap-2">
-        <span class="text-xs text-slate-400">共 {{ filtered.length }} 个话题</span>
+        <span class="text-xs ui-text-muted">共 {{ filtered.length }} 个话题</span>
         <div class="btn-group btn-group-sm">
           <button class="btn btn-xs" :class="viewMode === 'group' ? 'btn-active btn-primary' : 'btn-ghost'" type="button" @click="viewMode = 'group'">分组</button>
           <button class="btn btn-xs" :class="viewMode === 'flat' ? 'btn-active btn-primary' : 'btn-ghost'" type="button" @click="viewMode = 'flat'">平铺</button>
@@ -162,36 +162,36 @@ async function uploadImage(event) {
       </div>
     </div>
 
-    <div v-if="loading && !topics.length" class="surface py-12 text-center text-sm text-slate-400">加载中…</div>
-    <div v-else-if="!filtered.length" class="surface py-12 text-center text-sm text-slate-400">没有匹配的话题</div>
+    <div v-if="loading && !topics.length" class="surface empty-state">加载中…</div>
+    <div v-else-if="!filtered.length" class="surface empty-state">没有匹配的话题</div>
 
     <!-- 分组视图 -->
     <div v-else-if="viewMode === 'group'" class="space-y-4">
       <section v-for="group in groups" :key="group.code" class="surface overflow-hidden">
-        <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3">
+        <div class="flex flex-wrap items-center gap-2 border-b ui-border px-4 py-3">
           <button class="btn btn-ghost btn-xs" type="button" :aria-label="collapsed[group.code] ? '展开' : '收起'" @click="collapsed[group.code] = !collapsed[group.code]">
             <component :is="collapsed[group.code] ? ChevronRight : ChevronDown" class="size-4" />
           </button>
-          <h3 class="text-sm font-semibold text-slate-700">{{ group.label }}</h3>
+          <h3 class="section-title">{{ group.label }}</h3>
           <span class="badge badge-sm badge-ghost">{{ group.topics.length }} 个话题</span>
-          <span class="text-xs text-slate-400">共 {{ group.topics.reduce((sum, t) => sum + (t.talkCount || 0), 0) }} 条讨论</span>
+          <span class="text-xs ui-text-muted">共 {{ group.topics.reduce((sum, t) => sum + (t.talkCount || 0), 0) }} 条讨论</span>
           <button v-if="typeof group.code === 'number'" class="btn btn-ghost btn-xs ml-auto" type="button" @click="openCreate(group.code)"><Plus class="size-3.5" />在此分类新增</button>
         </div>
 
         <div v-if="!collapsed[group.code]" class="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
-          <article v-for="item in group.topics" :key="item.id" class="rounded-xl border border-slate-200 p-3 transition hover:border-indigo-300 hover:shadow-sm">
+          <article v-for="item in group.topics" :key="item.id" class="rounded-xl border ui-border p-3 transition hover:border-indigo-300 hover:shadow-sm">
             <div class="flex items-start gap-3">
-              <img :src="assetUrl(item.image)" :alt="item.title" class="h-12 w-12 shrink-0 rounded-lg bg-slate-50 object-cover" />
+              <img :src="assetUrl(item.image)" :alt="item.title" class="h-12 w-12 shrink-0 rounded-lg ui-bg-soft object-cover" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
-                  <h4 class="truncate font-medium text-slate-800">{{ item.title }}</h4>
+                  <h4 class="truncate font-medium ui-text-strong">{{ item.title }}</h4>
                   <span class="badge badge-xs" :class="item.status === 1 ? 'badge-success' : 'badge-ghost'">{{ item.status === 1 ? '启用' : '停用' }}</span>
                 </div>
-                <p class="line-clamp-2 mt-1 text-xs text-slate-500">{{ item.simpleDesc || '暂无简介' }}</p>
-                <p class="mt-1.5 text-xs text-slate-400">{{ item.followCount }} 人关注 · {{ item.talkCount }} 条讨论</p>
+                <p class="line-clamp-2 mt-1 text-xs ui-text-base">{{ item.simpleDesc || '暂无简介' }}</p>
+                <p class="mt-1.5 text-xs ui-text-muted">{{ item.followCount }} 人关注 · {{ item.talkCount }} 条讨论</p>
               </div>
             </div>
-            <div class="mt-3 flex flex-wrap gap-1 border-t border-slate-100 pt-2">
+            <div class="mt-3 flex flex-wrap gap-1 border-t ui-border pt-2">
               <select class="select select-ghost select-xs max-w-[130px]" :value="item.type" @change="moveTopic(item, $event)">
                 <option v-for="option in meta.topicTypes" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
@@ -200,23 +200,23 @@ async function uploadImage(event) {
               <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item)"><Trash2 class="size-3.5" />删除</button>
             </div>
           </article>
-          <p v-if="!group.topics.length" class="col-span-full py-6 text-center text-xs text-slate-400">该分类下暂无话题</p>
+          <p v-if="!group.topics.length" class="col-span-full py-6 text-center text-xs ui-text-muted">该分类下暂无话题</p>
         </div>
       </section>
     </div>
 
     <!-- 平铺视图 -->
     <div v-else class="surface grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
-      <article v-for="item in filtered" :key="item.id" class="rounded-xl border border-slate-200 p-3">
+      <article v-for="item in filtered" :key="item.id" class="rounded-xl border ui-border p-3">
         <div class="flex items-start gap-3">
-          <img :src="assetUrl(item.image)" :alt="item.title" class="h-12 w-12 shrink-0 rounded-lg bg-slate-50 object-cover" />
+          <img :src="assetUrl(item.image)" :alt="item.title" class="h-12 w-12 shrink-0 rounded-lg ui-bg-soft object-cover" />
           <div class="min-w-0">
-            <h4 class="truncate font-medium text-slate-800">{{ item.title }}</h4>
-            <p class="mt-0.5 text-xs text-indigo-500">{{ typeLabel(item.type) }}</p>
-            <p class="line-clamp-2 mt-1 text-xs text-slate-500">{{ item.simpleDesc || '暂无简介' }}</p>
+            <h4 class="truncate font-medium ui-text-strong">{{ item.title }}</h4>
+            <p class="mt-0.5 text-xs ui-text-brand">{{ typeLabel(item.type) }}</p>
+            <p class="line-clamp-2 mt-1 text-xs ui-text-base">{{ item.simpleDesc || '暂无简介' }}</p>
           </div>
         </div>
-        <div class="mt-3 flex gap-1 border-t border-slate-100 pt-2">
+        <div class="mt-3 flex gap-1 border-t ui-border pt-2">
           <button class="btn btn-ghost btn-xs" type="button" @click="openEdit(item)"><SquarePen class="size-3.5" />编辑</button>
           <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item)"><Trash2 class="size-3.5" />删除</button>
         </div>
@@ -235,7 +235,7 @@ async function uploadImage(event) {
           <label class="form-control">
             <span class="label-text mb-1 font-medium">话题名称 *</span>
             <input v-model="form.title" maxlength="50" class="input input-bordered input-sm" placeholder="例如 JavaScript" />
-            <span class="label-text-alt mt-1 text-slate-400">名称同时作为前台标签，修改后旧标签的帖子不会自动迁移</span>
+            <span class="label-text-alt mt-1 ui-text-muted">名称同时作为前台标签，修改后旧标签的帖子不会自动迁移</span>
           </label>
 
           <div class="grid gap-3 sm:grid-cols-2">
@@ -257,7 +257,7 @@ async function uploadImage(event) {
           <div>
             <span class="label-text mb-1 block font-medium">话题图标</span>
             <div class="flex items-center gap-3">
-              <img :src="assetUrl(form.image)" alt="图标预览" class="h-14 w-14 rounded-lg border border-slate-200 bg-slate-50 object-cover" />
+              <img :src="assetUrl(form.image)" alt="图标预览" class="h-14 w-14 rounded-lg border ui-border ui-bg-soft object-cover" />
               <div class="min-w-0 flex-1">
                 <input type="file" accept="image/*" class="file-input file-input-bordered file-input-xs w-full" @change="uploadImage" />
                 <input v-model="form.image" class="input input-bordered input-xs mt-2 w-full" placeholder="也可直接填写图标地址" />

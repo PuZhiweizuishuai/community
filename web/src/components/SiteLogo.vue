@@ -14,7 +14,7 @@ const src = `${import.meta.env.BASE_URL}logo.png`
   <img
     :src="src"
     alt="不挂高数社区 Logo"
-    class="shrink-0 bg-white object-contain"
+    class="shrink-0 ui-bg object-contain"
     :style="{ width: size + 'px', height: size + 'px', borderRadius: rounded }"
   />
 </template>

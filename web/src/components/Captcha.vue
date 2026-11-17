@@ -27,7 +27,7 @@ defineExpose({ refresh })
       autocomplete="off"
       @input="emit('update:modelValue', $event.target.value)"
     />
-    <button type="button" class="h-10 w-[130px] shrink-0 overflow-hidden rounded border border-slate-200" title="点击刷新验证码" @click="refresh">
+    <button type="button" class="h-10 w-[130px] shrink-0 overflow-hidden rounded border ui-border" title="点击刷新验证码" @click="refresh">
       <img :src="url" alt="验证码" class="h-full w-full object-cover" />
     </button>
   </div>

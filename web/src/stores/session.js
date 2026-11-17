@@ -9,7 +9,6 @@ export const useSessionStore = defineStore('session', () => {
   const user = ref(null)
   const admin = ref(null)
   const notificationCount = ref(0)
-  const token = ref(null)
   const loaded = ref(false)
 
   const loggedIn = computed(() => !!user.value)
@@ -26,7 +25,6 @@ export const useSessionStore = defineStore('session', () => {
         user.value = data?.user ?? null
         admin.value = data?.admin ?? null
         notificationCount.value = data?.notificationCount ?? 0
-        token.value = data?.token ?? null
         loaded.value = true
         return data
       })
@@ -45,7 +43,6 @@ export const useSessionStore = defineStore('session', () => {
 
   function applyLogin(data) {
     user.value = data?.user ?? null
-    token.value = data?.token ?? null
     loaded.value = true
   }
 
@@ -54,7 +51,7 @@ export const useSessionStore = defineStore('session', () => {
       await authApi.logout()
     } finally {
       user.value = null
-      token.value = null
+      admin.value = null
       notificationCount.value = 0
     }
   }
@@ -70,7 +67,6 @@ export const useSessionStore = defineStore('session', () => {
   return {
     user,
     admin,
-    token,
     notificationCount,
     loaded,
     loggedIn,

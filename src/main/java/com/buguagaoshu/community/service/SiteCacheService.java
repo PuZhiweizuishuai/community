@@ -1,27 +1,33 @@
 package com.buguagaoshu.community.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 /**
- * 全站统一的本地 TTL 缓存。
+ * 全站统一的业务缓存：Redis 为主缓存（多实例共享），本地仅保留 2 秒 L1 抵御热点往返。
  *
- * <p>社区里大量数据是「读多写少」：热门标签 / 热门问题 / 问题分类 / 话题分类 /
- * 话题列表 / 首页列表 / 在线人数。以前部分接口每次请求都会打到 MySQL，
- * 现在统一通过 {@link #get(String, long, Supplier)} 读取：命中直接返回，
- * 未命中才查库并回填；后台写操作调用 {@link #invalidate(String)} 主动失效。
- *
- * <p>使用本机内存而非 Redis 是为了避免额外的网络往返，适合单实例部署；
- * 若将来做多实例，只需把这里的实现替换成 Redis 并保留同样的接口。
+ * <p>失效策略：写操作调用 {@link #invalidate(String)} 删除 Redis 键并通过 pub/sub
+ * 广播，所有实例清空对应 L1；Redis 不可用时自动降级为本地缓存（全 TTL），不拖垮主流程。
+ * TTL 附加随机抖动，避免集中过期。
  */
 @Service
 @Slf4j
@@ -33,33 +39,74 @@ public class SiteCacheService {
     public static final String TOPICS = "topics:";
     public static final String CLASSIFICATION = "classification:";
 
+    public static final String INVALIDATE_CHANNEL = "sitecache:invalidate";
+    private static final String KEY_PREFIX = "sitecache:";
+    private static final long L1_TTL_MILLIS = 2_000L;
+
     private record Entry(Object value, long expireAt) {
         boolean expired(long now) {
             return now >= expireAt;
         }
     }
 
-    private final ConcurrentHashMap<String, Entry> cache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Entry> l1 = new ConcurrentHashMap<>();
+    /** per-key 回源锁：缓存击穿时同一 key 只放一个请求查库 */
+    private final ConcurrentHashMap<String, Object> loadLocks = new ConcurrentHashMap<>();
     private final AtomicLong hits = new AtomicLong();
     private final AtomicLong misses = new AtomicLong();
 
+    private final RedisTemplate<String, Object> redis;
+    private final StringRedisTemplate stringRedis;
+
+    public SiteCacheService(RedisTemplate<String, Object> cacheRedisTemplate, StringRedisTemplate stringRedis) {
+        this.redis = cacheRedisTemplate;
+        this.stringRedis = stringRedis;
+    }
+
     /**
-     * 读取缓存；过期或不存在时调用 loader 加载并回填。
+     * 读取缓存：L1 → Redis → 加锁回源。
      *
-     * @param ttlMillis 存活时间（毫秒）
+     * @param ttlMillis Redis 存活时间（毫秒）
      */
     @SuppressWarnings("unchecked")
     public <T> T get(String key, long ttlMillis, Supplier<T> loader) {
         long now = System.currentTimeMillis();
-        Entry entry = cache.get(key);
+        Entry entry = l1.get(key);
         if (entry != null && !entry.expired(now)) {
             hits.incrementAndGet();
             return (T) entry.value();
         }
-        misses.incrementAndGet();
-        T value = loader.get();
-        cache.put(key, new Entry(value, now + Math.max(1000L, ttlMillis)));
-        return value;
+        Object fromRedis = redisGet(key);
+        if (fromRedis != null) {
+            hits.incrementAndGet();
+            l1.put(key, new Entry(fromRedis, now + L1_TTL_MILLIS));
+            return (T) fromRedis;
+        }
+        Object lock = loadLocks.computeIfAbsent(key, k -> new Object());
+        synchronized (lock) {
+            // 双重检查：等锁期间可能已有其它请求回填
+            now = System.currentTimeMillis();
+            entry = l1.get(key);
+            if (entry != null && !entry.expired(now)) {
+                hits.incrementAndGet();
+                return (T) entry.value();
+            }
+            fromRedis = redisGet(key);
+            if (fromRedis != null) {
+                hits.incrementAndGet();
+                l1.put(key, new Entry(fromRedis, now + L1_TTL_MILLIS));
+                return (T) fromRedis;
+            }
+            misses.incrementAndGet();
+            T value = loader.get();
+            long base = Math.max(1000L, ttlMillis);
+            long jitter = ThreadLocalRandom.current().nextLong(base / 10 + 1);
+            boolean stored = value != null && redisSet(key, value, base + jitter);
+            // Redis 写入成功时 L1 只留 2 秒；降级或 null 值时本地持有全 TTL，避免反复回源
+            long localTtl = stored ? L1_TTL_MILLIS : base + jitter;
+            l1.put(key, new Entry(value, now + localTtl));
+            return value;
+        }
     }
 
     /** 按前缀失效，例如 invalidate("home:") 只清首页列表 */
@@ -68,22 +115,25 @@ public class SiteCacheService {
             invalidateAll();
             return;
         }
-        int removed = 0;
-        for (String key : cache.keySet()) {
-            if (key.startsWith(prefix)) {
-                cache.remove(key);
-                removed++;
-            }
-        }
-        if (removed > 0) {
-            log.debug("缓存失效 prefix={} 清理 {} 项", prefix, removed);
-        }
+        deleteByPrefix(KEY_PREFIX + prefix);
+        clearLocal(prefix);
+        broadcast(prefix);
     }
 
     public void invalidateAll() {
-        int size = cache.size();
-        cache.clear();
-        log.info("全站缓存已清空，共 {} 项", size);
+        deleteByPrefix(KEY_PREFIX);
+        clearLocal("*");
+        broadcast("*");
+        log.info("全站缓存已清空");
+    }
+
+    /** 清空本地 L1（本实例失效或收到其它实例的广播时调用） */
+    public void clearLocal(String prefix) {
+        if ("*".equals(prefix)) {
+            l1.clear();
+            return;
+        }
+        l1.keySet().removeIf(key -> key.startsWith(prefix));
     }
 
     /** 供后台「控制面板」展示命中率与缓存条目 */
@@ -92,7 +142,7 @@ public class SiteCacheService {
         long miss = misses.get();
         List<Map<String, Object>> keys = new ArrayList<>();
         long now = System.currentTimeMillis();
-        cache.forEach((key, entry) -> {
+        l1.forEach((key, entry) -> {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("key", key);
             item.put("ttlSeconds", Math.max(0, (entry.expireAt() - now) / 1000));
@@ -100,7 +150,8 @@ public class SiteCacheService {
             keys.add(item);
         });
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("size", cache.size());
+        data.put("size", l1.size() + countRedisKeys());
+        data.put("l1Size", l1.size());
         data.put("hits", hit);
         data.put("misses", miss);
         data.put("hitRate", hit + miss == 0 ? "0%" : String.format("%.1f%%", hit * 100.0 / (hit + miss)));
@@ -108,10 +159,80 @@ public class SiteCacheService {
         return data;
     }
 
-    /** 每分钟清掉过期条目，避免长期运行后 Map 只增不减 */
+    /** 每分钟清掉过期 L1 条目 */
     @Scheduled(fixedRate = 60_000)
     public void evictExpired() {
         long now = System.currentTimeMillis();
-        cache.entrySet().removeIf(entry -> entry.getValue().expired(now));
+        l1.entrySet().removeIf(entry -> entry.getValue().expired(now));
+        loadLocks.keySet().removeIf(key -> !l1.containsKey(key));
+    }
+
+    // ------------------------------------------------------------------
+    // Redis 操作：全部容错，不可用时降级为纯本地缓存
+    // ------------------------------------------------------------------
+
+    private Object redisGet(String key) {
+        try {
+            return redis.opsForValue().get(KEY_PREFIX + key);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean redisSet(String key, Object value, long ttlMillis) {
+        try {
+            redis.opsForValue().set(KEY_PREFIX + key, value, Duration.ofMillis(ttlMillis));
+            return true;
+        } catch (Exception e) {
+            log.warn("业务缓存写入 Redis 失败，降级本地缓存 key={}: {}", key, e.getMessage());
+            return false;
+        }
+    }
+
+    private void deleteByPrefix(String prefix) {
+        try {
+            Set<String> keys = redis.execute((RedisCallback<Set<String>>) connection -> {
+                Set<String> result = new HashSet<>();
+                try (Cursor<byte[]> cursor = connection.keyCommands().scan(
+                        ScanOptions.scanOptions().match(prefix + "*").count(500).build())) {
+                    while (cursor.hasNext()) {
+                        result.add(new String(cursor.next(), StandardCharsets.UTF_8));
+                    }
+                }
+                return result;
+            });
+            if (keys != null && !keys.isEmpty()) {
+                redis.delete(keys);
+            }
+        } catch (Exception e) {
+            log.warn("业务缓存失效扫描失败 prefix={}: {}", prefix, e.getMessage());
+        }
+    }
+
+    private long countRedisKeys() {
+        try {
+            Long count = redis.execute((RedisCallback<Long>) connection -> {
+                long n = 0;
+                try (Cursor<byte[]> cursor = connection.keyCommands().scan(
+                        ScanOptions.scanOptions().match(KEY_PREFIX + "*").count(500).build())) {
+                    while (cursor.hasNext()) {
+                        cursor.next();
+                        n++;
+                    }
+                }
+                return n;
+            });
+            return count == null ? 0 : count;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private void broadcast(String prefix) {
+        try {
+            stringRedis.convertAndSend(INVALIDATE_CHANNEL, prefix);
+        } catch (Exception e) {
+            log.warn("缓存失效广播失败 prefix={}: {}", prefix, e.getMessage());
+        }
     }
 }

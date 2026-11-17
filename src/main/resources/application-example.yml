@@ -1,0 +1,13 @@
+# 凭据模板：复制本文件为 application-local.yml（已 gitignore）并填写真实值。
+# 也可以不建 local 文件，直接以环境变量注入同名键（MYSQL_PASSWORD、JWT_KEY 等）。
+# JWT_KEY 必须是 >= 32 字节的随机值，可用 `openssl rand -base64 48` 生成。
+MYSQL_USERNAME: root
+MYSQL_PASSWORD: change-me
+
+REDIS_HOST: 127.0.0.1
+REDIS_PORT: 6379
+REDIS_PASSWORD: change-me
+
+JWT_KEY: change-me-to-a-random-secret-at-least-32-bytes
+
+# 对象存储（S3 兼容）凭据不再放这里：在管理后台「存储配置」页面维护，持久化到 storage_config 表

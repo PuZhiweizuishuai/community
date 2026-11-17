@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -7,7 +10,9 @@ import lombok.Data;
  * create          2019-10-09 17:26
  */
 @Data
+@Table(value = "topic", camelToUnderline = false)
 public class TagClass {
+    @Id(keyType = KeyType.Auto)
     private long id;
     private String title;
     private long talkCount;

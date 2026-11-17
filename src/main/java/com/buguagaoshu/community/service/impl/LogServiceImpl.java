@@ -36,9 +36,13 @@ public class LogServiceImpl implements LogService {
     @Override
     public Resource loadLogForDown(String filename) {
         String pathStr = LOG_PATH + "/";
-        Path file = Paths.get(pathStr);
+        Path root = Paths.get(pathStr).toAbsolutePath().normalize();
         try {
-            Path name = file.resolve(filename);
+            Path name = root.resolve(filename).normalize();
+            // 纵深防御：规范化后必须仍在日志目录内
+            if (!name.startsWith(root)) {
+                return null;
+            }
             Resource resource = new UrlResource(name.toUri());
             if (resource.exists() || resource.isReadable()) {
                 return resource;
@@ -57,20 +61,21 @@ public class LogServiceImpl implements LogService {
         try {
             Path files = Paths.get(pathStr);
             List<LogDTO> logDtoList = new ArrayList<>();
-            Files.walk(files, 1)
-                    .filter(file -> FileUtil.checkLogFileType(file.getFileName().toString()))
-                    .forEach(file -> {
-                        LogDTO logDTO = new LogDTO();
-                        logDTO.setTitle(file.getFileName().toString());
-                        logDTO.setUrl(file.getFileName().toString());
-                        try {
-                            logDTO.setTime(StringUtil.foematTime(Files.getLastModifiedTime(file).toMillis()));
-                        } catch (IOException e) {
-                            logDTO.setTime("未知时间");
-                        }
-                        logDTO.setShow(FileUtil.checkLogShow(file.getFileName().toString()));
-                        logDtoList.add(logDTO);
-                    });
+            try (var stream = Files.walk(files, 1)) {
+                stream.filter(file -> FileUtil.checkLogFileType(file.getFileName().toString()))
+                        .forEach(file -> {
+                            LogDTO logDTO = new LogDTO();
+                            logDTO.setTitle(file.getFileName().toString());
+                            logDTO.setUrl(file.getFileName().toString());
+                            try {
+                                logDTO.setTime(StringUtil.foematTime(Files.getLastModifiedTime(file).toMillis()));
+                            } catch (IOException e) {
+                                logDTO.setTime("未知时间");
+                            }
+                            logDTO.setShow(FileUtil.checkLogShow(file.getFileName().toString()));
+                            logDtoList.add(logDTO);
+                        });
+            }
             return logDtoList;
         } catch (Exception e) {
             log.error("文件遍历错误：{}", e.getMessage());

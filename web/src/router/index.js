@@ -23,6 +23,7 @@ const routes = [
   },
   { path: '/sign-in', name: 'sign-in', component: () => import('@/views/SignInView.vue'), meta: { title: '登录', bare: true } },
   { path: '/sign-up', name: 'sign-up', component: () => import('@/views/SignUpView.vue'), meta: { title: '注册', bare: true } },
+  { path: '/reset-password', name: 'reset-password', component: () => import('@/views/ResetPasswordView.vue'), meta: { title: '重置密码', bare: true } },
   {
     path: '/search/:keyword?',
     name: 'search',
@@ -93,6 +94,18 @@ const routes = [
     name: 'admin-controller',
     component: () => import('@/views/admin/AdminControllerView.vue'),
     meta: { title: '控制面板', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/storage',
+    name: 'admin-storage',
+    component: () => import('@/views/admin/AdminStorageView.vue'),
+    meta: { title: '存储配置', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/files',
+    name: 'admin-files',
+    component: () => import('@/views/admin/AdminFilesView.vue'),
+    meta: { title: '文件管理', adminArea: true, requiresAdmin: true },
   },
   {
     path: '/admin/topics',

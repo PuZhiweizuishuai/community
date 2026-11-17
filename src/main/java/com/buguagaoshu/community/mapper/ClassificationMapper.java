@@ -1,55 +1,69 @@
 package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.Classification;
+import com.mybatisflex.core.BaseMapper;
+import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.util.UpdateEntity;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+
+import static com.buguagaoshu.community.model.table.ClassificationTableDef.CLASSIFICATION;
+import static com.mybatisflex.core.query.QueryMethods.max;
 
 /**
  * 动态分类数据访问。删除分类前的「是否还有问题」校验也放在这里，
  * 保证判断和删除在同一个数据库视角下完成。
  */
 @Mapper
-public interface ClassificationMapper {
+public interface ClassificationMapper extends BaseMapper<Classification> {
 
-    @Select("select * from classification order by kind, sortOrder, id")
-    List<Classification> getAll();
+    default List<Classification> getAll() {
+        return selectListByQuery(QueryWrapper.create()
+                .orderBy(CLASSIFICATION.KIND.asc()).orderBy(CLASSIFICATION.SORT_ORDER.asc()).orderBy(CLASSIFICATION.ID.asc()));
+    }
 
-    @Select("select * from classification where kind=#{kind} and status=1 order by sortOrder, id")
-    List<Classification> getEnabledByKind(@Param("kind") String kind);
+    default List<Classification> getEnabledByKind(String kind) {
+        return selectListByQuery(QueryWrapper.create()
+                .where(CLASSIFICATION.KIND.eq(kind)).and(CLASSIFICATION.STATUS.eq(1))
+                .orderBy(CLASSIFICATION.SORT_ORDER.asc()).orderBy(CLASSIFICATION.ID.asc()));
+    }
 
-    @Select("select * from classification where id=#{id}")
-    Classification selectById(@Param("id") long id);
+    default Classification selectById(long id) {
+        return selectOneById(id);
+    }
 
-    @Select("select * from classification where kind=#{kind} and code=#{code}")
-    Classification selectByCode(@Param("kind") String kind, @Param("code") int code);
+    default Classification selectByCode(String kind, int code) {
+        return selectOneByQuery(QueryWrapper.create()
+                .where(CLASSIFICATION.KIND.eq(kind)).and(CLASSIFICATION.CODE.eq(code)));
+    }
 
-    @Select("select * from classification where kind=#{kind} and name=#{name}")
-    Classification selectByName(@Param("kind") String kind, @Param("name") String name);
+    default Classification selectByName(String kind, String name) {
+        return selectOneByQuery(QueryWrapper.create()
+                .where(CLASSIFICATION.KIND.eq(kind)).and(CLASSIFICATION.NAME.eq(name)));
+    }
 
-    @Select("select coalesce(max(code), 0) from classification where kind=#{kind}")
-    int maxCode(@Param("kind") String kind);
+    default int maxCode(String kind) {
+        Object value = selectObjectByQuery(QueryWrapper.create()
+                .select(max(CLASSIFICATION.CODE)).where(CLASSIFICATION.KIND.eq(kind)));
+        return value == null ? 0 : ((Number) value).intValue();
+    }
 
-    @Insert("insert into classification(kind, code, name, sortOrder, status, createTime, modifiedTime) " +
-            "values (#{kind}, #{code}, #{name}, #{sortOrder}, #{status}, #{createTime}, #{modifiedTime})")
-    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
-    int insert(Classification classification);
-
-    @Update("update classification set code=#{code}, name=#{name}, sortOrder=#{sortOrder}, " +
-            "status=#{status}, modifiedTime=#{modifiedTime} where id=#{id}")
-    int update(Classification classification);
-
-    @Delete("delete from classification where id=#{id}")
-    int deleteById(@Param("id") long id);
+    default int update(Classification classification) {
+        Classification update = UpdateEntity.of(Classification.class, classification.getId());
+        update.setCode(classification.getCode());
+        update.setName(classification.getName());
+        update.setSortOrder(classification.getSortOrder());
+        update.setStatus(classification.getStatus());
+        update.setModifiedTime(classification.getModifiedTime());
+        return update(update);
+    }
 
     // ------------------------------------------------------------------
-    // 删除前的使用情况校验
+    // 删除前的使用情况校验（跨表统计，保留 SQL）
     // ------------------------------------------------------------------
 
     /** 问题分类：Questions.classification 存的是分类名称 */
@@ -66,7 +80,7 @@ public interface ClassificationMapper {
     long countTopicsByType(@Param("code") int code);
 
     // ------------------------------------------------------------------
-    // 重命名 / 改编码时同步历史数据，避免产生孤儿数据
+    // 重命名 / 改编码时同步历史数据，避免产生孤儿数据（跨表更新，保留 SQL）
     // ------------------------------------------------------------------
 
     @Update("update Questions set classification=#{newName} where classification=#{oldName}")

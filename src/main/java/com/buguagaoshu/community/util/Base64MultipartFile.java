@@ -61,6 +61,8 @@ public class Base64MultipartFile implements MultipartFile {
 
     @Override
     public void transferTo(File dest) throws IOException, IllegalStateException {
-        new FileOutputStream(dest).write(imgContent);
+        try (OutputStream out = new FileOutputStream(dest)) {
+            out.write(imgContent);
+        }
     }
 }

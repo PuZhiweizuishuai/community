@@ -1,14 +1,15 @@
 package com.buguagaoshu.community.service.impl;
 
+import com.buguagaoshu.community.component.UserBatchLoader;
 import com.buguagaoshu.community.dto.NotificationDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
+import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
-import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.Notification;
 import com.buguagaoshu.community.model.Question;
@@ -16,13 +17,18 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+
+import static com.buguagaoshu.community.model.table.CommentTableDef.COMMENT;
 import java.util.stream.Collectors;
 
 /**
@@ -33,20 +39,20 @@ import java.util.stream.Collectors;
 public class NotificationServiceImpl implements NotificationService {
     private final NotificationMapper notificationMapper;
 
-    private final UserMapper userMapper;
-
-
     private final QuestionMapper questionMapper;
 
     private final CommentMapper commentMapper;
 
+    private final UserBatchLoader userBatchLoader;
+
     @Autowired
-    public NotificationServiceImpl(NotificationMapper notificationMapper, UserMapper userMapper,
-                                   QuestionMapper questionMapper, CommentMapper commentMapper) {
+    public NotificationServiceImpl(NotificationMapper notificationMapper,
+                                   QuestionMapper questionMapper, CommentMapper commentMapper,
+                                   UserBatchLoader userBatchLoader) {
         this.notificationMapper = notificationMapper;
-        this.userMapper = userMapper;
         this.questionMapper = questionMapper;
         this.commentMapper = commentMapper;
+        this.userBatchLoader = userBatchLoader;
     }
 
     @Override
@@ -98,17 +104,29 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         Set<Long> disUserIds = notifications.stream().map(Notification::getNotifier).collect(Collectors.toSet());
+        Map<Long, User> userMap = userBatchLoader.loadUsers(disUserIds);
+
+        // 批量取通知指向的评论/问题，避免逐条查询；已删除内容展示占位而不是 NPE
+        Set<Long> commentIds = notifications.stream()
+                .filter(n -> n.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()
+                        || n.getType() == NotificationTypeEnum.REPLY_COMMENT.getType())
+                .map(Notification::getCommentId)
+                .filter(cid -> cid > 0)
+                .collect(Collectors.toSet());
+        Map<Long, Comment> commentMap = commentIds.isEmpty() ? Map.of()
+                : commentMapper.selectListByIds(commentIds).stream()
+                        .collect(Collectors.toMap(Comment::getCommentId, Function.identity()));
+        Set<Long> questionIds = notifications.stream()
+                .filter(n -> n.getType() != NotificationTypeEnum.LIKE_COMMENT.getType()
+                        && n.getType() != NotificationTypeEnum.REPLY_COMMENT.getType())
+                .map(Notification::getOuterId)
+                .filter(qid -> qid > 0)
+                .collect(Collectors.toSet());
+        Map<Long, Question> questionMap = questionIds.isEmpty() ? Map.of()
+                : questionMapper.selectListByIds(questionIds).stream()
+                        .collect(Collectors.toMap(Question::getQuestionId, Function.identity()));
 
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
-
-
-        List<User> users = new ArrayList<>();
-        for (Long userId : disUserIds) {
-            User user = userMapper.selectUserById(userId);
-            users.add(user);
-        }
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
-
         for (Notification notification : notifications) {
             NotificationDTO notificationDTO = new NotificationDTO();
 
@@ -116,19 +134,18 @@ public class NotificationServiceImpl implements NotificationService {
             notificationDTO.setCreateTime(StringUtil.foematTime(notification.getCreateTime()));
             notificationDTO.setCommentContent(notification.getCommentContent());
             notificationDTO.setNotifier(notification.getNotifier());
-            notificationDTO.setNotifierId(userMap.get(notification.getNotifier()).getUserId());
-            notificationDTO.setNotifierName(userMap.get(notification.getNotifier()).getUserName());
+            User notifier = userMap.get(notification.getNotifier());
+            notificationDTO.setNotifierId(notifier == null ? null : notifier.getUserId());
+            notificationDTO.setNotifierName(notifier == null ? "已注销用户" : notifier.getUserName());
 
-            if(notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()) {
-                Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
-                notificationDTO.setOuterTitle(StringUtil.subString(comment.getContent(), 25));
-            } else if (notification.getType() == NotificationTypeEnum.REPLY_COMMENT.getType()) {
-                Comment comment = commentMapper.selectCommentByCommentId(notification.getCommentId(), 1);
-                notificationDTO.setOuterTitle(StringUtil.subString(comment.getContent(), 25));
+            if (notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()
+                    || notification.getType() == NotificationTypeEnum.REPLY_COMMENT.getType()) {
+                Comment comment = commentMap.get(notification.getCommentId());
+                notificationDTO.setOuterTitle(comment == null || comment.getStatus() == 0
+                        ? "内容已删除" : StringUtil.subString(comment.getContent(), 25));
             } else {
-                Question question = questionMapper.getQuestionIgnoreStatus(notification.getOuterId());
-                //TODO 目测可以优化
-                notificationDTO.setOuterTitle(question.getTitle());
+                Question question = questionMap.get(notification.getOuterId());
+                notificationDTO.setOuterTitle(question == null ? "内容已删除" : question.getTitle());
             }
             notificationDTO.setOuterid(notification.getOuterId());
             notificationDTO.setTypeName(NotificationTypeEnum.nameOfType(notification.getType()));
@@ -151,7 +168,7 @@ public class NotificationServiceImpl implements NotificationService {
         } catch (Exception e) {
             return null;
         }
-        Notification notification = notificationMapper.selectNotificationById(id);
+        Notification notification = notificationMapper.selectOneById(id);
         if (notification == null) {
             throw new CustomizeException(CustomizeErrorCode.NOTIFICATION_NOT_FOUND);
         }
@@ -176,5 +193,42 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public int readAll(long id) {
         return notificationMapper.readAll(id);
+    }
+
+    @Override
+    public void createBatch(List<Notification> notifications) {
+        if (notifications == null || notifications.isEmpty()) {
+            return;
+        }
+        notificationMapper.insertBatch(notifications);
+    }
+
+    @Override
+    public void notifyQuestionStatusChange(Question question, long notifierId,
+                                           NotificationTypeEnum questionType, NotificationTypeEnum commentType) {
+        // 作者收问题级通知，评论者收评论级通知；同一人既是作者又是评论者时只收问题级通知
+        Map<Long, NotificationTypeEnum> receivers = new LinkedHashMap<>();
+        receivers.put(question.getUserId(), questionType);
+        List<Comment> comments = commentMapper.selectListByQuery(QueryWrapper.create()
+                .where(COMMENT.QUESTION_ID.eq(question.getQuestionId())).and(COMMENT.STATUS.eq(1)));
+        for (Comment comment : comments) {
+            receivers.putIfAbsent(comment.getCommentator(), commentType);
+        }
+        long now = System.currentTimeMillis();
+        List<Notification> notifications = new ArrayList<>();
+        receivers.forEach((receiver, type) -> {
+            if (receiver == null || receiver == notifierId) {
+                return;
+            }
+            Notification notification = new Notification();
+            notification.setCreateTime(now);
+            notification.setType(type.getType());
+            notification.setOuterId(question.getQuestionId());
+            notification.setNotifier(notifierId);
+            notification.setStatus(NotificationStatusEnum.UNREAD.getStatus());
+            notification.setReceiver(receiver);
+            notifications.add(notification);
+        });
+        createBatch(notifications);
     }
 }

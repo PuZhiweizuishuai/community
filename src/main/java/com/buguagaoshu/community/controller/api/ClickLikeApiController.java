@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller.api;
 import com.buguagaoshu.community.dto.ClickLikeDTO;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.enums.ClickLikeTypeEnum;
+import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
 import com.buguagaoshu.community.util.AuthUtil;
@@ -44,6 +45,8 @@ public class ClickLikeApiController {
             data.put("message", type.getName());
             return ResultDTO.okOf(data);
         }
-        return ResultDTO.errorOf(2019, type.getName());
+        CustomizeErrorCode errorCode = type == ClickLikeTypeEnum.CLICK_LIKE_IS_NOT_USER
+                ? CustomizeErrorCode.PARAM_ERROR : CustomizeErrorCode.NOT_FOUND;
+        return ResultDTO.errorOf(errorCode.getCode(), type.getName());
     }
 }

@@ -52,6 +52,7 @@ async function readAll() {
 }
 
 const ads = computed(() => meta.adsFor('message'))
+meta.loadAds('message')
 </script>
 
 <template>
@@ -59,7 +60,7 @@ const ads = computed(() => meta.adsFor('message'))
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
       <div class="surface min-w-0 p-5">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h1 class="text-lg font-semibold text-slate-800">消息通知</h1>
+          <h1 class="text-lg font-semibold ui-text-strong">消息通知</h1>
           <button class="btn btn-ghost btn-sm" type="button" @click="readAll"><CheckCheck class="size-4" />一键已读</button>
         </div>
         <div class="tabs tabs-bordered mb-4">
@@ -67,7 +68,7 @@ const ads = computed(() => meta.adsFor('message'))
             v-for="tab in tabs"
             :key="tab.value"
             class="tab"
-            :class="type === tab.value ? 'tab-active font-medium text-indigo-600' : ''"
+            :class="type === tab.value ? 'tab-active font-medium ui-text-brand' : ''"
             type="button"
             @click="go({ type: tab.value, page: 1 })"
           >
@@ -77,8 +78,8 @@ const ads = computed(() => meta.adsFor('message'))
           </button>
         </div>
 
-        <div v-if="!data?.notifications?.data?.length" class="flex flex-col items-center py-12 text-center text-sm text-slate-400">
-          <Inbox class="size-10 text-slate-300" :stroke-width="1.5" />
+        <div v-if="!data?.notifications?.data?.length" class="empty-state">
+          <Inbox class="size-10 ui-text-muted" :stroke-width="1.5" />
           <p class="mt-2">这里还没有消息～</p>
         </div>
         <ul v-else class="divide-y divide-slate-100">
@@ -86,13 +87,13 @@ const ads = computed(() => meta.adsFor('message'))
             <button class="flex w-full items-start gap-3 py-3 text-left hover:bg-slate-50" type="button" @click="openMessage(item)">
               <Avatar :src="null" :name="item.notifierName || '系'" :size="34" />
               <div class="min-w-0 flex-1">
-                <p class="text-sm text-slate-700">
+                <p class="text-sm ui-text-strong">
                   <b>{{ item.notifierName || '系统' }}</b>
-                  <span class="text-slate-500"> {{ item.typeName }}</span>
-                  <RouterLink v-if="item.outerTitle" :to="`/question/${item.outerid}`" class="text-indigo-600">「{{ item.outerTitle }}」</RouterLink>
+                  <span class="ui-text-base"> {{ item.typeName }}</span>
+                  <RouterLink v-if="item.outerTitle" :to="`/question/${item.outerid}`" class="ui-text-brand">「{{ item.outerTitle }}」</RouterLink>
                 </p>
-                <p v-if="item.commentContent" class="line-clamp-2 mt-1 text-xs text-slate-500">{{ item.commentContent }}</p>
-                <p class="mt-1 text-xs text-slate-400">{{ item.createTime }}</p>
+                <p v-if="item.commentContent" class="line-clamp-2 mt-1 text-xs ui-text-base">{{ item.commentContent }}</p>
+                <p class="mt-1 text-xs ui-text-muted">{{ item.createTime }}</p>
               </div>
               <span v-if="item.status === 0" class="badge badge-primary badge-xs">未读</span>
             </button>
@@ -104,7 +105,7 @@ const ads = computed(() => meta.adsFor('message'))
 
       <aside class="side-panel">
         <section class="surface p-4 text-sm">
-          <h3 class="mb-2 flex items-center gap-1.5 font-semibold text-slate-700"><Compass class="size-4 text-indigo-500" />快捷导航</h3>
+          <h3 class="mb-2 flex items-center gap-1.5 font-semibold ui-text-strong"><Compass class="size-4 ui-text-brand" />快捷导航</h3>
           <div class="space-y-1 text-xs">
             <RouterLink to="/settings" class="link-muted block">个人设置</RouterLink>
             <RouterLink v-if="session.user" :to="`/user/${session.user.userId}`" class="link-muted block">我的主页</RouterLink>

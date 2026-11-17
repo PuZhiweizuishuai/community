@@ -25,15 +25,16 @@ async function setPower(user, power) {
   await load()
 }
 async function reset(user) {
-  if (!window.confirm(`确定将 ${user.userName} 的密码重置为 123456 吗？`)) return
-  await adminApi.resetPassword(user.id)
+  if (!window.confirm(`确定重置 ${user.userName} 的密码吗？将生成随机临时密码。`)) return
+  const data = await adminApi.resetPassword(user.id)
+  window.alert(`临时密码：${data?.tempPassword}\n请通知该用户登录后立即修改密码。`)
   toast.success('密码已重置')
 }
 </script>
 
 <template>
   <div class="surface overflow-x-auto p-5">
-    <h2 class="mb-4 text-sm font-semibold text-slate-700">所有用户（{{ data?.allCount ?? 0 }}）</h2>
+    <h2 class="mb-4 section-title">所有用户（{{ data?.allCount ?? 0 }}）</h2>
     <table class="table table-sm">
       <thead><tr><th>用户</th><th>账号</th><th>邮箱</th><th>注册时间</th><th>权限</th><th>操作</th></tr></thead>
       <tbody>
@@ -51,7 +52,7 @@ async function reset(user) {
           <td>
             <div class="dropdown">
               <button tabindex="0" class="btn btn-ghost btn-xs">操作 <ChevronDown class="size-3" /></button>
-              <ul tabindex="0" class="menu dropdown-content menu-xs z-30 w-36 rounded-box border border-slate-200 bg-white p-2 shadow-lg">
+              <ul tabindex="0" class="menu dropdown-content menu-xs z-30 w-36 rounded-box border ui-border ui-bg p-2 shadow-lg">
                 <li><button type="button" @click="setPower(user, 0)"><ShieldCheck class="size-3.5" />设为管理员</button></li>
                 <li><button type="button" @click="setPower(user, 2)"><Crown class="size-3.5" />设为 VIP</button></li>
                 <li><button type="button" @click="setPower(user, 1)"><UserRound class="size-3.5" />设为普通用户</button></li>
@@ -60,7 +61,7 @@ async function reset(user) {
             </div>
           </td>
         </tr>
-        <tr v-if="!data?.data?.length"><td colspan="6" class="text-center text-slate-400">暂无用户</td></tr>
+        <tr v-if="!data?.data?.length"><td colspan="6" class="text-center ui-text-muted">暂无用户</td></tr>
       </tbody>
     </table>
     <Pagination :pagination="data" @change="router.push({ name: 'admin-users', query: { page: $event } })" />

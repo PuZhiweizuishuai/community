@@ -1,5 +1,9 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -9,11 +13,13 @@ import lombok.Data;
  * <p>code 是稳定数值标识：问题分类用于首页 /?class={code}，话题分类写入 topic.type。
  */
 @Data
+@Table(value = "classification", camelToUnderline = false)
 public class Classification {
     /** question = 问题分类；topic = 话题所属分类 */
     public static final String KIND_QUESTION = "question";
     public static final String KIND_TOPIC = "topic";
 
+    @Id(keyType = KeyType.Auto)
     private Long id;
     private String kind;
     private Integer code;
@@ -24,5 +30,6 @@ public class Classification {
     private Long modifiedTime;
 
     /** 仅用于接口返回：该分类下关联的问题数 / 话题数 */
+    @Column(ignore = true)
     private Long usageCount;
 }

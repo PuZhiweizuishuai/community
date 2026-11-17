@@ -1,16 +1,13 @@
 package com.buguagaoshu.community.schedule;
 
 import com.buguagaoshu.community.cache.TagClassCache;
-import com.buguagaoshu.community.mapper.TagClassMapper;
-import com.buguagaoshu.community.model.TagClass;
+import com.buguagaoshu.community.component.RedisSchedulerLock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -19,28 +16,35 @@ import java.util.Map;
 @Component
 @Slf4j
 public class TagClassTasks {
-    private final TagClassMapper tagClassMapper;
 
     private final TagClassCache tagClassCache;
 
+    private final RedisSchedulerLock schedulerLock;
+
     @Autowired
-    public TagClassTasks(TagClassMapper tagClassMapper, TagClassCache tagClassCache) {
-        this.tagClassMapper = tagClassMapper;
+    public TagClassTasks(TagClassCache tagClassCache, RedisSchedulerLock schedulerLock) {
         this.tagClassCache = tagClassCache;
+        this.schedulerLock = schedulerLock;
     }
 
     /**
-     * 十分钟更新一次
+     * 十分钟更新一次（多实例只允许一个实例执行）
      * */
     @Scheduled(fixedRate = 600000)
+    public void scheduledRefresh() {
+        if (!schedulerLock.tryLock("tagClass", Duration.ofMinutes(5))) {
+            return;
+        }
+        try {
+            TagClassCache();
+        } finally {
+            schedulerLock.unlock("tagClass");
+        }
+    }
+
+    /** 后台手动刷新入口，不走分布式锁 */
     public void TagClassCache() {
         log.info("开始缓存话题");
-        List<TagClass> tagClassList = tagClassMapper.getAllTagClass();
-        Map<String, TagClass> tagClassMap = new HashMap<>();
-        for (TagClass tagClass : tagClassList) {
-            tagClassMap.put(tagClass.getTitle(), tagClass);
-        }
-        tagClassCache.setTagClassList(tagClassList);
-        tagClassCache.setTagClassMap(tagClassMap);
+        tagClassCache.refresh();
     }
 }

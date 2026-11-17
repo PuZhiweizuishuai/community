@@ -3,15 +3,22 @@ package com.buguagaoshu.community.service.impl;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.mapper.UserMapper;
+import com.buguagaoshu.community.mapper.UserPermissionMapper;
 import com.buguagaoshu.community.model.UserPermission;
-import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import static com.buguagaoshu.community.model.table.UserTableDef.USER;
+import java.util.stream.Collectors;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -25,27 +32,27 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
 
-    private final UserPermissionService userPermissionService;
+    private final UserPermissionMapper userPermissionMapper;
 
     @Autowired
-    public UserServiceImpl(UserMapper userMapper, UserPermissionService userPermissionService) {
+    public UserServiceImpl(UserMapper userMapper, UserPermissionMapper userPermissionMapper) {
         this.userMapper = userMapper;
-        this.userPermissionService = userPermissionService;
+        this.userPermissionMapper = userPermissionMapper;
     }
 
     @Override
     public User selectUserById(long id) {
-        return userMapper.selectUserById(id);
+        return userMapper.selectOneById(id);
     }
 
     @Override
     public User selectUserByEmail(String email) {
-        return userMapper.selectUserByEmail(email);
+        return userMapper.selectOneByQuery(QueryWrapper.create().where(USER.EMAIL.eq(email)));
     }
 
     @Override
     public User selectUserByUserId(String userId) {
-        User user = userMapper.selectUserByUserId(userId);
+        User user = userMapper.selectOneByQuery(QueryWrapper.create().where(USER.USER_ID.eq(userId)));
         if (user == null) {
             return null;
         }
@@ -55,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public int deleteUserById(long id) {
-        return userMapper.deleteUserById(id);
+        return userMapper.deleteById(id);
     }
 
     /**
@@ -73,7 +80,12 @@ public class UserServiceImpl implements UserService {
         }
         // 加密密码
         user.setPassword(StringUtil.BCryptPassword(user.getPassword()));
-        return userMapper.insertUser(user);
+        try {
+            return userMapper.insertUser(user);
+        } catch (DuplicateKeyException e) {
+            // 并发注册撞唯一索引（userId/email），按重复处理
+            return selectUserByEmail(user.getEmail()) != null ? -1 : -2;
+        }
     }
 
     @Override
@@ -109,14 +121,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PaginationDto<User> searchUser(String search, String page, String size) {
-        long allUserCount = userMapper.searchUserCount(search);
-        long[] param = NumberUtils.getPageAndSize(page, size, allUserCount);
-        List<User> userList = userMapper.searchUser(search, param[0], param[1]);
-        for(User user : userList) {
-            UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-            user.setPower(userPermission.getPower());
-            user.clean();
+        String keyword = StringUtil.sanitizeFulltextKeyword(search);
+        if (keyword == null) {
+            return emptyPage(page, size);
         }
+        long allUserCount = userMapper.searchUserCount(keyword);
+        long[] param = NumberUtils.getPageAndSize(page, size, allUserCount);
+        List<User> userList = userMapper.searchUser(keyword, param[0], param[1]);
+        fillPower(userList);
         PaginationDto<User> paginationDto = new PaginationDto<>();
         paginationDto.setData(userList);
         paginationDto.setPagination(param[2], param[3], param[1]);
@@ -127,14 +139,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PaginationDto<User> getUserList(String page, String size) {
-        long allUserCount = userMapper.getAlluserCount();
+        long allUserCount = userMapper.selectCountByQuery(QueryWrapper.create());
         long[] param = NumberUtils.getPageAndSize(page, size, allUserCount);
-        List<User> userList = userMapper.getUserList(param[0], param[1]);
-        for(User user : userList) {
-            UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-            user.setPower(userPermission.getPower());
-            user.clean();
-        }
+        List<User> userList = userMapper.selectListByQuery(QueryWrapper.create()
+                .orderBy(USER.ID.desc()).limit(param[0], param[1]));
+        fillPower(userList);
         PaginationDto<User> paginationDto = new PaginationDto<>();
         paginationDto.setData(userList);
         paginationDto.setPagination(param[2], param[3], param[1]);
@@ -143,8 +152,34 @@ public class UserServiceImpl implements UserService {
         return paginationDto;
     }
 
+    /** 批量装配权限并剥离密码，替代逐用户查询 */
+    private void fillPower(List<User> userList) {
+        if (userList.isEmpty()) {
+            return;
+        }
+        Map<Long, UserPermission> permissionMap = userPermissionMapper
+                .selectListByIds(userList.stream().map(User::getId).toList())
+                .stream().collect(Collectors.toMap(UserPermission::getId, Function.identity()));
+        for (User user : userList) {
+            UserPermission permission = permissionMap.get(user.getId());
+            if (permission != null) {
+                user.setPower(permission.getPower());
+            }
+            user.clean();
+        }
+    }
+
+    private PaginationDto<User> emptyPage(String page, String size) {
+        long[] param = NumberUtils.getPageAndSize(page, size, 0);
+        PaginationDto<User> paginationDto = new PaginationDto<>();
+        paginationDto.setData(List.of());
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(0);
+        return paginationDto;
+    }
+
     @Override
     public long getAlluserCount() {
-        return userMapper.getAlluserCount();
+        return userMapper.selectCountByQuery(QueryWrapper.create());
     }
 }

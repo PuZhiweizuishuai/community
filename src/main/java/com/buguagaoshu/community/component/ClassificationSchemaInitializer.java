@@ -95,6 +95,6 @@ public class ClassificationSchemaInitializer implements ApplicationRunner {
         item.setStatus(1);
         item.setCreateTime(now);
         item.setModifiedTime(now);
-        mapper.insert(item);
+        mapper.insertSelective(item);
     }
 }

@@ -26,23 +26,23 @@ function go(page) {
 </script>
 
 <template>
-  <div v-if="pagination" class="mt-5 flex flex-wrap items-center justify-center gap-1">
-    <button class="btn btn-xs btn-ghost" :disabled="!canPrev" type="button" @click="go(current - 1)"><ChevronLeft class="size-3.5" />上一页</button>
-    <button v-if="pagination.showFirstPage && !pages.includes(1)" class="btn btn-xs btn-ghost" type="button" @click="go(1)">1</button>
-    <span v-if="pagination.showFirstPage && !pages.includes(1)" class="px-1 text-xs text-slate-400">…</span>
+  <div v-if="pagination" class="mt-5 flex flex-wrap items-center justify-center gap-1.5">
+    <button class="btn btn-sm btn-ghost" :disabled="!canPrev" type="button" @click="go(current - 1)"><ChevronLeft class="size-3.5" />上一页</button>
+    <button v-if="pagination.showFirstPage && !pages.includes(1)" class="btn btn-sm btn-ghost" type="button" @click="go(1)">1</button>
+    <span v-if="pagination.showFirstPage && !pages.includes(1)" class="px-1 text-xs ui-text-muted">…</span>
     <button
       v-for="page in pages"
       :key="page"
-      class="btn btn-xs"
+      class="btn btn-sm"
       :class="Number(page) === current ? 'btn-primary' : 'btn-ghost'"
       type="button"
       @click="go(Number(page))"
     >
       {{ page }}
     </button>
-    <span v-if="pagination.showEndPage && !pages.includes(total)" class="px-1 text-xs text-slate-400">…</span>
-    <button v-if="pagination.showEndPage && !pages.includes(total)" class="btn btn-xs btn-ghost" type="button" @click="go(total)">{{ total }}</button>
-    <button class="btn btn-xs btn-ghost" :disabled="!canNext" type="button" @click="go(current + 1)">下一页<ChevronRight class="size-3.5" /></button>
-    <span class="ml-2 text-xs text-slate-400">共 {{ pagination.allCount ?? 0 }} 条 / {{ total }} 页</span>
+    <span v-if="pagination.showEndPage && !pages.includes(total)" class="px-1 text-xs ui-text-muted">…</span>
+    <button v-if="pagination.showEndPage && !pages.includes(total)" class="btn btn-sm btn-ghost" type="button" @click="go(total)">{{ total }}</button>
+    <button class="btn btn-sm btn-ghost" :disabled="!canNext" type="button" @click="go(current + 1)">下一页<ChevronRight class="size-3.5" /></button>
+    <span class="w-full text-center text-xs ui-text-muted sm:ml-2 sm:w-auto">共 {{ pagination.allCount ?? 0 }} 条 / {{ total }} 页</span>
   </div>
 </template>

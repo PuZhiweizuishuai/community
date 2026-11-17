@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.util;
 
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -9,20 +10,25 @@ import java.util.*;
  * create          2019-08-12 18:01
  */
 public class StringUtil {
+
+    /** BCrypt 编码器线程安全，全局单例（spring-security-crypto，无需整个 Spring Security） */
+    private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
+
     /**
      * 密码加密
      */
     public static String BCryptPassword(String password) {
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        return bCryptPasswordEncoder.encode(password);
+        return PASSWORD_ENCODER.encode(password);
     }
 
     /**
      * 与数据库中的密码进行对比
      */
     public static boolean judgePassword(String rawPassword, String encodedPassword) {
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        return bCryptPasswordEncoder.matches(rawPassword, encodedPassword);
+        if (rawPassword == null || encodedPassword == null) {
+            return false;
+        }
+        return PASSWORD_ENCODER.matches(rawPassword, encodedPassword);
     }
 
 
@@ -48,17 +54,6 @@ public class StringUtil {
         String regx = "^([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){6,30}$";
         return password.matches(regx);
     }
-
-    /**
-     * 返回处理结果
-     */
-    public static HashMap<String, Object> dealResultMessage(boolean success, String msg) {
-        HashMap<String, Object> hashMap = new HashMap<>(2);
-        hashMap.put("success", success);
-        hashMap.put("msg", msg);
-        return hashMap;
-    }
-
 
     /**
      * 获取当前系统时间
@@ -142,49 +137,35 @@ public class StringUtil {
     }
 
     /**
-     * 页面跳转的语言参数
-     *
-     * @param url        要跳转的页面
-     * @param isRedirect 是否重定向
+     * 清洗搜索关键字：限制长度并转义 LIKE 通配符，防止全表扫描放大与通配符注入。
+     * 返回 null 表示关键字非法/为空。
      */
-    public static String jumpWebLangeParameter(String url, boolean isRedirect,
-                                               HttpServletRequest request) {
-        StringBuffer stringBuffer = new StringBuffer();
-        if (isRedirect) {
-            stringBuffer.append("redirect:");
+    public static String sanitizeSearchKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
         }
-        String l = request.getParameter("l");
-        if (l != null && l.equals("en-US")) {
-
-            stringBuffer.append(url);
-            stringBuffer.append("?l=en-US");
-        } else {
-            stringBuffer.append(url);
+        String trimmed = keyword.trim();
+        if (trimmed.isEmpty() || trimmed.length() > 50) {
+            return null;
         }
-        return stringBuffer.toString();
+        return trimmed.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     /**
-     * 返回查询相关问题的正则
+     * 清洗 FULLTEXT 布尔模式关键字：去掉布尔操作符，防止语法错误与恶意构造。
+     * 返回 null 表示关键字非法/为空。
      */
-    public static String sqlSelectRegexpForRelevantQuestion(String tag) {
-        String regex = ",|，";
-        String[] str = tag.split(regex);
-        if (str.length == 1) {
-            return tag;
+    public static String sanitizeFulltextKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
         }
-        StringBuffer stringBuffer = new StringBuffer();
-        int n = str.length;
-        for (int i = 0; ; i++) {
-            stringBuffer.append(str[i]);
-            if (i == n - 1) {
-                break;
-            }
-            stringBuffer.append("|");
+        String cleaned = keyword.replaceAll("[+\\-><()~*\"@!\\\\]", " ")
+                .replaceAll("\\s+", " ").trim();
+        if (cleaned.isEmpty() || cleaned.length() > 50) {
+            return null;
         }
-        return stringBuffer.toString();
+        return cleaned;
     }
-
 
     /**
      * 判断标签数量
@@ -201,38 +182,6 @@ public class StringUtil {
             }
         }
         return tag != null;
-    }
-
-    /**
-     * 求差集
-     */
-    public static ArrayList<String> minus(String[] arr1, String[] arr2) {
-        ArrayList<String> list = new ArrayList<>();
-        LinkedList<String> history = new LinkedList<>();
-        String[] longerArr = arr1;
-        String[] shorterArr = arr2;
-        //找出较长的数组来减较短的数组
-        if (arr1.length > arr2.length) {
-            longerArr = arr2;
-            shorterArr = arr1;
-        }
-        for (String str : longerArr) {
-            if (!list.contains(str)) {
-                list.add(str);
-            }
-        }
-        for (String str : shorterArr) {
-            if (list.contains(str)) {
-                history.add(str);
-                list.remove(str);
-            } else {
-                if (!history.contains(str)) {
-                    list.add(str);
-
-                }
-            }
-        }
-        return list;
     }
 
     public static String subString(String str, int n) {

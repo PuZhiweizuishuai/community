@@ -11,8 +11,12 @@ export const authApi = {
   login: (data) => api.post('/auth/login', data),
   logout: () => api.post('/auth/logout', {}),
   register: (data) => api.form('/register', data),
-  checkEmail: (email) => api.raw('/checkEmail', { method: 'GET', params: { email }, silent: true }),
-  checkUserId: (userId) => api.raw('/checkUserId', { method: 'GET', params: { userId }, silent: true }),
+  features: () => api.get('/auth/features'),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
+  sendRegisterCode: (data) => api.post('/auth/send-register-code', data),
+  checkEmail: (email) => api.get('/checkEmail', { email }, { silent: true }),
+  checkUserId: (userId) => api.get('/checkUserId', { userId }, { silent: true }),
   adminSession: () => api.get('/admin/session'),
   adminLogin: (data) => api.form('/admin/login', data),
   adminLogout: () => api.form('/admin/logout', {}),
@@ -20,6 +24,10 @@ export const authApi = {
 
 export const metaApi = {
   get: () => api.get('/meta'),
+  hot: () => api.get('/meta/hot'),
+  hotUsers: () => api.get('/meta/hot-users'),
+  tagCategories: () => api.get('/meta/tag-categories'),
+  ads: (position) => api.get('/meta/ads', { position }),
   adClick: (url, id) => api.get('/meta/ad', { url, id }),
 }
 
@@ -65,7 +73,8 @@ export const settingApi = {
   updateData: (data) => api.form('/update/data', data),
   updatePassword: (data) => api.form('/update/password', data),
   updateHeadUrl: (imgBase) => api.form('/update/HeadUrl', { imgBase }),
-  uploadImage: (formData) => api.upload('/file/image/upload', formData),
+  // 统一上传入口 /api/file/upload，兼容 editormd-image-file 与 file[] 字段
+  uploadImage: (formData) => api.upload('/file/upload', formData),
   uploadFiles: (formData) => api.upload('/file/upload', formData),
 }
 
@@ -88,8 +97,8 @@ export const adminApi = {
   resetPassword: (userId) => api.form('/admin/reset/password', { userId }),
   settingTop: (ids) =>
     api.form('/admin/settingTopQuestion', { id1: ids[0], id2: ids[1], id3: ids[2] }),
-  refreshCache: (name) => api.get(`/admin/updateHot${name}`),
-  refreshTagClass: () => api.get('/admin/updateTagClass'),
+  refreshCache: (name) => api.post(`/admin/updateHot${name}`, {}),
+  refreshTagClass: () => api.post('/admin/updateTagClass', {}),
   cacheStats: () => api.get('/admin/cache'),
   refreshCacheAll: () => api.post('/admin/cache/refresh', {}),
   invalidateCache: (prefix) => api.form('/admin/cache/invalidate', { prefix }),
@@ -104,6 +113,18 @@ export const adminApi = {
   deleteTopic: (id) => api.post('/admin/topics/delete', { id }),
   refreshTopics: () => api.post('/admin/topics/refresh', {}),
   deleteLog: (data) => api.post('/admin/log/delete', data),
+  // 系统配置（注册开关 / SMTP 邮件）
+  systemConfig: () => api.get('/admin/config'),
+  saveSystemConfig: (data) => api.post('/admin/config/save', data),
+  testMail: (to) => api.post('/admin/config/test-mail', { to }),
+  // 存储配置（本地 / 多对象存储）
+  storages: () => api.get('/admin/storage'),
+  saveStorage: (data) => api.post('/admin/storage/save', data),
+  deleteStorage: (id) => api.post('/admin/storage/delete', { id }),
+  testStorage: (data) => api.post('/admin/storage/test', data),
+  // 文件管理
+  files: (params) => api.get('/admin/file/list', params),
+  deleteFile: (id) => api.post('/admin/file/delete', { id }),
   logUrl: (filename, type = 'download') =>
     `${BASE_URL}/admin/log/download/${encodeURIComponent(filename)}?type=${type}`,
 }

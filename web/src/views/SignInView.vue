@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Eye, EyeOff, Lock, Mail, X } from '@lucide/vue'
 import { authApi } from '@/api'
@@ -23,6 +23,59 @@ const submitting = ref(false)
 const errorMessage = ref('')
 const touched = ref(false)
 const captchaRef = ref(null)
+
+// 找回密码弹窗
+const mailEnabled = ref(false)
+const forgotOpen = ref(false)
+const forgotEmail = ref('')
+const forgotCaptcha = ref('')
+const forgotSubmitting = ref(false)
+const forgotCaptchaRef = ref(null)
+
+onMounted(async () => {
+  try {
+    const features = await authApi.features()
+    mailEnabled.value = !!features?.mailEnabled
+  } catch {
+    mailEnabled.value = false
+  }
+})
+
+function openForgot() {
+  if (!mailEnabled.value) {
+    toast.info('邮件找回未启用，请联系管理员重置密码')
+    return
+  }
+  forgotEmail.value = email.value.trim()
+  forgotCaptcha.value = ''
+  forgotOpen.value = true
+}
+
+function closeForgot() {
+  forgotOpen.value = false
+  // 弹窗与登录共用会话验证码，关闭后刷新登录验证码
+  captcha.value = ''
+  captchaRef.value?.refresh?.()
+}
+
+async function submitForgot() {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail.value.trim())) {
+    return toast.warning('请输入有效的邮箱地址')
+  }
+  if (!forgotCaptcha.value.trim()) return toast.warning('请输入验证码')
+  forgotSubmitting.value = true
+  try {
+    await authApi.forgotPassword({ email: forgotEmail.value.trim(), captcha: forgotCaptcha.value.trim() })
+    toast.success('重置链接已发送到邮箱，30 分钟内有效')
+    closeForgot()
+  } catch (error) {
+    toast.error(error?.message || '发送失败，请稍后重试')
+    forgotCaptcha.value = ''
+    forgotCaptchaRef.value?.refresh?.()
+  } finally {
+    forgotSubmitting.value = false
+  }
+}
 
 const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()))
 const passwordValid = computed(() => password.value.length >= 6)
@@ -69,9 +122,9 @@ async function login() {
 
     <form class="space-y-4" novalidate @submit.prevent="login">
       <label class="form-control">
-        <span class="label-text mb-1.5 font-medium text-slate-700">邮箱</span>
+        <span class="label-text mb-1.5 font-medium ui-text-strong">邮箱</span>
         <div class="relative">
-          <span class="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400"><Mail class="size-4" /></span>
+          <span class="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 ui-text-muted"><Mail class="size-4" /></span>
           <input
             v-model="email"
             type="email"
@@ -85,12 +138,12 @@ async function login() {
       </label>
 
       <label class="form-control">
-        <span class="label-text mb-1.5 flex justify-between font-medium text-slate-700">
+        <span class="label-text mb-1.5 flex justify-between font-medium ui-text-strong">
           密码
-          <span class="text-xs font-normal text-slate-400">至少 6 位</span>
+          <span class="text-xs font-normal ui-text-muted">至少 6 位</span>
         </span>
         <div class="relative">
-          <span class="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400"><Lock class="size-4" /></span>
+          <span class="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 ui-text-muted"><Lock class="size-4" /></span>
           <input
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
@@ -111,16 +164,16 @@ async function login() {
       </label>
 
       <div>
-        <span class="label-text mb-1.5 block font-medium text-slate-700">验证码</span>
+        <span class="label-text mb-1.5 block font-medium ui-text-strong">验证码</span>
         <Captcha ref="captchaRef" v-model="captcha" placeholder="输入图中字符" />
       </div>
 
       <div class="flex items-center justify-between text-sm">
-        <label class="flex cursor-pointer items-center gap-2 text-slate-600">
+        <label class="flex cursor-pointer items-center gap-2 ui-text-base">
           <input v-model="remember" type="checkbox" class="checkbox checkbox-sm checkbox-primary" />
           记住我（7 天）
         </label>
-        <button class="link text-xs text-slate-400 hover:text-indigo-600" type="button" @click="toast.info('找回密码功能即将上线')">忘记密码？</button>
+        <button class="link text-xs ui-text-muted hover:text-indigo-600" type="button" @click="openForgot">忘记密码？</button>
       </div>
 
       <button class="btn btn-primary w-full" :disabled="submitting" type="submit">
@@ -128,15 +181,37 @@ async function login() {
       </button>
     </form>
 
-    <div class="my-5 flex items-center gap-3 text-xs text-slate-400">
-      <span class="h-px flex-1 bg-slate-200" />
+    <div class="my-5 flex items-center gap-3 text-xs ui-text-muted">
+      <span class="h-px flex-1 ui-bg-soft" />
       还没有账号？
-      <span class="h-px flex-1 bg-slate-200" />
+      <span class="h-px flex-1 ui-bg-soft" />
     </div>
     <RouterLink to="/sign-up" class="btn btn-outline w-full">创建账号</RouterLink>
 
     <div class="mt-5 hidden justify-center lg:flex">
       <ThemeToggle />
+    </div>
+
+    <!-- 找回密码弹窗 -->
+    <div v-if="forgotOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" @click.self="closeForgot">
+      <div class="surface w-full max-w-sm space-y-4 p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-semibold ui-text-strong">找回密码</h2>
+          <button class="btn btn-ghost btn-xs" type="button" aria-label="关闭" @click="closeForgot"><X class="size-4" /></button>
+        </div>
+        <p class="text-xs ui-text-muted">输入注册邮箱，我们会发送一封含重置链接的邮件（30 分钟内有效）。</p>
+        <label class="form-control">
+          <span class="label-text mb-1.5 font-medium ui-text-strong">邮箱</span>
+          <input v-model="forgotEmail" type="email" class="input input-bordered w-full" placeholder="you@example.com" />
+        </label>
+        <div>
+          <span class="label-text mb-1.5 block font-medium ui-text-strong">验证码</span>
+          <Captcha ref="forgotCaptchaRef" v-model="forgotCaptcha" placeholder="输入图中字符" />
+        </div>
+        <button class="btn btn-primary w-full" type="button" :disabled="forgotSubmitting" @click="submitForgot">
+          {{ forgotSubmitting ? '发送中…' : '发送重置链接' }}
+        </button>
+      </div>
     </div>
   </AuthShell>
 </template>

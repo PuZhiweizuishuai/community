@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -7,7 +10,9 @@ import lombok.Data;
  * create          2019-08-15 15:44
  */
 @Data
+@Table(value = "Questions", camelToUnderline = false)
 public class Question {
+    @Id(keyType = KeyType.Auto)
     private long questionId = -1;
     private long userId;
     private String title;

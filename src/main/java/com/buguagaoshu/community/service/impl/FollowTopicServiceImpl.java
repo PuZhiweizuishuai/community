@@ -1,18 +1,20 @@
 package com.buguagaoshu.community.service.impl;
 
-import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.dto.FollowTopicDTO;
-import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.FollowTopicMapper;
 import com.buguagaoshu.community.model.FollowTopic;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.FollowTopicService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.buguagaoshu.community.model.table.FollowTopicTableDef.FOLLOW_TOPIC;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -24,17 +26,14 @@ public class FollowTopicServiceImpl implements FollowTopicService {
 
     private final TagClassService tagClassService;
 
-    private final TagClassCache tagClassCache;
-
     @Autowired
-    public FollowTopicServiceImpl(FollowTopicMapper followTopicMapper, TagClassService tagClassService, TagClassCache tagClassCache) {
+    public FollowTopicServiceImpl(FollowTopicMapper followTopicMapper, TagClassService tagClassService) {
         this.followTopicMapper = followTopicMapper;
         this.tagClassService = tagClassService;
-        this.tagClassCache = tagClassCache;
     }
 
     @Override
-    @Transactional(rollbackFor = CustomizeException.class)
+    @Transactional
     public int insertFollowTop(FollowTopicDTO followTopicDTO, long userId, TagClass tagClass) {
         FollowTopic followTopic = new FollowTopic();
         followTopic.setTopicId(followTopicDTO.getTopicId());
@@ -42,40 +41,47 @@ public class FollowTopicServiceImpl implements FollowTopicService {
         followTopic.setTopicImage(tagClass.getImage());
         followTopic.setUserId(userId);
         followTopic.setCreateTime(System.currentTimeMillis());
-        FollowTopic temp = followTopicMapper.selectFollowTopic(followTopic);
+        FollowTopic temp = findFollowTopic(followTopic.getTopicId(), userId);
         if (temp == null) {
-            tagClass.setFollowCount(tagClass.getFollowCount()+1);
-            tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
-
-            TagClass newClass = new TagClass();
-            newClass.setId(tagClass.getId());
-            newClass.setFollowCount(1);
-            tagClassService.updateFollowCount(newClass);
-
-            followTopicMapper.insertFollowTop(followTopic);
+            try {
+                followTopicMapper.insertSelective(followTopic);
+            } catch (DuplicateKeyException e) {
+                // 并发重复关注：唯一索引兜底，不再累加计数
+                return 1;
+            }
+            TagClass delta = new TagClass();
+            delta.setId(tagClass.getId());
+            delta.setFollowCount(1);
+            tagClassService.updateFollowCount(delta);
             return 1;
         } else {
-            tagClass.setFollowCount(tagClass.getFollowCount()-1);
-            tagClassCache.getTagClassMap().put(tagClass.getTitle(), tagClass);
-
-            TagClass newClass = new TagClass();
-            newClass.setId(tagClass.getId());
-            newClass.setFollowCount(1);
-
-            tagClassService.updateFollowCount(newClass);
-            followTopicMapper.deleteFollowTopic(temp.getFollowTopicId());
+            // 先删关系，删除成功才减计数，避免并发取消导致计数多减
+            int deleted = followTopicMapper.deleteById(temp.getFollowTopicId());
+            if (deleted == 1) {
+                TagClass delta = new TagClass();
+                delta.setId(tagClass.getId());
+                delta.setFollowCount(-1);
+                tagClassService.updateFollowCount(delta);
+            }
             return 2;
         }
     }
 
     @Override
     public boolean isFollowTopic(FollowTopic followTopic) {
-        FollowTopic temp = followTopicMapper.selectFollowTopic(followTopic);
-        return temp != null;
+        return findFollowTopic(followTopic.getTopicId(), followTopic.getUserId()) != null;
+    }
+
+    private FollowTopic findFollowTopic(long topicId, long userId) {
+        return followTopicMapper.selectOneByQuery(QueryWrapper.create()
+                .where(FOLLOW_TOPIC.TOPIC_ID.eq(topicId))
+                .and(FOLLOW_TOPIC.USER_ID.eq(userId)));
     }
 
     @Override
     public List<FollowTopic> selectUserFollowTopic(long userId) {
-        return followTopicMapper.selectUserFollowTopic(userId);
+        return followTopicMapper.selectListByQuery(QueryWrapper.create()
+                .where(FOLLOW_TOPIC.USER_ID.eq(userId))
+                .orderBy(FOLLOW_TOPIC.FOLLOW_TOPIC_ID.desc()));
     }
 }

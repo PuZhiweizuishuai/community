@@ -38,24 +38,24 @@ const option = computed(() => {
 <template>
   <div class="space-y-5">
     <div class="grid gap-4 sm:grid-cols-3">
-      <div class="surface p-5"><p class="flex items-center gap-1.5 text-xs text-slate-400"><Users class="size-4 text-indigo-500" />注册用户</p><p class="mt-1 text-2xl font-bold text-indigo-600">{{ data?.userNumber ?? '-' }}</p></div>
-      <div class="surface p-5"><p class="flex items-center gap-1.5 text-xs text-slate-400"><MessageCircleQuestion class="size-4 text-sky-500" />问题总数</p><p class="mt-1 text-2xl font-bold text-sky-600">{{ data?.questionNumber ?? '-' }}</p></div>
-      <div class="surface p-5"><p class="flex items-center gap-1.5 text-xs text-slate-400"><Wifi class="size-4 text-emerald-500" />当前在线</p><p class="mt-1 text-2xl font-bold text-emerald-600">{{ data?.onlineUser ?? '-' }}</p></div>
+      <div class="surface p-5"><p class="flex items-center gap-1.5 text-xs ui-text-muted"><Users class="size-4 ui-text-brand" />注册用户</p><p class="mt-1 text-2xl font-bold ui-text-brand">{{ data?.userNumber ?? '-' }}</p></div>
+      <div class="surface p-5"><p class="flex items-center gap-1.5 text-xs ui-text-muted"><MessageCircleQuestion class="size-4 text-sky-500" />问题总数</p><p class="mt-1 text-2xl font-bold text-sky-600">{{ data?.questionNumber ?? '-' }}</p></div>
+      <div class="surface p-5"><p class="flex items-center gap-1.5 text-xs ui-text-muted"><Wifi class="size-4 text-emerald-500" />当前在线</p><p class="mt-1 text-2xl font-bold text-emerald-600">{{ data?.onlineUser ?? '-' }}</p></div>
     </div>
 
     <div class="surface p-5">
-      <h2 class="mb-3 text-sm font-semibold text-slate-700">数据变化趋势</h2>
+      <h2 class="mb-3 section-title">数据变化趋势</h2>
       <EChart v-if="rows.length" :option="option" :height="300" />
-      <p v-else class="py-16 text-center text-sm text-slate-400">暂无统计数据</p>
+      <p v-else class="py-16 text-center text-sm ui-text-muted">暂无统计数据</p>
     </div>
 
     <div class="surface overflow-x-auto p-5">
-      <h2 class="mb-3 text-sm font-semibold text-slate-700">近期数据</h2>
+      <h2 class="mb-3 section-title">近期数据</h2>
       <table class="table table-sm">
         <thead><tr><th>时间</th><th>用户总数</th><th>问题总数</th><th>新增用户</th><th>新增问题</th></tr></thead>
         <tbody>
           <tr v-for="row in rows" :key="row.time"><td>{{ row.time }}</td><td>{{ row.userCount }}</td><td>{{ row.questionCount }}</td><td>{{ row.userAddCount }}</td><td>{{ row.questionAddCount }}</td></tr>
-          <tr v-if="!rows.length"><td colspan="5" class="text-center text-slate-400">暂无数据</td></tr>
+          <tr v-if="!rows.length"><td colspan="5" class="text-center ui-text-muted">暂无数据</td></tr>
         </tbody>
       </table>
       <Pagination :pagination="data?.pagination" @change="router.push({ name: 'admin-dashboard', query: { page: $event } })" />

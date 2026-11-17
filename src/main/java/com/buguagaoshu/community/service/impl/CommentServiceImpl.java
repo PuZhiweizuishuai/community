@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.service.impl;
 
+import com.buguagaoshu.community.component.UserBatchLoader;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.enums.CommentSortTypeEnum;
@@ -13,11 +14,11 @@ import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.*;
 import com.buguagaoshu.community.service.CommentService;
-import com.buguagaoshu.community.service.UserPermissionService;
-import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
+import com.mybatisflex.core.query.QueryColumn;
+import com.mybatisflex.core.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+
+import static com.buguagaoshu.community.model.table.CommentTableDef.COMMENT;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -41,21 +46,18 @@ public class CommentServiceImpl implements CommentService {
 
     private final QuestionMapper questionMapper;
 
-    private final UserService userService;
-
     private final NotificationMapper notificationMapper;
 
-    private final UserPermissionService userPermissionService;
+    private final UserBatchLoader userBatchLoader;
 
 
     @Autowired
     public CommentServiceImpl(CommentMapper commentMapper, QuestionMapper questionMapper,
-                              UserService userService, NotificationMapper notificationMapper, UserPermissionService userPermissionService) {
+                              NotificationMapper notificationMapper, UserBatchLoader userBatchLoader) {
         this.commentMapper = commentMapper;
         this.questionMapper = questionMapper;
-        this.userService = userService;
         this.notificationMapper = notificationMapper;
-        this.userPermissionService = userPermissionService;
+        this.userBatchLoader = userBatchLoader;
     }
 
 
@@ -64,7 +66,7 @@ public class CommentServiceImpl implements CommentService {
      * 插入评论
      */
     @Override
-    @Transactional(rollbackFor = CustomizeException.class)
+    @Transactional
     public int insertComment(Comment comment) {
         if (comment.getParentId() == 0) {
             throw new CustomizeException(CustomizeErrorCode.TARGET_PARAM_NOT_FOUND);
@@ -136,41 +138,29 @@ public class CommentServiceImpl implements CommentService {
         } catch (Exception e) {
             throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
         }
-        long allCommentNumber = commentMapper.getCommentNumber(qId, 1, 1);
+        QueryWrapper query = QueryWrapper.create()
+                .where(COMMENT.QUESTION_ID.eq(qId)).and(COMMENT.TYPE.eq(1)).and(COMMENT.STATUS.eq(1));
+        long allCommentNumber = commentMapper.selectCountByQuery(query);
         // 计算分页参数
         long[] param = NumberUtils.getPageAndSize(page, size, allCommentNumber);
-        List<Comment> comments;
-        switch (commentSortTypeEnum) {
-            case NEW:
-                comments = commentMapper.getNewCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
-                break;
-            case BEST_LIKE:
-                comments = commentMapper.getLikeCountCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
-                break;
-            case BEST_COMMENT:
-                comments = commentMapper.getReplyCountCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
-                break;
-            default:
-                comments = commentMapper.getCommentDtoByQuestionId(qId, 1, param[0], param[1], 1);
+        QueryColumn sortColumn = switch (commentSortTypeEnum) {
+            case NEW -> COMMENT.CREATE_TIME;
+            case BEST_LIKE -> COMMENT.LIKE_COUNT;
+            case BEST_COMMENT -> COMMENT.COMMENT_COUNT;
+            default -> null;
+        };
+        if (sortColumn != null) {
+            query.orderBy(sortColumn.desc());
         }
+        List<Comment> comments = commentMapper.selectListByQuery(query.limit(param[0], param[1]));
 
 
         if (comments.size() == 0) {
             return null;
         }
-        // 获取该问题下去重的所有评论者
-        Set<Long> commentors = comments.stream().map(comment -> comment.getCommentator()).collect(Collectors.toSet());
-        List<User> users = new ArrayList<>();
-        for (Long userId : commentors) {
-            User user = userService.selectUserById(userId);
-            UserPermission userPermission = userPermissionService.selectUserPermissionById(userId);
-            user.setPower(userPermission.getPower());
-            user.clean();
-            users.add(user);
-        }
-
-        // 获取 userMap
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
+        // 获取该问题下去重的所有评论者，批量装配作者信息
+        Set<Long> commentors = comments.stream().map(Comment::getCommentator).collect(Collectors.toSet());
+        Map<Long, User> userMap = userBatchLoader.loadUsers(commentors, true);
 
         // 为评论添加作者信息
         List<CommentDto> commentDtos = comments.stream().map(comment -> {
@@ -197,31 +187,35 @@ public class CommentServiceImpl implements CommentService {
         } catch (Exception e) {
             throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
         }
-        List<Comment> comments = commentMapper.getTwoLevelCommentByParent(id, type, 1);
+        List<Comment> comments = commentMapper.selectListByQuery(QueryWrapper.create()
+                .where(COMMENT.PARENT_COMMENT_ID.eq(id)).and(COMMENT.TYPE.eq(type)).and(COMMENT.STATUS.eq(1)));
         if (comments.size() == 0) {
             throw new CustomizeException(CustomizeErrorCode.COMMENT_NO_COMMENT);
         }
-        Set<Long> commentors = comments.stream().map(comment -> comment.getCommentator()).collect(Collectors.toSet());
-        List<User> users = new ArrayList<>();
-        for (Long userId : commentors) {
-            User user = userService.selectUserById(userId);
-            UserPermission userPermission = userPermissionService.selectUserPermissionById(userId);
-            user.setPower(userPermission.getPower());
-            user.clean();
-            users.add(user);
-        }
+        Set<Long> commentors = comments.stream().map(Comment::getCommentator).collect(Collectors.toSet());
 
-        // 获取 userMap
-        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(user -> user.getId(), user -> user));
+        // 二级回复可能指向别的评论：批量取目标评论与目标用户，避免逐条查询
+        Set<Long> targetCommentIds = comments.stream()
+                .filter(c -> c.getParentCommentId() != c.getParentId())
+                .map(Comment::getParentId)
+                .collect(Collectors.toSet());
+        Map<Long, Comment> targetCommentMap = targetCommentIds.isEmpty() ? Map.of()
+                : commentMapper.selectListByIds(targetCommentIds).stream()
+                        .collect(Collectors.toMap(Comment::getCommentId, Function.identity()));
+        Set<Long> allUserIds = new HashSet<>(commentors);
+        targetCommentMap.values().forEach(c -> allUserIds.add(c.getCommentator()));
+        Map<Long, User> userMap = userBatchLoader.loadUsers(allUserIds, true);
 
         // 为评论添加作者信息
         List<CommentDto> commentDtos = comments.stream().map(comment -> {
             CommentDto commentDto = new CommentDto();
             if (comment.getParentCommentId() != comment.getParentId()) {
-                Comment targetComment = commentMapper.selectCommentByCommentId(comment.getParentId(), 1);
-                User targetUser = userService.selectUserById(targetComment.getCommentator());
-                commentDto.setTargetName(targetUser.getUserName());
-                commentDto.setTargetUrl("/user/" + targetUser.getUserId());
+                Comment targetComment = targetCommentMap.get(comment.getParentId());
+                User targetUser = targetComment == null ? null : userMap.get(targetComment.getCommentator());
+                if (targetUser != null) {
+                    commentDto.setTargetName(targetUser.getUserName());
+                    commentDto.setTargetUrl("/user/" + targetUser.getUserId());
+                }
             }
             BeanUtils.copyProperties(comment, commentDto);
             commentDto.setUser(userMap.get(comment.getCommentator()));
@@ -262,6 +256,6 @@ public class CommentServiceImpl implements CommentService {
 
         notification.setCommentId(commentId);
 
-        notificationMapper.insertNotification(notification);
+        notificationMapper.insertSelective(notification);
     }
 }

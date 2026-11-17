@@ -1,5 +1,9 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Column;
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -7,12 +11,15 @@ import lombok.Data;
  * create          2019-10-27 14:29
  */
 @Data
+@Table(value = "followQuestion", camelToUnderline = false)
 public class FollowQuestion {
+    @Id(keyType = KeyType.Auto)
     private long id;
     private long followQuestionId;
     private long followQuestionAuthor;
     private String followQuestionTitle;
     private long userId;
     private long createTime;
+    @Column(ignore = true)
     private String time;
 }

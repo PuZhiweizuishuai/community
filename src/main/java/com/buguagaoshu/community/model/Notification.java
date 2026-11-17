@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -7,10 +10,12 @@ import lombok.Data;
  * create          2019-09-02 23:17
  */
 @Data
+@Table(value = "notification", camelToUnderline = false)
 public class Notification {
     /**
      * 通知主键 id
      */
+    @Id(keyType = KeyType.Auto)
     private long id;
 
     /**

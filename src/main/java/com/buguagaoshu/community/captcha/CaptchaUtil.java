@@ -44,7 +44,7 @@ public final class CaptchaUtil {
     }
 
     /**
-     * 校验用户输入的验证码，忽略大小写；不自动清除，由调用方决定何时 clear()。
+     * 校验用户输入的验证码，忽略大小写；无论成败校验后立即清除，杜绝同一验证码复用。
      */
     public static boolean ver(String code, HttpServletRequest request) {
         if (code == null || code.trim().isEmpty()) {
@@ -56,12 +56,12 @@ public final class CaptchaUtil {
         }
         Object expected = session.getAttribute(SESSION_KEY);
         Object created = session.getAttribute(SESSION_TIME_KEY);
+        clear(request);
         if (!(expected instanceof String expectedCode)) {
             return false;
         }
         if (created instanceof Long createTime
                 && System.currentTimeMillis() - createTime > VALIDITY_MILLIS) {
-            clear(request);
             return false;
         }
         return code.trim().toLowerCase(Locale.ROOT).equals(expectedCode);

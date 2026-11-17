@@ -1,7 +1,14 @@
 package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.User;
-import org.apache.ibatis.annotations.*;
+import com.mybatisflex.core.BaseMapper;
+import com.mybatisflex.core.util.UpdateEntity;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,193 +19,113 @@ import java.util.List;
  */
 @Mapper
 @Component(value = "UserMapper")
-public interface UserMapper {
-    /**
-     * 通过 id 查询学生信息
-     *
-     * @param id 学号
-     * @return 学生类
-     */
-    @Select("select * from users where id=#{id}")
-    User selectUserById(long id);
+public interface UserMapper extends BaseMapper<User> {
 
     /**
-     * 通过 email 查询学生信息
-     *
-     * @param email 学号
-     * @return 学生类
-     */
-    @Select("select * from users where email=#{email}")
-    User selectUserByEmail(String email);
-
-    /**
-     * 通过 userId 查询学生信息
-     *
-     * @param userID 用户名
-     * @return 学生类
-     */
-    @Select("select * from users where userID=#{userID}")
-    User selectUserByUserId(@Param("userID") String userID);
-
-    /**
-     * 通过用户 ID 删除用户信息
-     *
-     * @param id 用户 ID
-     * @return 1
-     */
-    @Delete("delete from users where id=#{id}")
-    int deleteUserById(long id);
-
-    /**
-     * 添加新用户
-     *
-     * @param user 新用户类
-     * @return 1
+     * 添加新用户。id 为原始类型默认 -1，不能进入 INSERT 列（否则写入负主键），保留显式列 SQL。
      */
     @Insert("insert into users(userId ,userName, password, email, sex, age, birthday, school, major, creationTime, lastTime, headUrl, userTopPhotoUrl) " +
             "values(#{userId}, #{userName}, #{password}, #{email}, #{sex}, #{age}, #{birthday}, #{school}, #{major}, #{creationTime}, #{lastTime}, #{headUrl}, #{userTopPhotoUrl})")
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
     int insertUser(User user);
 
+    default int updateUserNameById(long id, String newUserName) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setUserName(newUserName);
+        return update(update);
+    }
+
+    default int updateUserEmailById(long id, String newEmail) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setEmail(newEmail);
+        return update(update);
+    }
+
+    default int updateUserPasswordById(long id, String newPassword) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setPassword(newPassword);
+        return update(update);
+    }
+
+    default int updateUserLastTimeById(long id, String lastTime) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setLastTime(lastTime);
+        return update(update);
+    }
+
+    default int updateUserHeadUrlById(long id, String headUrl) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setHeadUrl(headUrl);
+        return update(update);
+    }
+
+    default int updateUserSexById(long id, String sex) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setSex(sex);
+        return update(update);
+    }
+
+    default int updateUserSchoolById(long id, String school) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setSchool(school);
+        return update(update);
+    }
+
+    default int updateUserMajorById(long id, String major) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setMajor(major);
+        return update(update);
+    }
+
+    default int updateUserSelfIntroductionById(long id, String selfIntroduction) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setSelfIntroduction(selfIntroduction);
+        return update(update);
+    }
+
+    default int updateUserTopPhotoUrl(long id, String userTopPhotoUrl) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setUserTopPhotoUrl(userTopPhotoUrl);
+        return update(update);
+    }
+
+    default int updateUserData(User user) {
+        User update = UpdateEntity.of(User.class, user.getId());
+        update.setUserName(user.getUserName());
+        update.setSex(user.getSex());
+        update.setSchool(user.getSchool());
+        update.setMajor(user.getMajor());
+        update.setSimpleSelfIntroduction(user.getSimpleSelfIntroduction());
+        update.setSelfIntroduction(user.getSelfIntroduction());
+        update.setLikes(user.getLikes());
+        return update(update);
+    }
+
     /**
-     * 通过 id 更改用户名
-     *
-     * @param id          用户 ID
-     * @param newUserName 新用户名
-     * @return 1 成功
+     * 更新获赞数（原子增量）
      */
-    @Update("update users set userName=#{newUserName} where id=#{id}")
-    int updateUserNameById(@Param("id") long id, @Param("newUserName") String newUserName);
-
-    /**
-     * 通过 id 更改邮箱
-     *
-     * @param id       用户 ID
-     * @param newEmail 新邮箱
-     * @return 1 成功
-     */
-    @Update("update users set email=#{newEmail} where id=#{id}")
-    int updateUserEmailById(@Param("id") long id, @Param("newEmail") String newEmail);
-
-    /**
-     * 通过 id 密码
-     *
-     * @param id          用户 ID
-     * @param newPassword 新密码
-     * @return 1 成功
-     */
-    @Update("update users set password=#{newPassword} where id=#{id}")
-    int updateUserPasswordById(@Param("id") long id, @Param("newPassword") String newPassword);
-
-    /**
-     * 通过 id 更改登陆时间
-     *
-     * @param id       用户 ID
-     * @param lastTime 上次登陆时间
-     * @return 1 成功
-     */
-    @Update("update users set lastTime=#{lastTime} where id=#{id}")
-    int updateUserLastTimeById(@Param("id") long id, @Param("lastTime") String lastTime);
-
-    /**
-     * 通过 id 更改用户头像
-     *
-     * @param id      用户 ID
-     * @param headUrl 新头像地址
-     * @return 1 成功
-     */
-    @Update("update users set headUrl=#{headUrl} where id=#{id}")
-    int updateUserHeadUrlById(@Param("id") long id, @Param("headUrl") String headUrl);
-
-
-    /**
-     * 通过 id 更改用户性别
-     *
-     * @param id  用户 ID
-     * @param sex 性别
-     * @return 1 成功
-     */
-    @Update("update users set sex=#{sex} where id=#{id}")
-    int updateUserSexById(@Param("id") long id, @Param("sex") String sex);
-
-    /**
-     * 通过 id 更改用户学校
-     *
-     * @param id     用户 ID
-     * @param school 学校
-     * @return 1 成功
-     */
-    @Update("update users set school=#{school} where id=#{id}")
-    int updateUserSchoolById(@Param("id") long id, @Param("school") String school);
-
-
-    /**
-     * 通过 id 更改用户专业
-     *
-     * @param id    用户 ID
-     * @param major 专业
-     * @return 1 成功
-     */
-    @Update("update users set major=#{major} where id=#{id}")
-    int updateUserMajorById(@Param("id") long id, @Param("major") String major);
-
-
-    /**
-     * 通过 id 更改用户简介
-     *
-     * @param id               用户 ID
-     * @param selfIntroduction 专业
-     * @return 1 成功
-     */
-    @Update("update users set selfIntroduction=#{selfIntroduction} where id=#{id}")
-    int updateUserSelfIntroductionById(@Param("id") long id, @Param("selfIntroduction") String selfIntroduction);
-
-
-    @Update("update users set userName=#{userName}, sex=#{sex}, school=#{school}, major=#{major}, simpleSelfIntroduction=#{simpleSelfIntroduction}, " +
-            "selfIntroduction=#{selfIntroduction}, likes=#{likes} where id=#{id}")
-    int updateUserData(User user);
-
-
-
-    @Update("update users set userTopPhotoUrl=#{userTopPhotoUrl} where id=#{id}")
-    int updateUserTopPhotoUrl(@Param("id") long id, @Param("userTopPhotoUrl") String userTopPhotoUrl);
-
-    /**
-     * 更新获赞数
-     * */
     @Update("update users set likeCount=likeCount+#{likeCount} where id=#{id}")
     int updateUserLikeCount(@Param("likeCount") long likeCount, @Param("id") long id);
 
     /**
-     * 更新关注数
-     * @param user 用户
-     * @return 结果
-     * */
+     * 更新关注数（原子增量）
+     */
     @Update("update users set followCount=followCount+#{followCount} where id=#{id}")
     int updateUserFollowCount(User user);
 
-
     /**
-     * 更新关注数
-     * @param user 用户
-     * @return 结果
-     * */
+     * 更新粉丝数（原子增量）
+     */
     @Update("update users set fansCount=fansCount+#{fansCount} where id=#{id}")
     int updateUserFansCount(User user);
 
+    // ------------------------------------------------------------------
+    // 用户搜索：FULLTEXT(ngram) 布尔模式，保留 SQL
+    // ------------------------------------------------------------------
 
-    @Select("select * from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search} order by id desc limit #{page}, #{size}")
+    @Select("select * from users where MATCH(userName, userId, simpleSelfIntroduction, selfIntroduction) AGAINST(#{search} IN BOOLEAN MODE) order by id desc limit #{page}, #{size}")
     List<User> searchUser(@Param("search") String search, @Param("page") long page, @Param("size") long size);
 
-
-    @Select("select COUNT(*) from users where userName regexp #{search} or userId regexp #{search} or simpleSelfIntroduction regexp #{search} or selfIntroduction regexp #{search}")
+    @Select("select COUNT(*) from users where MATCH(userName, userId, simpleSelfIntroduction, selfIntroduction) AGAINST(#{search} IN BOOLEAN MODE)")
     Long searchUserCount(@Param("search") String search);
-
-
-    @Select("select * from users order by id desc limit #{page}, #{size}")
-    List<User> getUserList(@Param("page") long page, @Param("size") long size);
-
-
-    @Select("select COUNT(*) from users;")
-    long getAlluserCount();
 }

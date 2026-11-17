@@ -26,11 +26,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 发现类页面数据：话题分类、搜索、用户列表、个人主页。
@@ -98,10 +96,10 @@ public class DiscoverApiController {
             data.put("users", new PaginationDto<User>());
             return ResultDTO.okOf(data);
         }
-        String regex = sanitize(keyword);
-        PaginationDto<QuestionDto> questions = questionService.searchQuestion(regex, page, size);
+        // LIKE 搜索：关键字长度与通配符清洗在 Service 内完成
+        PaginationDto<QuestionDto> questions = questionService.searchQuestion(keyword, page, size);
         questions.setSearch(keyword);
-        PaginationDto<User> users = userService.searchUser(regex, page,
+        PaginationDto<User> users = userService.searchUser(keyword, page,
                 "user".equals(type) ? size : "5");
         users.setSearch(keyword);
         data.put("questions", questions);
@@ -187,13 +185,5 @@ public class DiscoverApiController {
         }
         data.put("followTag", followed);
         return ResultDTO.okOf(data);
-    }
-
-    private String sanitize(String keyword) {
-        return Arrays.stream(keyword.split(" "))
-                .filter(StringUtils::isNotBlank)
-                .map(t -> t.replace("+", "").replace("*", "").replace("?", ""))
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.joining("|"));
     }
 }

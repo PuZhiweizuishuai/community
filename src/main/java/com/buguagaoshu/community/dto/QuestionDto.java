@@ -24,4 +24,21 @@ public class QuestionDto {
     private String alterTime;
     private int status;
     private User user;
+
+    /**
+     * 列表场景瘦身：去掉正文，作者只保留列表渲染需要的字段，
+     * 避免首页数据包携带 Markdown 正文与用户详细资料（含邮箱等敏感信息）。
+     */
+    public QuestionDto toListItem() {
+        this.description = null;
+        if (user != null) {
+            User author = new User();
+            author.setId(user.getId());
+            author.setUserId(user.getUserId());
+            author.setUserName(user.getUserName());
+            author.setHeadUrl(user.getHeadUrl());
+            this.user = author;
+        }
+        return this;
+    }
 }

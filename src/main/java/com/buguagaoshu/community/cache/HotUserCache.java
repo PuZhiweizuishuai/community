@@ -6,25 +6,22 @@ import org.springframework.stereotype.Component;
 
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.regex.PatternSyntaxException;
 
 /**
+ * 热门用户榜单：构建新集合后原子引用替换，刷新过程中不会读到空榜/半榜。
+ *
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-09-15 15:01
  */
 @Component
 @Data
 public class HotUserCache {
-    private List<UserDto> userDtoList = new ArrayList<>();
+    private volatile List<UserDto> userDtoList = List.of();
 
     public void updateUserDtoList(List<UserDto> userDtoList) {
         int max = 50;
-        this.userDtoList.clear();
-        // Collections.sort(userDtoList);
-        // this.userDtoList = userDtoList;
         PriorityQueue<UserDto> priorityQueue = new PriorityQueue<>(max);
         userDtoList.forEach((userDto) -> {
             if(priorityQueue.size() < max) {
@@ -38,11 +35,13 @@ public class HotUserCache {
             }
         });
 
+        List<UserDto> refreshed = new ArrayList<>(priorityQueue.size());
         UserDto userDto = priorityQueue.poll();
         while (userDto != null) {
-            this.userDtoList.add(userDto);
+            refreshed.add(userDto);
             userDto = priorityQueue.poll();
         }
+        this.userDtoList = List.copyOf(refreshed);
     }
 
 }

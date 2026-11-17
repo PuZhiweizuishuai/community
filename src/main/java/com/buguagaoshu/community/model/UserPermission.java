@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -8,7 +11,9 @@ import lombok.Data;
  * 用户权限
  */
 @Data
+@Table(value = "userPermission", camelToUnderline = false)
 public class UserPermission {
+    @Id(keyType = KeyType.None)
     private long id;
     /**
      * 权限

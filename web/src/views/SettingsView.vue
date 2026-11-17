@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ArrowLeft, Image, KeyRound, Pencil, UserRoundPen } from '@lucide/vue'
 import { settingApi, assetUrl } from '@/api'
 import { useSessionStore } from '@/stores/session'
@@ -10,6 +11,7 @@ import ImageCropper from '@/components/ImageCropper.vue'
 
 const session = useSessionStore()
 const toast = useToastStore()
+const router = useRouter()
 
 const tab = ref('profile')
 const user = ref({ ...session.user })
@@ -78,8 +80,11 @@ async function savePassword() {
       newPassword: pwd.value.newPassword,
       CAPTCHA: pwd.value.captcha,
     })
-    toast.success('密码修改成功')
+    toast.success('密码修改成功，请重新登录')
     pwd.value = { oldPassword: '', newPassword: '', confirm: '', captcha: '' }
+    // 后端已吊销全部会话与记住我 token，刷新登录态并跳转登录页
+    await session.refresh(true)
+    router.push('/sign-in')
   } catch {
     pwd.value.captcha = ''
     captchaRef.value?.refresh?.()
@@ -134,7 +139,7 @@ async function onCropConfirm(dataUrl) {
       >
         <div class="absolute inset-0 bg-gradient-to-t from-slate-900/25 to-transparent" />
       </div>
-      <div class="flex flex-wrap items-end gap-4 px-6 pb-5 -mt-10">
+      <div class="flex flex-wrap items-end gap-4 px-4 pb-5 -mt-10 sm:px-6">
         <div class="relative">
           <div class="rounded-full border-4 border-white shadow-md">
             <Avatar :src="user.headUrl" :name="user.userName" :size="80" />
@@ -150,17 +155,17 @@ async function onCropConfirm(dataUrl) {
         </div>
         <div class="min-w-0 flex-1 pt-10">
           <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl font-bold text-slate-800">{{ user.userName }}</h1>
+            <h1 class="text-xl font-bold ui-text-strong">{{ user.userName }}</h1>
             <span v-if="session.power === 2" class="badge badge-warning badge-sm">VIP</span>
             <span v-else-if="session.power === 0" class="badge badge-error badge-sm">管理员</span>
           </div>
-          <p class="mt-0.5 text-xs text-slate-400">@{{ user.userId }} · {{ user.email }}</p>
-          <p class="line-clamp-1 mt-1 text-sm text-slate-500">{{ user.simpleSelfIntroduction || '还没有写个性签名' }}</p>
+          <p class="mt-0.5 text-xs ui-text-muted">@{{ user.userId }} · {{ user.email }}</p>
+          <p class="line-clamp-1 mt-1 text-sm ui-text-base">{{ user.simpleSelfIntroduction || '还没有写个性签名' }}</p>
         </div>
         <div class="flex gap-6 pt-10 text-center">
-          <div><p class="text-lg font-bold text-indigo-600">{{ user.likeCount || 0 }}</p><p class="text-xs text-slate-400">获赞</p></div>
-          <div><p class="text-lg font-bold text-indigo-600">{{ user.followCount || 0 }}</p><p class="text-xs text-slate-400">关注</p></div>
-          <div><p class="text-lg font-bold text-indigo-600">{{ user.fansCount || 0 }}</p><p class="text-xs text-slate-400">粉丝</p></div>
+          <div><p class="text-lg font-bold ui-text-brand">{{ user.likeCount || 0 }}</p><p class="text-xs ui-text-muted">获赞</p></div>
+          <div><p class="text-lg font-bold ui-text-brand">{{ user.followCount || 0 }}</p><p class="text-xs ui-text-muted">关注</p></div>
+          <div><p class="text-lg font-bold ui-text-brand">{{ user.fansCount || 0 }}</p><p class="text-xs ui-text-muted">粉丝</p></div>
         </div>
       </div>
     </div>
@@ -172,7 +177,7 @@ async function onCropConfirm(dataUrl) {
           <button
             type="button"
             class="flex items-start gap-3 rounded-lg px-3 py-2.5 text-left"
-            :class="tab === item.value ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600'"
+            :class="tab === item.value ? 'ui-bg-brand ui-text-brand font-medium' : 'ui-text-base'"
             @click="tab = item.value"
           >
             <component :is="item.icon" class="mt-0.5 size-4" />
@@ -182,9 +187,9 @@ async function onCropConfirm(dataUrl) {
             </span>
           </button>
         </li>
-        <li class="my-2 border-t border-slate-100" />
+        <li class="my-2 border-t ui-border" />
         <li>
-          <RouterLink :to="`/user/${user.userId}`" class="flex items-center gap-1.5 text-sm text-slate-500"><ArrowLeft class="size-3.5" />查看我的主页</RouterLink>
+          <RouterLink :to="`/user/${user.userId}`" class="flex items-center gap-1.5 text-sm ui-text-base"><ArrowLeft class="size-3.5" />查看我的主页</RouterLink>
         </li>
       </ul>
 
@@ -192,68 +197,68 @@ async function onCropConfirm(dataUrl) {
       <div class="surface min-w-0 p-5 sm:p-6">
         <div v-if="tab === 'profile'" class="space-y-5">
           <div>
-            <h2 class="text-base font-semibold text-slate-800">基本资料</h2>
-            <p class="mt-1 text-xs text-slate-400">这些信息会展示在你的个人主页上</p>
+            <h2 class="text-base font-semibold ui-text-strong">基本资料</h2>
+            <p class="mt-1 text-xs ui-text-muted">这些信息会展示在你的个人主页上</p>
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="form-control">
-              <span class="label-text mb-1.5 font-medium text-slate-700">昵称</span>
+              <span class="label-text mb-1.5 font-medium ui-text-strong">昵称</span>
               <input v-model="user.userName" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" maxlength="20" />
             </label>
             <label class="form-control">
-              <span class="label-text mb-1.5 font-medium text-slate-700">性别</span>
+              <span class="label-text mb-1.5 font-medium ui-text-strong">性别</span>
               <select v-model="user.sex" class="select select-bordered w-full focus:border-indigo-400 focus:outline-none">
                 <option>保密</option><option>男</option><option>女</option>
               </select>
             </label>
             <label class="form-control">
-              <span class="label-text mb-1.5 font-medium text-slate-700">学校</span>
+              <span class="label-text mb-1.5 font-medium ui-text-strong">学校</span>
               <input v-model="user.school" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="就读 / 毕业院校" />
             </label>
             <label class="form-control">
-              <span class="label-text mb-1.5 font-medium text-slate-700">专业</span>
+              <span class="label-text mb-1.5 font-medium ui-text-strong">专业</span>
               <input v-model="user.major" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="所学专业" />
             </label>
           </div>
 
           <label class="form-control">
-            <span class="label-text mb-1.5 flex justify-between font-medium text-slate-700">
-              个性签名 <span class="text-xs font-normal text-slate-400">{{ (user.simpleSelfIntroduction || '').length }} / 50</span>
+            <span class="label-text mb-1.5 flex justify-between font-medium ui-text-strong">
+              个性签名 <span class="text-xs font-normal ui-text-muted">{{ (user.simpleSelfIntroduction || '').length }} / 50</span>
             </span>
             <input v-model="user.simpleSelfIntroduction" maxlength="50" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="一句话介绍自己" />
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-1.5 flex justify-between font-medium text-slate-700">
-              自我介绍 <span class="text-xs font-normal text-slate-400">{{ (user.selfIntroduction || '').length }} / 500</span>
+            <span class="label-text mb-1.5 flex justify-between font-medium ui-text-strong">
+              自我介绍 <span class="text-xs font-normal ui-text-muted">{{ (user.selfIntroduction || '').length }} / 500</span>
             </span>
             <textarea v-model="user.selfIntroduction" maxlength="500" rows="4" class="textarea textarea-bordered w-full leading-relaxed focus:border-indigo-400 focus:outline-none" placeholder="多写一点，让大家更了解你…" />
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-1.5 font-medium text-slate-700">爱好</span>
+            <span class="label-text mb-1.5 font-medium ui-text-strong">爱好</span>
             <input v-model="user.likes" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="用逗号分隔，例如：摄影, 跑步, 开源" />
           </label>
 
-          <div class="flex items-center gap-3 border-t border-slate-100 pt-4">
+          <div class="flex items-center gap-3 border-t ui-border pt-4">
             <button class="btn btn-primary btn-sm px-6" :disabled="saving" type="button" @click="saveProfile">
               {{ saving ? '保存中…' : '保存修改' }}
             </button>
-            <span class="text-xs text-slate-400">修改后会立即同步到个人主页</span>
+            <span class="text-xs ui-text-muted">修改后会立即同步到个人主页</span>
           </div>
         </div>
 
         <div v-else-if="tab === 'security'" class="max-w-md space-y-5">
           <div>
-            <h2 class="text-base font-semibold text-slate-800">修改密码</h2>
-            <p class="mt-1 text-xs text-slate-400">密码需为 6 ~ 30 位字母、数字或常见符号</p>
+            <h2 class="text-base font-semibold ui-text-strong">修改密码</h2>
+            <p class="mt-1 text-xs ui-text-muted">密码需为 6 ~ 30 位字母、数字或常见符号</p>
           </div>
-          <label class="form-control"><span class="label-text mb-1.5 font-medium text-slate-700">原密码</span><input v-model="pwd.oldPassword" type="password" class="input input-bordered w-full" autocomplete="current-password" /></label>
-          <label class="form-control"><span class="label-text mb-1.5 font-medium text-slate-700">新密码</span><input v-model="pwd.newPassword" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>
-          <label class="form-control"><span class="label-text mb-1.5 font-medium text-slate-700">确认新密码</span><input v-model="pwd.confirm" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>
+          <label class="form-control"><span class="label-text mb-1.5 font-medium ui-text-strong">原密码</span><input v-model="pwd.oldPassword" type="password" class="input input-bordered w-full" autocomplete="current-password" /></label>
+          <label class="form-control"><span class="label-text mb-1.5 font-medium ui-text-strong">新密码</span><input v-model="pwd.newPassword" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>
+          <label class="form-control"><span class="label-text mb-1.5 font-medium ui-text-strong">确认新密码</span><input v-model="pwd.confirm" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>
           <div>
-            <span class="label-text mb-1.5 block font-medium text-slate-700">验证码</span>
+            <span class="label-text mb-1.5 block font-medium ui-text-strong">验证码</span>
             <Captcha ref="captchaRef" v-model="pwd.captcha" />
           </div>
           <button class="btn btn-primary btn-sm px-6" :disabled="saving" type="button" @click="savePassword">
@@ -263,28 +268,28 @@ async function onCropConfirm(dataUrl) {
 
         <div v-else class="space-y-5">
           <div>
-            <h2 class="text-base font-semibold text-slate-800">头像与主页封面</h2>
-            <p class="mt-1 text-xs text-slate-400">选择图片后先裁剪再上传，避免头像变形或封面被拉伸</p>
+            <h2 class="text-base font-semibold ui-text-strong">头像与主页封面</h2>
+            <p class="mt-1 text-xs ui-text-muted">选择图片后先裁剪再上传，避免头像变形或封面被拉伸</p>
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 p-4">
+            <div class="rounded-xl border ui-border p-4">
               <div class="flex items-center gap-3">
                 <Avatar :src="user.headUrl" :name="user.userName" :size="64" />
                 <div>
-                  <h3 class="text-sm font-semibold text-slate-700">头像</h3>
-                  <p class="text-xs text-slate-400">正方形 1:1，建议 240×240</p>
+                  <h3 class="section-title">头像</h3>
+                  <p class="text-xs ui-text-muted">正方形 1:1，建议 240×240</p>
                 </div>
               </div>
               <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="pickFile($event, 'avatar')" />
               <button class="btn btn-outline btn-sm mt-4 w-full" type="button" :disabled="uploading" @click="avatarInput?.click()">选择并裁剪头像</button>
             </div>
 
-            <div class="rounded-xl border border-slate-200 p-4">
-              <img :src="coverUrl" alt="主页封面" class="h-16 w-full rounded-lg bg-slate-100 object-cover" />
+            <div class="rounded-xl border ui-border p-4">
+              <img :src="coverUrl" alt="主页封面" class="h-16 w-full rounded-lg ui-bg-soft object-cover" />
               <div class="mt-3">
-                <h3 class="text-sm font-semibold text-slate-700">主页封面</h3>
-                <p class="text-xs text-slate-400">宽幅 3:1，建议 1200×400</p>
+                <h3 class="section-title">主页封面</h3>
+                <p class="text-xs ui-text-muted">宽幅 3:1，建议 1200×400</p>
               </div>
               <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="pickFile($event, 'cover')" />
               <button class="btn btn-outline btn-sm mt-4 w-full" type="button" :disabled="uploading" @click="coverInput?.click()">选择并裁剪封面</button>

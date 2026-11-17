@@ -22,7 +22,7 @@ const currentIcon = computed(() => (theme.isDark ? Moon : Sun))
       <li v-for="item in options" :key="item.value">
         <button
           type="button"
-          :class="theme.mode === item.value ? 'active font-medium text-indigo-500' : ''"
+          :class="theme.mode === item.value ? 'active font-medium ui-text-brand' : ''"
           @click="theme.setMode(item.value)"
         >
           <component :is="item.icon" class="size-4" />

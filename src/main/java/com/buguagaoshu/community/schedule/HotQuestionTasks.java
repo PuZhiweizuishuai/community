@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.schedule;
 
 import com.buguagaoshu.community.cache.HotQuestionCache;
+import com.buguagaoshu.community.component.RedisSchedulerLock;
 import com.buguagaoshu.community.dto.HotQuestionDTO;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.QuestionService;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -26,31 +28,41 @@ public class HotQuestionTasks {
 
     private final QuestionService questionService;
     private final HotQuestionCache hotQuestionCache;
+    private final RedisSchedulerLock schedulerLock;
 
-    public HotQuestionTasks(QuestionService questionService, HotQuestionCache hotQuestionCache) {
+    public HotQuestionTasks(QuestionService questionService, HotQuestionCache hotQuestionCache,
+                            RedisSchedulerLock schedulerLock) {
         this.questionService = questionService;
         this.hotQuestionCache = hotQuestionCache;
+        this.schedulerLock = schedulerLock;
     }
 
     @Scheduled(fixedRate = 3600000)
     public void hotQuestionCurrentTime() {
-        log.info("开始计算热门问题");
-        long now = System.currentTimeMillis();
-        List<Question> questions = questionService.getQuestionListForTag(0, HotRankingUtil.CANDIDATE_LIMIT);
-        List<HotQuestionDTO> ranked = new ArrayList<>();
-        for (Question question : questions) {
-            if (question == null || question.getStatus() == 0) {
-                continue;
-            }
-            HotQuestionDTO dto = new HotQuestionDTO();
-            dto.setQuestionId(question.getQuestionId());
-            dto.setTitle(question.getTitle());
-            dto.setSortWeight(HotRankingUtil.scaled(HotRankingUtil.questionScore(question, now)));
-            ranked.add(dto);
+        if (!schedulerLock.tryLock("hotQuestion", Duration.ofMinutes(10))) {
+            return;
         }
-        ranked.sort(Comparator.comparingLong(HotQuestionDTO::getSortWeight).reversed()
-                .thenComparingLong(HotQuestionDTO::getQuestionId));
-        hotQuestionCache.updateHotQuestion(ranked);
-        log.info("热门问题计算完成，候选 {} 条，上榜 {} 条", ranked.size(), hotQuestionCache.getHotQuestionDTOList().size());
+        try {
+            log.info("开始计算热门问题");
+            long now = System.currentTimeMillis();
+            List<Question> questions = questionService.getQuestionListForTag(0, HotRankingUtil.CANDIDATE_LIMIT);
+            List<HotQuestionDTO> ranked = new ArrayList<>();
+            for (Question question : questions) {
+                if (question == null || question.getStatus() == 0) {
+                    continue;
+                }
+                HotQuestionDTO dto = new HotQuestionDTO();
+                dto.setQuestionId(question.getQuestionId());
+                dto.setTitle(question.getTitle());
+                dto.setSortWeight(HotRankingUtil.scaled(HotRankingUtil.questionScore(question, now)));
+                ranked.add(dto);
+            }
+            ranked.sort(Comparator.comparingLong(HotQuestionDTO::getSortWeight).reversed()
+                    .thenComparingLong(HotQuestionDTO::getQuestionId));
+            hotQuestionCache.updateHotQuestion(ranked);
+            log.info("热门问题计算完成，候选 {} 条，上榜 {} 条", ranked.size(), hotQuestionCache.getHotQuestionDTOList().size());
+        } finally {
+            schedulerLock.unlock("hotQuestion");
+        }
     }
 }

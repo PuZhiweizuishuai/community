@@ -31,7 +31,10 @@ public enum CustomizeErrorCode implements ICustomizeErrorCode {
     CAPTCHA_REQUIRED(2015, "验证码错误或已过期，请刷新后重试"),
     TAG_LIMIT(2016, "标签不能为空且最多只能输入 6 个标签"),
     TITLE_INVALID(2017, "标题不能为空，且不能超过 50 个字符"),
-    CLASS_INVALID(2018, "请选择问题分类");
+    CLASS_INVALID(2018, "请选择问题分类"),
+    TOO_MANY_ATTEMPTS(2020, "失败次数过多或操作过于频繁，请 15 分钟后再试"),
+    FORBIDDEN(403, "没有权限执行该操作"),
+    CONFLICT(409, "操作冲突，请刷新后重试");
 
     @Override
     public String getMessage() {

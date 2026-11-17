@@ -93,8 +93,8 @@ async function sync() {
   <div class="space-y-4">
     <div class="surface flex flex-wrap items-center gap-2 p-4">
       <div class="mr-auto">
-        <h2 class="text-sm font-semibold text-slate-700">分类管理</h2>
-        <p class="mt-1 text-xs text-slate-400">问题分类与话题所属分类均可动态增删；删除前会校验是否仍有关联问题</p>
+        <h2 class="section-title">分类管理</h2>
+        <p class="mt-1 text-xs ui-text-muted">问题分类与话题所属分类均可动态增删；删除前会校验是否仍有关联问题</p>
       </div>
       <button class="btn btn-ghost btn-sm" type="button" @click="sync"><RefreshCw class="size-4" />同步前台缓存</button>
       <button class="btn btn-primary btn-sm" type="button" @click="openCreate"><Plus class="size-4" />新增分类</button>
@@ -106,14 +106,14 @@ async function sync() {
           v-for="item in kinds"
           :key="item.value"
           class="tab"
-          :class="kind === item.value ? 'tab-active font-medium text-indigo-600' : ''"
+          :class="kind === item.value ? 'tab-active font-medium ui-text-brand' : ''"
           type="button"
           @click="switchKind(item.value)"
         >
           {{ item.label }}
         </button>
       </div>
-      <p class="mb-4 text-xs text-slate-400">{{ current.hint }}</p>
+      <p class="mb-4 text-xs ui-text-muted">{{ current.hint }}</p>
 
       <div v-if="deleteError" class="alert alert-warning mb-4 py-2 text-sm">
         <TriangleAlert class="size-4 shrink-0" />
@@ -121,7 +121,7 @@ async function sync() {
         <button class="btn btn-ghost btn-xs ml-auto" type="button" @click="deleteError = ''">关闭</button>
       </div>
 
-      <div v-if="loading && !list.length" class="py-12 text-center text-sm text-slate-400">加载中…</div>
+      <div v-if="loading && !list.length" class="empty-state">加载中…</div>
       <div v-else class="overflow-x-auto">
         <table class="table table-sm">
           <thead>
@@ -130,7 +130,7 @@ async function sync() {
           <tbody>
             <tr v-for="item in filtered" :key="item.id">
               <td class="font-mono text-xs">{{ item.code }}</td>
-              <td class="font-medium text-slate-800">{{ item.name }}</td>
+              <td class="font-medium ui-text-strong">{{ item.name }}</td>
               <td class="text-xs">{{ item.sortOrder }}</td>
               <td><span class="badge badge-sm" :class="item.status === 1 ? 'badge-success' : 'badge-ghost'">{{ item.status === 1 ? '启用' : '停用' }}</span></td>
               <td>
@@ -143,13 +143,13 @@ async function sync() {
                 <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item)"><Trash2 class="size-3.5" />删除</button>
               </td>
             </tr>
-            <tr v-if="!filtered.length"><td colspan="6" class="text-center text-slate-400">暂无分类，点击右上角新增</td></tr>
+            <tr v-if="!filtered.length"><td colspan="6" class="text-center ui-text-muted">暂无分类，点击右上角新增</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="mt-4 rounded-lg bg-slate-50 p-3 text-xs leading-relaxed text-slate-500">
-        <b class="text-slate-700">删除规则：</b>
+      <div class="mt-4 rounded-lg ui-bg-soft p-3 text-xs leading-relaxed ui-text-base">
+        <b class="ui-text-strong">删除规则：</b>
         若分类下还有问题（问题分类按名称匹配，话题分类按该分类下话题的标签匹配），服务端会拒绝删除并提示数量；
         请先把这些问题改成其他分类或删除。话题分类下即使没有问题、但仍有话题时也需要先迁移话题，避免出现无归属分类。
       </div>

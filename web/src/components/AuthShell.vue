@@ -11,6 +11,7 @@ defineProps({
 })
 
 const meta = useMetaStore()
+meta.loadHot()
 const year = new Date().getFullYear()
 const stats = computed(() => [
   { label: '热门标签', value: meta.hots.length || '—' },
@@ -25,7 +26,7 @@ const features = [
 </script>
 
 <template>
-  <div class="auth-bg min-h-screen lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+  <div class="auth-bg min-h-[100dvh] lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
     <!-- 品牌展示区（大屏） -->
     <aside class="relative hidden overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-800 px-12 py-10 text-white lg:flex lg:flex-col">
       <div class="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
@@ -72,23 +73,23 @@ const features = [
     </aside>
 
     <!-- 表单区 -->
-    <main class="flex min-h-screen items-center justify-center px-5 py-10">
+    <main class="flex min-h-[100dvh] items-center justify-center px-4 py-8 sm:px-5 sm:py-10">
       <div class="w-full max-w-[440px]">
-        <RouterLink to="/" class="mb-6 flex items-center justify-center gap-2 lg:hidden">
+        <RouterLink to="/" class="mb-5 flex items-center justify-center gap-2 lg:hidden">
           <SiteLogo :size="38" rounded="0.75rem" />
-          <span class="text-lg font-bold text-indigo-600">不挂高数</span>
+          <span class="text-lg font-bold ui-text-brand">不挂高数</span>
         </RouterLink>
 
-        <div class="surface p-7 sm:p-9">
-          <p v-if="eyebrow" class="mb-1 text-xs font-medium uppercase tracking-widest text-indigo-500">{{ eyebrow }}</p>
-          <h1 class="text-2xl font-bold text-slate-800">{{ title }}</h1>
-          <p v-if="subtitle" class="mt-1.5 text-sm text-slate-500">{{ subtitle }}</p>
+        <div class="surface p-5 sm:p-8">
+          <p v-if="eyebrow" class="mb-1 text-xs font-medium uppercase tracking-widest ui-text-brand">{{ eyebrow }}</p>
+          <h1 class="text-2xl font-bold ui-text-strong">{{ title }}</h1>
+          <p v-if="subtitle" class="mt-1.5 text-sm ui-text-base">{{ subtitle }}</p>
           <div class="mt-6">
             <slot />
           </div>
         </div>
 
-        <p class="mt-6 text-center text-xs text-slate-400">
+        <p class="mt-6 text-center text-xs ui-text-muted">
           登录即表示你同意社区规范 ·
           <RouterLink to="/about" class="link-muted">关于我们</RouterLink>
           ·

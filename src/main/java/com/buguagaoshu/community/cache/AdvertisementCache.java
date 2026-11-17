@@ -5,8 +5,8 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -66,15 +66,15 @@ public class AdvertisementCache {
     @Value("${advertisement.number}")
     public int AD_MAX_NUMBER;
 
-    private Map<Long, Object> homeAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> publishAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> questionAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> classAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> userAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> userHomeAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> messageAdvertisementMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> newsMap = new HashMap<>(AD_MAX_NUMBER);
-    private Map<Long, Object> searchMap = new HashMap<>(AD_MAX_NUMBER);
+    private Map<Long, Object> homeAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> publishAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> questionAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> classAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> userAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> userHomeAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> messageAdvertisementMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> newsMap = new ConcurrentHashMap<>();
+    private Map<Long, Object> searchMap = new ConcurrentHashMap<>();
 
     public void removeAdvertisement(Advertisement advertisement) {
         switch (advertisement.getPosition()) {

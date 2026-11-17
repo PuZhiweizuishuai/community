@@ -35,3 +35,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# 本地敏感凭据，禁止提交
+src/main/resources/application-local.yml

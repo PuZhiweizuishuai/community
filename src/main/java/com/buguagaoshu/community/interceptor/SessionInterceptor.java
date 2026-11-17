@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.interceptor;
 
+import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserService;
@@ -43,7 +44,13 @@ public class SessionInterceptor implements HandlerInterceptor {
         }
         try {
             Claims claims = jwtUtil.parseJWT(token);
-            User user = userService.selectUserById(Long.parseLong(claims.getId()));
+            // 服务端在线记录是吊销依据：登出/改密会删除记录，旧 token 随之失效
+            OnlineUser onlineUser = onlineUserService.selectOnlineUserByToken(token);
+            long userId = Long.parseLong(claims.getId());
+            if (onlineUser == null || onlineUser.getId() != userId) {
+                return true;
+            }
+            User user = userService.selectUserById(userId);
             if (user != null) {
                 user.clean();
                 request.getSession().setAttribute("user", user);

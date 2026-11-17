@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.SecretKey;
@@ -15,24 +16,12 @@ import java.util.Date;
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-20 15:19
- * jwt 工具类
- *
- * <p>升级到 jjwt 0.13.0 后，HS256 要求密钥至少 32 字节；
- * 这里对配置项 jwt.key 做 SHA-256 派生，保持原有短字符串密钥配置可用。
+ * jwt 工具类（无状态单例：TTL 由调用方按请求传入，禁止写入实例字段）
  */
 public class JwtUtil {
-    /**
-     * 要加的盐
-     * */
+
     @Value("${jwt.key}")
     private String key;
-
-    /**
-     * 过期时间
-     * 默认二小时
-     * */
-    @Value("${jwt.ttl}")
-    private long ttl;
 
     public String getKey() {
         return key;
@@ -42,12 +31,11 @@ public class JwtUtil {
         this.key = key;
     }
 
-    public long getTtl() {
-        return ttl;
-    }
-
-    public void setTtl(long ttl) {
-        this.ttl = ttl;
+    @PostConstruct
+    void validateKey() {
+        if (key == null || key.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("jwt.key 必须是至少 32 字节的随机密钥，请通过环境变量或 application-local.yml 注入");
+        }
     }
 
     /**
@@ -63,7 +51,7 @@ public class JwtUtil {
         }
     }
 
-    public String createJWT(long id, String userId, String userName, String email, int power) {
+    public String createJWT(long id, String userId, String userName, String email, int power, long ttlMillis) {
         long nowMillis = System.currentTimeMillis();
         JwtBuilder jwtBuilder = Jwts.builder()
                 .id(Long.toString(id))
@@ -73,8 +61,8 @@ public class JwtUtil {
                 .claim("email", email)
                 .claim("userName", userName)
                 .signWith(signingKey());
-        if (ttl > 0) {
-            jwtBuilder.expiration(new Date(nowMillis + ttl));
+        if (ttlMillis > 0) {
+            jwtBuilder.expiration(new Date(nowMillis + ttlMillis));
         }
         return jwtBuilder.compact();
     }

@@ -57,8 +57,9 @@ public class FollowApiController {
     public ResultDTO<Map<String, Object>> followTopic(@RequestBody FollowTopicDTO body,
                                                       HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
-        TagClass tagClass = tagClassCache.getTagClassMap() == null
-                ? null : tagClassCache.getTagClassMap().get(body.getTopicTitle());
+        Map<String, TagClass> tagMap = tagClassCache.getTagClassMap();
+        TagClass tagClass = tagMap == null || body.getTopicTitle() == null
+                ? null : tagMap.get(body.getTopicTitle());
         if (tagClass == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "话题不存在了，请选择别的话题吧!");
         }

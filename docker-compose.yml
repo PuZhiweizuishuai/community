@@ -1,0 +1,60 @@
+# 本地一键起依赖：MySQL + Redis + MinIO（S3 兼容）
+# 应用本体可 mvn spring-boot:run，或 docker compose --profile app up 一起容器化
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: community
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./databases.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./SQL_Upgrade/001_performance_and_consistency.sql:/docker-entrypoint-initdb.d/02-upgrade-001.sql:ro
+      - ./SQL_Upgrade/002_unique_constraints.sql:/docker-entrypoint-initdb.d/03-upgrade-002.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass 123456
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin12345
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  app:
+    profiles: ["app"]
+    build: .
+    depends_on:
+      - mysql
+      - redis
+      - minio
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/community?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: "123456"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "123456"
+      JWT_KEY: please-inject-a-random-secret-at-least-32-bytes
+      COOKIE_SECURE: "false"
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:
+  redis-data:
+  minio-data:

@@ -2,7 +2,12 @@ package com.buguagaoshu.community.service;
 
 import com.buguagaoshu.community.dto.NotificationDTO;
 import com.buguagaoshu.community.dto.PaginationDto;
+import com.buguagaoshu.community.enums.NotificationTypeEnum;
+import com.buguagaoshu.community.model.Notification;
+import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
+
+import java.util.List;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -42,4 +47,15 @@ public interface NotificationService {
 
 
     int readAll(long id);
+
+    /**
+     * 批量创建通知（空列表直接返回）
+     */
+    void createBatch(List<Notification> notifications);
+
+    /**
+     * 问题被删除/恢复时，批量通知作者与所有评论者（操作者本人不收通知，接收人去重）
+     */
+    void notifyQuestionStatusChange(Question question, long notifierId,
+                                    NotificationTypeEnum questionType, NotificationTypeEnum commentType);
 }

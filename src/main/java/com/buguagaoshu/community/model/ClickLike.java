@@ -1,5 +1,8 @@
 package com.buguagaoshu.community.model;
 
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
 /**
@@ -8,7 +11,9 @@ import lombok.Data;
  * 点赞
  */
 @Data
+@Table(value = "clickLike", camelToUnderline = false)
 public class ClickLike {
+    @Id(keyType = KeyType.Auto)
     private long likeId;
     private long notifier;
     private String notifierName;

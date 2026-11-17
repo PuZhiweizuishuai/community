@@ -200,11 +200,11 @@ watch(zoom, draw)
 
 <template>
   <div class="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 p-4">
-    <div class="w-full max-w-2xl rounded-2xl bg-white p-5 shadow-2xl">
+    <div class="w-full max-w-2xl rounded-2xl ui-bg p-5 shadow-2xl">
       <div class="mb-4 flex items-center justify-between">
         <div>
-          <h3 class="text-base font-semibold text-slate-800">{{ title }}</h3>
-          <p class="mt-0.5 text-xs text-slate-400">拖动图片调整位置，滚轮或滑块缩放，确认后才会上传</p>
+          <h3 class="text-base font-semibold ui-text-strong">{{ title }}</h3>
+          <p class="mt-0.5 text-xs ui-text-muted">拖动图片调整位置，滚轮或滑块缩放，确认后才会上传</p>
         </div>
         <button class="btn btn-ghost btn-circle btn-sm" type="button" aria-label="关闭" @click="emit('cancel')"><X class="size-4" /></button>
       </div>
@@ -221,9 +221,9 @@ watch(zoom, draw)
       />
 
       <div class="mt-4 flex items-center gap-3">
-        <span class="flex shrink-0 items-center gap-1 text-xs text-slate-500"><ZoomIn class="size-3.5" />缩放</span>
+        <span class="flex shrink-0 items-center gap-1 text-xs ui-text-base"><ZoomIn class="size-3.5" />缩放</span>
         <input v-model.number="zoom" type="range" min="1" max="3" step="0.05" class="range range-primary range-xs flex-1" />
-        <span class="w-10 text-right text-xs text-slate-500">{{ zoom.toFixed(1) }}×</span>
+        <span class="w-10 text-right text-xs ui-text-base">{{ zoom.toFixed(1) }}×</span>
         <button class="btn btn-ghost btn-xs" type="button" @click="reset"><RotateCcw class="size-3.5" />重置</button>
       </div>
 
