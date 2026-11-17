@@ -70,4 +70,11 @@ public class CommentDto {
     private String targetName;
 
     private String targetUrl;
+
+    /**
+     * 审核状态：0 待审核，1 已通过，2 未通过
+     */
+    private int reviewStatus = 1;
+
+    private String reviewReason;
 }

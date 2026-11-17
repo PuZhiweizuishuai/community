@@ -2,9 +2,11 @@
 import { onMounted, reactive, ref } from 'vue'
 import { Cloud, HardDrive, Pencil, Plus, PlugZap, Trash2, X } from '@lucide/vue'
 import { adminApi } from '@/api'
+import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 
 const toast = useToastStore()
+const confirm = useConfirmStore()
 const storages = ref([])
 const loading = ref(false)
 const saving = ref(false)
@@ -103,7 +105,7 @@ async function test() {
 }
 
 async function remove(storage) {
-  if (!window.confirm(`确定删除对象存储「${storage.name}」吗？`)) return
+  if (!(await confirm.ask({ title: '删除存储', message: `确定删除对象存储「${storage.name}」吗？`, confirmText: '删除', danger: true }))) return
   await adminApi.deleteStorage(storage.id)
   toast.success('已删除')
   await load()

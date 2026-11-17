@@ -19,12 +19,7 @@ public class CommentCreateDto {
     private long questionId;
 
     /**
-     * 父级评论
-     * */
-    private long parentCommentId;
-
-    /**
-     * 评论目标 id
+     * 评论目标 id：一级评论为问题 ID，回复为被回复评论 ID
      */
     @Min(value = 1, message = "评论目标不合法")
     private long parentId;

@@ -38,8 +38,8 @@ public class CommentApiController {
 
 
     @PostMapping("/api/comment")
-    public ResultDTO<Comment> insertComment(@Valid @RequestBody CommentCreateDto commentDto,
-                                            HttpServletRequest request) {
+    public ResultDTO<CommentDto> insertComment(@Valid @RequestBody CommentCreateDto commentDto,
+                                               HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         // 检查验证码（校验即清除）
         if (!CaptchaUtil.ver(commentDto.getCaptcha(), request)) {
@@ -48,23 +48,22 @@ public class CommentApiController {
 
         Comment comment = new Comment();
         comment.setQuestionId(commentDto.getQuestionId());
-        comment.setParentCommentId(commentDto.getParentCommentId());
         comment.setParentId(commentDto.getParentId());
         comment.setType(commentDto.getType());
         comment.setCommentator(user.getId());
-        comment.setContent(commentDto.getContent());
+        comment.setContent(commentDto.getContent().trim());
         comment.setCreateTime(System.currentTimeMillis());
         comment.setModifiedTime(System.currentTimeMillis());
 
-        commentService.insertComment(comment);
+        CommentDto created = commentService.insertComment(comment);
         // 评论数变化会影响首页列表与热门排序
         siteCache.invalidate(SiteCacheService.HOME);
-        return okOf(comment);
+        return okOf(created);
     }
 
     @GetMapping("/api/twoLevelComment/{commentId}")
     public ResultDTO backTwoLevelComment(@PathVariable("commentId") String commentId) {
-        List<CommentDto> commentDtos = commentService.getTwoLevelCommentByParent(commentId, 2);
+        List<CommentDto> commentDtos = commentService.getTwoLevelCommentByParent(commentId);
         return ResultDTO.okOf(commentDtos);
     }
 }

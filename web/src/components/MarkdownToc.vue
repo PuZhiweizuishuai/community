@@ -9,17 +9,22 @@ import Vditor from 'vditor'
  */
 const el = ref(null)
 const hasToc = ref(false)
-let sourceEl = null
 let headings = []
 
 function render(source) {
   if (!source || !el.value) return
-  sourceEl = source
+  // 正文可能由多个段落容器组成，需要递归收集全部标题；
+  // Vditor.outlineRender 只识别直接子级标题，因此先放入临时容器再生成目录
+  headings = Array.from(source.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter((node) => node.id)
   el.value.innerHTML = ''
-  try {
-    Vditor.outlineRender(sourceEl, el.value)
-  } catch (error) {
-    console.warn('[toc] 目录生成失败', error)
+  if (headings.length) {
+    const headingContainer = document.createElement('div')
+    headings.forEach((heading) => headingContainer.appendChild(heading.cloneNode(true)))
+    try {
+      Vditor.outlineRender(headingContainer, el.value)
+    } catch (error) {
+      console.warn('[toc] 目录生成失败', error)
+    }
   }
   // outlineRender 会加上 .vditor-outline（默认 display:none / width:250px），这里适配侧栏
   el.value.style.display = hasContent() ? 'block' : 'none'
@@ -27,7 +32,6 @@ function render(source) {
   el.value.style.borderRight = 'none'
   el.value.style.background = 'transparent'
   hasToc.value = hasContent()
-  headings = Array.from(sourceEl.children).filter((node) => /^H[1-6]$/.test(node.tagName))
   highlight()
 }
 

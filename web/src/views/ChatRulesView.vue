@@ -1,7 +1,9 @@
 <script setup>
 import { ArrowRight, MessageCircle, TriangleAlert } from '@lucide/vue'
 import { useSessionStore } from '@/stores/session'
+import { useMetaStore } from '@/stores/meta'
 const session = useSessionStore()
+const meta = useMetaStore()
 </script>
 
 <template>
@@ -10,8 +12,14 @@ const session = useSessionStore()
       <h1 class="flex items-center gap-2 text-2xl font-bold ui-text-strong"><MessageCircle class="size-6 ui-text-brand" />社区聊天室</h1>
       <p class="mt-2 text-sm ui-text-base">和其他开发者实时交流，聊技术、聊生活，也欢迎来摸鱼。</p>
 
-      <RouterLink v-if="session.loggedIn" to="/chat/room" class="btn btn-primary mt-5">开始聊天<ArrowRight class="size-4" /></RouterLink>
-      <RouterLink v-else :to="{ name: 'sign-in', query: { redirect: '/chat/room' } }" class="btn btn-primary mt-5">登录后开始聊天<ArrowRight class="size-4" /></RouterLink>
+      <div v-if="!meta.chatEnabled" class="alert alert-warning mt-5 text-sm">
+        <TriangleAlert class="size-5 shrink-0" />
+        <span>聊天室已被管理员关闭，暂时无法进入。</span>
+      </div>
+      <template v-else>
+        <RouterLink v-if="session.loggedIn" to="/chat/room" class="btn btn-primary mt-5">开始聊天<ArrowRight class="size-4" /></RouterLink>
+        <RouterLink v-else :to="{ name: 'sign-in', query: { redirect: '/chat/room' } }" class="btn btn-primary mt-5">登录后开始聊天<ArrowRight class="size-4" /></RouterLink>
+      </template>
 
       <div class="alert alert-warning mt-8 text-sm">
         <TriangleAlert class="size-5 shrink-0" />

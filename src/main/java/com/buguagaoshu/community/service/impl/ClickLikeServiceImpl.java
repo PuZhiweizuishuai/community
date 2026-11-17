@@ -4,6 +4,7 @@ import com.buguagaoshu.community.dto.ClickLikeDTO;
 import com.buguagaoshu.community.enums.ClickLikeTypeEnum;
 import com.buguagaoshu.community.enums.NotificationStatusEnum;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
+import com.buguagaoshu.community.enums.ReviewStatusEnum;
 import com.buguagaoshu.community.mapper.*;
 import com.buguagaoshu.community.model.ClickLike;
 import com.buguagaoshu.community.model.Comment;
@@ -54,7 +55,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
         // clickLike.setReceiver(clickLikeDTO.getReceiver());
         // 防止问题不存在
         Question question = questionMapper.selectQuestionById(clickLikeDTO.getQuestionId(), 1);
-        if(question == null) {
+        if(question == null || question.getReviewStatus() != ReviewStatusEnum.APPROVED.getStatus()) {
             return ClickLikeTypeEnum.LIKE_QUESTION_NOT_FOUND;
         }
         clickLike.setQuestionId(clickLikeDTO.getQuestionId());
@@ -105,7 +106,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
 
         } else {
             Comment comment = commentMapper.selectCommentByCommentId(clickLikeDTO.getCommentId(), 1);
-            if(comment == null) {
+            if(comment == null || comment.getReviewStatus() != ReviewStatusEnum.APPROVED.getStatus()) {
                 return ClickLikeTypeEnum.LIKE_COMMENT_NOT_FOUND;
             }
             if(clickLike.getNotifier() == comment.getCommentator()) {

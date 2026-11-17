@@ -20,6 +20,24 @@ const type = computed(() => route.query.type || '0')
 const page = computed(() => route.query.page || '1')
 const data = ref(null)
 
+// 内容审核相关系统消息：点击后进入「我的审核」修改/查看
+const REVIEW_TYPES = [10, 11, 12, 13, 14, 15]
+const REVIEW_COMMENT_TYPES = [11, 13, 15]
+
+function isReviewMessage(value) {
+  return REVIEW_TYPES.includes(Number(value))
+}
+
+function reviewQuery(value) {
+  return { type: REVIEW_COMMENT_TYPES.includes(Number(value)) ? 'comment' : 'question' }
+}
+
+function itemLink(item) {
+  return isReviewMessage(item.type)
+    ? { name: 'my-reviews', query: reviewQuery(item.type) }
+    : `/question/${item.outerid}`
+}
+
 const tabs = [
   { value: '0', label: '回复', key: 'commentCount', icon: MessageCircle },
   { value: '3', label: '点赞', key: 'likeCount', icon: ThumbsUp },
@@ -39,6 +57,10 @@ function go(patch) {
 async function openMessage(item) {
   try {
     const result = await messageApi.read(item.id)
+    if (isReviewMessage(result?.type)) {
+      router.push({ name: 'my-reviews', query: reviewQuery(result.type) })
+      return
+    }
     if (result?.outerId) router.push(`/question/${result.outerId}`)
   } catch {
     toast.warning('这条消息已不可读')
@@ -90,7 +112,7 @@ meta.loadAds('message')
                 <p class="text-sm ui-text-strong">
                   <b>{{ item.notifierName || '系统' }}</b>
                   <span class="ui-text-base"> {{ item.typeName }}</span>
-                  <RouterLink v-if="item.outerTitle" :to="`/question/${item.outerid}`" class="ui-text-brand">「{{ item.outerTitle }}」</RouterLink>
+                  <RouterLink v-if="item.outerTitle" :to="itemLink(item)" class="ui-text-brand">「{{ item.outerTitle }}」</RouterLink>
                 </p>
                 <p v-if="item.commentContent" class="line-clamp-2 mt-1 text-xs ui-text-base">{{ item.commentContent }}</p>
                 <p class="mt-1 text-xs ui-text-muted">{{ item.createTime }}</p>

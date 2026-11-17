@@ -4,6 +4,7 @@ import com.buguagaoshu.community.component.RateLimitService;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
+import com.buguagaoshu.community.model.ChatMessage;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.MailService;
 import com.buguagaoshu.community.service.SystemConfigService;
@@ -11,6 +12,7 @@ import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,8 +31,10 @@ import java.util.Map;
 @RequestMapping("/api/admin/config")
 public class SystemConfigAdminApiController {
 
-    public record SaveRequest(Boolean registerEnabled, Boolean mailEnabled, String mailHost, Integer mailPort,
-                              String mailUsername, String mailPassword, String mailFrom, Boolean mailSsl) {
+    public record SaveRequest(Boolean registerEnabled, Boolean chatEnabled, Boolean reviewEnabled,
+                              Boolean mailEnabled, String mailHost,
+                              Integer mailPort, String mailUsername, String mailPassword, String mailFrom,
+                              Boolean mailSsl) {
     }
 
     public record TestMailRequest(String to) {
@@ -39,12 +43,15 @@ public class SystemConfigAdminApiController {
     private final SystemConfigService configService;
     private final MailService mailService;
     private final RateLimitService rateLimitService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
     public SystemConfigAdminApiController(SystemConfigService configService, MailService mailService,
-                                          RateLimitService rateLimitService) {
+                                          RateLimitService rateLimitService,
+                                          SimpMessageSendingOperations messagingTemplate) {
         this.configService = configService;
         this.mailService = mailService;
         this.rateLimitService = rateLimitService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @GetMapping
@@ -53,6 +60,8 @@ public class SystemConfigAdminApiController {
         SystemConfigService.MailSettings mail = configService.mailSettings();
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("registerEnabled", configService.isRegisterEnabled());
+        data.put("chatEnabled", configService.isChatEnabled());
+        data.put("reviewEnabled", configService.isReviewEnabled());
         data.put("mailEnabled", mail.enabled());
         data.put("mailHost", mail.host());
         data.put("mailPort", mail.port());
@@ -70,6 +79,8 @@ public class SystemConfigAdminApiController {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
         }
         SystemConfigService.MailSettings current = configService.mailSettings();
+        boolean wasChatEnabled = configService.isChatEnabled();
+        boolean chatEnabled = body.chatEnabled() != null ? body.chatEnabled() : wasChatEnabled;
         boolean mailEnabled = body.mailEnabled() != null ? body.mailEnabled() : current.enabled();
         String host = body.mailHost() != null ? body.mailHost().trim() : current.host();
         int port = body.mailPort() != null ? body.mailPort() : current.port();
@@ -83,6 +94,9 @@ public class SystemConfigAdminApiController {
         Map<String, String> updates = new LinkedHashMap<>();
         updates.put(SystemConfigService.REGISTER_ENABLED,
                 String.valueOf(body.registerEnabled() != null ? body.registerEnabled() : configService.isRegisterEnabled()));
+        updates.put(SystemConfigService.CHAT_ENABLED, String.valueOf(chatEnabled));
+        updates.put(SystemConfigService.REVIEW_ENABLED,
+                String.valueOf(body.reviewEnabled() != null ? body.reviewEnabled() : configService.isReviewEnabled()));
         updates.put(SystemConfigService.MAIL_ENABLED, String.valueOf(mailEnabled));
         updates.put(SystemConfigService.MAIL_HOST, host);
         updates.put(SystemConfigService.MAIL_PORT, String.valueOf(port));
@@ -97,6 +111,13 @@ public class SystemConfigAdminApiController {
             updates.put(SystemConfigService.MAIL_PASSWORD, body.mailPassword());
         }
         configService.save(updates);
+        // 从开启切换为关闭时，通知在线用户立即退出，避免继续留在聊天室
+        if (wasChatEnabled && !chatEnabled) {
+            ChatMessage closed = new ChatMessage();
+            closed.setType(ChatMessage.MessageType.DISABLED);
+            closed.setContent("聊天室已被管理员关闭");
+            messagingTemplate.convertAndSend("/topic/public", closed);
+        }
         return ResultDTO.okOf();
     }
 

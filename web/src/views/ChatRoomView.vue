@@ -4,14 +4,17 @@ import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import { ArrowLeft, Send, TriangleAlert } from '@lucide/vue'
 import { useSessionStore } from '@/stores/session'
+import { useMetaStore } from '@/stores/meta'
 import Avatar from '@/components/Avatar.vue'
 
 const session = useSessionStore()
+const meta = useMetaStore()
 const messages = ref([])
 const text = ref('')
 const online = ref(0)
 const connected = ref(false)
 const rejected = ref('')
+const disabled = ref('')
 const area = ref(null)
 let client = null
 
@@ -40,6 +43,11 @@ function identity() {
 }
 
 function connect() {
+  // 管理员关闭聊天室后不再建立连接
+  if (!meta.chatEnabled) {
+    disabled.value = '聊天室已被管理员关闭'
+    return
+  }
   client = new Client({
     webSocketFactory: () => new SockJS('/ws'),
     reconnectDelay: 5000,
@@ -55,6 +63,13 @@ function connect() {
           return
         }
         if (typeof payload.count === 'number') online.value = payload.count
+
+        if (payload.type === 'DISABLED') {
+          disabled.value = payload.content || '聊天室已被管理员关闭'
+          connected.value = false
+          client?.deactivate?.()
+          return
+        }
 
         if (payload.type === 'DUPLICATE') {
           // 广播消息，只有令牌匹配的窗口（即被拒绝的新窗口）需要响应
@@ -79,7 +94,7 @@ function connect() {
 
 function send() {
   const content = text.value.trim()
-  if (!content || !connected.value || rejected.value) return
+  if (!content || !connected.value || rejected.value || disabled.value) return
   client.publish({
     destination: '/app/chat.sendMessage',
     body: JSON.stringify({ ...identity(), content, type: 'CHAT' }),
@@ -98,7 +113,7 @@ connect()
         <RouterLink to="/chat" class="btn btn-ghost btn-sm" aria-label="返回"><ArrowLeft class="size-4" /></RouterLink>
         <h1 class="font-semibold ui-text-strong">社区聊天室</h1>
         <span class="badge badge-sm" :class="connected ? 'badge-success' : 'badge-ghost'">
-          {{ connected ? `在线 ${online}` : rejected ? '已被拒绝' : '连接中…' }}
+          {{ connected ? `在线 ${online}` : disabled ? '已关闭' : rejected ? '已被拒绝' : '连接中…' }}
         </span>
       </div>
       <RouterLink :to="`/user/${session.user?.userId}`" class="flex items-center gap-2 text-sm ui-text-base">
@@ -106,6 +121,12 @@ connect()
         <span class="hidden sm:inline">{{ session.user?.userName }}</span>
       </RouterLink>
     </header>
+
+    <div v-if="disabled" class="alert alert-warning mx-3 mt-3 flex flex-col items-start gap-0 rounded-xl p-4 text-sm sm:mx-4 sm:mt-4">
+      <p class="flex items-center gap-1.5 font-semibold"><TriangleAlert class="size-4" />聊天室已关闭</p>
+      <p class="mt-1">{{ disabled }}</p>
+      <RouterLink to="/" class="btn btn-sm btn-outline mt-3">返回首页</RouterLink>
+    </div>
 
     <div v-if="rejected" class="alert alert-warning mx-3 mt-3 flex flex-col items-start gap-0 rounded-xl p-4 text-sm sm:mx-4 sm:mt-4">
       <p class="flex items-center gap-1.5 font-semibold"><TriangleAlert class="size-4" />无法加入聊天室</p>
@@ -115,7 +136,7 @@ connect()
     </div>
 
     <div ref="area" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
-      <div v-if="!messages.length && !rejected" class="empty-state">还没有消息，说点什么吧～</div>
+      <div v-if="!messages.length && !rejected && !disabled" class="empty-state">还没有消息，说点什么吧～</div>
       <div v-for="message in messages" :key="message.key">
         <div v-if="message.type !== 'CHAT'" class="text-center text-xs ui-text-muted">
           {{ message.sender }} {{ message.type === 'JOIN' ? '加入了聊天室' : '离开了聊天室' }}
@@ -140,8 +161,8 @@ connect()
     </div>
 
     <form class="chat-composer flex shrink-0 items-center gap-2 border-t ui-border ui-bg p-3" @submit.prevent="send">
-      <input v-model="text" class="input input-bordered min-w-0 flex-1 focus:outline-none" placeholder="输入消息，回车发送…" :disabled="!connected || !!rejected" />
-      <button class="btn btn-primary shrink-0" type="submit" :disabled="!connected || !!rejected || !text.trim()"><Send class="size-4" /><span class="hidden sm:inline">发送</span></button>
+      <input v-model="text" class="input input-bordered min-w-0 flex-1 focus:outline-none" placeholder="输入消息，回车发送…" :disabled="!connected || !!rejected || !!disabled" />
+      <button class="btn btn-primary shrink-0" type="submit" :disabled="!connected || !!rejected || !!disabled || !text.trim()"><Send class="size-4" /><span class="hidden sm:inline">发送</span></button>
     </form>
   </div>
 </template>

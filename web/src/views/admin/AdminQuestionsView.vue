@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { RotateCcw, Trash2 } from '@lucide/vue'
 import { adminApi, questionApi } from '@/api'
+import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 import { statusLabel } from '@/utils/format'
 import Pagination from '@/components/Pagination.vue'
@@ -10,6 +11,7 @@ import Pagination from '@/components/Pagination.vue'
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const confirm = useConfirmStore()
 const page = computed(() => route.query.page || '1')
 const data = ref(null)
 
@@ -19,7 +21,7 @@ async function load() {
 watch(page, load, { immediate: true })
 
 async function remove(id) {
-  if (!window.confirm('确定删除该问题？')) return
+  if (!(await confirm.ask({ title: '删除问题', message: '确定删除该问题？', confirmText: '删除', danger: true }))) return
   await questionApi.remove(id)
   toast.success('已删除')
   await load()

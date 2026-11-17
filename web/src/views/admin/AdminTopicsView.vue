@@ -2,11 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { ChevronDown, ChevronRight, Plus, Power, RefreshCw, Search, SquarePen, Tags, Trash2, X } from '@lucide/vue'
 import { adminApi, settingApi, assetUrl } from '@/api'
+import { useConfirmStore } from '@/stores/confirm'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
 
 const meta = useMetaStore()
 const toast = useToastStore()
+const confirm = useConfirmStore()
 
 const topics = ref([])
 const loading = ref(false)
@@ -90,7 +92,7 @@ async function save() {
 }
 
 async function remove(item) {
-  if (!window.confirm(`确定删除话题「${item.title}」？该操作不可恢复。`)) return
+  if (!(await confirm.ask({ title: '删除话题', message: `确定删除话题「${item.title}」？该操作不可恢复。`, confirmText: '删除', danger: true }))) return
   await adminApi.deleteTopic(item.id)
   toast.success('话题已删除')
   await load(true)

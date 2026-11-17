@@ -8,6 +8,7 @@ import { useThemeStore } from '@/stores/theme'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import ToastHost from '@/components/ToastHost.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import AdminShell from '@/components/AdminShell.vue'
 
 const route = useRoute()
@@ -68,5 +69,6 @@ const adminArea = computed(() => !!route.meta.adminArea && !bare.value)
     </template>
 
     <ToastHost :items="toast.items" @close="toast.remove" />
+    <ConfirmDialog />
   </div>
 </template>

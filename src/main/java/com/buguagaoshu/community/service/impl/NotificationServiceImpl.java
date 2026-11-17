@@ -182,6 +182,8 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setId(notification.getId());
         notificationDTO.setOuterid(notification.getOuterId());
         notificationDTO.setReceiver(notification.getReceiver());
+        notificationDTO.setType(notification.getType());
+        notificationDTO.setCommentId(notification.getCommentId());
         return notificationDTO;
     }
 
@@ -204,13 +206,32 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    public void createSystemNotification(long receiver, long notifier, long outerId, long commentId,
+                                         int type, String content) {
+        if (receiver <= 0) {
+            return;
+        }
+        Notification notification = new Notification();
+        notification.setCreateTime(System.currentTimeMillis());
+        notification.setType(type);
+        notification.setOuterId(outerId);
+        notification.setCommentId(commentId);
+        notification.setNotifier(notifier > 0 ? notifier : receiver);
+        notification.setStatus(NotificationStatusEnum.UNREAD.getStatus());
+        notification.setReceiver(receiver);
+        notification.setCommentContent(content == null ? "" : content);
+        notificationMapper.insertSelective(notification);
+    }
+
+    @Override
     public void notifyQuestionStatusChange(Question question, long notifierId,
                                            NotificationTypeEnum questionType, NotificationTypeEnum commentType) {
         // 作者收问题级通知，评论者收评论级通知；同一人既是作者又是评论者时只收问题级通知
         Map<Long, NotificationTypeEnum> receivers = new LinkedHashMap<>();
         receivers.put(question.getUserId(), questionType);
         List<Comment> comments = commentMapper.selectListByQuery(QueryWrapper.create()
-                .where(COMMENT.QUESTION_ID.eq(question.getQuestionId())).and(COMMENT.STATUS.eq(1)));
+                .where(COMMENT.QUESTION_ID.eq(question.getQuestionId()))
+                .and(COMMENT.STATUS.eq(1)).and(COMMENT.REVIEW_STATUS.eq(1)));
         for (Comment comment : comments) {
             receivers.putIfAbsent(comment.getCommentator(), commentType);
         }

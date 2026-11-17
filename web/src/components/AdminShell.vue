@@ -12,8 +12,11 @@ import {
   Megaphone,
   Menu,
   MessageCircleQuestion,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
   Settings,
+  ShieldCheck,
   Tags,
   Users,
   X,
@@ -31,9 +34,29 @@ const toast = useToastStore()
 const search = ref('')
 const menuOpen = ref(false)
 
+// 桌面端侧栏收起状态：记住上次选择，移动端抽屉始终展示完整菜单
+const SIDEBAR_COLLAPSED_KEY = 'community-admin-sidebar-collapsed'
+const collapsed = ref(readCollapsed())
+watch(collapsed, (value) => {
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, value ? '1' : '0')
+  } catch {
+    /* 隐私模式 / 存储不可用时忽略 */
+  }
+})
+
+function readCollapsed() {
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 const menus = [
   { label: '数据概览', to: '/admin/dashboard', icon: LayoutDashboard },
   { label: '问题管理', to: '/admin/questions', icon: MessageCircleQuestion },
+  { label: '内容审核', to: '/admin/reviews', icon: ShieldCheck },
   { label: '用户管理', to: '/admin/users', icon: Users },
   { label: '站内搜索', to: '/admin/search', icon: Search },
   { label: '控制面板', to: '/admin/controller', icon: Settings },
@@ -61,11 +84,11 @@ async function logout() {
   <div class="flex min-h-screen ui-bg-page">
     <!-- 侧栏：桌面常驻，移动端变为抽屉，同一份 DOM 保证两套布局完全一致 -->
     <div v-if="menuOpen" class="fixed inset-0 z-50 bg-slate-900/50 md:hidden" @click="menuOpen = false" />
-    <aside class="admin-sidebar" :class="{ 'is-open': menuOpen }">
-      <div class="flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-4 text-sm font-bold text-white sm:h-16 sm:px-5 sm:text-base">
-        <RouterLink to="/" class="flex items-center gap-2">
+    <aside id="admin-sidebar" class="admin-sidebar" :class="{ 'is-open': menuOpen, 'is-collapsed': collapsed }">
+      <div class="admin-sidebar-brand flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-4 text-sm font-bold text-white sm:h-16 sm:px-5 sm:text-base">
+        <RouterLink to="/" class="flex items-center gap-2" :title="collapsed ? '社区管理后台' : undefined">
           <SiteLogo :size="32" rounded="0.7rem" />
-          社区管理后台
+          <span class="admin-sidebar-title whitespace-nowrap">社区管理后台</span>
         </RouterLink>
         <button class="btn btn-ghost btn-circle btn-sm ml-auto text-white md:hidden" type="button" aria-label="关闭菜单" @click="menuOpen = false">
           <X class="size-4" />
@@ -78,20 +101,37 @@ async function logout() {
           :to="item.to"
           class="admin-nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
           :class="{ 'is-active': route.path === item.to }"
+          :title="collapsed ? item.label : undefined"
+          :aria-label="item.label"
           @click="menuOpen = false"
         >
-          <component :is="item.icon" class="size-4" />
-          {{ item.label }}
+          <component :is="item.icon" class="size-4 shrink-0" />
+          <span class="admin-nav-label truncate">{{ item.label }}</span>
         </RouterLink>
       </nav>
       <div class="border-t border-white/10 p-4 text-xs text-slate-400">
-        <RouterLink to="/" class="flex items-center gap-1.5 hover:text-white"><ArrowLeft class="size-3.5" />返回前台</RouterLink>
+        <RouterLink to="/" class="admin-sidebar-footer-link flex items-center gap-1.5 hover:text-white" :title="collapsed ? '返回前台' : undefined">
+          <ArrowLeft class="size-3.5 shrink-0" />
+          <span class="admin-sidebar-footer-label whitespace-nowrap">返回前台</span>
+        </RouterLink>
       </div>
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">
       <header class="ui-header sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b px-3 sm:h-16 sm:px-4 lg:px-6">
         <div class="flex min-w-0 items-center gap-2">
+          <button
+            class="btn btn-ghost btn-circle btn-sm hidden md:inline-flex"
+            type="button"
+            :aria-label="collapsed ? '展开侧边栏' : '收起侧边栏'"
+            :title="collapsed ? '展开侧边栏' : '收起侧边栏'"
+            aria-controls="admin-sidebar"
+            :aria-expanded="!collapsed"
+            @click="collapsed = !collapsed"
+          >
+            <PanelLeftOpen v-if="collapsed" class="size-4" />
+            <PanelLeftClose v-else class="size-4" />
+          </button>
           <button class="btn btn-ghost btn-circle btn-sm md:hidden" type="button" aria-label="打开菜单" @click="menuOpen = true">
             <Menu class="size-5" />
           </button>

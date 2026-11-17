@@ -3,11 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ChevronLeft, ChevronRight, CircleCheck, CirclePlay, CircleX, Filter, ListChecks, Megaphone, Plus, SquarePen } from '@lucide/vue'
 import { adminApi, assetUrl } from '@/api'
+import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
+const confirm = useConfirmStore()
 
 const page = computed(() => route.query.page || '1')
 const position = ref(route.query.position || '')
@@ -92,7 +94,15 @@ async function submitBatchSetting() {
 
 async function batchClose() {
   if (!selected.value.length) return toast.warning('请先勾选要结束的广告')
-  if (!window.confirm(`确定结束选中的 ${selected.value.length} 条广告投放？`)) return
+  if (
+    !(await confirm.ask({
+      title: '结束广告投放',
+      message: `确定结束选中的 ${selected.value.length} 条广告投放？`,
+      confirmText: '结束投放',
+      danger: true,
+    }))
+  )
+    return
   busy.value = true
   try {
     const result = await adminApi.batchCloseAd([...selected.value])
@@ -106,7 +116,15 @@ async function batchClose() {
 }
 
 async function closeOne(item) {
-  if (!window.confirm(`确定提前结束「${item.title}」的投放？`)) return
+  if (
+    !(await confirm.ask({
+      title: '结束广告投放',
+      message: `确定提前结束「${item.title}」的投放？`,
+      confirmText: '结束投放',
+      danger: true,
+    }))
+  )
+    return
   const result = await adminApi.batchCloseAd([item.id])
   toast.success(result.results?.[0]?.message || '已结束')
   await load()

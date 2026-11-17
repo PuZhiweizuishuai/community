@@ -20,14 +20,24 @@ const emit = defineEmits(['update:modelValue', 'ready'])
 const holderId = `vditor-${Math.random().toString(36).slice(2)}`
 const holder = ref(null)
 let editor = null
+let editorReady = false
+// Vditor 构造是异步的：初始化完成前收到的值先暂存，after 回调里统一写入
+let pendingValue = null
 let internalUpdate = false
+
+/** 仅在 Vditor 初始化完成后调用，避免访问尚未创建的内部实例 */
+function applyValue(value) {
+  if (!editor) return
+  const next = value ?? ''
+  if (editor.getValue?.() !== next) editor.setValue?.(next)
+}
 
 function options() {
   const t = vditorThemeOf(theme.isDark)
   return {
     height: props.height,
     mode: props.mode,
-    value: props.modelValue || '',
+    value: pendingValue ?? props.modelValue ?? '',
     placeholder: props.placeholder,
     theme: t.editor,
     icon: 'material',
@@ -87,7 +97,15 @@ function options() {
       emit('update:modelValue', value)
       internalUpdate = false
     },
-    after: () => emit('ready', editor),
+    after: () => {
+      editorReady = true
+      // 初始化期间通过 setValue / v-model 传入的内容，此时才有内部实例可写入
+      if (pendingValue !== null) {
+        applyValue(pendingValue)
+        pendingValue = null
+      }
+      emit('ready', editor)
+    },
   }
 }
 
@@ -103,12 +121,14 @@ onBeforeUnmount(() => {
     /* 编辑器可能尚未初始化完成 */
   }
   editor = null
+  editorReady = false
+  pendingValue = null
 })
 
 watch(
   () => theme.isDark,
   (dark) => {
-    if (!editor) return
+    if (!editorReady || !editor) return
     const t = vditorThemeOf(dark)
     // setTheme(theme, contentTheme, codeTheme)：一次切换编辑器外观、内容主题与代码高亮
     editor.setTheme?.(t.editor, t.content, t.code)
@@ -118,18 +138,32 @@ watch(
 watch(
   () => props.modelValue,
   (value) => {
-    if (internalUpdate || !editor) return
-    const current = editor.getValue?.()
-    if (current !== value) editor.setValue?.(value ?? '')
+    if (internalUpdate) return
+    if (!editorReady || !editor) {
+      // 初始化完成前只记录待写入值，由 after 回调统一应用
+      pendingValue = value ?? ''
+      return
+    }
+    applyValue(value)
   },
 )
 
 defineExpose({
-  getValue: () => editor?.getValue?.() ?? '',
-  setValue: (value) => editor?.setValue?.(value ?? ''),
-  focus: () => editor?.focus?.(),
+  getValue: () => (editorReady && editor ? editor.getValue?.() ?? '' : pendingValue ?? props.modelValue ?? ''),
+  setValue: (value) => {
+    const next = value ?? ''
+    if (!editorReady || !editor) {
+      pendingValue = next
+      return
+    }
+    applyValue(next)
+  },
+  focus: () => {
+    if (editorReady) editor?.focus?.()
+  },
   clear: () => {
-    editor?.setValue?.('')
+    pendingValue = ''
+    if (editorReady && editor) editor.setValue?.('')
     emit('update:modelValue', '')
   },
 })

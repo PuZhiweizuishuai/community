@@ -23,6 +23,10 @@ public class QuestionDto {
     private String createTime;
     private String alterTime;
     private int status;
+    private int reviewStatus = 1;
+    private String reviewReason;
+    private String reviewSuggestion;
+    private long reviewTime;
     private User user;
 
     /**

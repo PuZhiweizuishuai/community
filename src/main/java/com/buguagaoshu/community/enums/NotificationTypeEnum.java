@@ -44,7 +44,28 @@ public enum NotificationTypeEnum {
     /**
      * 恢复评论
      * */
-    SYSTEM_RESET_COMMENT(9, "恢复了问题");
+    SYSTEM_RESET_COMMENT(9, "恢复了问题"),
+
+    /**
+     * 内容审核：提交待审
+     */
+    REVIEW_QUESTION_PENDING(10, "提交了问题审核"),
+
+    REVIEW_COMMENT_PENDING(11, "提交了评论审核"),
+
+    /**
+     * 内容审核：通过
+     */
+    REVIEW_QUESTION_PASS(12, "审核通过了你的问题"),
+
+    REVIEW_COMMENT_PASS(13, "审核通过了你的评论"),
+
+    /**
+     * 内容审核：驳回
+     */
+    REVIEW_QUESTION_REJECT(14, "退回了你的问题"),
+
+    REVIEW_COMMENT_REJECT(15, "退回了你的评论");
 
 
 

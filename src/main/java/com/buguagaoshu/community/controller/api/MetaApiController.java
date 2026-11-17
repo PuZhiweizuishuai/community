@@ -16,6 +16,7 @@ import com.buguagaoshu.community.model.Classification;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.SiteCacheService;
+import com.buguagaoshu.community.service.SystemConfigService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,6 +47,7 @@ public class MetaApiController {
     private final OnlineUserService onlineUserService;
     private final ClassificationCache classificationCache;
     private final SiteCacheService siteCache;
+    private final SystemConfigService systemConfigService;
 
     public MetaApiController(HotTagCache hotTagCache,
                              HotQuestionCache hotQuestionCache,
@@ -54,7 +56,8 @@ public class MetaApiController {
                              AdvertisementService advertisementService,
                              OnlineUserService onlineUserService,
                              ClassificationCache classificationCache,
-                             SiteCacheService siteCache) {
+                             SiteCacheService siteCache,
+                             SystemConfigService systemConfigService) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
         this.hotUserCache = hotUserCache;
@@ -63,6 +66,7 @@ public class MetaApiController {
         this.onlineUserService = onlineUserService;
         this.classificationCache = classificationCache;
         this.siteCache = siteCache;
+        this.systemConfigService = systemConfigService;
     }
 
     /** 基础字典：体积小、全站通用，前端启动时拉取一次 */
@@ -77,6 +81,10 @@ public class MetaApiController {
         // 在线人数会查库，缓存 30 秒避免每次请求都打 MySQL
         data.put("onlineCount", siteCache.get(SiteCacheService.META + "onlineCount", 30_000,
                 onlineUserService::selectOnlineUserCount));
+        // 聊天室开关：前台据此隐藏入口与路由守卫
+        data.put("chatEnabled", systemConfigService.isChatEnabled());
+        // 内容审核开关：发布页与评论框据此提示「发布后需审核」
+        data.put("reviewEnabled", systemConfigService.isReviewEnabled());
         return ResultDTO.okOf(data);
     }
 

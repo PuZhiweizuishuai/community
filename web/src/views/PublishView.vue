@@ -1,7 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Check, ChevronDown, ChevronUp, Eye, Minus, Plus, Send, X } from '@lucide/vue'
+import { Check, ChevronDown, ChevronUp, Eye, FileText, Lock, MessageCircle, Minus, Plus, Send, ShieldCheck, Trash2, X } from '@lucide/vue'
 import { questionApi } from '@/api'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
@@ -17,10 +17,18 @@ const toast = useToastStore()
 meta.loadTagCategories()
 meta.loadAds('publish')
 
+const SEGMENT_TYPES = [
+  { value: 0, label: '普通文本', hint: '所有人可直接阅读', icon: FileText },
+  { value: 1, label: '密码可见', hint: '读者输入阅读密码后可见', icon: Lock },
+  { value: 2, label: '回复可见', hint: '读者回复该问题后可见', icon: MessageCircle },
+]
+let segmentSeq = 0
+const newSegment = () => ({ key: ++segmentSeq, type: 0, content: '', password: '' })
+
 const editId = computed(() => route.params.id || null)
 const title = ref('')
 const classification = ref('')
-const description = ref('')
+const segments = ref([newSegment()])
 const tags = ref([])
 const tagInput = ref('')
 const captcha = ref('')
@@ -28,41 +36,62 @@ const createTime = ref(0)
 const questionId = ref(-1)
 const submitting = ref(false)
 const captchaRef = ref(null)
-const editor = ref(null)
 const showTagPanel = ref(false)
 const previewOpen = ref(false)
+
+const editorRefs = {}
+function setEditorRef(key, el) {
+  if (el) editorRefs[key] = el
+  else delete editorRefs[key]
+}
+function contentOf(segment) {
+  return editorRefs[segment.key]?.getValue?.() ?? segment.content ?? ''
+}
+function segmentTypeLabel(type) {
+  return SEGMENT_TYPES.find((t) => t.value === type)?.label || '普通文本'
+}
 
 const editClasses = computed(() => meta.classifications.filter((c) => c.value !== 0))
 const ads = computed(() => meta.adsFor('publish'))
 
-const checks = computed(() => [
-  { label: '标题（≤ 50 字）', ok: title.value.trim().length > 0 && title.value.length <= 50 },
-  { label: '问题分类', ok: !!classification.value },
-  { label: '正文内容', ok: (description.value || '').trim().length > 0 },
-  { label: '标签（1 ~ 6 个）', ok: tags.value.length > 0 },
-  { label: '验证码', ok: captcha.value.trim().length > 0 },
-])
+const checks = computed(() => {
+  const list = [
+    { label: '标题（≤ 50 字）', ok: title.value.trim().length > 0 && title.value.length <= 50 },
+    { label: '问题分类', ok: !!classification.value },
+    { label: '正文内容', ok: segments.value.every((s) => (s.content || '').trim().length > 0) },
+  ]
+  if (segments.value.some((s) => s.type === 1)) {
+    list.push({ label: '阅读密码（密码可见段落）', ok: segments.value.filter((s) => s.type === 1).every((s) => (s.password || '').trim().length > 0) })
+  }
+  list.push(
+    { label: '标签（1 ~ 6 个）', ok: tags.value.length > 0 },
+    { label: '验证码', ok: captcha.value.trim().length > 0 },
+  )
+  return list
+})
 const readyCount = computed(() => checks.value.filter((c) => c.ok).length)
 
 async function loadEdit() {
   if (!editId.value) {
     title.value = ''
     classification.value = ''
-    description.value = ''
+    segments.value = [newSegment()]
     tags.value = []
     questionId.value = -1
     createTime.value = 0
-    editor.value?.setValue?.('')
     return
   }
-  const question = await questionApi.edit(editId.value)
+  const data = await questionApi.edit(editId.value)
+  const question = data.question
   title.value = question.title || ''
   classification.value = question.classification || ''
-  description.value = question.description || ''
   tags.value = String(question.tag || '').split(/[,，]/).filter(Boolean)
   createTime.value = question.createTime || 0
   questionId.value = question.questionId
-  editor.value?.setValue?.(description.value)
+  const list = (data.contents || []).map((c) => ({ key: ++segmentSeq, type: c.type, content: c.content || '', password: c.password || '' }))
+  segments.value = list.length ? list : [newSegment()]
+  await nextTick()
+  segments.value.forEach((s) => editorRefs[s.key]?.setValue?.(s.content))
 }
 watch(editId, loadEdit, { immediate: true })
 
@@ -77,16 +106,33 @@ function removeTag(tag) {
   tags.value = tags.value.filter((t) => t !== tag)
 }
 
-function currentContent() {
-  return editor.value?.getValue?.() ?? description.value ?? ''
+function addSegment() {
+  if (segments.value.length >= 3) return toast.warning('最多只能添加 3 个内容段落')
+  segments.value.push(newSegment())
+}
+function removeSegment(index) {
+  if (segments.value.length <= 1) return toast.warning('至少保留一个内容段落')
+  segments.value.splice(index, 1)
 }
 
 async function submit() {
-  const content = currentContent()
   if (!title.value.trim()) return toast.warning('请填写标题')
   if (title.value.length > 50) return toast.warning('标题不能超过 50 个字')
   if (!classification.value) return toast.warning('请选择问题分类')
-  if (!content.trim()) return toast.warning('正文不能为空')
+  const contents = []
+  for (let i = 0; i < segments.value.length; i++) {
+    const segment = segments.value[i]
+    const content = contentOf(segment)
+    if (!content.trim()) return toast.warning(`第 ${i + 1} 段正文不能为空`)
+    if (segment.type === 1) {
+      const password = segment.password.trim()
+      if (!password) return toast.warning(`请为第 ${i + 1} 段设置阅读密码`)
+      if (password.length > 64) return toast.warning(`第 ${i + 1} 段阅读密码不能超过 64 个字符`)
+      contents.push({ type: segment.type, content, password })
+    } else {
+      contents.push({ type: segment.type, content })
+    }
+  }
   if (!tags.value.length) return toast.warning('请至少添加一个标签')
   if (!captcha.value.trim()) return toast.warning('请输入验证码')
 
@@ -95,13 +141,18 @@ async function submit() {
     const result = await questionApi.save({
       title: title.value.trim(),
       classification: classification.value,
-      description: content,
+      contents,
       tag: tags.value.join(','),
       questionId: questionId.value,
       createTime: createTime.value,
       captcha: captcha.value,
     })
-    toast.success(editId.value ? '修改成功' : '发布成功')
+    // 审核开启时后端返回 reviewStatus=0，提示用户内容已进入审核区
+    if (Number(result?.reviewStatus) === 0) {
+      toast.success(editId.value ? '修改已提交审核，通过后将重新公开展示' : '发布成功，已提交审核')
+    } else {
+      toast.success(editId.value ? '修改成功' : '发布成功')
+    }
     router.push(`/question/${result.questionId || questionId.value}`)
   } catch {
     captcha.value = ''
@@ -170,10 +221,51 @@ async function submit() {
               <h2 class="section-title">正文 <span class="text-rose-500">*</span></h2>
               <p class="mt-0.5 text-xs ui-text-muted">支持 Markdown、代码块、公式、流程图与图片拖拽上传</p>
             </div>
-            <span class="hidden text-xs ui-text-muted sm:block">自动保存已关闭 · 记得及时发布</span>
+            <span class="hidden text-xs ui-text-muted sm:block">{{ segments.length }} / 3 个段落</span>
           </div>
-          <div class="p-2 sm:p-3">
-            <VditorEditor ref="editor" v-model="description" :height="520" />
+          <div class="space-y-3 p-2 sm:p-3">
+            <div v-for="(segment, index) in segments" :key="segment.key" class="rounded-xl border ui-border">
+              <div class="flex flex-wrap items-center gap-2 border-b ui-border px-3 py-2">
+                <span class="text-xs font-medium ui-text-base">段落 {{ index + 1 }}</span>
+                <div class="flex flex-wrap gap-1">
+                  <button
+                    v-for="t in SEGMENT_TYPES"
+                    :key="t.value"
+                    type="button"
+                    class="rounded-full border px-2.5 py-1 text-xs transition"
+                    :class="segment.type === t.value
+                      ? 'border-indigo-500 ui-bg-brand font-medium ui-text-brand'
+                      : 'ui-border ui-text-base hover:border-indigo-300 hover:text-indigo-600'"
+                    :title="t.hint"
+                    @click="segment.type = t.value"
+                  >
+                    <component :is="t.icon" class="mr-1 inline size-3" />{{ t.label }}
+                  </button>
+                </div>
+                <button v-if="segments.length > 1" class="btn btn-ghost btn-xs ml-auto text-rose-500" type="button" @click="removeSegment(index)">
+                  <Trash2 class="size-3.5" />删除
+                </button>
+              </div>
+              <div v-if="segment.type === 1" class="flex flex-wrap items-center gap-2 border-b ui-border px-3 py-2">
+                <Lock class="size-4 shrink-0 ui-text-muted" />
+                <input
+                  v-model="segment.password"
+                  type="text"
+                  maxlength="64"
+                  class="input input-bordered input-sm w-full max-w-sm focus:outline-none"
+                  placeholder="设置阅读密码，读者输入相同密码即可阅读本段"
+                />
+              </div>
+              <div v-else-if="segment.type === 2" class="border-b ui-border px-3 py-2 text-xs ui-text-muted">
+                读者回复该问题后才能查看本段内容，你作为作者始终可见
+              </div>
+              <div class="p-1">
+                <VditorEditor :ref="(el) => setEditorRef(segment.key, el)" v-model="segment.content" :height="360" />
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm w-full" type="button" :disabled="segments.length >= 3" @click="addSegment">
+              <Plus class="size-4" />添加段落（最多 3 个）
+            </button>
           </div>
         </section>
       </div>
@@ -251,6 +343,11 @@ async function submit() {
             <Captcha ref="captchaRef" v-model="captcha" />
           </div>
 
+          <p v-if="meta.reviewEnabled" class="mt-3 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-700">
+            <ShieldCheck class="mt-0.5 size-3.5 shrink-0" />
+            当前社区已开启内容审核，{{ editId ? '保存修改' : '发布' }}后需管理员审核通过才公开展示，审核结果会通过站内消息通知你。
+          </p>
+
           <button
             class="btn btn-primary mt-5 w-full"
             :disabled="submitting || readyCount < checks.length"
@@ -258,7 +355,9 @@ async function submit() {
             @click="submit"
           >
             <Send class="size-4" />
-            {{ submitting ? '发布中…' : editId ? '保存修改' : '发布讨论' }}
+            {{ submitting ? '提交中…' : editId
+              ? (meta.reviewEnabled ? '保存并提交审核' : '保存修改')
+              : (meta.reviewEnabled ? '发布并提交审核' : '发布讨论') }}
           </button>
           <p class="mt-2 text-center text-xs ui-text-muted">发布表示你已阅读并同意社区规范</p>
         </section>
@@ -292,7 +391,10 @@ async function submit() {
           <p class="mt-1 text-xs ui-text-muted">{{ classification || '未选择分类' }} · {{ tags.join(' / ') || '暂无标签' }}</p>
         </div>
         <div class="max-h-[55vh] overflow-y-auto">
-          <MarkdownView :content="currentContent()" />
+          <div v-for="(segment, index) in segments" :key="segment.key" class="mb-5">
+            <p class="mb-1 text-xs font-medium ui-text-muted">段落 {{ index + 1 }} · {{ segmentTypeLabel(segment.type) }}</p>
+            <MarkdownView :content="contentOf(segment)" />
+          </div>
         </div>
         <div class="modal-action">
           <button class="btn btn-ghost btn-sm" type="button" @click="previewOpen = false">关闭</button>

@@ -1,8 +1,12 @@
 package com.buguagaoshu.community.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * 发布 / 编辑问题的请求体（application/json）。
@@ -14,8 +18,13 @@ public class QuestionCreateDTO {
     private String title;
     @NotBlank(message = "请选择问题分类")
     private String classification;
-    @NotBlank(message = "输入内容不能为空")
-    private String description;
+    /**
+     * 内容段落，1 ~ 3 个，按数组顺序展示
+     */
+    @Valid
+    @NotEmpty(message = "输入内容不能为空")
+    @Size(max = 3, message = "最多只能添加 3 个内容段落")
+    private List<QuestionContentCreateDTO> contents;
     private String tag;
     private Long questionId = -1L;
     private Long createTime = 0L;

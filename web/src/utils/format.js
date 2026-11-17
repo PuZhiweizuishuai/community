@@ -15,6 +15,28 @@ export function shortNumber(value) {
   return `${(n / 10000).toFixed(1)}w`
 }
 
+/**
+ * 旧版编辑器保存的回复整段带 4 个以上空格缩进，Markdown 会按缩进代码块渲染成 <pre><code>。
+ * 这里去掉公共缩进，让历史评论按普通段落展示；正常内容原样返回。
+ */
+export function normalizeCommentMarkdown(content) {
+  const text = String(content ?? '').replace(/\r\n?/g, '\n')
+  if (!text.trim()) return ''
+  if (!/^[ \t]{4,}\S/m.test(text)) return text.trim()
+
+  const lines = text.split('\n')
+  const indentOf = (line) => line.match(/^[ \t]*/)[0].length
+  const minIndent = Math.min(...lines.filter((line) => line.trim()).map(indentOf))
+  if (minIndent >= 4) {
+    return lines
+      .map((line) => (line.trim() ? line.slice(Math.min(indentOf(line), minIndent)) : ''))
+      .join('\n')
+      .trim()
+  }
+  // 首行带缩进、后续行顶格（如旧版嵌入的 iframe），只去掉首行缩进
+  return [lines[0].trimStart(), ...lines.slice(1)].join('\n').trim()
+}
+
 /** 后台状态码文案 */
 export function statusLabel(status) {
   return Number(status) === 1 ? '正常' : '已删除'

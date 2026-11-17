@@ -26,7 +26,10 @@ public class ChatMessage {
         LEAVE,
 
         /** 同一账号已在其他窗口加入，当前窗口被拒绝 */
-        DUPLICATE
+        DUPLICATE,
+
+        /** 管理员关闭了聊天室，客户端应主动退出 */
+        DISABLED
     }
 
     public MessageType getType() {

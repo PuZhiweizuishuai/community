@@ -5,6 +5,7 @@ import com.buguagaoshu.community.dto.FollowQuestionDTO;
 import com.buguagaoshu.community.dto.FollowTopicDTO;
 import com.buguagaoshu.community.dto.FollowUserDTO;
 import com.buguagaoshu.community.dto.ResultDTO;
+import com.buguagaoshu.community.enums.ReviewStatusEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
@@ -72,7 +73,7 @@ public class FollowApiController {
                                                          HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         Question question = questionMapper.selectQuestionById(body.getFollowQuestionId(), 1);
-        if (question == null) {
+        if (question == null || question.getReviewStatus() != ReviewStatusEnum.APPROVED.getStatus()) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "问题不存在了，请选择别的问题吧!");
         }
         int result = followQuestionService.insertFollowQuestion(body, question, user.getId());

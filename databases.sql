@@ -117,6 +117,21 @@ CREATE TABLE comment
 
 CREATE INDEX index_comment_createTime ON comment (createTime);
 
+-- 问题内容段落表：一个问题最多 3 段，type 0 普通文本 / 1 密码可见 / 2 回复可见
+-- password 明文存储，仅用于阅读校验；Questions.description 只保留普通文本副本
+CREATE TABLE question_content
+(
+    id bigint PRIMARY KEY AUTO_INCREMENT,
+    questionId bigint NOT NULL,
+    sort int NOT NULL DEFAULT 0,
+    type tinyint NOT NULL DEFAULT 0,
+    content LONGTEXT NOT NULL,
+    password varchar(64) DEFAULT NULL,
+    constraint fk_content_question foreign key(questionId) references Questions(questionId)
+);
+
+CREATE INDEX idx_question_sort ON question_content (questionId, sort);
+
 -- 通知表
 -- id 通知 id
 -- notifier 通知发起人
@@ -405,6 +420,8 @@ CREATE INDEX `idx_questions_status_create` ON `Questions` (`status`, `createTime
 -- 评论：按问题 + 类型 + 状态取一级/二级评论
 CREATE INDEX `idx_comment_question_type_status` ON `comment` (`questionId`, `type`, `status`);
 CREATE INDEX `idx_comment_parent` ON `comment` (`parentId`, `status`);
+-- 评论：按根评论取全部回复（二级回复扁平化后 parentCommentId 指向根评论）
+CREATE INDEX `idx_comment_parent_comment` ON `comment` (`parentCommentId`, `type`, `status`);
 -- 通知：未读数与按类型分页
 CREATE INDEX `idx_notification_receiver_status` ON `notification` (`receiver`, `status`);
 CREATE INDEX `idx_notification_receiver_type` ON `notification` (`receiver`, `type`, `status`);

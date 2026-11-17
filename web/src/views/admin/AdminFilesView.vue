@@ -2,9 +2,11 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ChevronLeft, ChevronRight, Copy, File, FileText, Film, Music, Search, Trash2 } from '@lucide/vue'
 import { adminApi, assetUrl } from '@/api'
+import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 
 const toast = useToastStore()
+const confirm = useConfirmStore()
 const loading = ref(false)
 const records = ref([])
 const total = ref(0)
@@ -87,7 +89,15 @@ async function copyUrl(record) {
 }
 
 async function remove(record) {
-  if (!window.confirm(`确定删除文件「${record.originalName || record.fileKey}」吗？物理文件将被移除，引用该文件的页面将无法显示。`)) return
+  if (
+    !(await confirm.ask({
+      title: '删除文件',
+      message: `确定删除文件「${record.originalName || record.fileKey}」吗？物理文件将被移除，引用该文件的页面将无法显示。`,
+      confirmText: '删除',
+      danger: true,
+    }))
+  )
+    return
   await adminApi.deleteFile(record.id)
   toast.success('文件已删除')
   await load()

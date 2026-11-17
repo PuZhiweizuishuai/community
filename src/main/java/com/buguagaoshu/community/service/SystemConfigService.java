@@ -21,6 +21,9 @@ import java.util.Map;
 public class SystemConfigService {
 
     public static final String REGISTER_ENABLED = "register.enabled";
+    public static final String CHAT_ENABLED = "chat.enabled";
+    /** 内容审核开关：开启后问题与评论需管理员审核通过才公开展示 */
+    public static final String REVIEW_ENABLED = "review.enabled";
     public static final String MAIL_ENABLED = "mail.enabled";
     public static final String MAIL_HOST = "mail.host";
     public static final String MAIL_PORT = "mail.port";
@@ -65,6 +68,16 @@ public class SystemConfigService {
         return !"false".equalsIgnoreCase(get(REGISTER_ENABLED));
     }
 
+    /** 聊天室默认开启；只有显式保存为 false 时才关闭 */
+    public boolean isChatEnabled() {
+        return !"false".equalsIgnoreCase(get(CHAT_ENABLED));
+    }
+
+    /** 内容审核默认关闭；只有显式保存为 true 时才开启 */
+    public boolean isReviewEnabled() {
+        return "true".equalsIgnoreCase(get(REVIEW_ENABLED));
+    }
+
     public MailSettings mailSettings() {
         Map<String, String> values = values();
         int port;
@@ -92,7 +105,7 @@ public class SystemConfigService {
             return;
         }
         long now = System.currentTimeMillis();
-        updates.forEach((key, value) -> mapper.insertOrUpdate(new SystemConfig(key, value, now)));
+        updates.forEach((key, value) -> mapper.upsert(new SystemConfig(key, value, now)));
         reload();
     }
 
@@ -138,7 +151,7 @@ public class SystemConfigService {
         updates.put(MAIL_FROM, ymlMailFrom);
         updates.put(MAIL_IMPORTED, "true");
         long now = System.currentTimeMillis();
-        updates.forEach((key, value) -> mapper.insertOrUpdate(new SystemConfig(key, value, now)));
+        updates.forEach((key, value) -> mapper.upsert(new SystemConfig(key, value, now)));
         log.info("已将 yml/环境变量中的 SMTP 配置导入 system_config 表");
     }
 }

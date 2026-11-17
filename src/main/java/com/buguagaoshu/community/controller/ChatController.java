@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller;
 import com.buguagaoshu.community.component.ChatHandshakeInterceptor;
 import com.buguagaoshu.community.component.ChatPresenceRegistry;
 import com.buguagaoshu.community.model.ChatMessage;
+import com.buguagaoshu.community.service.SystemConfigService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -22,15 +23,20 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatPresenceRegistry presence;
+    private final SystemConfigService systemConfigService;
 
-    public ChatController(ChatPresenceRegistry presence) {
+    public ChatController(ChatPresenceRegistry presence, SystemConfigService systemConfigService) {
         this.presence = presence;
+        this.systemConfigService = systemConfigService;
     }
 
     @MessageMapping("/chat.addUser")
     @SendTo("/topic/public")
     public ChatMessage addUser(@Payload ChatMessage message,
                                SimpMessageHeaderAccessor headerAccessor) {
+        if (!systemConfigService.isChatEnabled()) {
+            return null;
+        }
         Map<String, Object> attributes = headerAccessor.getSessionAttributes();
         String userId = attribute(attributes, ChatHandshakeInterceptor.ATTR_USER_ID);
         if (userId == null) {
@@ -71,6 +77,9 @@ public class ChatController {
     @SendTo("/topic/public")
     public ChatMessage sendMessage(@Payload ChatMessage message,
                                    SimpMessageHeaderAccessor headerAccessor) {
+        if (!systemConfigService.isChatEnabled()) {
+            return null;
+        }
         Map<String, Object> attributes = headerAccessor.getSessionAttributes();
         String userId = attribute(attributes, ChatHandshakeInterceptor.ATTR_USER_ID);
         String clientToken = attribute(attributes, "chatClientToken");

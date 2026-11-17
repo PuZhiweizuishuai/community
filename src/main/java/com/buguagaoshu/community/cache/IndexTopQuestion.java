@@ -2,6 +2,7 @@ package com.buguagaoshu.community.cache;
 
 
 import com.buguagaoshu.community.dto.QuestionDto;
+import com.buguagaoshu.community.enums.ReviewStatusEnum;
 import com.buguagaoshu.community.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,8 @@ public class IndexTopQuestion {
         List<QuestionDto> refreshed = new ArrayList<>(questionId.length);
         for (Long i : questionId) {
             QuestionDto questionDto = questionService.selectQuestionById(i.toString());
-            if (questionDto == null) {
+            // 待审核 / 未通过的问题不能出现在首页置顶
+            if (questionDto == null || questionDto.getReviewStatus() != ReviewStatusEnum.APPROVED.getStatus()) {
                 continue;
             }
             refreshed.add(questionDto.toListItem());

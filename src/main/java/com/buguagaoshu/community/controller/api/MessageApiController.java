@@ -68,7 +68,11 @@ public class MessageApiController {
         if (notification == null || notification.getReceiver() != user.getId()) {
             throw new CustomizeException(CustomizeErrorCode.READ_NOTIFICATION_FAIL);
         }
-        return ResultDTO.okOf(Map.of("outerId", notification.getOuterid()));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("outerId", notification.getOuterid());
+        data.put("type", notification.getType());
+        data.put("commentId", notification.getCommentId());
+        return ResultDTO.okOf(data);
     }
 
     @PostMapping("/read-all")

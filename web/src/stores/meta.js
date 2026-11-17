@@ -12,6 +12,8 @@ const EMPTY = {
   topicTypes: [],
   advertisements: {},
   onlineCount: 0,
+  chatEnabled: true,
+  reviewEnabled: false,
 }
 
 /**
@@ -92,6 +94,15 @@ export const useMetaStore = defineStore('meta', () => {
   const sorts = computed(() => data.value.sorts || [])
   const topicTypes = computed(() => data.value.topicTypes || [])
   const tagCategories = computed(() => data.value.tagCategories || [])
+  // 聊天室开关：管理员关闭后隐藏入口并拦截路由；默认开启
+  const chatEnabled = computed(() => data.value.chatEnabled !== false)
+  // 内容审核开关：开启后发布页/评论框提示「提交后需审核」
+  const reviewEnabled = computed(() => data.value.reviewEnabled === true)
+
+  /** 后台保存配置后同步本地状态，头部入口立即更新 */
+  function setChatEnabled(enabled) {
+    data.value = { ...data.value, chatEnabled: !!enabled }
+  }
 
   function adsFor(position) {
     const list = ads.value[position]
@@ -115,5 +126,8 @@ export const useMetaStore = defineStore('meta', () => {
     sorts,
     topicTypes,
     tagCategories,
+    chatEnabled,
+    setChatEnabled,
+    reviewEnabled,
   }
 })

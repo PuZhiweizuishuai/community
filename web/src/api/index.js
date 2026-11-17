@@ -36,9 +36,12 @@ export const homeApi = {
 }
 
 export const questionApi = {
-  detail: (id, params) => api.get(`/questions/${encodeURIComponent(id)}`, params),
+  detail: (id) => api.get(`/questions/${encodeURIComponent(id)}`),
+  comments: (id, params) => api.get(`/questions/${encodeURIComponent(id)}/comments`, params),
+  relevant: (id) => api.get(`/questions/${encodeURIComponent(id)}/relevant`),
   edit: (id) => api.get(`/questions/${encodeURIComponent(id)}/edit`),
   save: (data) => api.post('/questions', data),
+  unlockContent: (id, data) => api.post(`/questions/${encodeURIComponent(id)}/content/unlock`, data),
   remove: (questionId) => api.form('/admin/delete/question', { questionId }),
   recover: (questionId) => api.form('/admin/recovery/question', { questionId }),
 }
@@ -67,6 +70,13 @@ export const messageApi = {
   list: (params) => api.get('/messages', params),
   read: (id) => api.post(`/messages/${id}/read`, {}),
   readAll: () => api.post('/messages/read-all', {}),
+}
+
+// 用户侧内容审核：查看自己的待审/被驳回内容，修改评论后重新提交
+export const reviewApi = {
+  mine: (params) => api.get('/reviews/mine', params),
+  resubmitComment: (commentId, content) =>
+    api.post(`/reviews/comments/${commentId}/resubmit`, { content }),
 }
 
 export const settingApi = {
@@ -113,10 +123,16 @@ export const adminApi = {
   deleteTopic: (id) => api.post('/admin/topics/delete', { id }),
   refreshTopics: () => api.post('/admin/topics/refresh', {}),
   deleteLog: (data) => api.post('/admin/log/delete', data),
-  // 系统配置（注册开关 / SMTP 邮件）
+  // 系统配置（注册开关 / 聊天室 / 内容审核 / SMTP 邮件）
   systemConfig: () => api.get('/admin/config'),
   saveSystemConfig: (data) => api.post('/admin/config/save', data),
   testMail: (to) => api.post('/admin/config/test-mail', { to }),
+  // 内容审核（问题 + 评论）
+  reviews: (params) => api.get('/admin/reviews', params),
+  reviewCount: () => api.get('/admin/reviews/count'),
+  reviewDetail: (type, id) => api.get(`/admin/reviews/${type}/${id}`),
+  approveReview: (type, id) => api.post('/admin/reviews/approve', { type, id }),
+  rejectReview: (data) => api.post('/admin/reviews/reject', data),
   // 存储配置（本地 / 多对象存储）
   storages: () => api.get('/admin/storage'),
   saveStorage: (data) => api.post('/admin/storage/save', data),

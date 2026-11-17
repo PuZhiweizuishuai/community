@@ -8,6 +8,7 @@ import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import SidePanel from '@/components/SidePanel.vue'
 import QuestionList from '@/components/QuestionList.vue'
+import Pagination from '@/components/Pagination.vue'
 import Avatar from '@/components/Avatar.vue'
 
 const route = useRoute()
@@ -20,17 +21,12 @@ const loading = ref(false)
 const data = ref(null)
 const followed = ref(false)
 
-// 游标分页：栈里保存到达当前页之前用过的游标，用于「上一页」
-const cursorStack = ref([])
-const pageNo = computed(() => cursorStack.value.length + 1)
-
 const query = computed(() => ({
   page: route.query.page || '1',
   size: route.query.size || '15',
   tag: route.query.tag || undefined,
   sort: route.query.sort || '3',
   class: route.query.class || '0',
-  cursor: route.query.cursor || undefined,
 }))
 
 async function load() {
@@ -45,32 +41,17 @@ async function load() {
 
 watch(query, load, { immediate: true, deep: true })
 
-// 筛选条件变化时回到第一页并清空游标栈
-const filters = computed(() => [route.query.tag, route.query.sort, route.query.class, route.query.size].join('|'))
-watch(filters, () => {
-  cursorStack.value = []
-})
-
 function updateQuery(patch) {
-  const base = { ...route.query }
-  if (!('cursor' in patch)) {
-    delete base.cursor
-    delete base.page
-  }
-  router.push({ name: 'home', query: { ...base, ...patch } })
+  const next = { ...route.query, ...patch }
+  // 第一页不写入 URL，保持地址简洁
+  if (String(next.page) === '1') delete next.page
+  router.push({ name: 'home', query: next })
 }
 
-function nextPage() {
-  const next = data.value?.pagination?.nextCursor
-  if (!next) return
-  cursorStack.value.push(route.query.cursor ?? null)
-  updateQuery({ cursor: next })
-}
-
-function prevPage() {
-  if (!cursorStack.value.length) return
-  const previous = cursorStack.value.pop()
-  updateQuery({ cursor: previous ?? undefined })
+function goPage(page) {
+  if (Number(page) === Number(query.value.page)) return
+  updateQuery({ page })
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 async function toggleFollow(tagClass) {
@@ -155,11 +136,7 @@ const tagClass = computed(() => data.value?.tagClass || null)
           <div v-for="i in 5" :key="i" class="skeleton h-16 w-full rounded-xl" />
         </div>
         <QuestionList v-else :items="data?.pagination?.data || []" />
-        <div class="mt-4 flex items-center justify-between gap-2 rounded-xl border ui-border ui-bg-soft px-2 py-1.5 sm:px-3">
-          <button class="btn btn-sm btn-ghost" type="button" :disabled="!cursorStack.length" @click="prevPage">上一页</button>
-          <span class="text-xs ui-text-base">第 {{ pageNo }} 页 · 共 {{ data?.pagination?.allCount ?? 0 }} 条</span>
-          <button class="btn btn-sm btn-ghost" type="button" :disabled="!data?.pagination?.nextCursor" @click="nextPage">下一页</button>
-        </div>
+        <Pagination :pagination="data?.pagination" @change="goPage" />
       </div>
 
       <SidePanel

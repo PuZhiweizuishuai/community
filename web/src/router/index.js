@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
+import { useMetaStore } from '@/stores/meta'
 
 const routes = [
   { path: '/', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { title: '首页' } },
@@ -45,6 +46,12 @@ const routes = [
     meta: { title: '消息通知', requiresAuth: true },
   },
   {
+    path: '/my/reviews',
+    name: 'my-reviews',
+    component: () => import('@/views/MyReviewsView.vue'),
+    meta: { title: '我的审核', requiresAuth: true },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),
@@ -82,6 +89,12 @@ const routes = [
     name: 'admin-questions',
     component: () => import('@/views/admin/AdminQuestionsView.vue'),
     meta: { title: '问题管理', adminArea: true, requiresAdmin: true },
+  },
+  {
+    path: '/admin/reviews',
+    name: 'admin-reviews',
+    component: () => import('@/views/admin/AdminReviewsView.vue'),
+    meta: { title: '内容审核', adminArea: true, requiresAdmin: true },
   },
   {
     path: '/admin/search',
@@ -158,6 +171,15 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const session = useSessionStore()
   if (!session.loaded) await session.refresh()
+  const meta = useMetaStore()
+  const chatRoute = to.name === 'chat-rules' || to.name === 'chat-room'
+  if (chatRoute) {
+    // 进入聊天室前强制刷新开关，避免管理员关闭后旧页面仍可进入
+    await meta.load(true)
+    if (!meta.chatEnabled) return { name: 'home' }
+  } else if (!meta.loaded) {
+    await meta.load()
+  }
   if (to.meta.requiresAuth && !session.loggedIn) {
     return { name: 'sign-in', query: { redirect: to.fullPath } }
   }

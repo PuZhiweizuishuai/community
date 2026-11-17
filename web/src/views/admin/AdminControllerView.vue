@@ -12,12 +12,14 @@ import {
   Inbox,
   Layers,
   ListTree,
+  MessageCircle,
   MessageCircleQuestion,
   Pin,
   RefreshCw,
   ScrollText,
   Send,
   Settings,
+  ShieldCheck,
   SlidersHorizontal,
   Tags,
   Trash2,
@@ -27,9 +29,11 @@ import {
   Zap,
 } from '@lucide/vue'
 import { adminApi } from '@/api'
+import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
 
 const toast = useToastStore()
+const meta = useMetaStore()
 
 const tab = ref('cache')
 const topIds = ref(['', '', ''])
@@ -54,6 +58,8 @@ const testingMail = ref(false)
 const testEmail = ref('')
 const config = reactive({
   registerEnabled: true,
+  chatEnabled: true,
+  reviewEnabled: false,
   mailEnabled: false,
   mailHost: '',
   mailPort: 465,
@@ -185,6 +191,8 @@ async function loadConfig() {
     const data = await adminApi.systemConfig()
     Object.assign(config, {
       registerEnabled: data.registerEnabled !== false,
+      chatEnabled: data.chatEnabled !== false,
+      reviewEnabled: data.reviewEnabled === true,
       mailEnabled: !!data.mailEnabled,
       mailHost: data.mailHost || '',
       mailPort: data.mailPort || 465,
@@ -207,6 +215,8 @@ async function saveConfig() {
   try {
     await adminApi.saveSystemConfig({
       registerEnabled: config.registerEnabled,
+      chatEnabled: config.chatEnabled,
+      reviewEnabled: config.reviewEnabled,
       mailEnabled: config.mailEnabled,
       mailHost: config.mailHost.trim(),
       mailPort: port,
@@ -216,6 +226,7 @@ async function saveConfig() {
       mailSsl: config.mailSsl,
     })
     toast.success('系统配置已保存，立即生效')
+    meta.setChatEnabled(config.chatEnabled)
     await loadConfig()
   } finally {
     savingConfig.value = false
@@ -548,6 +559,41 @@ loadAll()
 
             <section class="surface p-5">
               <div class="mb-4 flex items-center gap-2.5">
+                <span class="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white"><MessageCircle class="size-4" /></span>
+                <div>
+                  <h2 class="section-title">聊天室设置</h2>
+                  <p class="text-xs ui-text-muted">关闭后前台隐藏聊天室入口，并拒绝所有新的聊天连接</p>
+                </div>
+              </div>
+              <label class="flex cursor-pointer select-none items-center justify-between gap-3 rounded-xl border ui-border p-4">
+                <span>
+                  <span class="block text-sm font-semibold ui-text-strong">开启聊天室</span>
+                  <span class="mt-0.5 block text-xs ui-text-muted">{{ config.chatEnabled ? '聊天室入口可见，登录用户可进入聊天' : '聊天室入口已隐藏，所有用户无法加入聊天室' }}</span>
+                </span>
+                <input v-model="config.chatEnabled" type="checkbox" class="toggle toggle-success" />
+              </label>
+            </section>
+
+            <section class="surface p-5">
+              <div class="mb-4 flex items-center gap-2.5">
+                <span class="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 text-white"><ShieldCheck class="size-4" /></span>
+                <div>
+                  <h2 class="section-title">内容审核</h2>
+                  <p class="text-xs ui-text-muted">开启后问题与评论先进入审核区，审核通过后才对其他用户可见</p>
+                </div>
+              </div>
+              <label class="flex cursor-pointer select-none items-center justify-between gap-3 rounded-xl border ui-border p-4">
+                <span>
+                  <span class="block text-sm font-semibold ui-text-strong">开启内容审核</span>
+                  <span class="mt-0.5 block text-xs ui-text-muted">{{ config.reviewEnabled ? '新发布或修改的问题/评论需管理员审核通过后公开展示，作者会收到审核消息' : '当前关闭：新发布内容立即公开；已进入审核区的内容仍需在「内容审核」中处理' }}</span>
+                </span>
+                <input v-model="config.reviewEnabled" type="checkbox" class="toggle toggle-success" />
+              </label>
+              <RouterLink to="/admin/reviews" class="btn btn-outline btn-sm mt-4"><ShieldCheck class="size-4" />进入内容审核</RouterLink>
+            </section>
+
+            <section class="surface p-5">
+              <div class="mb-4 flex items-center gap-2.5">
                 <span class="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-cyan-500 to-sky-500 text-white"><Send class="size-4" /></span>
                 <div>
                   <h2 class="section-title">邮件服务（SMTP）</h2>
@@ -616,6 +662,8 @@ loadAll()
               <h3 class="mb-2 section-title">小贴士</h3>
               <ul class="list-inside list-disc space-y-1.5 text-xs leading-relaxed ui-text-base">
                 <li>配置保存在数据库中，修改后无需重启服务。</li>
+                <li>关闭聊天室后，前台入口隐藏，在线用户会被立即移出。</li>
+                <li>开启内容审核后，问题与评论需审核通过才公开展示，作者会收到审核结果消息。</li>
                 <li>SMTP 密码只写不读，留空保存表示沿用原密码。</li>
                 <li>常见邮箱（QQ / 163 等）需使用授权码而非登录密码。</li>
                 <li>关闭注册不影响已有用户登录与找回密码。</li>

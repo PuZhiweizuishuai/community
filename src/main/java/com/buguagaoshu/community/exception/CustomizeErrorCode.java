@@ -33,6 +33,17 @@ public enum CustomizeErrorCode implements ICustomizeErrorCode {
     TITLE_INVALID(2017, "标题不能为空，且不能超过 50 个字符"),
     CLASS_INVALID(2018, "请选择问题分类"),
     TOO_MANY_ATTEMPTS(2020, "失败次数过多或操作过于频繁，请 15 分钟后再试"),
+    CONTENT_SEGMENT_LIMIT(2021, "内容段落数量必须在 1 ~ 3 个之间"),
+    CONTENT_TYPE_INVALID(2022, "内容段落类型不正确"),
+    CONTENT_PASSWORD_REQUIRED(2023, "密码可见段落必须设置阅读密码（不超过 64 个字符）"),
+    CONTENT_PASSWORD_ERROR(2024, "阅读密码错误"),
+    CONTENT_NOT_FOUND(2025, "内容段落不存在"),
+    CONTENT_UNDER_REVIEW(2026, "内容正在审核中，暂时无法查看或操作"),
+    CONTENT_REVIEW_REJECTED(2027, "内容未通过审核，请修改后重新提交"),
+    REVIEW_NOT_FOUND(2028, "待审核内容不存在或已被删除"),
+    REVIEW_ALREADY_HANDLED(2029, "该内容已被处理，请刷新后重试"),
+    REVIEW_REASON_REQUIRED(2030, "请填写审核不通过原因"),
+    REVIEW_RESUBMIT_FORBIDDEN(2031, "该内容当前不可修改，请刷新后重试"),
     FORBIDDEN(403, "没有权限执行该操作"),
     CONFLICT(409, "操作冲突，请刷新后重试");
 

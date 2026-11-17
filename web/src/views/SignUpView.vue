@@ -6,7 +6,6 @@ import { authApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 import Captcha from '@/components/Captcha.vue'
 import AuthShell from '@/components/AuthShell.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -70,18 +69,6 @@ const form = reactive({
 
 const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
 const userIdValid = computed(() => /^[A-Za-z0-9_-]{3,20}$/.test(form.userId.trim()))
-const passwordScore = computed(() => {
-  const value = form.password
-  let score = 0
-  if (value.length >= 6) score++
-  if (value.length >= 10) score++
-  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score++
-  if (/\d/.test(value)) score++
-  if (/[^A-Za-z0-9]/.test(value)) score++
-  return Math.min(4, Math.max(0, score - 1))
-})
-const strengthLabel = computed(() => ['弱', '一般', '良好', '很强'][passwordScore.value] || '弱')
-const strengthColor = computed(() => ['bg-rose-400', 'bg-amber-400', 'bg-sky-400', 'bg-emerald-500'][passwordScore.value])
 
 async function checkEmail() {
   emailTip.value = ''
@@ -134,9 +121,7 @@ async function register() {
 </script>
 
 <template>
-  <AuthShell eyebrow="Join the community" title="创建账号" subtitle="加入社区，与大家一起交流技术">
-    <div class="mb-3 flex justify-end lg:hidden"><ThemeToggle /></div>
-
+  <AuthShell title="创建账号" subtitle="加入社区，与大家一起交流技术">
     <div v-if="errorMessage" class="alert alert-error mb-4 py-2 text-sm">
       <span>{{ errorMessage }}</span>
       <button class="btn btn-ghost btn-xs ml-auto" type="button" @click="errorMessage = ''"><X class="size-3.5" /></button>
@@ -146,112 +131,86 @@ async function register() {
       <span>站点已关闭新用户注册，如有疑问请联系管理员。已有账号可直接登录。</span>
     </div>
 
-    <form v-if="registerEnabled" class="space-y-5" novalidate @submit.prevent="register">
-      <!-- 账号信息 -->
-      <section>
-        <h2 class="mb-2.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide ui-text-base">
-          <span class="flex h-5 w-5 items-center justify-center rounded-full ui-bg-brand text-[10px] ui-text-brand">1</span>
-          账号信息
-        </h2>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="form-control">
-            <span class="label-text mb-1 font-medium ui-text-strong">账号 ID *</span>
-            <input v-model="form.userId" class="input input-bordered input-sm" placeholder="用于个人主页地址" autocomplete="username" @blur="checkUserId" />
-            <span v-if="userIdTip" class="label-text-alt mt-1 text-rose-500">{{ userIdTip }}</span>
-            <span v-else class="label-text-alt mt-1 ui-text-muted">3~20 位字母 / 数字 / _ -</span>
-          </label>
-          <label class="form-control">
-            <span class="label-text mb-1 font-medium ui-text-strong">昵称 *</span>
-            <input v-model="form.userName" maxlength="20" class="input input-bordered input-sm" placeholder="展示给其他用户" />
-          </label>
-        </div>
-        <label class="form-control mt-3">
-          <span class="label-text mb-1 font-medium ui-text-strong">邮箱 *</span>
-          <input v-model="form.email" type="email" class="input input-bordered input-sm" placeholder="you@example.com" @blur="checkEmail" />
-          <span v-if="emailTip" class="label-text-alt mt-1 text-rose-500">{{ emailTip }}</span>
+    <form v-if="registerEnabled" class="space-y-4" novalidate @submit.prevent="register">
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="form-control">
+          <span class="label-text mb-1 text-sm font-medium ui-text-strong">账号 ID</span>
+          <input v-model="form.userId" class="input input-bordered w-full" placeholder="用于个人主页地址" autocomplete="username" @blur="checkUserId" />
+          <span v-if="userIdTip" class="label-text-alt mt-1 text-rose-500">{{ userIdTip }}</span>
         </label>
-      </section>
+        <label class="form-control">
+          <span class="label-text mb-1 text-sm font-medium ui-text-strong">昵称</span>
+          <input v-model="form.userName" maxlength="20" class="input input-bordered w-full" placeholder="展示给其他用户" />
+        </label>
+      </div>
 
-      <!-- 安全设置 -->
-      <section class="border-t ui-border pt-4">
-        <h2 class="mb-2.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide ui-text-base">
-          <span class="flex h-5 w-5 items-center justify-center rounded-full ui-bg-brand text-[10px] ui-text-brand">2</span>
-          安全设置
-        </h2>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="form-control">
-            <span class="label-text mb-1 font-medium ui-text-strong">密码 *</span>
-            <div class="relative">
-              <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="input input-bordered input-sm w-full pr-12" placeholder="至少 6 位" autocomplete="new-password" />
-              <button class="btn btn-ghost btn-xs absolute right-1 top-1/2 -translate-y-1/2" type="button" :aria-label="showPassword ? '隐藏密码' : '显示密码'" @click="showPassword = !showPassword"><component :is="showPassword ? EyeOff : Eye" class="size-4" /></button>
-            </div>
-          </label>
-          <label class="form-control">
-            <span class="label-text mb-1 font-medium ui-text-strong">确认密码 *</span>
-            <input v-model="form.password2" :type="showPassword ? 'text' : 'password'" class="input input-bordered input-sm" placeholder="再输入一次" autocomplete="new-password" />
-          </label>
-        </div>
-        <div v-if="form.password" class="mt-2">
-          <div class="flex gap-1">
-            <span v-for="i in 4" :key="i" class="h-1 flex-1 rounded-full" :class="i <= passwordScore + 1 ? strengthColor : 'ui-bg-soft'" />
+      <label class="form-control">
+        <span class="label-text mb-1 text-sm font-medium ui-text-strong">邮箱</span>
+        <input v-model="form.email" type="email" class="input input-bordered w-full" placeholder="you@example.com" autocomplete="email" @blur="checkEmail" />
+        <span v-if="emailTip" class="label-text-alt mt-1 text-rose-500">{{ emailTip }}</span>
+      </label>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="form-control">
+          <span class="label-text mb-1 text-sm font-medium ui-text-strong">密码</span>
+          <div class="relative">
+            <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="input input-bordered w-full pr-10" placeholder="至少 6 位" autocomplete="new-password" />
+            <button class="btn btn-ghost btn-xs absolute right-1 top-1/2 -translate-y-1/2" type="button" :aria-label="showPassword ? '隐藏密码' : '显示密码'" @click="showPassword = !showPassword">
+              <component :is="showPassword ? EyeOff : Eye" class="size-4" />
+            </button>
           </div>
-          <p class="mt-1 text-xs ui-text-muted">密码强度：{{ strengthLabel }}</p>
-        </div>
-      </section>
+        </label>
+        <label class="form-control">
+          <span class="label-text mb-1 text-sm font-medium ui-text-strong">确认密码</span>
+          <input v-model="form.password2" :type="showPassword ? 'text' : 'password'" class="input input-bordered w-full" placeholder="再输入一次" autocomplete="new-password" />
+        </label>
+      </div>
 
-      <!-- 补充资料 -->
-      <section class="border-t ui-border pt-4">
-        <h2 class="mb-2.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide ui-text-base">
-          <span class="flex h-5 w-5 items-center justify-center rounded-full ui-bg-brand text-[10px] ui-text-brand">3</span>
-          补充资料（选填）
-        </h2>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label class="form-control">
-            <span class="label-text mb-1 ui-text-base">生日</span>
-            <input v-model="form.birthday" type="date" class="input input-bordered input-sm" />
-          </label>
-          <label class="form-control">
-            <span class="label-text mb-1 ui-text-base">性别</span>
-            <select v-model="form.sex" class="select select-bordered select-sm"><option>保密</option><option>男</option><option>女</option></select>
-          </label>
-          <label class="form-control">
-            <span class="label-text mb-1 ui-text-base">学校</span>
-            <input v-model="form.school" class="input input-bordered input-sm" />
-          </label>
-          <label class="form-control">
-            <span class="label-text mb-1 ui-text-base">专业</span>
-            <input v-model="form.major" class="input input-bordered input-sm" />
-          </label>
-        </div>
-      </section>
-
-      <div class="border-t ui-border pt-4">
-        <span class="label-text mb-1.5 block font-medium ui-text-strong">验证码 *</span>
+      <div>
+        <span class="label-text mb-1 block text-sm font-medium ui-text-strong">验证码</span>
         <Captcha ref="captchaRef" v-model="form.validateCode" placeholder="输入图中字符" />
       </div>
 
       <div v-if="mailEnabled">
-        <span class="label-text mb-1.5 block font-medium ui-text-strong">邮箱验证码 *</span>
+        <span class="label-text mb-1 block text-sm font-medium ui-text-strong">邮箱验证码</span>
         <div class="flex gap-2">
-          <input v-model="mailCode" class="input input-bordered flex-1" placeholder="邮件中的 6 位数字" maxlength="6" />
-          <button class="btn btn-outline" type="button" :disabled="sendingCode || codeCooldown > 0" @click="sendMailCode">
+          <input v-model="mailCode" class="input input-bordered min-w-0 flex-1" placeholder="邮件中的 6 位数字" maxlength="6" />
+          <button class="btn btn-outline shrink-0" type="button" :disabled="sendingCode || codeCooldown > 0" @click="sendMailCode">
             {{ codeCooldown > 0 ? `${codeCooldown}s 后重发` : sendingCode ? '发送中…' : '发送验证码' }}
           </button>
         </div>
       </div>
+
+      <details class="rounded-lg border ui-border">
+        <summary class="cursor-pointer select-none px-3 py-2.5 text-sm ui-text-base">补充资料（选填）</summary>
+        <div class="grid gap-3 border-t ui-border p-3 sm:grid-cols-2">
+          <label class="form-control">
+            <span class="label-text mb-1 text-xs ui-text-base">生日</span>
+            <input v-model="form.birthday" type="date" class="input input-bordered input-sm" />
+          </label>
+          <label class="form-control">
+            <span class="label-text mb-1 text-xs ui-text-base">性别</span>
+            <select v-model="form.sex" class="select select-bordered select-sm"><option>保密</option><option>男</option><option>女</option></select>
+          </label>
+          <label class="form-control">
+            <span class="label-text mb-1 text-xs ui-text-base">学校</span>
+            <input v-model="form.school" class="input input-bordered input-sm" />
+          </label>
+          <label class="form-control">
+            <span class="label-text mb-1 text-xs ui-text-base">专业</span>
+            <input v-model="form.major" class="input input-bordered input-sm" />
+          </label>
+        </div>
+      </details>
 
       <button class="btn btn-primary w-full" :disabled="submitting" type="submit">
         {{ submitting ? '注册中…' : '创建账号' }}
       </button>
     </form>
 
-    <div class="my-5 flex items-center gap-3 text-xs ui-text-muted">
-      <span class="h-px flex-1 ui-bg-soft" />
+    <p class="mt-5 text-center text-sm ui-text-base">
       已有账号？
-      <span class="h-px flex-1 ui-bg-soft" />
-    </div>
-    <RouterLink to="/sign-in" class="btn btn-outline w-full">去登录</RouterLink>
-
-    <div class="mt-5 hidden justify-center lg:flex"><ThemeToggle /></div>
+      <RouterLink to="/sign-in" class="font-medium ui-text-brand hover:underline">去登录</RouterLink>
+    </p>
   </AuthShell>
 </template>

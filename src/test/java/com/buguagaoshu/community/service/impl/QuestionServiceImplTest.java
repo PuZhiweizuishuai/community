@@ -11,6 +11,8 @@ import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
+import com.buguagaoshu.community.service.QuestionContentService;
+import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.service.TagClassService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,8 +52,11 @@ class QuestionServiceImplTest {
         ClassificationCache classificationCache = mock(ClassificationCache.class);
         notificationService = mock(NotificationService.class);
         userBatchLoader = mock(UserBatchLoader.class);
+        QuestionContentService questionContentService = mock(QuestionContentService.class);
+        SystemConfigService systemConfigService = mock(SystemConfigService.class);
+        when(systemConfigService.isReviewEnabled()).thenReturn(false);
         service = new QuestionServiceImpl(questionMapper, tagClassService, classificationCache,
-                notificationService, userBatchLoader);
+                notificationService, userBatchLoader, questionContentService, systemConfigService);
 
         question = new Question();
         question.setQuestionId(10);

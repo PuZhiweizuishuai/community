@@ -2,11 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { Plus, RefreshCw, SquarePen, Trash2, TriangleAlert, X } from '@lucide/vue'
 import { adminApi } from '@/api'
+import { useConfirmStore } from '@/stores/confirm'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
 
 const meta = useMetaStore()
 const toast = useToastStore()
+const confirm = useConfirmStore()
 
 const kind = ref('question')
 const list = ref([])
@@ -71,7 +73,7 @@ async function save() {
 
 async function remove(item) {
   deleteError.value = ''
-  if (!window.confirm(`确定删除「${item.name}」分类？`)) return
+  if (!(await confirm.ask({ title: '删除分类', message: `确定删除「${item.name}」分类？`, confirmText: '删除', danger: true }))) return
   try {
     await adminApi.deleteClassification(item.id)
     toast.success('分类已删除')

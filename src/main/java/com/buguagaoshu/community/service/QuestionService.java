@@ -3,6 +3,7 @@ package com.buguagaoshu.community.service;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.QuestionContent;
 import com.buguagaoshu.community.model.User;
 
 import java.util.List;
@@ -14,11 +15,12 @@ import java.util.List;
  */
 public interface QuestionService {
     /**
-     * 插入问题
+     * 插入或编辑问题，并全量替换内容段落（同一事务）。
      * @param question 问题
+     * @param contents 内容段落（1 ~ 3 个，按顺序）
      * @return 结果
      * */
-    int createQuestion(Question question);
+    int createQuestion(Question question, List<QuestionContent> contents);
 
     /**
      * @param page 页码
@@ -69,10 +71,11 @@ public interface QuestionService {
 
 
     /**
-     * 根据正则匹配相关问题
-     * @return 相关问题
+     * 根据问题标签匹配相关问题
+     * @param questionId 问题 id
+     * @return 相关问题，问题不存在或已删除时返回空列表
      * */
-    List<Question> getRelevantQuestion(QuestionDto questionDto);
+    List<Question> getRelevantQuestion(String questionId);
 
 
     /**

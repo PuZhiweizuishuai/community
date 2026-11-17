@@ -129,6 +129,17 @@
     outline-offset: 2px;
   }
 
+  /* 可交互元素统一手型光标：Tailwind 4 预置样式下 button 默认仍是箭头 */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
   ::-webkit-scrollbar {
     width: 9px;
     height: 9px;
@@ -266,6 +277,36 @@ a.surface:hover,
   color: #cbd5e1;
   background: linear-gradient(180deg, #131c31, #0d1527);
   border-right: 1px solid rgb(255 255 255 / 8%);
+}
+/* 桌面端：侧栏固定在视口内，内容区独立滚动；支持收起为纯图标模式 */
+@media (min-width: 768px) {
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100dvh;
+    transition: width 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .admin-sidebar.is-collapsed {
+    width: 4.75rem;
+  }
+  .admin-sidebar.is-collapsed .admin-sidebar-brand {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  .admin-sidebar.is-collapsed .admin-sidebar-title,
+  .admin-sidebar.is-collapsed .admin-nav-label,
+  .admin-sidebar.is-collapsed .admin-sidebar-footer-label {
+    display: none;
+  }
+  .admin-sidebar.is-collapsed .admin-nav-link {
+    justify-content: center;
+    gap: 0;
+    padding-inline: 0;
+  }
+  .admin-sidebar.is-collapsed .admin-sidebar-footer-link {
+    justify-content: center;
+  }
 }
 .admin-nav-link {
   color: #cbd5e1;

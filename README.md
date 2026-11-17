@@ -57,6 +57,26 @@ web/src/
   views/            前台页面 + views/admin 后台页面
 ```
 
+## 截图
+
+### 首页
+
+![首页](/images/new_home.png)
+
+
+### 内容页
+
+![内容页](/images/new_content.png)
+
+![内容页](/images/new_content2.jpg)
+
+
+### 管理
+
+![管理](/images/new_admin.png)
+
+
+
 ## 资料
 
 [Spring Boot 文档](https://docs.spring.io/spring-boot/reference/) · [Spring Session](https://docs.spring.io/spring-session/reference/) · [MyBatis](http://www.mybatis.org/mybatis-3/zh/index.html) · [Vditor](https://hacpai.com/article/1549638745630) · [daisyUI](https://daisyui.com/) · [ECharts](https://echarts.apache.org/) · [AWS SDK for Java 2.x](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/home.html)
