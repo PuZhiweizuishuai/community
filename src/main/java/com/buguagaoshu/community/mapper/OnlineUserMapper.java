@@ -15,7 +15,7 @@ public interface OnlineUserMapper extends BaseMapper<OnlineUser> {
     /**
      * 原子替换在线记录（id 为主键），替代「先查再删后插」的竞态写法
      */
-    @Insert("insert into onlineUser values (#{id}, #{userName}, #{token}, #{ip}, #{time}, #{expireTime}) " +
+    @Insert("insert into online_users values (#{id}, #{userName}, #{token}, #{ip}, #{time}, #{expireTime}) " +
             "on duplicate key update userName=#{userName}, token=#{token}, ip=#{ip}, time=#{time}, expireTime=#{expireTime}")
     int upsertOnlineUser(OnlineUser user);
 }

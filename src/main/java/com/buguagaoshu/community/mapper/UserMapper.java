@@ -148,6 +148,10 @@ public interface UserMapper extends BaseMapper<User> {
             """)
     List<UserBanStatus> selectBanStatusByUserIds(@Param("userIds") Collection<Long> userIds);
 
+    /** 当前生效的封禁用户数：永久封禁 + 临时封禁未到期 */
+    @Select("SELECT COUNT(*) FROM users WHERE banType = 2 OR (banType = 1 AND banEndTime > #{now})")
+    long countActiveBanned(@Param("now") long now);
+
     @Update("UPDATE users SET banType = #{banType}, banEndTime = #{banEndTime}, banReason = #{banReason}, "
             + "banTime = #{banTime}, banOperator = #{banOperator} WHERE id = #{userId}")
     int updateBanStatus(@Param("userId") long userId,

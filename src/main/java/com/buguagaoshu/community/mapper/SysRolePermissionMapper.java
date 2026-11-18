@@ -14,15 +14,15 @@ import java.util.Map;
 @Component(value = "SysRolePermissionMapper")
 public interface SysRolePermissionMapper {
 
-    @Select("SELECT permissionId FROM sys_role_permission WHERE roleId = #{roleId}")
+    @Select("SELECT permissionId FROM sys_role_permissions WHERE roleId = #{roleId}")
     List<Long> selectPermissionIdsByRoleId(@Param("roleId") long roleId);
 
-    @Delete("DELETE FROM sys_role_permission WHERE roleId = #{roleId}")
+    @Delete("DELETE FROM sys_role_permissions WHERE roleId = #{roleId}")
     int deleteByRoleId(@Param("roleId") long roleId);
 
-    @Insert("INSERT IGNORE INTO sys_role_permission(roleId, permissionId) VALUES(#{roleId}, #{permissionId})")
+    @Insert("INSERT IGNORE INTO sys_role_permissions(roleId, permissionId) VALUES(#{roleId}, #{permissionId})")
     int insertIgnore(@Param("roleId") long roleId, @Param("permissionId") long permissionId);
 
-    @Select("SELECT roleId, COUNT(*) AS total FROM sys_role_permission GROUP BY roleId")
+    @Select("SELECT roleId, COUNT(*) AS total FROM sys_role_permissions GROUP BY roleId")
     List<Map<String, Object>> countPermissionsByRole();
 }

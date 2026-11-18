@@ -9,7 +9,7 @@ import lombok.Data;
  * 权限点定义。权限点由系统预置，后台按角色动态勾选。
  */
 @Data
-@Table(value = "sys_permission", camelToUnderline = false)
+@Table(value = "sys_permissions", camelToUnderline = false)
 public class SysPermission {
 
     @Id(keyType = KeyType.Auto)

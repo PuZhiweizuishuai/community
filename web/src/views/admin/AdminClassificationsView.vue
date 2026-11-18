@@ -18,7 +18,7 @@ const saving = ref(false)
 const deleteError = ref('')
 
 const kinds = [
-  { value: 'question', label: '问题分类', hint: '首页筛选与发帖时选择，例如 提问 / 讨论 / 分享' },
+  { value: 'question', label: '问题类型', hint: '发帖时单选的问题形态，例如 提问 / 讨论 / 分享' },
   { value: 'topic', label: '话题所属分类', hint: '话题的分组，例如 开发语言 / 平台框架' },
 ]
 const current = computed(() => kinds.find((k) => k.value === kind.value))
@@ -95,8 +95,8 @@ async function sync() {
   <div class="space-y-4">
     <div class="surface flex flex-wrap items-center gap-2 p-4">
       <div class="mr-auto">
-        <h2 class="section-title">分类管理</h2>
-        <p class="mt-1 text-xs ui-text-muted">问题分类与话题所属分类均可动态增删；删除前会校验是否仍有关联问题</p>
+        <h2 class="section-title">类型与分类管理</h2>
+        <p class="mt-1 text-xs ui-text-muted">问题类型与话题所属分类均可动态增删；删除前会校验是否仍有关联问题</p>
       </div>
       <button class="btn btn-ghost btn-sm" type="button" @click="sync"><RefreshCw class="size-4" />同步前台缓存</button>
       <button class="btn btn-primary btn-sm" type="button" @click="openCreate"><Plus class="size-4" />新增分类</button>
@@ -152,8 +152,8 @@ async function sync() {
 
       <div class="mt-4 rounded-lg ui-bg-soft p-3 text-xs leading-relaxed ui-text-base">
         <b class="ui-text-strong">删除规则：</b>
-        若分类下还有问题（问题分类按名称匹配，话题分类按该分类下话题的标签匹配），服务端会拒绝删除并提示数量；
-        请先把这些问题改成其他分类或删除。话题分类下即使没有问题、但仍有话题时也需要先迁移话题，避免出现无归属分类。
+        若问题类型下还有问题（按 code 关联）或话题分类下还有话题/帖子，服务端会拒绝删除并提示数量；
+        请先把这些问题改成其他类型或删除。话题分类下即使没有问题、但仍有话题时也需要先迁移话题，避免出现无归属分类。
       </div>
     </div>
 
@@ -187,7 +187,7 @@ async function sync() {
             </select>
           </label>
           <p class="rounded-lg bg-amber-50 p-2 text-xs leading-relaxed text-amber-800">
-            重命名问题分类时，历史帖子的分类会自动同步更新；修改话题分类编号时会同步更新该分类下所有话题的归属。
+            问题类型已按编号存储，重命名不会影响历史帖子；修改话题分类编号时会同步更新该分类下所有话题的归属。
           </p>
         </div>
 

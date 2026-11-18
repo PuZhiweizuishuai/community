@@ -10,7 +10,7 @@ import lombok.Data;
  * create          2019-10-09 17:26
  */
 @Data
-@Table(value = "topic", camelToUnderline = false)
+@Table(value = "topics", camelToUnderline = false)
 public class TagClass {
     @Id(keyType = KeyType.Auto)
     private long id;

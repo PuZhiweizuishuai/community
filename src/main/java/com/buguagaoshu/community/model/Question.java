@@ -10,20 +10,28 @@ import lombok.Data;
  * create          2019-08-15 15:44
  */
 @Data
-@Table(value = "Questions", camelToUnderline = false)
+@Table(value = "questions", camelToUnderline = false)
 public class Question {
     @Id(keyType = KeyType.Auto)
     private long questionId = -1;
     private long userId;
     private String title;
-    private String classification;
+    /** 问题类型 code（classifications.kind=question） */
+    private Integer classification;
+    /** 所属话题（单选，topics.id） */
+    private Long topicId;
     private String description;
     private String fileUrl;
     private long viewCount;
     private long commentCount;
     private long likeCount;
     private long followCount;
+    /** 冗余展示列：由 QuestionTagService 维护为所有「已通过」标签名，全文索引依赖该列 */
     private String tag;
+    /** 话题内置顶 */
+    private int isTop;
+    /** 加精 */
+    private int isEssence;
     private long createTime;
     private long alterTime;
 

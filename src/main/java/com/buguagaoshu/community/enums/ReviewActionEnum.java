@@ -1,7 +1,7 @@
 package com.buguagaoshu.community.enums;
 
 /**
- * 审核流水动作，写入 content_review_log 便于追溯。
+ * 审核流水动作，写入 content_review_logs 便于追溯。
  */
 public enum ReviewActionEnum {
     SUBMIT(1, "提交审核"),

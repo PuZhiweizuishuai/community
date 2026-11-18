@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft,
   FolderOpen,
+  Flag,
   HardDrive,
   Home,
   LayoutDashboard,
@@ -11,10 +12,10 @@ import {
   LogOut,
   Megaphone,
   Menu,
+  MessageCircle,
   MessageCircleQuestion,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
   Settings,
   ShieldCheck,
   Tags,
@@ -32,7 +33,6 @@ const route = useRoute()
 const router = useRouter()
 const session = useSessionStore()
 const toast = useToastStore()
-const search = ref('')
 const menuOpen = ref(false)
 
 // 桌面端侧栏收起状态：记住上次选择，移动端抽屉始终展示完整菜单
@@ -56,27 +56,43 @@ function readCollapsed() {
 
 const menus = [
   { label: '数据概览', to: '/admin/dashboard', icon: LayoutDashboard, permission: 'admin:access' },
-  { label: '问题管理', to: '/admin/questions', icon: MessageCircleQuestion, permission: 'admin:question' },
+  {
+    label: '问题管理',
+    to: '/admin/questions',
+    icon: MessageCircleQuestion,
+    permission: 'admin:question',
+  },
+  { label: '评论管理', to: '/admin/comments', icon: MessageCircle, permission: 'admin:comment' },
   { label: '内容审核', to: '/admin/reviews', icon: ShieldCheck, permission: 'admin:review' },
+  { label: '举报管理', to: '/admin/reports', icon: Flag, permission: 'admin:report' },
   { label: '用户管理', to: '/admin/users', icon: Users, permission: 'admin:user' },
   { label: '角色权限', to: '/admin/roles', icon: KeyRound, permission: 'admin:role' },
-  { label: '站内搜索', to: '/admin/search', icon: Search, permission: 'admin:search' },
   { label: '控制面板', to: '/admin/controller', icon: Settings, permission: 'admin:system' },
   { label: '存储配置', to: '/admin/storage', icon: HardDrive, permission: 'admin:storage' },
   { label: '文件管理', to: '/admin/files', icon: FolderOpen, permission: 'admin:file' },
   { label: '话题管理', to: '/admin/topics', icon: Tags, permission: 'admin:topic' },
-  { label: '分类管理', to: '/admin/classifications', icon: ListTree, permission: 'admin:classification' },
-  { label: '广告与新闻', to: '/admin/advertisements', icon: Megaphone, permission: 'admin:advertisement' },
+  { label: '标签审核', to: '/admin/tags', icon: ShieldCheck, permission: 'admin:tag' },
+  {
+    label: '分类管理',
+    to: '/admin/classifications',
+    icon: ListTree,
+    permission: 'admin:classification',
+  },
+  {
+    label: '广告与新闻',
+    to: '/admin/advertisements',
+    icon: Megaphone,
+    permission: 'admin:advertisement',
+  },
 ]
 
 // 菜单按当前用户权限过滤：角色权限变更后刷新会话即可看到对应入口
 const visibleMenus = computed(() => menus.filter((item) => session.can(item.permission)))
 
-watch(() => route.fullPath, () => (menuOpen.value = false))
-
-function doSearch() {
-  router.push({ name: 'admin-search', query: search.value ? { search: search.value } : {} })
-}
+watch(
+  () => route.fullPath,
+  () => (menuOpen.value = false),
+)
 
 async function logout() {
   await session.adminLogout()
@@ -88,14 +104,33 @@ async function logout() {
 <template>
   <div class="flex min-h-screen ui-bg-page">
     <!-- 侧栏：桌面常驻，移动端变为抽屉，同一份 DOM 保证两套布局完全一致 -->
-    <div v-if="menuOpen" class="fixed inset-0 z-50 bg-slate-900/50 md:hidden" @click="menuOpen = false" />
-    <aside id="admin-sidebar" class="admin-sidebar" :class="{ 'is-open': menuOpen, 'is-collapsed': collapsed }">
-      <div class="admin-sidebar-brand flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-4 text-sm font-bold text-white sm:h-16 sm:px-5 sm:text-base">
-        <RouterLink to="/" class="flex items-center gap-2" :title="collapsed ? '社区管理后台' : undefined">
+    <div
+      v-if="menuOpen"
+      class="fixed inset-0 z-50 bg-slate-900/50 md:hidden"
+      @click="menuOpen = false"
+    />
+    <aside
+      id="admin-sidebar"
+      class="admin-sidebar"
+      :class="{ 'is-open': menuOpen, 'is-collapsed': collapsed }"
+    >
+      <div
+        class="admin-sidebar-brand flex h-14 shrink-0 items-center gap-2 border-b border-white/10 px-4 text-sm font-bold text-white sm:h-16 sm:px-5 sm:text-base"
+      >
+        <RouterLink
+          to="/admin"
+          class="flex items-center gap-2"
+          :title="collapsed ? '社区管理后台' : undefined"
+        >
           <SiteLogo :size="32" rounded="0.7rem" />
           <span class="admin-sidebar-title whitespace-nowrap">社区管理后台</span>
         </RouterLink>
-        <button class="btn btn-ghost btn-circle btn-sm ml-auto text-white md:hidden" type="button" aria-label="关闭菜单" @click="menuOpen = false">
+        <button
+          class="btn btn-ghost btn-circle btn-sm ml-auto text-white md:hidden"
+          type="button"
+          aria-label="关闭菜单"
+          @click="menuOpen = false"
+        >
           <X class="size-4" />
         </button>
       </div>
@@ -115,7 +150,11 @@ async function logout() {
         </RouterLink>
       </nav>
       <div class="border-t border-white/10 p-4 text-xs text-slate-400">
-        <RouterLink to="/" class="admin-sidebar-footer-link flex items-center gap-1.5 hover:text-white" :title="collapsed ? '返回前台' : undefined">
+        <RouterLink
+          to="/"
+          class="admin-sidebar-footer-link flex items-center gap-1.5 hover:text-white"
+          :title="collapsed ? '返回前台' : undefined"
+        >
           <ArrowLeft class="size-3.5 shrink-0" />
           <span class="admin-sidebar-footer-label whitespace-nowrap">返回前台</span>
         </RouterLink>
@@ -123,7 +162,9 @@ async function logout() {
     </aside>
 
     <div class="flex min-w-0 flex-1 flex-col">
-      <header class="ui-header sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b px-3 sm:h-16 sm:px-4 lg:px-6">
+      <header
+        class="ui-header sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b px-3 sm:h-16 sm:px-4 lg:px-6"
+      >
         <div class="flex min-w-0 items-center gap-2">
           <button
             class="btn btn-ghost btn-circle btn-sm hidden md:inline-flex"
@@ -137,17 +178,19 @@ async function logout() {
             <PanelLeftOpen v-if="collapsed" class="size-4" />
             <PanelLeftClose v-else class="size-4" />
           </button>
-          <button class="btn btn-ghost btn-circle btn-sm md:hidden" type="button" aria-label="打开菜单" @click="menuOpen = true">
+          <button
+            class="btn btn-ghost btn-circle btn-sm md:hidden"
+            type="button"
+            aria-label="打开菜单"
+            @click="menuOpen = true"
+          >
             <Menu class="size-5" />
           </button>
-          <h1 class="truncate text-sm font-semibold ui-text-strong sm:text-base">{{ route.meta.title || '管理后台' }}</h1>
+          <h1 class="truncate text-sm font-semibold ui-text-strong sm:text-base">
+            {{ route.meta.title || '管理后台' }}
+          </h1>
         </div>
         <div class="flex items-center gap-1 sm:gap-2">
-          <form class="join hidden md:flex" @submit.prevent="doSearch">
-            <input v-model="search" class="input input-bordered input-sm join-item w-44 lg:w-56" placeholder="搜索问题 / 用户" />
-            <button class="btn btn-sm btn-primary join-item" type="submit"><Search class="size-4" />搜索</button>
-          </form>
-          <RouterLink to="/admin/search" class="btn btn-ghost btn-circle btn-sm md:hidden" aria-label="站内搜索"><Search class="size-5" /></RouterLink>
           <ThemeToggle />
 
           <div class="dropdown dropdown-end">
@@ -155,9 +198,16 @@ async function logout() {
               <Avatar :src="session.admin?.headUrl" :name="session.admin?.userName" :size="26" />
               <span class="hidden sm:inline">{{ session.admin?.userName }}</span>
             </button>
-            <ul tabindex="0" class="menu dropdown-content menu-sm z-50 mt-2 w-40 rounded-box border ui-border p-2">
-              <li><RouterLink to="/"><Home class="size-4" />返回前台</RouterLink></li>
-              <li><button type="button" @click="logout"><LogOut class="size-4" />退出登录</button></li>
+            <ul
+              tabindex="0"
+              class="menu dropdown-content menu-sm z-50 mt-2 w-40 rounded-box border ui-border p-2"
+            >
+              <li>
+                <RouterLink to="/"><Home class="size-4" />返回前台</RouterLink>
+              </li>
+              <li>
+                <button type="button" @click="logout"><LogOut class="size-4" />退出登录</button>
+              </li>
             </ul>
           </div>
         </div>

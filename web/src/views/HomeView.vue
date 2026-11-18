@@ -25,6 +25,7 @@ const query = computed(() => ({
   page: route.query.page || '1',
   size: route.query.size || '15',
   tag: route.query.tag || undefined,
+  topic: route.query.topic || undefined,
   sort: route.query.sort || '3',
   class: route.query.class || '0',
 }))
@@ -69,6 +70,7 @@ async function toggleFollow(tagClass) {
 }
 
 const tagClass = computed(() => data.value?.tagClass || null)
+const topicCard = computed(() => tagClass.value)
 </script>
 
 <template>
@@ -80,7 +82,7 @@ const tagClass = computed(() => data.value?.tagClass || null)
         :key="item.value"
         class="btn btn-xs ui-text-base"
         :class="String(query.class) === String(item.value) ? 'btn-primary' : 'btn-ghost'"
-        :to="{ name: 'home', query: { tag: route.query.tag, sort: route.query.sort, class: item.value } }"
+        :to="{ name: 'home', query: { tag: route.query.tag, topic: route.query.topic, sort: route.query.sort, class: item.value } }"
       >
         {{ item.label }}
       </RouterLink>
@@ -104,6 +106,10 @@ const tagClass = computed(() => data.value?.tagClass || null)
       <span v-if="query.tag" class="badge badge-primary badge-sm ml-auto">
         标签：{{ query.tag }}
         <button type="button" class="ml-1 inline-flex" @click="updateQuery({ tag: undefined, page: 1 })"><X class="size-3" /></button>
+      </span>
+      <span v-if="topicCard" class="badge badge-primary badge-sm" :class="query.tag ? '' : 'ml-auto'">
+        话题：{{ topicCard.title }}
+        <button type="button" class="ml-1 inline-flex" @click="updateQuery({ topic: undefined, page: 1 })"><X class="size-3" /></button>
       </span>
     </div>
 

@@ -11,7 +11,7 @@ import lombok.Data;
  * 用户权限
  */
 @Data
-@Table(value = "userPermission", camelToUnderline = false)
+@Table(value = "user_permissions", camelToUnderline = false)
 public class UserPermission {
     @Id(keyType = KeyType.None)
     private long id;
@@ -19,7 +19,7 @@ public class UserPermission {
      * 用户等级
      * 1 普通用户
      * 2 vip
-     * 管理员身份已迁移到 RBAC 角色（sys_user_role），不再使用 power 判断
+     * 管理员身份已迁移到 RBAC 角色（sys_user_roles），不再使用 power 判断
      * */
     private int power;
 

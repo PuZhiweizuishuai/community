@@ -16,13 +16,13 @@ public interface TagClassMapper extends BaseMapper<TagClass> {
     /**
      * 更新讨论数（原子增量）
      */
-    @Update("update topic set talkCount=talkCount+#{talkCount} where id=#{id}")
+    @Update("update topics set talkCount=talkCount+#{talkCount} where id=#{id}")
     int updateTagTalkCount(TagClass tagClass);
 
     /**
      * 更新关注数（原子增量）
      */
-    @Update("update topic set followCount=followCount+#{followCount} where id=#{id}")
+    @Update("update topics set followCount=followCount+#{followCount} where id=#{id}")
     int updateTagFollowCount(TagClass tagClass);
 
     /**

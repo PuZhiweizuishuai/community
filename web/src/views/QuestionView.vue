@@ -1,8 +1,25 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowRight, ChevronDown, ChevronUp, Eye, Frown, Lock, MessageCircle, Reply, ShieldCheck, SquarePen, Star, ThumbsUp, Trash2, TriangleAlert } from '@lucide/vue'
-import { questionApi, commentApi, interactionApi } from '@/api'
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Flag,
+  Frown,
+  Lock,
+  MessageCircle,
+  Reply,
+  ShieldCheck,
+  SquarePen,
+  Star,
+  ThumbsUp,
+  Trash2,
+  TriangleAlert,
+  X,
+} from '@lucide/vue'
+import { questionApi, commentApi, interactionApi, reportApi } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
@@ -63,7 +80,24 @@ const reviewStatus = computed(() => Number(question.value?.reviewStatus ?? 1))
 const reviewPending = computed(() => reviewStatus.value === 0)
 const reviewRejected = computed(() => reviewStatus.value === 2)
 const ads = computed(() => meta.adsFor('question'))
+// 详情接口已按审核状态装配标签（作者本人可见自己的待审核标签）
+const questionTags = computed(() => {
+  const list = question.value?.tags
+  if (Array.isArray(list) && list.length) return list
+  return splitTags(question.value?.tag).map((name) => ({ name, status: 1 }))
+})
 const canComment = computed(() => session.canWrite('content:comment:create'))
+const canReport = computed(() => session.canWrite('content:report:create'))
+const reportTarget = ref(null)
+const reportSubmitting = ref(false)
+const reportForm = reactive({ reason: 'spam', description: '' })
+const reportReasons = [
+  { value: 'spam', label: '垃圾广告' },
+  { value: 'abuse', label: '辱骂攻击' },
+  { value: 'porn', label: '色情低俗' },
+  { value: 'illegal', label: '违法违规' },
+  { value: 'other', label: '其他' },
+]
 meta.loadAds('question')
 
 const sortTabs = [
@@ -92,7 +126,10 @@ async function unlockSegment(segment) {
   if (!password) return toast.warning('请输入阅读密码')
   unlocking.value[segment.contentId] = true
   try {
-    const result = await questionApi.unlockContent(id.value, { contentId: segment.contentId, password })
+    const result = await questionApi.unlockContent(id.value, {
+      contentId: segment.contentId,
+      password,
+    })
     segment.content = result.content
     segment.locked = false
   } catch {
@@ -111,7 +148,11 @@ function goReply() {
 async function loadComments() {
   commentsLoading.value = true
   try {
-    commentPage.value = await questionApi.comments(id.value, { page: page.value, size: 15, sort: sort.value })
+    commentPage.value = await questionApi.comments(id.value, {
+      page: page.value,
+      size: 15,
+      sort: sort.value,
+    })
     expanded.value = {}
     twoLevel.value = {}
     replyComposer.value = null
@@ -125,14 +166,23 @@ async function loadRelevant() {
 }
 
 // 问题正文与相关问题只在切换问题时加载，评论排序/翻页不重复查问题
-watch(id, () => {
-  loadQuestion()
-  loadRelevant()
-}, { immediate: true })
+watch(
+  id,
+  () => {
+    loadQuestion()
+    loadRelevant()
+  },
+  { immediate: true },
+)
 watch([id, page, sort], loadComments, { immediate: true })
 
 function updateQuery(patch) {
-  router.push({ name: 'question', params: { id: id.value }, query: { ...route.query, ...patch }, hash: '#comments' })
+  router.push({
+    name: 'question',
+    params: { id: id.value },
+    query: { ...route.query, ...patch },
+    hash: '#comments',
+  })
 }
 
 function requireLogin() {
@@ -265,18 +315,72 @@ async function submitComment() {
 }
 
 async function removeQuestion() {
-  if (!(await confirm.ask({ title: '删除问题', message: '确定要删除这个问题吗？', confirmText: '删除', danger: true }))) return
+  if (
+    !(await confirm.ask({
+      title: '删除问题',
+      message: '确定要删除这个问题吗？',
+      confirmText: '删除',
+      danger: true,
+    }))
+  )
+    return
   await questionApi.remove(id.value)
   toast.success('问题已删除')
   router.push('/')
+}
+
+function canReportItem(ownerId) {
+  return canReport.value && Number(ownerId) !== Number(session.user?.id)
+}
+
+function openReport(targetType, targetId, snapshot, ownerId) {
+  if (!requireLogin()) return
+  if (!canReport.value) {
+    toast.warning('当前账号没有举报权限')
+    return
+  }
+  if (Number(ownerId) === Number(session.user?.id)) {
+    toast.warning('不能举报自己发布的内容')
+    return
+  }
+  reportForm.reason = 'spam'
+  reportForm.description = ''
+  reportTarget.value = { targetType, targetId, snapshot }
+}
+
+async function submitReport() {
+  if (!reportTarget.value) return
+  const description = reportForm.description.trim()
+  if (reportForm.reason === 'other' && !description) {
+    toast.warning('请补充举报说明')
+    return
+  }
+  reportSubmitting.value = true
+  try {
+    await reportApi.create({
+      targetType: reportTarget.value.targetType,
+      targetId: reportTarget.value.targetId,
+      reason: reportForm.reason,
+      description,
+    })
+    toast.success('举报已提交，我们会尽快处理')
+    reportTarget.value = null
+  } finally {
+    reportSubmitting.value = false
+  }
 }
 </script>
 
 <template>
   <div class="page-container">
-    <div v-if="loading && !question" class="surface p-8 text-center ui-text-muted">正在加载问题…</div>
+    <div v-if="loading && !question" class="surface p-8 text-center ui-text-muted">
+      正在加载问题…
+    </div>
 
-    <div v-else-if="question" class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
+    <div
+      v-else-if="question"
+      class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]"
+    >
       <div class="min-w-0">
         <article class="surface p-5">
           <!-- 审核状态横幅：仅作者与管理员能看到未公开的内容 -->
@@ -292,17 +396,30 @@ async function removeQuestion() {
                 :class="reviewPending ? 'text-amber-500' : 'text-rose-500'"
               />
               <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold" :class="reviewPending ? 'text-amber-700' : 'text-rose-700'">
+                <p
+                  class="text-sm font-semibold"
+                  :class="reviewPending ? 'text-amber-700' : 'text-rose-700'"
+                >
                   {{ reviewPending ? '该内容正在审核中' : '该内容未通过审核' }}
                 </p>
-                <p class="mt-1 text-xs leading-relaxed" :class="reviewPending ? 'text-amber-600' : 'text-rose-600'">
-                  {{ reviewPending
-                    ? '当前仅你和管理员可见，审核通过后将自动公开展示。'
-                    : '其他用户暂时无法查看，请按以下审核意见修改后重新提交。' }}
+                <p
+                  class="mt-1 text-xs leading-relaxed"
+                  :class="reviewPending ? 'text-amber-600' : 'text-rose-600'"
+                >
+                  {{
+                    reviewPending
+                      ? '当前仅你和管理员可见，审核通过后将自动公开展示。'
+                      : '其他用户暂时无法查看，请按以下审核意见修改后重新提交。'
+                  }}
                 </p>
-                <div v-if="reviewRejected && (question.reviewReason || question.reviewSuggestion)" class="mt-2 space-y-1 text-xs leading-relaxed text-rose-600">
+                <div
+                  v-if="reviewRejected && (question.reviewReason || question.reviewSuggestion)"
+                  class="mt-2 space-y-1 text-xs leading-relaxed text-rose-600"
+                >
                   <p v-if="question.reviewReason"><b>原因：</b>{{ question.reviewReason }}</p>
-                  <p v-if="question.reviewSuggestion"><b>修改建议：</b>{{ question.reviewSuggestion }}</p>
+                  <p v-if="question.reviewSuggestion">
+                    <b>修改建议：</b>{{ question.reviewSuggestion }}
+                  </p>
                 </div>
                 <RouterLink
                   v-if="canEdit"
@@ -317,25 +434,55 @@ async function removeQuestion() {
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <span class="badge badge-outline ui-border ui-text-brand">{{ question.classification }}</span>
-            <h1 class="w-full text-xl font-bold leading-snug ui-text-strong sm:w-auto sm:flex-1">{{ question.title }}</h1>
+            <RouterLink
+              v-if="question.topicId"
+              :to="`/topics/${question.topicId}`"
+              class="badge badge-sm badge-primary hover:opacity-80"
+            >
+              {{ question.topicTitle || meta.topicTitle(question.topicId) || '话题' }}
+            </RouterLink>
+            <span class="badge badge-outline ui-border ui-text-brand">{{
+              meta.classificationLabel(question.classification)
+            }}</span>
+            <h1 class="w-full text-xl font-bold leading-snug ui-text-strong sm:w-auto sm:flex-1">
+              {{ question.title }}
+            </h1>
           </div>
 
           <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ui-text-muted">
-            <RouterLink :to="`/user/${question.user?.userId}`" class="flex items-center gap-1.5 hover:text-indigo-600">
+            <RouterLink
+              :to="`/user/${question.user?.userId}`"
+              class="flex items-center gap-1.5 hover:text-indigo-600"
+            >
               <Avatar :src="question.user?.headUrl" :name="question.user?.userName" :size="22" />
               {{ question.user?.userName }}
             </RouterLink>
             <span>发布于 {{ question.createTime }}</span>
-            <span class="flex items-center gap-1"><Eye class="size-3.5" />{{ shortNumber(question.viewCount) }} 次浏览</span>
-            <span class="flex items-center gap-1"><MessageCircle class="size-3.5" />{{ shortNumber(question.commentCount) }} 条回复</span>
-            <span class="flex items-center gap-1"><ThumbsUp class="size-3.5" />{{ shortNumber(question.likeCount) }} 个赞</span>
+            <span class="flex items-center gap-1"
+              ><Eye class="size-3.5" />{{ shortNumber(question.viewCount) }} 次浏览</span
+            >
+            <span class="flex items-center gap-1"
+              ><MessageCircle class="size-3.5" />{{
+                shortNumber(question.commentCount)
+              }}
+              条回复</span
+            >
+            <span class="flex items-center gap-1"
+              ><ThumbsUp class="size-3.5" />{{ shortNumber(question.likeCount) }} 个赞</span
+            >
           </div>
 
           <div ref="bodyEl" class="my-5 space-y-4 border-t ui-border pt-4">
             <div v-for="segment in contents" :key="segment.contentId">
-              <MarkdownView v-if="!segment.locked" :content="segment.content" @rendered="onBodyRendered" />
-              <div v-else-if="segment.type === 1" class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center">
+              <MarkdownView
+                v-if="!segment.locked"
+                :content="segment.content"
+                @rendered="onBodyRendered"
+              />
+              <div
+                v-else-if="segment.type === 1"
+                class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center"
+              >
                 <Lock class="mx-auto size-6 ui-text-muted" />
                 <p class="mt-2 text-sm font-medium ui-text-strong">本段内容需输入阅读密码后查看</p>
                 <div class="mx-auto mt-3 flex max-w-sm items-center gap-2">
@@ -346,47 +493,92 @@ async function removeQuestion() {
                     placeholder="请输入阅读密码"
                     @keydown.enter.prevent="unlockSegment(segment)"
                   />
-                  <button class="btn btn-primary btn-sm" type="button" :disabled="unlocking[segment.contentId]" @click="unlockSegment(segment)">
+                  <button
+                    class="btn btn-primary btn-sm"
+                    type="button"
+                    :disabled="unlocking[segment.contentId]"
+                    @click="unlockSegment(segment)"
+                  >
                     {{ unlocking[segment.contentId] ? '解锁中…' : '解锁' }}
                   </button>
                 </div>
               </div>
-              <div v-else class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center">
+              <div
+                v-else
+                class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center"
+              >
                 <MessageCircle class="mx-auto size-6 ui-text-muted" />
                 <p class="mt-2 text-sm font-medium ui-text-strong">本段内容需回复后查看</p>
                 <p class="mt-1 text-xs ui-text-muted">发表一条回复，即可解锁本段内容</p>
-                <button class="btn btn-primary btn-sm mt-3" type="button" @click="goReply">去回复</button>
+                <button class="btn btn-primary btn-sm mt-3" type="button" @click="goReply">
+                  去回复
+                </button>
               </div>
             </div>
           </div>
 
-          <div v-if="splitTags(question.tag).length" class="mb-4 flex flex-wrap gap-1.5">
+          <div v-if="questionTags.length" class="mb-4 flex flex-wrap gap-1.5">
             <RouterLink
-              v-for="tag in splitTags(question.tag)"
-              :key="tag"
-              :to="{ name: 'home', query: { tag } }"
+              v-for="tag in questionTags"
+              :key="tag.id || tag.name"
+              :to="{ name: 'home', query: { tag: tag.name } }"
               class="badge badge-sm ui-bg-soft ui-text-base hover:bg-indigo-50 hover:text-indigo-600"
             >
-              # {{ tag }}
+              # {{ tag.name }}
+              <span v-if="tag.status === 0" class="ml-1 badge badge-xs badge-warning">待审核</span>
             </RouterLink>
           </div>
 
           <div class="flex flex-wrap items-center gap-2 border-t ui-border pt-4">
-            <button class="btn btn-sm" :class="liked ? 'btn-primary' : 'btn-outline'" type="button" @click="likeQuestion">
+            <button
+              class="btn btn-sm"
+              :class="liked ? 'btn-primary' : 'btn-outline'"
+              type="button"
+              @click="likeQuestion"
+            >
               <ThumbsUp class="size-4" />{{ liked ? '已点赞' : '点赞' }}
             </button>
-            <button class="btn btn-sm" :class="followed ? 'btn-primary' : 'btn-outline'" type="button" @click="followQuestion">
+            <button
+              class="btn btn-sm"
+              :class="followed ? 'btn-primary' : 'btn-outline'"
+              type="button"
+              @click="followQuestion"
+            >
               <Star class="size-4" />{{ followed ? '已关注' : '关注问题' }}
             </button>
-            <RouterLink v-if="canEdit && session.canWrite('content:question:publish')" :to="`/publish/${question.questionId}`" class="btn btn-ghost btn-sm"><SquarePen class="size-4" />编辑</RouterLink>
-            <button v-if="canEdit || session.isAdmin" class="btn btn-ghost btn-sm text-rose-500" type="button" @click="removeQuestion"><Trash2 class="size-4" />删除</button>
+            <RouterLink
+              v-if="canEdit && session.canWrite('content:question:publish')"
+              :to="`/publish/${question.questionId}`"
+              class="btn btn-ghost btn-sm"
+              ><SquarePen class="size-4" />编辑</RouterLink
+            >
+            <button
+              v-if="canEdit || session.isAdmin"
+              class="btn btn-ghost btn-sm text-rose-500"
+              type="button"
+              @click="removeQuestion"
+            >
+              <Trash2 class="size-4" />删除
+            </button>
+            <button
+              v-if="reviewStatus === 1 && canReportItem(question.user?.id) && !canEdit"
+              class="btn btn-ghost btn-sm ui-text-muted"
+              type="button"
+              @click="
+                openReport('question', question.questionId, question.title, question.user?.id)
+              "
+            >
+              <Flag class="size-4" />举报
+            </button>
           </div>
         </article>
 
         <!-- 回复列表 -->
         <section id="comments" class="surface mt-5 p-5">
           <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-base font-semibold ui-text-strong">全部回复（{{ question.commentCount }}）</h2>
+            <h2 class="text-base font-semibold ui-text-strong">
+              全部回复（{{ question.commentCount }}）
+            </h2>
             <div class="tabs tabs-xs max-w-full overflow-x-auto">
               <button
                 v-for="tab in sortTabs"
@@ -404,34 +596,81 @@ async function removeQuestion() {
           <div v-if="commentsLoading && !commentPage" class="empty-state">正在加载回复…</div>
           <div v-else-if="!comments.length" class="empty-state">还没有人回复，来抢占沙发吧～</div>
 
-          <article v-for="comment in comments" :key="comment.commentId" class="border-t ui-border py-4 first:border-t-0">
+          <article
+            v-for="comment in comments"
+            :key="comment.commentId"
+            class="border-t ui-border py-4 first:border-t-0"
+          >
             <div class="flex items-start gap-3">
               <RouterLink :to="`/user/${comment.user?.userId}`">
                 <Avatar :src="comment.user?.headUrl" :name="comment.user?.userName" :size="34" />
               </RouterLink>
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2 text-xs">
-                  <RouterLink :to="`/user/${comment.user?.userId}`" class="font-medium ui-text-strong hover:text-indigo-600">
+                  <RouterLink
+                    :to="`/user/${comment.user?.userId}`"
+                    class="font-medium ui-text-strong hover:text-indigo-600"
+                  >
                     {{ comment.user?.userName }}
                   </RouterLink>
-                  <span v-if="comment.targetName" class="ui-text-muted">回复 @{{ comment.targetName }}</span>
-                  <span class="ui-text-muted">{{ comment.modifiedTime || comment.createTime }}</span>
+                  <span v-if="comment.targetName" class="ui-text-muted"
+                    >回复 @{{ comment.targetName }}</span
+                  >
+                  <span class="ui-text-muted">{{
+                    comment.modifiedTime || comment.createTime
+                  }}</span>
                 </div>
                 <div class="mt-1.5">
                   <MarkdownView :content="normalizeCommentMarkdown(comment.content)" :anchor="0" />
                 </div>
                 <div class="mt-2 flex flex-wrap items-center gap-3 text-xs ui-text-muted">
-                  <button type="button" class="flex items-center gap-1 hover:text-indigo-600" @click="likeComment(comment)"><ThumbsUp class="size-3.5" />{{ comment.likeCount }}</button>
-                  <button v-if="Number(comment.commentCount) > 0" type="button" class="flex items-center gap-1 hover:text-indigo-600" @click="toggleTwoLevel(comment)">
-                    <component :is="expanded[comment.commentId] ? ChevronUp : ChevronDown" class="size-3.5" />
-                    {{ expanded[comment.commentId] ? '收起' : `展开 ${comment.commentCount} 条回复` }}
+                  <button
+                    type="button"
+                    class="flex items-center gap-1 hover:text-indigo-600"
+                    @click="likeComment(comment)"
+                  >
+                    <ThumbsUp class="size-3.5" />{{ comment.likeCount }}
                   </button>
-                  <button v-if="canComment" type="button" class="flex items-center gap-1 transition-colors hover:text-indigo-600" @click="replyTo(comment)"><Reply class="size-3.5" />回复</button>
+                  <button
+                    v-if="Number(comment.commentCount) > 0"
+                    type="button"
+                    class="flex items-center gap-1 hover:text-indigo-600"
+                    @click="toggleTwoLevel(comment)"
+                  >
+                    <component
+                      :is="expanded[comment.commentId] ? ChevronUp : ChevronDown"
+                      class="size-3.5"
+                    />
+                    {{
+                      expanded[comment.commentId] ? '收起' : `展开 ${comment.commentCount} 条回复`
+                    }}
+                  </button>
+                  <button
+                    v-if="canComment"
+                    type="button"
+                    class="flex items-center gap-1 transition-colors hover:text-indigo-600"
+                    @click="replyTo(comment)"
+                  >
+                    <Reply class="size-3.5" />回复
+                  </button>
+                  <button
+                    v-if="canReportItem(comment.user?.id)"
+                    type="button"
+                    class="flex items-center gap-1 transition-colors hover:text-rose-500"
+                    @click="
+                      openReport('comment', comment.commentId, comment.content, comment.user?.id)
+                    "
+                  >
+                    <Flag class="size-3.5" />举报
+                  </button>
                 </div>
 
                 <!-- 回复一级评论：输入框就地展开，不再跳转到底部 -->
                 <CommentComposer
-                  v-if="replyComposer?.parentCommentId === comment.commentId && replyComposer?.targetCommentId === comment.commentId"
+                  v-if="
+                    replyComposer?.parentCommentId === comment.commentId &&
+                    replyComposer?.targetCommentId === comment.commentId
+                  "
                   :question-id="Number(id)"
                   :target-comment-id="comment.commentId"
                   :target-name="replyComposer.targetName"
@@ -439,7 +678,10 @@ async function removeQuestion() {
                   @cancel="closeReplyComposer"
                 />
 
-                <div v-if="expanded[comment.commentId]" class="mt-3 space-y-3 rounded-lg ui-bg-soft p-3">
+                <div
+                  v-if="expanded[comment.commentId]"
+                  class="mt-3 space-y-3 rounded-lg ui-bg-soft p-3"
+                >
                   <div v-for="child in twoLevel[comment.commentId] || []" :key="child.commentId">
                     <div class="flex items-start gap-2">
                       <Avatar :src="child.user?.headUrl" :name="child.user?.userName" :size="26" />
@@ -449,13 +691,40 @@ async function removeQuestion() {
                           <span v-if="child.targetName"> 回复 @{{ child.targetName }}</span>
                           · {{ child.createTime }}
                         </div>
-                        <div class="mt-1"><MarkdownView :content="normalizeCommentMarkdown(child.content)" :anchor="0" /></div>
+                        <div class="mt-1">
+                          <MarkdownView
+                            :content="normalizeCommentMarkdown(child.content)"
+                            :anchor="0"
+                          />
+                        </div>
                       </div>
-                      <button v-if="canComment" type="button" class="btn btn-ghost btn-xs" @click="replyTo(comment, child)">回复</button>
+                      <div class="flex items-center gap-1">
+                        <button
+                          v-if="canComment"
+                          type="button"
+                          class="btn btn-ghost btn-xs"
+                          @click="replyTo(comment, child)"
+                        >
+                          回复
+                        </button>
+                        <button
+                          v-if="canReportItem(child.user?.id)"
+                          type="button"
+                          class="btn btn-ghost btn-xs text-rose-500"
+                          @click="
+                            openReport('comment', child.commentId, child.content, child.user?.id)
+                          "
+                        >
+                          举报
+                        </button>
+                      </div>
                     </div>
                     <!-- 回复二级评论：在对应回复下方就地展开 -->
                     <CommentComposer
-                      v-if="replyComposer?.parentCommentId === comment.commentId && replyComposer?.targetCommentId === child.commentId"
+                      v-if="
+                        replyComposer?.parentCommentId === comment.commentId &&
+                        replyComposer?.targetCommentId === child.commentId
+                      "
                       :question-id="Number(id)"
                       :target-comment-id="child.commentId"
                       :target-name="replyComposer.targetName"
@@ -475,24 +744,46 @@ async function removeQuestion() {
         <!-- 发表评论 -->
         <section id="reply-box" class="surface mt-5 p-5">
           <h2 class="mb-3 text-base font-semibold ui-text-strong">发表评论</h2>
-          <div v-if="reviewStatus !== 1" class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center text-sm ui-text-base">
+          <div
+            v-if="reviewStatus !== 1"
+            class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center text-sm ui-text-base"
+          >
             内容审核通过后才能发表评论
           </div>
           <template v-else-if="canComment">
-            <VditorEditor ref="commentEditor" v-model="commentText" :height="220" placeholder="友善地表达你的观点…" />
+            <VditorEditor
+              ref="commentEditor"
+              v-model="commentText"
+              :height="220"
+              placeholder="友善地表达你的观点…"
+            />
             <div class="mt-3 flex flex-wrap items-center gap-3">
               <div class="w-56"><Captcha ref="captchaRef" v-model="captcha" /></div>
-              <button class="btn btn-primary btn-sm" :disabled="submitting" type="button" @click="submitComment">
+              <button
+                class="btn btn-primary btn-sm"
+                :disabled="submitting"
+                type="button"
+                @click="submitComment"
+              >
                 {{ submitting ? '提交中…' : meta.reviewEnabled ? '提交评论审核' : '发布评论' }}
               </button>
             </div>
-            <p v-if="meta.reviewEnabled" class="mt-2 text-xs ui-text-muted">当前社区已开启内容审核，评论需管理员审核通过后才公开展示。</p>
+            <p v-if="meta.reviewEnabled" class="mt-2 text-xs ui-text-muted">
+              当前社区已开启内容审核，评论需管理员审核通过后才公开展示。
+            </p>
           </template>
-          <div v-else-if="session.loggedIn" class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center text-sm ui-text-base">
+          <div
+            v-else-if="session.loggedIn"
+            class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center text-sm ui-text-base"
+          >
             当前账号没有发表评论权限，请联系管理员。
           </div>
           <div v-else class="py-6 text-center text-sm ui-text-base">
-            <RouterLink :to="{ name: 'sign-in', query: { redirect: route.fullPath } }" class="btn btn-primary btn-sm">登录后参与讨论</RouterLink>
+            <RouterLink
+              :to="{ name: 'sign-in', query: { redirect: route.fullPath } }"
+              class="btn btn-primary btn-sm"
+              >登录后参与讨论</RouterLink
+            >
           </div>
         </section>
       </div>
@@ -504,7 +795,9 @@ async function removeQuestion() {
             <Avatar :src="question.user.headUrl" :name="question.user.userName" :size="44" />
             <div>
               <p class="font-medium ui-text-strong">{{ question.user.userName }}</p>
-              <p class="flex items-center gap-1 text-xs ui-text-muted">查看 TA 的主页 <ArrowRight class="size-3" /></p>
+              <p class="flex items-center gap-1 text-xs ui-text-muted">
+                查看 TA 的主页 <ArrowRight class="size-3" />
+              </p>
             </div>
           </RouterLink>
         </section>
@@ -515,7 +808,11 @@ async function removeQuestion() {
           <h3 class="mb-3 section-title">相关问题</h3>
           <ul class="space-y-2">
             <li v-for="item in relevant.slice(0, 8)" :key="item.questionId">
-              <RouterLink :to="`/question/${item.questionId}`" class="line-clamp-2 text-sm link-muted">{{ item.title }}</RouterLink>
+              <RouterLink
+                :to="`/question/${item.questionId}`"
+                class="line-clamp-2 text-sm link-muted"
+                >{{ item.title }}</RouterLink
+              >
             </li>
           </ul>
         </section>
@@ -529,5 +826,85 @@ async function removeQuestion() {
       <p class="mt-3 text-lg">这个问题走丢了</p>
       <RouterLink to="/" class="btn btn-primary btn-sm mt-4">回到首页</RouterLink>
     </div>
+
+    <dialog v-if="reportTarget" class="modal modal-open">
+      <div class="modal-box max-w-lg">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-3">
+            <span
+              class="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white"
+            >
+              <Flag class="size-5" />
+            </span>
+            <div>
+              <h3 class="text-base font-semibold ui-text-strong">
+                举报{{ reportTarget.targetType === 'question' ? '问题' : '评论' }}
+              </h3>
+              <p class="mt-0.5 text-xs ui-text-muted">
+                请选择举报理由并补充必要说明，管理员会尽快处理
+              </p>
+            </div>
+          </div>
+          <button
+            class="btn btn-ghost btn-circle btn-sm"
+            type="button"
+            aria-label="关闭"
+            @click="reportTarget = null"
+          >
+            <X class="size-4" />
+          </button>
+        </div>
+
+        <div class="mt-4 rounded-xl ui-bg-soft p-3 text-sm ui-text-base">
+          <p class="line-clamp-3">{{ reportTarget.snapshot || '（无内容）' }}</p>
+        </div>
+
+        <label class="form-control mt-4">
+          <span class="label-text mb-1 text-xs font-medium ui-text-base"
+            >举报理由 <span class="text-rose-500">*</span></span
+          >
+          <select
+            v-model="reportForm.reason"
+            class="select select-bordered select-sm w-full focus:outline-none"
+          >
+            <option v-for="item in reportReasons" :key="item.value" :value="item.value">
+              {{ item.label }}
+            </option>
+          </select>
+        </label>
+
+        <label class="form-control mt-3">
+          <span class="label-text mb-1 text-xs font-medium ui-text-base">
+            补充说明{{ reportForm.reason === 'other' ? '（必填）' : '（选填）' }}
+          </span>
+          <textarea
+            v-model="reportForm.description"
+            rows="3"
+            maxlength="500"
+            class="textarea textarea-bordered w-full text-sm focus:outline-none"
+            placeholder="请描述违规情况，便于管理员核实处理"
+          />
+          <span class="mt-1 text-right text-xs ui-text-muted"
+            >{{ reportForm.description.length }} / 500</span
+          >
+        </label>
+
+        <p class="mt-2 text-xs ui-text-muted">请如实举报，恶意举报可能会影响账号信用。</p>
+
+        <div class="modal-action">
+          <button class="btn btn-ghost btn-sm" type="button" @click="reportTarget = null">
+            取消
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            type="button"
+            :disabled="reportSubmitting"
+            @click="submitReport"
+          >
+            {{ reportSubmitting ? '提交中…' : '提交举报' }}
+          </button>
+        </div>
+      </div>
+    </dialog>
   </div>
 </template>

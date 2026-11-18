@@ -42,6 +42,15 @@ export function statusLabel(status) {
   return Number(status) === 1 ? '正常' : '已删除'
 }
 
+/** 毫秒时间戳 → yyyy-MM-dd HH:mm；空值返回占位符 */
+export function formatDateTime(value) {
+  if (value === null || value === undefined || value === '') return '—'
+  const date = new Date(Number(value))
+  if (Number.isNaN(date.getTime())) return String(value)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 export function notificationIcon(type) {
   if (type >= 6) return 'system'
   if (type === 3) return 'like'

@@ -10,7 +10,7 @@ import lombok.Data;
  * create          2019-09-02 23:17
  */
 @Data
-@Table(value = "notification", camelToUnderline = false)
+@Table(value = "notifications", camelToUnderline = false)
 public class Notification {
     /**
      * 通知主键 id

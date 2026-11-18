@@ -11,7 +11,7 @@ import lombok.Data;
  * 点赞
  */
 @Data
-@Table(value = "clickLike", camelToUnderline = false)
+@Table(value = "click_likes", camelToUnderline = false)
 public class ClickLike {
     @Id(keyType = KeyType.Auto)
     private long likeId;

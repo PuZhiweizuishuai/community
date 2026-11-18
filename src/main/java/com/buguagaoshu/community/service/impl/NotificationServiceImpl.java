@@ -133,10 +133,16 @@ public class NotificationServiceImpl implements NotificationService {
             notificationDTO.setId(notification.getId());
             notificationDTO.setCreateTime(StringUtil.foematTime(notification.getCreateTime()));
             notificationDTO.setCommentContent(notification.getCommentContent());
-            notificationDTO.setNotifier(notification.getNotifier());
-            User notifier = userMap.get(notification.getNotifier());
-            notificationDTO.setNotifierId(notifier == null ? null : notifier.getUserId());
-            notificationDTO.setNotifierName(notifier == null ? "已注销用户" : notifier.getUserName());
+            // 系统通知不暴露处理人身份，通知表仍保留 notifier 供后台审计
+            boolean systemNotification = notification.getType() >= NotificationTypeEnum.SYSTEM_NOTIFICATION.getType();
+            if (systemNotification) {
+                notificationDTO.setNotifierName("系统");
+            } else {
+                notificationDTO.setNotifier(notification.getNotifier());
+                User notifier = userMap.get(notification.getNotifier());
+                notificationDTO.setNotifierId(notifier == null ? null : notifier.getUserId());
+                notificationDTO.setNotifierName(notifier == null ? "已注销用户" : notifier.getUserName());
+            }
 
             if (notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()
                     || notification.getType() == NotificationTypeEnum.REPLY_COMMENT.getType()) {

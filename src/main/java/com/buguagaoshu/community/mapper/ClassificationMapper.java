@@ -66,26 +66,22 @@ public interface ClassificationMapper extends BaseMapper<Classification> {
     // 删除前的使用情况校验（跨表统计，保留 SQL）
     // ------------------------------------------------------------------
 
-    /** 问题分类：Questions.classification 存的是分类名称 */
-    @Select("select count(*) from Questions where classification=#{name}")
-    long countQuestionsByClassification(@Param("name") String name);
+    /** 问题分类：questions.classification 存的是分类 code */
+    @Select("select count(*) from questions where classification=#{code}")
+    long countQuestionsByClassification(@Param("code") int code);
 
-    /** 话题分类：统计归类到该分类下所有话题的帖子数（兼容中英文逗号分隔的标签） */
-    @Select("select count(*) from Questions q where exists (" +
-            "select 1 from topic t where t.type=#{code} " +
-            "and find_in_set(t.title, replace(q.tag, '，', ',')) > 0)")
+    /** 话题分类：统计归类到该分类下所有话题的帖子数 */
+    @Select("select count(*) from questions q join topics t on t.id = q.topicId " +
+            "where t.type=#{code} and q.status=1 and q.reviewStatus=1")
     long countQuestionsByTopicType(@Param("code") int code);
 
-    @Select("select count(*) from topic where type=#{code}")
+    @Select("select count(*) from topics where type=#{code}")
     long countTopicsByType(@Param("code") int code);
 
     // ------------------------------------------------------------------
-    // 重命名 / 改编码时同步历史数据，避免产生孤儿数据（跨表更新，保留 SQL）
+    // 改编码时同步历史数据，避免产生孤儿数据（跨表更新，保留 SQL）
     // ------------------------------------------------------------------
 
-    @Update("update Questions set classification=#{newName} where classification=#{oldName}")
-    int renameQuestionClassification(@Param("oldName") String old, @Param("newName") String name);
-
-    @Update("update topic set type=#{newCode} where type=#{oldCode}")
+    @Update("update topics set type=#{newCode} where type=#{oldCode}")
     int renameTopicType(@Param("oldCode") int old, @Param("newCode") int code);
 }

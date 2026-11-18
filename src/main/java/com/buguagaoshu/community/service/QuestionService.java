@@ -15,21 +15,26 @@ import java.util.List;
  */
 public interface QuestionService {
     /**
-     * 插入或编辑问题，并全量替换内容段落（同一事务）。
+     * 插入或编辑问题，并全量替换内容段落与标签（同一事务）。
      * @param question 问题
      * @param contents 内容段落（1 ~ 3 个，按顺序）
+     * @param tagNames 标签名称（≤5，新标签为待审核）
      * @return 结果
      * */
-    int createQuestion(Question question, List<QuestionContent> contents);
+    int createQuestion(Question question, List<QuestionContent> contents, List<String> tagNames);
 
     /**
      * @param page 页码
      * @param size 每页显示数量
+     * @param tag 标签名称（精确匹配，仅审核通过的标签可命中）
+     * @param classification 问题类型 code，0 表示全部
+     * @param topicId 话题 ID，null 表示不限
      * @param cursor 游标（非空时走游标分页，忽略 page）
      * 获取问题列表,并添加相应用户信息
      * @return 问题列表
      * */
-    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort, Integer classification, String cursor);
+    PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort,
+                                                  Integer classification, Long topicId, String cursor);
 
 
     /**
@@ -40,6 +45,11 @@ public interface QuestionService {
      * @return 问题列表
      * */
     PaginationDto<QuestionDto> getQuestionByUserId(String page, String size, long id);
+
+    /**
+     * 话题帖子流：置顶优先，其余按最后活跃时间倒序。
+     */
+    PaginationDto<QuestionDto> getTopicQuestions(long topicId, String page, String size, String tag);
 
     /**
      * 查找问题
@@ -97,9 +107,6 @@ public interface QuestionService {
     long getAllQuestionCount();
 
     PaginationDto<QuestionDto> getAllQuestionList(String page, String size);
-
-
-    PaginationDto<QuestionDto> searchAllQuestionList(String search ,String page, String size);
 
 
     /**

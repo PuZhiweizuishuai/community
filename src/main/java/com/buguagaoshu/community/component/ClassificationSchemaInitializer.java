@@ -16,7 +16,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 /**
- * 动态分类的零停机初始化：老库没有 classification 表时自动建表，
+ * 动态分类的零停机初始化：老库没有 classifications 表时自动建表，
  * 并用原来写死在枚举里的分类做一次性种子数据；新库由 databases.sql 直接建表。
  *
  * <p>这样升级后不需要手工执行 DDL，已有的问题分类 / 话题分类也不会丢失。
@@ -42,7 +42,7 @@ public class ClassificationSchemaInitializer implements ApplicationRunner {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
             statement.execute(
-                    "CREATE TABLE IF NOT EXISTS classification (" +
+                    "CREATE TABLE IF NOT EXISTS classifications (" +
                     " id bigint NOT NULL AUTO_INCREMENT," +
                     " kind varchar(20) NOT NULL," +
                     " code int NOT NULL," +
@@ -57,7 +57,7 @@ public class ClassificationSchemaInitializer implements ApplicationRunner {
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
             long count = 0;
-            try (ResultSet rs = statement.executeQuery("select count(*) from classification")) {
+            try (ResultSet rs = statement.executeQuery("select count(*) from classifications")) {
                 if (rs.next()) {
                     count = rs.getLong(1);
                 }

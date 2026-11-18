@@ -32,6 +32,12 @@ const routes = [
     meta: { title: '搜索' },
   },
   { path: '/topics', name: 'topics', component: () => import('@/views/TopicsView.vue'), meta: { title: '话题' } },
+  {
+    path: '/topics/:id',
+    name: 'topic-detail',
+    component: () => import('@/views/TopicDetailView.vue'),
+    meta: { title: '话题详情' },
+  },
   { path: '/users', name: 'user-list', component: () => import('@/views/UserListView.vue'), meta: { title: '用户' } },
   {
     path: '/user/:userId',
@@ -91,16 +97,22 @@ const routes = [
     meta: { title: '问题管理', adminArea: true, requiresAdmin: true, permission: 'admin:question' },
   },
   {
+    path: '/admin/comments',
+    name: 'admin-comments',
+    component: () => import('@/views/admin/AdminCommentsView.vue'),
+    meta: { title: '评论管理', adminArea: true, requiresAdmin: true, permission: 'admin:comment' },
+  },
+  {
     path: '/admin/reviews',
     name: 'admin-reviews',
     component: () => import('@/views/admin/AdminReviewsView.vue'),
     meta: { title: '内容审核', adminArea: true, requiresAdmin: true, permission: 'admin:review' },
   },
   {
-    path: '/admin/search',
-    name: 'admin-search',
-    component: () => import('@/views/admin/AdminSearchView.vue'),
-    meta: { title: '站内搜索', adminArea: true, requiresAdmin: true, permission: 'admin:search' },
+    path: '/admin/reports',
+    name: 'admin-reports',
+    component: () => import('@/views/admin/AdminReportsView.vue'),
+    meta: { title: '举报管理', adminArea: true, requiresAdmin: true, permission: 'admin:report' },
   },
   {
     path: '/admin/controller',
@@ -125,6 +137,12 @@ const routes = [
     name: 'admin-files',
     component: () => import('@/views/admin/AdminFilesView.vue'),
     meta: { title: '文件管理', adminArea: true, requiresAdmin: true, permission: 'admin:file' },
+  },
+  {
+    path: '/admin/tags',
+    name: 'admin-tags',
+    component: () => import('@/views/admin/AdminTagsView.vue'),
+    meta: { title: '标签审核', adminArea: true, requiresAdmin: true, permission: 'admin:tag' },
   },
   {
     path: '/admin/topics',

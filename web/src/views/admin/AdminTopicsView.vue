@@ -1,10 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { ChevronDown, ChevronRight, Plus, Power, RefreshCw, Search, SquarePen, Tags, Trash2, X } from '@lucide/vue'
+import { ChevronDown, ChevronRight, Plus, Power, RefreshCw, Search, SquarePen, Tags, Trash2, Users, X } from '@lucide/vue'
 import { adminApi, settingApi, assetUrl } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
+import Avatar from '@/components/Avatar.vue'
 
 const meta = useMetaStore()
 const toast = useToastStore()
@@ -28,6 +29,46 @@ const emptyForm = () => ({
   status: 1,
 })
 const form = ref(emptyForm())
+
+// ---------------- 吧务团队 ----------------
+const moderatorTarget = ref(null)
+const moderators = ref([])
+const moderatorLoading = ref(false)
+const assignForm = ref({ userCode: '', role: 'moderator' })
+
+async function openModerators(item) {
+  moderatorTarget.value = item
+  assignForm.value = { userCode: '', role: 'moderator' }
+  await loadModerators()
+}
+
+async function loadModerators() {
+  if (!moderatorTarget.value) return
+  moderatorLoading.value = true
+  try {
+    moderators.value = (await adminApi.topicModerators(moderatorTarget.value.id)) || []
+  } finally {
+    moderatorLoading.value = false
+  }
+}
+
+async function assignModerator() {
+  if (!assignForm.value.userCode.trim()) return toast.warning('请填写用户登录账号')
+  await adminApi.assignTopicModerator(moderatorTarget.value.id, {
+    userCode: assignForm.value.userCode.trim(),
+    role: assignForm.value.role,
+  })
+  toast.success('吧务已任命')
+  assignForm.value.userCode = ''
+  await loadModerators()
+}
+
+async function removeModerator(item) {
+  if (!(await confirm.ask({ title: '卸任吧务', message: `确定卸任「${item.userName || item.userCode}」？`, confirmText: '卸任', danger: true }))) return
+  await adminApi.removeTopicModerator(moderatorTarget.value.id, item.userId)
+  toast.success('已卸任')
+  await loadModerators()
+}
 
 const typeLabel = (value) => meta.topicTypes.find((t) => String(t.value) === String(value))?.label || `分类 ${value}`
 
@@ -197,6 +238,7 @@ async function uploadImage(event) {
               <select class="select select-ghost select-xs max-w-[130px]" :value="item.type" @change="moveTopic(item, $event)">
                 <option v-for="option in meta.topicTypes" :key="option.value" :value="option.value">{{ option.label }}</option>
               </select>
+              <button class="btn btn-ghost btn-xs" type="button" @click="openModerators(item)"><Users class="size-3.5" />吧务团队</button>
               <button class="btn btn-ghost btn-xs" type="button" @click="openEdit(item)"><SquarePen class="size-3.5" />编辑</button>
               <button class="btn btn-ghost btn-xs" type="button" @click="toggleStatus(item)"><Power class="size-3.5" />{{ item.status === 1 ? '停用' : '启用' }}</button>
               <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item)"><Trash2 class="size-3.5" />删除</button>
@@ -219,6 +261,7 @@ async function uploadImage(event) {
           </div>
         </div>
         <div class="mt-3 flex gap-1 border-t ui-border pt-2">
+          <button class="btn btn-ghost btn-xs" type="button" @click="openModerators(item)"><Users class="size-3.5" />吧务</button>
           <button class="btn btn-ghost btn-xs" type="button" @click="openEdit(item)"><SquarePen class="size-3.5" />编辑</button>
           <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item)"><Trash2 class="size-3.5" />删除</button>
         </div>
@@ -276,6 +319,47 @@ async function uploadImage(event) {
         <div class="modal-action">
           <button class="btn btn-ghost btn-sm" type="button" @click="editing = null">取消</button>
           <button class="btn btn-primary btn-sm" :disabled="saving" type="button" @click="save">{{ saving ? '保存中…' : '保存' }}</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- 吧务团队 -->
+    <dialog v-if="moderatorTarget" class="modal modal-open">
+      <div class="modal-box max-w-lg">
+        <div class="mb-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-semibold">吧务团队 · {{ moderatorTarget.title }}</h3>
+            <p class="mt-0.5 text-xs ui-text-muted">吧务可置顶、加精、删除本话题帖子并修改标签</p>
+          </div>
+          <button class="btn btn-ghost btn-circle btn-xs" type="button" aria-label="关闭" @click="moderatorTarget = null"><X class="size-4" /></button>
+        </div>
+
+        <div v-if="moderatorLoading" class="empty-state py-6">加载中…</div>
+        <div v-else-if="!moderators.length" class="empty-state py-6">该话题还没有吧务</div>
+        <ul v-else class="space-y-2">
+          <li v-for="item in moderators" :key="item.id" class="flex items-center gap-2 rounded-lg border ui-border p-2">
+            <Avatar :src="item.headUrl" :name="item.userName" :size="28" />
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm ui-text-strong">{{ item.userName || item.userCode }}</p>
+              <p class="text-xs ui-text-muted">@{{ item.userCode }}</p>
+            </div>
+            <span class="badge badge-sm" :class="item.role === 'owner' ? 'badge-primary' : 'badge-ghost'">
+              {{ item.role === 'owner' ? '吧主' : '小吧' }}
+            </span>
+            <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="removeModerator(item)">卸任</button>
+          </li>
+        </ul>
+
+        <div class="mt-4 border-t ui-border pt-4">
+          <span class="mb-2 block text-xs font-medium ui-text-base">任命新吧务</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <input v-model="assignForm.userCode" class="input input-bordered input-sm min-w-0 flex-1" placeholder="用户登录账号，如 zhangsan" />
+            <select v-model="assignForm.role" class="select select-bordered select-sm w-28">
+              <option value="moderator">小吧</option>
+              <option value="owner">吧主</option>
+            </select>
+            <button class="btn btn-primary btn-sm" type="button" @click="assignModerator">任命</button>
+          </div>
         </div>
       </div>
     </dialog>

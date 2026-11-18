@@ -30,7 +30,7 @@ import java.net.URI;
 import java.time.Duration;
 
 /**
- * 一个 S3 兼容对象存储的读写实现，按 storage_config 表中的配置动态构建，
+ * 一个 S3 兼容对象存储的读写实现，按 storage_configs 表中的配置动态构建，
  * 由 StorageConfigRepository 缓存复用；配置变更后旧实例关闭重建。
  */
 public class S3FileStorageRepository implements FileStorageRepository, AutoCloseable {

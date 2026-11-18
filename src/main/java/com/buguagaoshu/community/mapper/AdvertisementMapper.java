@@ -45,8 +45,17 @@ public interface AdvertisementMapper extends BaseMapper<Advertisement> {
     /**
      * 更新阅读数（原子增量）
      */
-    @Update("update advertisement set viewCount=viewCount+#{viewCount} where id=#{id}")
+    @Update("update advertisements set viewCount=viewCount+#{viewCount} where id=#{id}")
     int updateAdvertisementViewCount(Advertisement advertisement);
+
+    /**
+     * 统计当前有效投放的广告总数
+     */
+    default long countActive(@Param("now") long now) {
+        return selectCountByQuery(QueryWrapper.create()
+                .where(ADVERTISEMENT.STATUS.eq(1))
+                .and(ADVERTISEMENT.END_TIME.gt(now)));
+    }
 
     /**
      * 统计某位置当前有效投放数（容量判断以数据库为准，excludeId 用于续期时排除自身）

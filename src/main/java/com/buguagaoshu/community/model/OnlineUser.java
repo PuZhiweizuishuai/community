@@ -11,7 +11,7 @@ import lombok.Data;
  * 在线用户
  */
 @Data
-@Table(value = "onlineUser", camelToUnderline = false)
+@Table(value = "online_users", camelToUnderline = false)
 public class OnlineUser {
     @Id(keyType = KeyType.None)
     private long id;

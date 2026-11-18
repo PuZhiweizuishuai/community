@@ -60,10 +60,22 @@ export const interactionApi = {
 
 export const discoverApi = {
   topics: (type) => api.get('/topics', { type }),
-  topic: (title) => api.get(`/topics/${encodeURIComponent(title)}`),
+  topic: (id) => api.get(`/topics/${encodeURIComponent(id)}`),
+  topicQuestions: (id, params) => api.get(`/topics/${encodeURIComponent(id)}/questions`, params),
   search: (params) => api.get('/search', params),
   userList: (params) => api.get('/users', params),
   userHome: (userId, params) => api.get(`/users/${encodeURIComponent(userId)}`, params),
+}
+
+// 话题吧务操作：置顶、加精、删帖、改标签
+export const moderationApi = {
+  remove: (topicId, questionId) => api.post(`/topics/${topicId}/moderation/delete`, { questionId }),
+  recover: (topicId, questionId) => api.post(`/topics/${topicId}/moderation/recover`, { questionId }),
+  setTop: (topicId, questionId, enabled) => api.post(`/topics/${topicId}/moderation/top`, { questionId, enabled }),
+  setEssence: (topicId, questionId, enabled) =>
+    api.post(`/topics/${topicId}/moderation/essence`, { questionId, enabled }),
+  setTags: (topicId, questionId, tagNames) =>
+    api.post(`/topics/${topicId}/moderation/tags`, { questionId, tagNames }),
 }
 
 export const messageApi = {
@@ -79,6 +91,11 @@ export const reviewApi = {
     api.post(`/reviews/comments/${commentId}/resubmit`, { content }),
 }
 
+// 用户举报问题 / 评论
+export const reportApi = {
+  create: (data) => api.post('/reports', data),
+}
+
 export const settingApi = {
   updateData: (data) => api.form('/update/data', data),
   updatePassword: (data) => api.form('/update/password', data),
@@ -92,7 +109,13 @@ export const adminApi = {
   dashboard: (params) => api.get('/admin/dashboard', params),
   users: (params) => api.get('/admin/users', params),
   questions: (params) => api.get('/admin/questions', params),
-  search: (params) => api.get('/admin/search', params),
+  comments: (params) => api.get('/admin/comments', params),
+  commentDetail: (id) => api.get(`/admin/comments/${id}`),
+  deleteComment: (id) => api.post(`/admin/comments/${id}/delete`, {}),
+  recoverComment: (id) => api.post(`/admin/comments/${id}/recover`, {}),
+  reports: (params) => api.get('/admin/reports', params),
+  reportDetail: (id) => api.get(`/admin/reports/${id}`),
+  handleReport: (id, data) => api.post(`/admin/reports/${id}/handle`, data),
   controller: () => api.get('/admin/controller'),
   advertisements: (params) => api.get('/admin/advertisements', params),
   advertisement: (id) => api.get(`/admin/advertisements/${id}`),
@@ -137,6 +160,16 @@ export const adminApi = {
   saveTopic: (data) => api.post('/admin/topics/save', data),
   deleteTopic: (id) => api.post('/admin/topics/delete', { id }),
   refreshTopics: () => api.post('/admin/topics/refresh', {}),
+  topicModerators: (topicId) => api.get(`/admin/topics/${topicId}/moderators`),
+  assignTopicModerator: (topicId, data) => api.post(`/admin/topics/${topicId}/moderators`, data),
+  removeTopicModerator: (topicId, userId) =>
+    api.post(`/admin/topics/${topicId}/moderators/remove`, { userId }),
+  // 标签审核
+  tags: (params) => api.get('/admin/tags', params),
+  approveTag: (id) => api.post('/admin/tags/approve', { id }),
+  rejectTag: (id, reason) => api.post('/admin/tags/reject', { id, reason }),
+  renameTag: (id, name) => api.post('/admin/tags/rename', { id, name }),
+  deleteTag: (id) => api.post('/admin/tags/delete', { id }),
   deleteLog: (data) => api.post('/admin/log/delete', data),
   // 系统配置（注册开关 / 聊天室 / 内容审核 / SMTP 邮件）
   systemConfig: () => api.get('/admin/config'),

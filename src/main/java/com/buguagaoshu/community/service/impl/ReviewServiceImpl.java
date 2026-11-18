@@ -234,7 +234,9 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new CustomizeException(CustomizeErrorCode.REVIEW_ALREADY_HANDLED);
             }
             // 审核通过后问题才公开，话题讨论数在此刻 +1
-            tagClassService.updateTalkCount(question.getTag(), 1);
+            if (question.getTopicId() != null && question.getTopicId() > 0) {
+                tagClassService.updateTalkCount(question.getTopicId(), 1);
+            }
             writeLog(ReviewTargetTypeEnum.QUESTION, id, ReviewActionEnum.APPROVE, admin.getId(), null, null);
             notificationService.createSystemNotification(question.getUserId(), admin.getId(),
                     question.getQuestionId(), -1, NotificationTypeEnum.REVIEW_QUESTION_PASS.getType(),

@@ -18,13 +18,13 @@ public interface TagClassService {
     List<TagClass> getTagClassByTypeNotUserPage(String type);
 
     /**
-     * 更新当前话题的讨论数
+     * 按话题 ID 调整讨论数（原子增量）。话题为单选，不再拆标签字符串。
      *
-     * @param tag 标签
-     * @param count 增加或减少数量
-     * @return 1
+     * @param topicId 话题 ID
+     * @param count   增加或减少数量
+     * @return 更新的行数
      */
-    int updateTalkCount(String tag, int count);
+    int updateTalkCount(long topicId, int count);
 
     /**
      * 跟新关注数
@@ -34,11 +34,7 @@ public interface TagClassService {
     int updateFollowCount(TagClass tagClass);
 
     /**
-     * 修改问题后对话题讨论数量的调整
-     *
-     * @param newQuestionTag 修改后的标签
-     * @param oldQuestionTag 修改前的标签
-     * @return 1
+     * 按 ID 查话题；缓存未命中时回退数据库。
      */
-    int alterQuestionTalkCount(String[] newQuestionTag, String[] oldQuestionTag);
+    TagClass findById(long topicId);
 }

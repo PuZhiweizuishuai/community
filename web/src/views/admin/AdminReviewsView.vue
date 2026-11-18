@@ -17,6 +17,7 @@ import {
 import { adminApi } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
+import { useMetaStore } from '@/stores/meta'
 import MarkdownView from '@/components/MarkdownView.vue'
 import Pagination from '@/components/Pagination.vue'
 
@@ -24,6 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const confirm = useConfirmStore()
+const meta = useMetaStore()
 
 const type = computed(() => route.query.type || 'question')
 const status = computed(() => String(route.query.status ?? '0'))
@@ -245,7 +247,7 @@ async function confirmReject() {
               </td>
               <td class="text-xs ui-text-base">
                 <template v-if="item.type === 'question'">
-                  <span class="badge badge-outline badge-sm">{{ item.classification }}</span>
+                  <span class="badge badge-outline badge-sm">{{ meta.classificationLabel(item.classification) }}</span>
                   <span class="mt-1 block truncate ui-text-muted">{{ item.tag }}</span>
                 </template>
                 <RouterLink v-else :to="`/question/${item.questionId}`" class="line-clamp-2 hover:text-indigo-600">{{ item.questionTitle || '问题已删除' }}</RouterLink>
@@ -314,7 +316,7 @@ async function confirmReject() {
             <div class="rounded-xl border ui-border p-4">
               <h4 class="text-lg font-bold ui-text-strong">{{ detail.item.title }}</h4>
               <div class="mt-2 flex flex-wrap items-center gap-2 text-xs ui-text-muted">
-                <span class="badge badge-outline badge-sm">{{ detail.item.classification }}</span>
+                <span class="badge badge-outline badge-sm">{{ meta.classificationLabel(detail.item.classification) }}</span>
                 <span>{{ detail.item.tag }}</span>
               </div>
             </div>

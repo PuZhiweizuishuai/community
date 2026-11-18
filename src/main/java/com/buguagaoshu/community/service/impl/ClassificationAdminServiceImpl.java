@@ -83,10 +83,7 @@ public class ClassificationAdminServiceImpl implements ClassificationAdminServic
         } else {
             body.setCreateTime(old.getCreateTime());
             mapper.update(body);
-            // 历史数据同步：问题分类按名称存、话题分类按编号存
-            if (Classification.KIND_QUESTION.equals(kind) && !old.getName().equals(name)) {
-                mapper.renameQuestionClassification(old.getName(), name);
-            }
+            // 问题分类已改为按 code 存储，重命名无需同步历史问题；话题分类改编码仍需同步 topics.type
             if (Classification.KIND_TOPIC.equals(kind)
                     && old.getCode() != null && old.getCode() != code) {
                 mapper.renameTopicType(old.getCode(), code);
@@ -105,7 +102,7 @@ public class ClassificationAdminServiceImpl implements ClassificationAdminServic
         }
 
         if (Classification.KIND_QUESTION.equals(target.getKind())) {
-            long questions = mapper.countQuestionsByClassification(target.getName());
+            long questions = mapper.countQuestionsByClassification(target.getCode());
             if (questions > 0) {
                 throw new CustomizeException(409,
                         "「" + target.getName() + "」分类下还有 " + questions

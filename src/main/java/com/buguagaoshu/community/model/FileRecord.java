@@ -9,7 +9,7 @@ import lombok.Data;
  * 文件记录：每次上传落库一条，url 为统一访问地址 /api/file/{storageId}/{fileKey}。
  */
 @Data
-@Table(value = "file_record", camelToUnderline = false)
+@Table(value = "file_records", camelToUnderline = false)
 public class FileRecord {
     public static final int STATUS_NORMAL = 0;
     public static final int STATUS_DELETED = 1;

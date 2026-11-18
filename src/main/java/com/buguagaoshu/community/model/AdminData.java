@@ -11,7 +11,7 @@ import lombok.Data;
  * 管理数据
  */
 @Data
-@Table(value = "admin", camelToUnderline = false)
+@Table(value = "admin_snapshots", camelToUnderline = false)
 public class AdminData {
     @Id(keyType = KeyType.Auto)
     private Long adminId;

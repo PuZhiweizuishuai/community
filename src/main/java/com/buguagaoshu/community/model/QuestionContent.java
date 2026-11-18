@@ -10,7 +10,7 @@ import lombok.Data;
  * type 见 QuestionContentTypeEnum；password 明文存储，仅密码可见段落使用。
  */
 @Data
-@Table(value = "question_content", camelToUnderline = false)
+@Table(value = "question_contents", camelToUnderline = false)
 public class QuestionContent {
     @Id(keyType = KeyType.Auto)
     private Long id;

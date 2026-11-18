@@ -65,7 +65,28 @@ public enum NotificationTypeEnum {
      */
     REVIEW_QUESTION_REJECT(14, "退回了你的问题"),
 
-    REVIEW_COMMENT_REJECT(15, "退回了你的评论");
+    REVIEW_COMMENT_REJECT(15, "退回了你的评论"),
+
+    /**
+     * 管理员删除 / 恢复评论
+     */
+    ADMIN_DELETE_COMMENT(16, "删除了你的评论"),
+
+    ADMIN_RECOVER_COMMENT(17, "恢复了你的评论"),
+
+    /**
+     * 举报处理结果
+     */
+    REPORT_ACCEPTED(18, "举报已受理"),
+
+    REPORT_REJECTED(19, "举报未受理"),
+
+    /**
+     * 标签审核结果
+     */
+    TAG_REVIEW_PASS(20, "标签审核通过"),
+
+    TAG_REVIEW_REJECT(21, "标签审核未通过");
 
 
 

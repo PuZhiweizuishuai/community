@@ -163,23 +163,6 @@ public class StringUtil {
         return cleaned;
     }
 
-    /**
-     * 判断标签数量
-     */
-    public static boolean judgeTagNumber(String tag) {
-        String regex = ",|，";
-        if (tag != null) {
-            if(tag.equals("")) {
-                return false;
-            }
-            String[] str = tag.split(regex);
-            if (str.length > 5) {
-                return false;
-            }
-        }
-        return tag != null;
-    }
-
     public static String subString(String str, int n) {
         if (str.length() > n) {
             return str.substring(0, n) + "......";

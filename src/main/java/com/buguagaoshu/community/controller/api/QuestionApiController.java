@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.cache.ClassificationCache;
 import com.buguagaoshu.community.captcha.CaptchaUtil;
 import com.buguagaoshu.community.component.ViewCountBuffer;
 import com.buguagaoshu.community.constant.PermissionCodes;
@@ -21,13 +22,16 @@ import com.buguagaoshu.community.model.ClickLike;
 import com.buguagaoshu.community.model.FollowQuestion;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.QuestionContent;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.FollowQuestionService;
 import com.buguagaoshu.community.service.QuestionContentService;
 import com.buguagaoshu.community.service.QuestionService;
+import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SiteCacheService;
+import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
@@ -45,6 +49,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 问题详情 / 发布 / 编辑的 REST 接口（对应原 question.html、publish.html）。
@@ -60,6 +65,9 @@ public class QuestionApiController {
     private final FollowQuestionService followQuestionService;
     private final SiteCacheService siteCache;
     private final ViewCountBuffer viewCountBuffer;
+    private final QuestionTagService questionTagService;
+    private final TagClassService tagClassService;
+    private final ClassificationCache classificationCache;
 
     public QuestionApiController(QuestionService questionService,
                                  QuestionContentService questionContentService,
@@ -67,7 +75,10 @@ public class QuestionApiController {
                                  ClickLikeService clickLikeService,
                                  FollowQuestionService followQuestionService,
                                  SiteCacheService siteCache,
-                                 ViewCountBuffer viewCountBuffer) {
+                                 ViewCountBuffer viewCountBuffer,
+                                 QuestionTagService questionTagService,
+                                 TagClassService tagClassService,
+                                 ClassificationCache classificationCache) {
         this.questionService = questionService;
         this.questionContentService = questionContentService;
         this.commentService = commentService;
@@ -75,6 +86,9 @@ public class QuestionApiController {
         this.followQuestionService = followQuestionService;
         this.siteCache = siteCache;
         this.viewCountBuffer = viewCountBuffer;
+        this.questionTagService = questionTagService;
+        this.tagClassService = tagClassService;
+        this.classificationCache = classificationCache;
     }
 
     /**
@@ -127,12 +141,16 @@ public class QuestionApiController {
         List<QuestionContentDto> contents = questionContentService.visibleContents(
                 question.getQuestionId(), question.getUserId(), user, admin != null);
         question.setDescription(null);
+        boolean canEdit = user != null && question.getUser() != null
+                && user.getId() == question.getUser().getId();
+        // 详情页标签：访客只看到已通过标签，作者本人额外看到自己的待审核标签
+        question.setTags(questionTagService.tagsForDetail(question.getQuestionId(),
+                user == null ? null : user.getId(), canEdit));
         data.put("question", question);
         data.put("contents", contents);
         data.put("isQuestionClickLike", liked);
         data.put("isFollowQuestion", followed);
-        data.put("canEdit", user != null && question.getUser() != null
-                && user.getId() == question.getUser().getId());
+        data.put("canEdit", canEdit);
         return ResultDTO.okOf(data);
     }
 
@@ -185,6 +203,8 @@ public class QuestionApiController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("question", question);
         data.put("contents", questionContentService.listByQuestionId(question.getQuestionId()));
+        // 作者编辑时可见自己的待审核标签，避免保存后「标签消失」
+        data.put("tags", questionTagService.tagsForDetail(question.getQuestionId(), user.getId(), true));
         return ResultDTO.okOf(data);
     }
 
@@ -239,19 +259,34 @@ public class QuestionApiController {
             }
             contents.add(content);
         }
-        if (!StringUtil.judgeTagNumber(body.getTag())) {
-            throw new CustomizeException(CustomizeErrorCode.TAG_LIMIT);
+        if (!classificationCache.isValidQuestionCode(body.getClassification())) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "所选问题类型不存在或已停用");
+        }
+        TagClass topic = tagClassService.findById(body.getTopicId());
+        if (topic == null || topic.getStatus() != 1) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "所选话题不存在或已停用");
+        }
+        if (body.getTagNames() != null && !body.getTagNames().isEmpty()) {
+            boolean tooMany = body.getTagNames().stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(name -> !name.isEmpty())
+                    .distinct()
+                    .count() > 5;
+            if (tooMany) {
+                throw new CustomizeException(CustomizeErrorCode.TAG_LIMIT);
+            }
         }
 
         Question question = new Question();
         question.setQuestionId(body.getQuestionId() == null ? -1L : body.getQuestionId());
         question.setTitle(body.getTitle());
         question.setClassification(body.getClassification());
-        question.setTag(body.getTag());
+        question.setTopicId(body.getTopicId());
         question.setUserId(user.getId());
         question.setCreateTime(body.getCreateTime() == null ? 0L : body.getCreateTime());
 
-        questionService.createQuestion(question, contents);
+        questionService.createQuestion(question, contents, body.getTagNames());
         // 发布/编辑后首页列表与热门数据即时失效
         siteCache.invalidate(SiteCacheService.HOME);
         siteCache.invalidate(SiteCacheService.META + "hots");

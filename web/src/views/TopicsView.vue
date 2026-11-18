@@ -48,7 +48,7 @@ watch(type, load, { immediate: true })
           <RouterLink
             v-for="tag in data.tags"
             :key="tag.id || tag.title"
-            :to="{ name: 'home', query: { tag: tag.title } }"
+            :to="`/topics/${tag.id}`"
             class="surface flex items-start gap-3 p-4 hover:border-indigo-200"
           >
             <img :src="assetUrl(tag.image)" :alt="tag.title" class="h-14 w-14 shrink-0 rounded-lg object-cover" />

@@ -26,6 +26,9 @@ import java.util.Map;
 
 /**
  * 首页数据接口（对应原 / 与 /index 的 Thymeleaf 模型数据）。
+ *
+ * <p>筛选参数拆成三个独立维度，可自由叠加：
+ * topic=话题 ID（贴吧「吧」）、tag=标签名称（精确匹配，仅已通过标签）、class=问题类型 code。
  */
 @RestController
 @RequestMapping("/api/home")
@@ -55,19 +58,22 @@ public class HomeApiController {
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "15") String size,
             @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "topic", required = false) String topic,
             @RequestParam(value = "sort", defaultValue = "3") String sort,
             @RequestParam(value = "class", defaultValue = "0") String classification,
             @RequestParam(value = "cursor", required = false) String cursor) {
 
         int sortValue = parseInt(sort, QuestionSortType.NEW_QUESTION.getType());
         int classValue = parseInt(classification, QuestionClassType.ALL.getType());
+        Long topicId = parseTopicId(topic);
 
         // 列表、置顶、话题卡片是公共数据，按查询条件缓存 20 秒；
         // followTag 与登录用户相关，必须每次请求单独计算，不能进缓存。
         String key = SiteCacheService.HOME + String.join("|", page, size,
-                tag == null ? "" : tag, sort, classification, cursor == null ? "" : cursor);
+                tag == null ? "" : tag, topic == null ? "" : topic, sort, classification,
+                cursor == null ? "" : cursor);
         Map<String, Object> data = new LinkedHashMap<>(siteCache.get(key, 20_000,
-                () -> buildPublicData(page, size, tag, sort, classification, sortValue, classValue, cursor)));
+                () -> buildPublicData(page, size, tag, topicId, sort, classification, sortValue, classValue, cursor)));
 
         TagClass tagClass = (TagClass) data.get("tagClass");
         boolean followed = false;
@@ -84,24 +90,37 @@ public class HomeApiController {
         return ResultDTO.okOf(data);
     }
 
-    private Map<String, Object> buildPublicData(String page, String size, String tag,
+    private Map<String, Object> buildPublicData(String page, String size, String tag, Long topicId,
                                                 String sort, String classification,
                                                 int sortValue, int classValue, String cursor) {
         Map<String, Object> data = new LinkedHashMap<>();
         PaginationDto<QuestionDto> pagination = questionService.getSomeQuestionDto(
-                page, size, tag, sortValue, classValue, cursor);
+                page, size, tag, sortValue, classValue, topicId, cursor);
         data.put("pagination", pagination);
         data.put("tag", tag);
+        data.put("topic", topicId);
         data.put("sort", sort);
         data.put("class", classification);
 
         boolean defaultPage = "1".equals(page) && (tag == null || tag.isBlank())
-                && "3".equals(sort) && "0".equals(classification);
+                && topicId == null && "3".equals(sort) && "0".equals(classification);
         data.put("topQuestions", defaultPage ? indexTopQuestion.getTopQuestion() : List.of());
-        // 缓存快照是不可变 Map，get(null) 会 NPE，先判空
-        Map<String, TagClass> tagMap = tagClassCache.getTagClassMap();
-        data.put("tagClass", tagMap == null || tag == null ? null : tagMap.get(tag));
+        // 话题卡片：只有按话题筛选时才有内容
+        TagClass topic = topicId == null ? null : tagClassCache.getById(topicId);
+        data.put("tagClass", topic);
         return data;
+    }
+
+    private Long parseTopicId(String topic) {
+        if (topic == null || topic.isBlank()) {
+            return null;
+        }
+        try {
+            long id = Long.parseLong(topic);
+            return id > 0 ? id : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private int parseInt(String value, int fallback) {

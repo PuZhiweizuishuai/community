@@ -33,7 +33,7 @@ public enum CustomizeErrorCode implements ICustomizeErrorCode {
     NOT_FOUND(404, 404, "内容不存在或已被删除"),
     QUESTION_DELETED(2014, 404, "这个问题已经被删除了！如需恢复，请联系管理员！"),
     CAPTCHA_REQUIRED(2015, 400, "验证码错误或已过期，请刷新后重试"),
-    TAG_LIMIT(2016, 400, "标签不能为空且最多只能输入 6 个标签"),
+    TAG_LIMIT(2016, 400, "标签不能为空且最多只能输入 5 个标签"),
     TITLE_INVALID(2017, 400, "标题不能为空，且不能超过 50 个字符"),
     CLASS_INVALID(2018, 400, "请选择问题分类"),
     TOO_MANY_ATTEMPTS(2020, 429, "失败次数过多或操作过于频繁，请 15 分钟后再试"),

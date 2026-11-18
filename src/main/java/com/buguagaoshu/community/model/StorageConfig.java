@@ -9,7 +9,7 @@ import lombok.Data;
  * 存储配置：id=0 固定为本地存储，id>=1 为 S3 兼容对象存储，可启用多个。
  */
 @Data
-@Table(value = "storage_config", camelToUnderline = false)
+@Table(value = "storage_configs", camelToUnderline = false)
 public class StorageConfig {
     public static final long LOCAL_ID = 0L;
     public static final String TYPE_LOCAL = "local";

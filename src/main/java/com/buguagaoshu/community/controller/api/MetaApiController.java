@@ -5,7 +5,7 @@ import com.buguagaoshu.community.cache.ClassificationCache;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.HotUserCache;
-import com.buguagaoshu.community.cache.TagCache;
+import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.TagDTO;
 import com.buguagaoshu.community.dto.UserDto;
@@ -13,8 +13,11 @@ import com.buguagaoshu.community.enums.QuestionClassType;
 import com.buguagaoshu.community.enums.QuestionSortType;
 import com.buguagaoshu.community.enums.TagClassTypeEnum;
 import com.buguagaoshu.community.model.Classification;
+import com.buguagaoshu.community.model.Tag;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.service.OnlineUserService;
+import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +51,8 @@ public class MetaApiController {
     private final ClassificationCache classificationCache;
     private final SiteCacheService siteCache;
     private final SystemConfigService systemConfigService;
+    private final TagClassCache tagClassCache;
+    private final QuestionTagService questionTagService;
 
     public MetaApiController(HotTagCache hotTagCache,
                              HotQuestionCache hotQuestionCache,
@@ -57,7 +62,9 @@ public class MetaApiController {
                              OnlineUserService onlineUserService,
                              ClassificationCache classificationCache,
                              SiteCacheService siteCache,
-                             SystemConfigService systemConfigService) {
+                             SystemConfigService systemConfigService,
+                             TagClassCache tagClassCache,
+                             QuestionTagService questionTagService) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
         this.hotUserCache = hotUserCache;
@@ -67,6 +74,8 @@ public class MetaApiController {
         this.classificationCache = classificationCache;
         this.siteCache = siteCache;
         this.systemConfigService = systemConfigService;
+        this.tagClassCache = tagClassCache;
+        this.questionTagService = questionTagService;
     }
 
     /** 基础字典：体积小、全站通用，前端启动时拉取一次 */
@@ -78,6 +87,9 @@ public class MetaApiController {
         data.put("sorts", sorts());
         data.put("topicTypes", siteCache.get(SiteCacheService.CLASSIFICATION + "topic", 300_000,
                 this::topicTypes));
+        // 发帖话题单选器：只下发启用中的话题精简字段，避免把简介/图标等大字段塞进基础字典
+        data.put("topics", siteCache.get(SiteCacheService.TOPICS + "options", 60_000,
+                this::topicOptions));
         // 在线人数会查库，缓存 30 秒避免每次请求都打 MySQL
         data.put("onlineCount", siteCache.get(SiteCacheService.META + "onlineCount", 30_000,
                 onlineUserService::selectOnlineUserCount));
@@ -106,11 +118,11 @@ public class MetaApiController {
                 hotUserCache::getUserDtoList));
     }
 
-    /** 标签分类：仅发布页选择标签时使用 */
+    /** 标签建议：已通过标签按使用数排序，发布页据此展示可选标签 */
     @GetMapping("/tag-categories")
     public ResultDTO<List<TagDTO>> tagCategories() {
-        return ResultDTO.okOf(siteCache.get(SiteCacheService.META + "tagCategories", 3_600_000,
-                TagCache::get));
+        return ResultDTO.okOf(siteCache.get(SiteCacheService.META + "approvedTags", 300_000,
+                this::approvedTagGroups));
     }
 
     /** 按广告位拉取广告，position 取值见 AdvertisementCache 的位置常量对应的 key */
@@ -194,5 +206,34 @@ public class MetaApiController {
         item.put("label", label);
         item.put("id", id);
         return item;
+    }
+
+    /** 发帖话题单选器数据：只包含启用中的话题 */
+    private List<Map<String, Object>> topicOptions() {
+        List<TagClass> topics = tagClassCache.getTagClassList();
+        if (topics == null) {
+            return List.of();
+        }
+        return topics.stream()
+                .filter(topic -> topic.getStatus() == 1)
+                .map(topic -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", topic.getId());
+                    item.put("title", topic.getTitle());
+                    item.put("type", topic.getType());
+                    return item;
+                }).toList();
+    }
+
+    /** 已通过标签按使用数排序，包装成发布页原有的分组结构 */
+    private List<TagDTO> approvedTagGroups() {
+        List<Tag> tags = questionTagService.approvedTags(60);
+        if (tags.isEmpty()) {
+            return List.of();
+        }
+        TagDTO group = new TagDTO();
+        group.setCategoryName("常用标签");
+        group.setTags(tags.stream().map(Tag::getName).toList());
+        return List.of(group);
     }
 }

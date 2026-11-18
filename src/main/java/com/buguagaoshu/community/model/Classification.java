@@ -8,12 +8,12 @@ import lombok.Data;
 
 /**
  * 动态分类：问题分类（提问/讨论/…）与话题所属分类（开发语言/平台框架/…）
- * 统一存放在 classification 表，由后台管理员维护。
+ * 统一存放在 classifications 表，由后台管理员维护。
  *
- * <p>code 是稳定数值标识：问题分类用于首页 /?class={code}，话题分类写入 topic.type。
+ * <p>code 是稳定数值标识：问题分类用于首页 /?class={code}，话题分类写入 topics.type。
  */
 @Data
-@Table(value = "classification", camelToUnderline = false)
+@Table(value = "classifications", camelToUnderline = false)
 public class Classification {
     /** question = 问题分类；topic = 话题所属分类 */
     public static final String KIND_QUESTION = "question";

@@ -3,6 +3,8 @@ package com.buguagaoshu.community.dto;
 import com.buguagaoshu.community.model.User;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-08-15 22:40
@@ -12,7 +14,15 @@ public class QuestionDto {
     private long questionId;
     private long userId;
     private String title;
-    private String classification;
+    /** 问题类型 code（classifications.kind=question） */
+    private Integer classification;
+    /** 所属话题 */
+    private Long topicId;
+    private String topicTitle;
+    private int isTop;
+    private int isEssence;
+    /** 已通过审核的标签（列表批量装配；详情页作者本人额外可见自己的待审核标签） */
+    private List<QuestionTagDto> tags;
     private String description;
     private String fileUrl;
     private long viewCount;

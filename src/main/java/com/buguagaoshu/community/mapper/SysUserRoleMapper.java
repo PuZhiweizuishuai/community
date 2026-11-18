@@ -16,19 +16,19 @@ import java.util.Map;
 @Component(value = "SysUserRoleMapper")
 public interface SysUserRoleMapper {
 
-    @Select("SELECT roleId FROM sys_user_role WHERE userId = #{userId}")
+    @Select("SELECT roleId FROM sys_user_roles WHERE userId = #{userId}")
     List<Long> selectRoleIdsByUserId(@Param("userId") long userId);
 
-    @Delete("DELETE FROM sys_user_role WHERE userId = #{userId}")
+    @Delete("DELETE FROM sys_user_roles WHERE userId = #{userId}")
     int deleteByUserId(@Param("userId") long userId);
 
-    @Insert("INSERT IGNORE INTO sys_user_role(userId, roleId) VALUES(#{userId}, #{roleId})")
+    @Insert("INSERT IGNORE INTO sys_user_roles(userId, roleId) VALUES(#{userId}, #{roleId})")
     int insertIgnore(@Param("userId") long userId, @Param("roleId") long roleId);
 
-    @Select("SELECT COUNT(*) FROM sys_user_role WHERE roleId = #{roleId}")
+    @Select("SELECT COUNT(*) FROM sys_user_roles WHERE roleId = #{roleId}")
     long countUsersByRoleId(@Param("roleId") long roleId);
 
-    @Select("SELECT roleId, COUNT(*) AS total FROM sys_user_role GROUP BY roleId")
+    @Select("SELECT roleId, COUNT(*) AS total FROM sys_user_roles GROUP BY roleId")
     List<Map<String, Object>> countUsersByRole();
 
     /**
@@ -37,8 +37,8 @@ public interface SysUserRoleMapper {
     @Select("""
             <script>
             SELECT ur.userId AS userId, r.id AS roleId, r.code AS roleCode, r.name AS roleName
-            FROM sys_user_role ur
-                     JOIN sys_role r ON r.id = ur.roleId
+            FROM sys_user_roles ur
+                     JOIN sys_roles r ON r.id = ur.roleId
             WHERE ur.userId IN
             <foreach collection="userIds" item="id" open="(" separator="," close=")">#{id}</foreach>
             ORDER BY r.sortOrder, r.id

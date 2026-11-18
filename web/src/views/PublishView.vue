@@ -29,7 +29,10 @@ const newSegment = () => ({ key: ++segmentSeq, type: 0, content: '', password: '
 
 const editId = computed(() => route.params.id || null)
 const title = ref('')
-const classification = ref('')
+const classification = ref(0)
+const topicId = ref(0)
+const topicKeyword = ref('')
+const showTopicPanel = ref(false)
 const segments = ref([newSegment()])
 const tags = ref([])
 const tagInput = ref('')
@@ -55,18 +58,26 @@ function segmentTypeLabel(type) {
 
 const editClasses = computed(() => meta.classifications.filter((c) => c.value !== 0))
 const ads = computed(() => meta.adsFor('publish'))
+const selectedTopic = computed(() => meta.topics.find((t) => Number(t.id) === Number(topicId.value)) || null)
+const filteredTopics = computed(() => {
+  const kw = topicKeyword.value.trim().toLowerCase()
+  const list = meta.topics
+  if (!kw) return list
+  return list.filter((t) => String(t.title || '').toLowerCase().includes(kw))
+})
 
 const checks = computed(() => {
   const list = [
     { label: '标题（≤ 50 字）', ok: title.value.trim().length > 0 && title.value.length <= 50 },
-    { label: '问题分类', ok: !!classification.value },
+    { label: '话题（必选一个）', ok: !!topicId.value },
+    { label: '问题类型', ok: !!classification.value },
     { label: '正文内容', ok: segments.value.every((s) => (s.content || '').trim().length > 0) },
   ]
   if (segments.value.some((s) => s.type === 1)) {
     list.push({ label: '阅读密码（密码可见段落）', ok: segments.value.filter((s) => s.type === 1).every((s) => (s.password || '').trim().length > 0) })
   }
   list.push(
-    { label: '标签（1 ~ 6 个）', ok: tags.value.length > 0 },
+    { label: '标签（1 ~ 5 个）', ok: tags.value.length > 0 },
     { label: '验证码', ok: captcha.value.trim().length > 0 },
   )
   return list
@@ -76,7 +87,8 @@ const readyCount = computed(() => checks.value.filter((c) => c.ok).length)
 async function loadEdit() {
   if (!editId.value) {
     title.value = ''
-    classification.value = ''
+    classification.value = 0
+    topicId.value = Number(route.query.topic || 0)
     segments.value = [newSegment()]
     tags.value = []
     questionId.value = -1
@@ -86,8 +98,9 @@ async function loadEdit() {
   const data = await questionApi.edit(editId.value)
   const question = data.question
   title.value = question.title || ''
-  classification.value = question.classification || ''
-  tags.value = String(question.tag || '').split(/[,，]/).filter(Boolean)
+  classification.value = Number(question.classification || 0)
+  topicId.value = Number(question.topicId || 0)
+  tags.value = (data.tags || []).map((t) => t.name)
   createTime.value = question.createTime || 0
   questionId.value = question.questionId
   const list = (data.contents || []).map((c) => ({ key: ++segmentSeq, type: c.type, content: c.content || '', password: c.password || '' }))
@@ -97,10 +110,16 @@ async function loadEdit() {
 }
 watch(editId, loadEdit, { immediate: true })
 
+function chooseTopic(topic) {
+  topicId.value = Number(topic.id)
+  topicKeyword.value = ''
+  showTopicPanel.value = false
+}
+
 function addTag(tag) {
   const clean = String(tag).trim()
   if (!clean || tags.value.includes(clean)) return
-  if (tags.value.length >= 6) return toast.warning('最多只能添加 6 个标签')
+  if (tags.value.length >= 5) return toast.warning('最多只能添加 5 个标签')
   tags.value.push(clean)
   tagInput.value = ''
 }
@@ -120,7 +139,8 @@ function removeSegment(index) {
 async function submit() {
   if (!title.value.trim()) return toast.warning('请填写标题')
   if (title.value.length > 50) return toast.warning('标题不能超过 50 个字')
-  if (!classification.value) return toast.warning('请选择问题分类')
+  if (!topicId.value) return toast.warning('请选择话题')
+  if (!classification.value) return toast.warning('请选择问题类型')
   const contents = []
   for (let i = 0; i < segments.value.length; i++) {
     const segment = segments.value[i]
@@ -142,9 +162,10 @@ async function submit() {
   try {
     const result = await questionApi.save({
       title: title.value.trim(),
-      classification: classification.value,
+      classification: Number(classification.value),
+      topicId: Number(topicId.value),
       contents,
-      tag: tags.value.join(','),
+      tagNames: tags.value,
       questionId: questionId.value,
       createTime: createTime.value,
       captcha: captcha.value,
@@ -204,17 +225,54 @@ async function submit() {
           </label>
 
           <div class="mt-5">
-            <span class="mb-2 block text-xs font-medium ui-text-base">问题分类 <span class="text-rose-500">*</span></span>
+            <span class="mb-2 block text-xs font-medium ui-text-base">话题 <span class="text-rose-500">*</span></span>
+            <p class="mb-2 text-xs ui-text-muted">每篇帖子只属于一个话题，类似贴吧的「吧」；发布后可在话题页浏览与关注。</p>
+            <div class="relative">
+              <div v-if="selectedTopic" class="mb-2 flex items-center gap-2">
+                <span class="badge badge-primary badge-sm gap-1">
+                  {{ selectedTopic.title }}
+                  <button type="button" class="inline-flex" aria-label="清除话题" @click="topicId = 0"><X class="size-3" /></button>
+                </span>
+              </div>
+              <div class="join w-full">
+                <input
+                  v-model="topicKeyword"
+                  class="input input-bordered input-sm join-item min-w-0 flex-1 focus:outline-none"
+                  placeholder="搜索并选择话题"
+                  @focus="showTopicPanel = true"
+                />
+                <button class="btn btn-sm join-item" type="button" @click="showTopicPanel = !showTopicPanel">
+                  <component :is="showTopicPanel ? ChevronUp : ChevronDown" class="size-4" />
+                </button>
+              </div>
+              <div v-if="showTopicPanel" class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border ui-border ui-bg p-1 shadow-lg">
+                <button
+                  v-for="topic in filteredTopics"
+                  :key="topic.id"
+                  type="button"
+                  class="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-indigo-50 hover:text-indigo-600"
+                  @click="chooseTopic(topic)"
+                >
+                  <span>{{ topic.title }}</span>
+                  <Check v-if="Number(topic.id) === Number(topicId)" class="size-3.5" />
+                </button>
+                <p v-if="!filteredTopics.length" class="px-3 py-4 text-center text-xs ui-text-muted">没有匹配的话题</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <span class="mb-2 block text-xs font-medium ui-text-base">问题类型 <span class="text-rose-500">*</span></span>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="item in editClasses"
                 :key="item.value"
                 type="button"
                 class="rounded-full border px-3.5 py-1.5 text-sm transition"
-                :class="classification === item.label
+                :class="classification === item.value
                   ? 'border-indigo-500 ui-bg-brand font-medium ui-text-brand'
                   : 'ui-border ui-text-base hover:border-indigo-300 hover:text-indigo-600'"
-                @click="classification = item.label"
+                @click="classification = item.value"
               >
                 {{ item.label }}
               </button>
@@ -298,8 +356,10 @@ async function submit() {
           <div class="border-t ui-border pt-4">
             <div class="mb-2 flex items-center justify-between">
               <span class="text-xs font-medium ui-text-base">标签 <span class="text-rose-500">*</span></span>
-              <span class="text-xs ui-text-muted">{{ tags.length }} / 6</span>
+              <span class="text-xs ui-text-muted">{{ tags.length }} / 5</span>
             </div>
+
+            <p class="mb-2 text-xs ui-text-muted">输入新标签会先进入待审核状态，管理员通过后才会公开显示。</p>
 
             <div v-if="tags.length" class="mb-2 flex flex-wrap gap-1.5">
               <span v-for="tag in tags" :key="tag" class="badge badge-primary badge-sm gap-1">
@@ -395,7 +455,9 @@ async function submit() {
         </div>
         <div class="mb-4 border-b ui-border pb-3">
           <h2 class="text-xl font-bold ui-text-strong">{{ title || '（未填写标题）' }}</h2>
-          <p class="mt-1 text-xs ui-text-muted">{{ classification || '未选择分类' }} · {{ tags.join(' / ') || '暂无标签' }}</p>
+          <p class="mt-1 text-xs ui-text-muted">
+            {{ selectedTopic?.title || '未选择话题' }} · {{ meta.classificationLabel(classification) || '未选择类型' }} · {{ tags.join(' / ') || '暂无标签' }}
+          </p>
         </div>
         <div class="max-h-[55vh] overflow-y-auto">
           <div v-for="(segment, index) in segments" :key="segment.key" class="mb-5">

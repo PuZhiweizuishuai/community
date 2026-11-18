@@ -8,6 +8,7 @@ const EMPTY = {
   hotUsers: [],
   tagCategories: [],
   classifications: [],
+  topics: [],
   sorts: [],
   topicTypes: [],
   advertisements: {},
@@ -91,6 +92,7 @@ export const useMetaStore = defineStore('meta', () => {
   const hotQuestions = computed(() => data.value.hotQuestions || [])
   const hotUsers = computed(() => data.value.hotUsers || [])
   const classifications = computed(() => data.value.classifications || [])
+  const topics = computed(() => data.value.topics || [])
   const sorts = computed(() => data.value.sorts || [])
   const topicTypes = computed(() => data.value.topicTypes || [])
   const tagCategories = computed(() => data.value.tagCategories || [])
@@ -109,6 +111,18 @@ export const useMetaStore = defineStore('meta', () => {
     return Array.isArray(list) ? list : Object.values(list || {})
   }
 
+  /** 问题类型 code → 名称；后台/审核等页面统一用它展示，避免直接显示数字 */
+  function classificationLabel(code) {
+    if (code === null || code === undefined || code === '') return ''
+    const item = classifications.value.find((c) => Number(c.value) === Number(code))
+    return item?.label || String(code)
+  }
+
+  function topicTitle(id) {
+    const item = topics.value.find((t) => Number(t.id) === Number(id))
+    return item?.title || ''
+  }
+
   return {
     data,
     loaded,
@@ -123,9 +137,12 @@ export const useMetaStore = defineStore('meta', () => {
     hotQuestions,
     hotUsers,
     classifications,
+    topics,
     sorts,
     topicTypes,
     tagCategories,
+    classificationLabel,
+    topicTitle,
     chatEnabled,
     setChatEnabled,
     reviewEnabled,

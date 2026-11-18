@@ -68,7 +68,7 @@ public class ClassificationAdminApiController {
                 .toList();
         result.forEach(item -> {
             if (Classification.KIND_QUESTION.equals(item.getKind())) {
-                item.setUsageCount(mapper.countQuestionsByClassification(item.getName()));
+                item.setUsageCount(mapper.countQuestionsByClassification(item.getCode()));
             } else {
                 item.setUsageCount(mapper.countQuestionsByTopicType(item.getCode()));
             }

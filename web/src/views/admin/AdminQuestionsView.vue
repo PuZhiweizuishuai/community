@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { RotateCcw, Trash2 } from '@lucide/vue'
 import { adminApi, questionApi } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
+import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
 import { statusLabel } from '@/utils/format'
 import Pagination from '@/components/Pagination.vue'
@@ -12,6 +13,7 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToastStore()
 const confirm = useConfirmStore()
+const meta = useMetaStore()
 const page = computed(() => route.query.page || '1')
 const data = ref(null)
 
@@ -42,7 +44,7 @@ async function recover(id) {
         <tr v-for="item in data?.data || []" :key="item.questionId">
           <td class="text-xs">{{ item.questionId }}</td>
           <td><RouterLink :to="`/question/${item.questionId}`" class="line-clamp-1 max-w-xs hover:text-indigo-600">{{ item.title }}</RouterLink></td>
-          <td><span class="badge badge-sm badge-outline">{{ item.classification }}</span></td>
+          <td><span class="badge badge-sm badge-outline">{{ meta.classificationLabel(item.classification) }}</span></td>
           <td><RouterLink :to="`/user/${item.user?.userId}`" class="text-xs hover:text-indigo-600">{{ item.user?.userName }}</RouterLink></td>
           <td class="text-xs">{{ item.createTime }}</td>
           <td><span class="badge badge-sm" :class="item.status === 1 ? 'badge-success' : 'badge-error'">{{ statusLabel(item.status) }}</span></td>

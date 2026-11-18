@@ -9,7 +9,7 @@ import lombok.Data;
  * 内容审核流水：提交 / 通过 / 驳回均写入一条记录，便于追溯审核过程。
  */
 @Data
-@Table(value = "content_review_log", camelToUnderline = false)
+@Table(value = "content_review_logs", camelToUnderline = false)
 public class ContentReviewLog {
     @Id(keyType = KeyType.Auto)
     private long id;

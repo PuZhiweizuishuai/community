@@ -4,20 +4,13 @@ import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.TagClassService;
-import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static com.buguagaoshu.community.model.table.TagClassTableDef.TAG_CLASS;
 
 
 /**
@@ -69,26 +62,18 @@ public class TagClassServiceImpl implements TagClassService {
     }
 
     @Override
-    public int updateTalkCount(String tag, int count) {
-        if (tag == null || tag.isBlank()) {
+    public int updateTalkCount(long topicId, int count) {
+        if (topicId <= 0 || count == 0) {
             return 0;
         }
-        Set<String> tags = new HashSet<>(Arrays.asList(tag.split(",|，")));
-        boolean updated = false;
-        for (String tagStr : tags) {
-            TagClass tagClass = findTag(tagStr);
-            if (tagClass != null) {
-                TagClass delta = new TagClass();
-                delta.setId(tagClass.getId());
-                delta.setTalkCount(count);
-                tagClassMapper.updateTagTalkCount(delta);
-                updated = true;
-            }
-        }
-        if (updated) {
+        TagClass delta = new TagClass();
+        delta.setId(topicId);
+        delta.setTalkCount(count);
+        int rows = tagClassMapper.updateTagTalkCount(delta);
+        if (rows > 0) {
             refreshCacheAfterCommit();
         }
-        return 1;
+        return rows;
     }
 
     @Override
@@ -101,43 +86,15 @@ public class TagClassServiceImpl implements TagClassService {
     }
 
     @Override
-    public int alterQuestionTalkCount(String[] newQuestionTag, String[] oldQuestionTag) {
-        Set<String> newTags = new HashSet<>(Arrays.asList(newQuestionTag));
-        Set<String> oldTags = new HashSet<>(Arrays.asList(oldQuestionTag));
-        boolean updated = false;
-        for (String tag : newTags) {
-            if (!oldTags.contains(tag)) {
-                updated |= adjustTalkCount(tag, 1);
-            }
+    public TagClass findById(long topicId) {
+        if (topicId <= 0) {
+            return null;
         }
-        for (String tag : oldTags) {
-            if (!newTags.contains(tag)) {
-                updated |= adjustTalkCount(tag, -1);
-            }
+        TagClass cached = tagClassCache.getById(topicId);
+        if (cached != null) {
+            return cached;
         }
-        if (updated) {
-            refreshCacheAfterCommit();
-        }
-        return updated ? 1 : 0;
-    }
-
-    private boolean adjustTalkCount(String tag, int delta) {
-        TagClass tagClass = findTag(tag);
-        if (tagClass == null) {
-            return false;
-        }
-        TagClass increment = new TagClass();
-        increment.setId(tagClass.getId());
-        increment.setTalkCount(delta);
-        tagClassMapper.updateTagTalkCount(increment);
-        return true;
-    }
-
-    private TagClass findTag(String title) {
-        Map<String, TagClass> map = tagClassCache.getTagClassMap();
-        TagClass tagClass = map == null ? null : map.get(title);
-        return tagClass != null ? tagClass : tagClassMapper.selectOneByQuery(
-                QueryWrapper.create().where(TAG_CLASS.TITLE.eq(title)));
+        return tagClassMapper.selectOneById(topicId);
     }
 
     /** 事务提交后再重建缓存；无事务上下文时立即重建 */

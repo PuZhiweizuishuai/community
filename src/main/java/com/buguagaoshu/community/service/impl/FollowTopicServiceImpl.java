@@ -36,8 +36,9 @@ public class FollowTopicServiceImpl implements FollowTopicService {
     @Transactional
     public int insertFollowTop(FollowTopicDTO followTopicDTO, long userId, TagClass tagClass) {
         FollowTopic followTopic = new FollowTopic();
-        followTopic.setTopicId(followTopicDTO.getTopicId());
-        followTopic.setTopicTitle(followTopicDTO.getTopicTitle());
+        followTopic.setTopicId(tagClass.getId());
+        // 标题/图标以话题表为准，关注关系不再依赖前端传入的冗余标题
+        followTopic.setTopicTitle(tagClass.getTitle());
         followTopic.setTopicImage(tagClass.getImage());
         followTopic.setUserId(userId);
         followTopic.setCreateTime(System.currentTimeMillis());

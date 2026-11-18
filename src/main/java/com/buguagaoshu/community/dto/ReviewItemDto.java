@@ -54,7 +54,7 @@ public class ReviewItemDto {
 
     private String reviewSuggestion;
 
-    private String classification;
+    private Integer classification;
 
     private String tag;
 

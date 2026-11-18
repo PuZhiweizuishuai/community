@@ -152,6 +152,6 @@ public class SystemConfigService {
         updates.put(MAIL_IMPORTED, "true");
         long now = System.currentTimeMillis();
         updates.forEach((key, value) -> mapper.upsert(new SystemConfig(key, value, now)));
-        log.info("已将 yml/环境变量中的 SMTP 配置导入 system_config 表");
+        log.info("已将 yml/环境变量中的 SMTP 配置导入 system_configs 表");
     }
 }

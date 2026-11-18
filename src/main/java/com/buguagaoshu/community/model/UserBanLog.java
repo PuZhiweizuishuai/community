@@ -9,7 +9,7 @@ import lombok.Data;
  * 用户封禁流水。状态为 1 的记录表示当前生效的封禁，解封时置为 0。
  */
 @Data
-@Table(value = "user_ban_log", camelToUnderline = false)
+@Table(value = "user_ban_logs", camelToUnderline = false)
 public class UserBanLog {
 
     @Id(keyType = KeyType.Auto)

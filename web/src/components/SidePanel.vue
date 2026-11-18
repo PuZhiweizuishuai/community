@@ -36,7 +36,7 @@ watch(
       <div class="flex items-start gap-3">
         <img :src="assetUrl(tagClass.image)" :alt="tagClass.title" class="h-12 w-12 rounded-lg object-cover" />
         <div class="min-w-0">
-          <h3 class="font-semibold ui-text-strong">{{ tagClass.title }}</h3>
+          <RouterLink :to="`/topics/${tagClass.id}`" class="font-semibold ui-text-strong hover:text-indigo-600">{{ tagClass.title }}</RouterLink>
           <p class="line-clamp-2 mt-1 text-xs ui-text-base">{{ tagClass.simpleDesc || '暂无话题简介' }}</p>
         </div>
       </div>

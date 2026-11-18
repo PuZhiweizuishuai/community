@@ -71,4 +71,30 @@ public class ClassificationCache {
         }
         return false;
     }
+
+    /** 校验问题类型 code 是否存在且启用 */
+    public boolean isValidQuestionCode(Integer code) {
+        if (code == null || code <= 0) {
+            return false;
+        }
+        for (Classification item : questionTypes) {
+            if (item.getCode() != null && item.getCode().intValue() == code) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 问题类型 code → 名称（后台列表等只需要展示名称的场景） */
+    public String questionTypeName(Integer code) {
+        if (code == null) {
+            return "";
+        }
+        for (Classification item : questionTypes) {
+            if (item.getCode() != null && item.getCode().intValue() == code) {
+                return item.getName();
+            }
+        }
+        return QuestionClassType.getNameStr(code);
+    }
 }

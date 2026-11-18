@@ -10,7 +10,7 @@ import lombok.Data;
  * create          2019-10-27 16:40
  */
 @Data
-@Table(value = "followUser", camelToUnderline = false)
+@Table(value = "follow_users", camelToUnderline = false)
 public class FollowUser {
     @Id(keyType = KeyType.Auto)
     private long id;

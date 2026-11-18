@@ -13,6 +13,7 @@ import {
   X,
 } from '@lucide/vue'
 import { reviewApi } from '@/api'
+import { useMetaStore } from '@/stores/meta'
 import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import Pagination from '@/components/Pagination.vue'
@@ -22,6 +23,7 @@ const route = useRoute()
 const router = useRouter()
 const session = useSessionStore()
 const toast = useToastStore()
+const meta = useMetaStore()
 
 const type = computed(() => route.query.type || 'question')
 const status = computed(() => String(route.query.status ?? '0'))
@@ -154,7 +156,7 @@ async function confirmEdit() {
                   {{ item.title }}
                 </RouterLink>
                 <div class="mt-1 flex flex-wrap items-center gap-2 text-xs ui-text-muted">
-                  <span class="badge badge-outline badge-sm">{{ item.classification }}</span>
+                  <span class="badge badge-outline badge-sm">{{ meta.classificationLabel(item.classification) }}</span>
                   <span>{{ item.tag }}</span>
                 </div>
               </template>

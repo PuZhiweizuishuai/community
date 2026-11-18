@@ -11,7 +11,7 @@ import lombok.Data;
  * 关注话题
  */
 @Data
-@Table(value = "followTopic", camelToUnderline = false)
+@Table(value = "follow_topics", camelToUnderline = false)
 public class FollowTopic {
     @Id(keyType = KeyType.Auto)
     private long followTopicId;

@@ -10,7 +10,7 @@ import lombok.Data;
  * <p>{@code builtIn = 1} 为系统内置角色（超级管理员），不可删除、权限不可编辑。
  */
 @Data
-@Table(value = "sys_role", camelToUnderline = false)
+@Table(value = "sys_roles", camelToUnderline = false)
 public class SysRole {
 
     @Id(keyType = KeyType.Auto)

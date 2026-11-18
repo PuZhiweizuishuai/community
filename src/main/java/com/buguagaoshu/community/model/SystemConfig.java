@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(value = "system_config", camelToUnderline = false)
+@Table(value = "system_configs", camelToUnderline = false)
 public class SystemConfig {
     @Id(keyType = KeyType.None)
     private String configKey;

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Properties;
 
 /**
- * 邮件发送。SMTP 参数来自后台「系统配置」（system_config 表），
+ * 邮件发送。SMTP 参数来自后台「系统配置」（system_configs 表），
  * 未启用或未填写服务器地址时 isEnabled() 返回 false，调用方应给出明确提示。
  */
 @Service

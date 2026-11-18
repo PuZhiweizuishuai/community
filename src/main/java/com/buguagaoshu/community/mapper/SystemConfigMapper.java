@@ -15,7 +15,7 @@ public interface SystemConfigMapper extends BaseMapper<SystemConfig> {
      * BaseMapper#insertOrUpdate 在主键非空时只会执行 UPDATE，
      * 行不存在会静默影响 0 行，因此这里使用数据库原生 upsert。
      */
-    @Insert("insert into system_config(configKey, configValue, modifiedTime) " +
+    @Insert("insert into system_configs(configKey, configValue, modifiedTime) " +
             "values(#{configKey}, #{configValue}, #{modifiedTime}) " +
             "on duplicate key update configValue=values(configValue), modifiedTime=values(modifiedTime)")
     int upsert(SystemConfig config);

@@ -16,6 +16,7 @@ import com.buguagaoshu.community.service.FollowUserService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.service.TopicModerationService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,6 +47,7 @@ public class DiscoverApiController {
     private final FollowUserService followUserService;
     private final TagClassCache tagClassCache;
     private final SiteCacheService siteCache;
+    private final TopicModerationService topicModerationService;
 
     public DiscoverApiController(QuestionService questionService,
                                  UserService userService,
@@ -54,7 +56,8 @@ public class DiscoverApiController {
                                  FollowQuestionService followQuestionService,
                                  FollowUserService followUserService,
                                  TagClassCache tagClassCache,
-                                 SiteCacheService siteCache) {
+                                 SiteCacheService siteCache,
+                                 TopicModerationService topicModerationService) {
         this.siteCache = siteCache;
         this.questionService = questionService;
         this.userService = userService;
@@ -63,6 +66,7 @@ public class DiscoverApiController {
         this.followQuestionService = followQuestionService;
         this.followUserService = followUserService;
         this.tagClassCache = tagClassCache;
+        this.topicModerationService = topicModerationService;
     }
 
     /**
@@ -166,24 +170,52 @@ public class DiscoverApiController {
     }
 
     /**
-     * 话题详情（首页按标签筛选时右侧的话题卡片数据）。
+     * 话题详情（贴吧「吧」主页）：话题卡片 + 关注状态 + 吧务团队 + 当前用户吧务身份。
+     * 兼容旧链接：路径不是数字时按话题名称查找。
      */
-    @GetMapping("/topics/{title}")
-    public ResultDTO<Map<String, Object>> topicDetail(@PathVariable("title") String title,
+    @GetMapping("/topics/{id}")
+    public ResultDTO<Map<String, Object>> topicDetail(@PathVariable("id") String id,
                                                       HttpServletRequest request) {
-        Map<String, Object> data = new LinkedHashMap<>();
-        TagClass tagClass = tagClassCache.getTagClassMap() == null
-                ? null : tagClassCache.getTagClassMap().get(title);
-        data.put("tagClass", tagClass);
-        User user = AuthUtil.currentUser(request);
-        boolean followed = false;
-        if (tagClass != null && user != null) {
-            FollowTopic followTopic = new FollowTopic();
-            followTopic.setUserId(user.getId());
-            followTopic.setTopicId(tagClass.getId());
-            followed = followTopicService.isFollowTopic(followTopic);
+        TagClass tagClass;
+        try {
+            tagClass = tagClassCache.getById(Long.parseLong(id));
+        } catch (NumberFormatException e) {
+            tagClass = tagClassCache.getByTitle(id);
         }
-        data.put("followTag", followed);
+        if (tagClass == null) {
+            throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
+        }
+        User user = AuthUtil.currentUser(request);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("tagClass", tagClass);
+        data.put("followTag", isFollowed(user, tagClass.getId()));
+        data.put("moderators", topicModerationService.moderators(tagClass.getId()));
+        data.put("isModerator", topicModerationService.isModerator(user, tagClass.getId()));
         return ResultDTO.okOf(data);
+    }
+
+    /**
+     * 话题帖子流：置顶优先，支持标签筛选。
+     */
+    @GetMapping("/topics/{id}/questions")
+    public ResultDTO<PaginationDto<QuestionDto>> topicQuestions(
+            @PathVariable("id") long id,
+            @RequestParam(value = "page", defaultValue = "1") String page,
+            @RequestParam(value = "size", defaultValue = "15") String size,
+            @RequestParam(value = "tag", required = false) String tag) {
+        if (tagClassCache.getById(id) == null) {
+            throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
+        }
+        return ResultDTO.okOf(questionService.getTopicQuestions(id, page, size, tag));
+    }
+
+    private boolean isFollowed(User user, long topicId) {
+        if (user == null) {
+            return false;
+        }
+        FollowTopic followTopic = new FollowTopic();
+        followTopic.setUserId(user.getId());
+        followTopic.setTopicId(topicId);
+        return followTopicService.isFollowTopic(followTopic);
     }
 }

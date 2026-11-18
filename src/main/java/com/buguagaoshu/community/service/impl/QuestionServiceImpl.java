@@ -13,10 +13,12 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.QuestionContent;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.QuestionContentService;
 import com.buguagaoshu.community.service.QuestionService;
+import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.util.DateFormatUtil;
@@ -31,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,11 +61,13 @@ public class QuestionServiceImpl implements QuestionService {
 
     private final SystemConfigService systemConfigService;
 
+    private final QuestionTagService questionTagService;
+
     @Autowired
     public QuestionServiceImpl(QuestionMapper questionMapper, TagClassService tagClassService,
                                ClassificationCache classificationCache, NotificationService notificationService,
                                UserBatchLoader userBatchLoader, QuestionContentService questionContentService,
-                               SystemConfigService systemConfigService) {
+                               SystemConfigService systemConfigService, QuestionTagService questionTagService) {
         this.questionMapper = questionMapper;
         this.tagClassService = tagClassService;
         this.classificationCache = classificationCache;
@@ -72,14 +75,7 @@ public class QuestionServiceImpl implements QuestionService {
         this.userBatchLoader = userBatchLoader;
         this.questionContentService = questionContentService;
         this.systemConfigService = systemConfigService;
-    }
-
-    /**
-     * 分类编号 → 分类名称（动态分类表；缓存尚未加载时回退到旧枚举）。
-     * Questions.classification 存的是名称，重命名分类时后台会同步更新历史数据。
-     */
-    private String classificationName(int code) {
-        return classificationCache.questionName(code);
+        this.questionTagService = questionTagService;
     }
 
     /** 分页结果：分页参数必须是方法内局部状态，禁止写入单例字段（并发请求会互相踩踏） */
@@ -90,31 +86,33 @@ public class QuestionServiceImpl implements QuestionService {
      * 根据传入参数，返回相对应的问题列表。
      * 条件统一由 listCondition 构建，计数与列表共用同一份条件，避免 SQL 双份维护。
      */
-    private QuestionPage getQuestionList(String page, String size, String tag, Integer sort, Integer classification) {
-        String keyword = StringUtil.sanitizeSearchKeyword(tag);
-        if (StringUtils.isBlank(tag)) {
-            keyword = null;
-        }
-        String className = classification != 0 ? classificationName(classification) : null;
-        long allQuestionCount = questionMapper.selectCountByQuery(listCondition(sort, className, keyword));
+    private QuestionPage getQuestionList(String page, String size, String tag, Integer sort,
+                                         Integer classification, Long topicId) {
+        String tagName = StringUtils.trimToNull(tag);
+        Integer classCode = classification != null && classification != 0 ? classification : null;
+        long allQuestionCount = questionMapper.selectCountByQuery(listCondition(sort, classCode, tagName, topicId));
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
         List<Question> questionList = questionMapper.selectListByQuery(
-                listQuery(sort, className, keyword)
+                listQuery(sort, classCode, tagName, topicId)
                         .select(QuestionMapper.LIST_QUERY_COLUMNS)
                         .limit(param[0], param[1]));
         return new QuestionPage(questionList, param, allQuestionCount);
     }
 
-    /** 列表过滤条件：状态 + 审核状态 + 分类 + 标签关键字 + 零回复 */
-    private QueryWrapper listCondition(int sort, String className, String keyword) {
+    /** 列表过滤条件：状态 + 审核状态 + 类型 code + 话题 + 标签（仅已通过标签可命中） */
+    private QueryWrapper listCondition(int sort, Integer classification, String tagName, Long topicId) {
         QueryWrapper query = QueryWrapper.create()
                 .where(QUESTION.STATUS.eq(1))
                 .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()));
-        if (className != null) {
-            query.and(QUESTION.CLASSIFICATION.eq(className));
+        if (classification != null) {
+            query.and(QUESTION.CLASSIFICATION.eq(classification));
         }
-        if (keyword != null) {
-            query.and(QUESTION.TITLE.like(keyword).or(QUESTION.TAG.like(keyword)));
+        if (topicId != null && topicId > 0) {
+            query.and(QUESTION.TOPIC_ID.eq(topicId));
+        }
+        if (tagName != null) {
+            query.and("exists (select 1 from question_tags qt join tags t on t.id=qt.tagId " +
+                    "where qt.questionId=questions.questionId and t.status=1 and t.name=?)", tagName);
         }
         if (sort == QuestionSortType.NO_COMMENT.getType()) {
             query.and(QUESTION.COMMENT_COUNT.eq(0));
@@ -123,17 +121,17 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     /** 零回复与标签筛选按 questionId 倒序，首页最新按 alterTime 倒序（与索引匹配） */
-    private QueryWrapper listQuery(int sort, String className, String keyword) {
-        boolean byId = sort == QuestionSortType.NO_COMMENT.getType() || keyword != null;
-        return listCondition(sort, className, keyword)
+    private QueryWrapper listQuery(int sort, Integer classification, String tagName, Long topicId) {
+        boolean byId = sort == QuestionSortType.NO_COMMENT.getType() || tagName != null;
+        return listCondition(sort, classification, tagName, topicId)
                 .orderBy(byId ? QUESTION.QUESTION_ID.desc() : QUESTION.ALTER_TIME.desc());
     }
 
 
     @Override
     @Transactional
-    public int createQuestion(Question question, List<QuestionContent> contents) {
-        // description 只保留普通段落的公开副本，受保护内容不写入 Questions 表
+    public int createQuestion(Question question, List<QuestionContent> contents, List<String> tagNames) {
+        // description 只保留普通段落的公开副本，受保护内容不写入 questions 表
         question.setDescription(contents.stream()
                 .filter(c -> c.getType() == QuestionContentTypeEnum.NORMAL.getType())
                 .map(QuestionContent::getContent)
@@ -142,15 +140,18 @@ public class QuestionServiceImpl implements QuestionService {
         if (question.getQuestionId() == -1) {
             question.setCreateTime(System.currentTimeMillis());
             question.setAlterTime(System.currentTimeMillis());
+            question.setTag("");
             question.setReviewStatus(reviewRequired
                     ? ReviewStatusEnum.PENDING.getStatus() : ReviewStatusEnum.APPROVED.getStatus());
             int rows = questionMapper.createQuestion(question);
             questionContentService.replaceContents(question.getQuestionId(), contents);
+            // 标签关联与审核状态解耦：新标签先建关联，审核通过后自动公开显示
+            questionTagService.saveQuestionTags(question.getQuestionId(), tagNames, question.getUserId());
             if (reviewRequired) {
                 notifyReviewSubmitted(question, true);
             } else {
                 // 未开启审核：发布即可见，话题讨论数立即 +1
-                tagClassService.updateTalkCount(question.getTag(), 1);
+                tagClassService.updateTalkCount(question.getTopicId(), 1);
             }
             return rows;
         } else {
@@ -161,24 +162,29 @@ public class QuestionServiceImpl implements QuestionService {
                 log.info("有人尝试非法修改，修改被拦截！");
                 throw new CustomizeException(CustomizeErrorCode.INVALID_OPERATION);
             }
-            String regex = ",|，";
-            String[] newTags = question.getTag().split(regex);
-            String[] oldTags = oldQuestion.getTag().split(regex);
             question.setAlterTime(System.currentTimeMillis());
 
             boolean wasPublic = oldQuestion.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus();
             boolean willBePublic = !reviewRequired;
+            long oldTopicId = oldQuestion.getTopicId() == null ? 0 : oldQuestion.getTopicId();
+            long newTopicId = question.getTopicId() == null ? 0 : question.getTopicId();
             // 话题讨论数只统计公开展示的问题：进入审核先扣除，审核通过时再加回
-            if (wasPublic && willBePublic) {
-                tagClassService.alterQuestionTalkCount(newTags, oldTags);
-            } else if (wasPublic) {
-                tagClassService.updateTalkCount(oldQuestion.getTag(), -1);
-            } else if (willBePublic) {
-                tagClassService.updateTalkCount(question.getTag(), 1);
+            if (wasPublic && willBePublic && oldTopicId != newTopicId) {
+                if (oldTopicId > 0) {
+                    tagClassService.updateTalkCount(oldTopicId, -1);
+                }
+                if (newTopicId > 0) {
+                    tagClassService.updateTalkCount(newTopicId, 1);
+                }
+            } else if (wasPublic && !willBePublic && oldTopicId > 0) {
+                tagClassService.updateTalkCount(oldTopicId, -1);
+            } else if (!wasPublic && willBePublic && newTopicId > 0) {
+                tagClassService.updateTalkCount(newTopicId, 1);
             }
 
             int rows = questionMapper.updateQuestion(question);
             questionContentService.replaceContents(question.getQuestionId(), contents);
+            questionTagService.saveQuestionTags(question.getQuestionId(), tagNames, question.getUserId());
             question.setReviewStatus(willBePublic
                     ? ReviewStatusEnum.APPROVED.getStatus() : ReviewStatusEnum.PENDING.getStatus());
             // 修改同样需要重新审核，否则用户可以用「先发合规内容，通过后改违规内容」绕过审核
@@ -204,18 +210,35 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort, Integer classification, String cursor) {
+    public PaginationDto<QuestionDto> getSomeQuestionDto(String page, String size, String tag, Integer sort,
+                                                          Integer classification, Long topicId, String cursor) {
         // 游标分页：仅「最新 / 零回复」两种有序列表支持，避免深 offset 扫描
         if (cursor != null && !cursor.isBlank()
                 && (sort == QuestionSortType.NO_COMMENT.getType() || sort == QuestionSortType.NEW_QUESTION.getType())) {
-            return cursorPage(cursor, size, tag, sort, classification);
+            return cursorPage(cursor, size, tag, sort, classification, topicId);
         }
-        QuestionPage questionPage = getQuestionList(page, size, tag, sort, classification);
-        List<Question> questionList = questionPage.questions();
-        long[] param = questionPage.param();
+        QuestionPage questionPage = getQuestionList(page, size, tag, sort, classification, topicId);
+        List<QuestionDto> questionDtoList = toDtoList(questionPage.questions());
 
+        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(questionDtoList);
+        long[] param = questionPage.param();
+        if (param[2] == 0) {
+            param[2] = 1;
+        }
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(questionPage.allCount());
+        paginationDto.setNextCursor(nextCursorOf(questionPage.questions(), sort, param[3] < param[2]));
+        return paginationDto;
+    }
+
+    /** 列表 DTO 装配：批量取作者与已通过标签，避免 N+1 */
+    private List<QuestionDto> toDtoList(List<Question> questionList) {
         Map<Long, User> userMap = userBatchLoader.loadUsers(
                 questionList.stream().map(Question::getUserId).toList());
+        Map<Long, List<com.buguagaoshu.community.dto.QuestionTagDto>> tagMap =
+                questionTagService.approvedTagsOfQuestions(
+                        questionList.stream().map(Question::getQuestionId).toList());
 
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
@@ -224,18 +247,19 @@ public class QuestionServiceImpl implements QuestionService {
             questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
             questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
             questionDto.setUser(userMap.get(question.getUserId()));
+            questionDto.setTags(tagMap.getOrDefault(question.getQuestionId(), List.of()));
+            questionDto.setTopicTitle(topicTitle(question.getTopicId()));
             questionDtoList.add(questionDto.toListItem());
         }
+        return questionDtoList;
+    }
 
-        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
-        paginationDto.setData(questionDtoList);
-        if (param[2] == 0) {
-            param[2] = 1;
+    private String topicTitle(Long topicId) {
+        if (topicId == null || topicId <= 0) {
+            return null;
         }
-        paginationDto.setPagination(param[2], param[3], param[1]);
-        paginationDto.setAllCount(questionPage.allCount());
-        paginationDto.setNextCursor(nextCursorOf(questionList, sort, param[3] < param[2]));
-        return paginationDto;
+        TagClass tagClass = tagClassService.findById(topicId);
+        return tagClass == null ? null : tagClass.getTitle();
     }
 
     /** 列表末尾元素生成下一页游标；「最新」用 (alterTime, questionId) 复合游标防止同时间戳丢行 */
@@ -249,10 +273,12 @@ public class QuestionServiceImpl implements QuestionService {
                 : Long.toString(last.getQuestionId());
     }
 
-    private PaginationDto<QuestionDto> cursorPage(String cursor, String size, String tag, int sort, int classification) {
+    private PaginationDto<QuestionDto> cursorPage(String cursor, String size, String tag, int sort,
+                                                  Integer classification, Long topicId) {
         long n = NumberUtils.getPageAndSize("1", size, 0)[1];
-        String className = classification != 0 ? classificationName(classification) : null;
-        String keyword = StringUtils.isBlank(tag) ? null : StringUtil.sanitizeSearchKeyword(tag);
+        Integer classCode = classification != null && classification != 0 ? classification : null;
+        String tagName = StringUtils.trimToNull(tag);
+        Long topic = topicId != null && topicId > 0 ? topicId : null;
 
         List<Question> fetched;
         try {
@@ -260,9 +286,9 @@ public class QuestionServiceImpl implements QuestionService {
             if (sort == QuestionSortType.NEW_QUESTION.getType()) {
                 long alterTime = Long.parseLong(parts[0]);
                 long questionId = parts.length > 1 ? Long.parseLong(parts[1]) : Long.MAX_VALUE;
-                fetched = questionMapper.getQuestionsByAlterTimeCursor(alterTime, questionId, className, keyword, n + 1, 1);
+                fetched = questionMapper.getQuestionsByAlterTimeCursor(alterTime, questionId, classCode, topic, tagName, n + 1, 1);
             } else {
-                fetched = questionMapper.getNoCommentQuestionsByCursor(Long.parseLong(parts[0]), className, keyword, n + 1, 1);
+                fetched = questionMapper.getNoCommentQuestionsByCursor(Long.parseLong(parts[0]), classCode, topic, tagName, n + 1, 1);
             }
         } catch (NumberFormatException e) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
@@ -270,27 +296,15 @@ public class QuestionServiceImpl implements QuestionService {
         boolean hasMore = fetched.size() > n;
         List<Question> questionList = hasMore ? fetched.subList(0, (int) n) : fetched;
 
-        Map<Long, User> userMap = userBatchLoader.loadUsers(
-                questionList.stream().map(Question::getUserId).toList());
-        List<QuestionDto> questionDtoList = new ArrayList<>();
-        for (Question question : questionList) {
-            QuestionDto questionDto = new QuestionDto();
-            BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
-            questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
-            questionDto.setUser(userMap.get(question.getUserId()));
-            questionDtoList.add(questionDto.toListItem());
-        }
-
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
-        paginationDto.setData(questionDtoList);
-        paginationDto.setAllCount(countQuestions(sort, className, keyword));
+        paginationDto.setData(toDtoList(questionList));
+        paginationDto.setAllCount(countQuestions(sort, classCode, tagName, topic));
         paginationDto.setNextCursor(nextCursorOf(questionList, sort, hasMore));
         return paginationDto;
     }
 
-    private long countQuestions(int sort, String className, String keyword) {
-        return questionMapper.selectCountByQuery(listCondition(sort, className, keyword));
+    private long countQuestions(int sort, Integer classification, String tagName, Long topicId) {
+        return questionMapper.selectCountByQuery(listCondition(sort, classification, tagName, topicId));
     }
 
     @Override
@@ -306,6 +320,9 @@ public class QuestionServiceImpl implements QuestionService {
 
         Map<Long, User> userMap = userBatchLoader.loadUsers(
                 questionList.stream().map(Question::getUserId).toList(), true);
+        Map<Long, List<com.buguagaoshu.community.dto.QuestionTagDto>> tagMap =
+                questionTagService.approvedTagsOfQuestions(
+                        questionList.stream().map(Question::getQuestionId).toList());
 
         List<QuestionDto> questionDtoList = new ArrayList<>();
         for (Question question : questionList) {
@@ -315,6 +332,8 @@ public class QuestionServiceImpl implements QuestionService {
             questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
             // 个人主页的问题列表同样需要作者信息，否则前端头像与 /user/{userId} 链接会变成 undefined
             questionDto.setUser(userMap.get(question.getUserId()));
+            questionDto.setTags(tagMap.getOrDefault(question.getQuestionId(), List.of()));
+            questionDto.setTopicTitle(topicTitle(question.getTopicId()));
             questionDtoList.add(questionDto.toListItem());
         }
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
@@ -323,6 +342,20 @@ public class QuestionServiceImpl implements QuestionService {
         paginationDto.setAllCount(allQuestionCount);
         return paginationDto;
 
+    }
+
+    @Override
+    public PaginationDto<QuestionDto> getTopicQuestions(long topicId, String page, String size, String tag) {
+        String tagName = StringUtils.trimToNull(tag);
+        long total = questionMapper.countTopicQuestions(topicId, tagName);
+        long[] param = NumberUtils.getPageAndSize(page, size, total);
+        List<Question> questionList = questionMapper.selectTopicQuestions(topicId, tagName, param[0], param[1]);
+
+        PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(toDtoList(questionList));
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        paginationDto.setAllCount(total);
+        return paginationDto;
     }
 
     @Override
@@ -348,6 +381,7 @@ public class QuestionServiceImpl implements QuestionService {
         questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
         questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
         questionDto.setUser(user);
+        questionDto.setTopicTitle(topicTitle(question.getTopicId()));
         return questionDto;
     }
 
@@ -383,18 +417,7 @@ public class QuestionServiceImpl implements QuestionService {
         } catch (Exception e) {
             return List.of();
         }
-        String tag = questionMapper.selectTagById(id);
-        if (tag == null || tag.isBlank()) {
-            return List.of();
-        }
-        List<String> tags = Arrays.stream(tag.split(",|，"))
-                .map(StringUtil::sanitizeSearchKeyword)
-                .filter(Objects::nonNull)
-                .toList();
-        if (tags.isEmpty()) {
-            return List.of();
-        }
-        return questionMapper.getRelevantQuestion(tags, id, 10, 1);
+        return questionMapper.getRelevantQuestion(id, 10, 1);
     }
 
     @Override
@@ -433,18 +456,6 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public PaginationDto<QuestionDto> searchAllQuestionList(String search, String page, String size) {
-        String keyword = StringUtil.sanitizeFulltextKeyword(search);
-        if (keyword == null) {
-            return paginationDto(List.of(), 0, NumberUtils.getPageAndSize(page, size, 0));
-        }
-        long allQuestionCount = questionMapper.fulltextSearchAllQuestionListCount(keyword);
-        long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-        List<Question> questionList = questionMapper.fulltextSearchAllQuestionList(keyword, param[0], param[1]);
-        return paginationDto(questionList, allQuestionCount, param);
-    }
-
-    @Override
     public long getUserQuestionCount(long id, int status) {
         return questionMapper.selectCountByQuery(QueryWrapper.create()
                 .where(QUESTION.USER_ID.eq(id)).and(QUESTION.STATUS.eq(status)));
@@ -471,8 +482,9 @@ public class QuestionServiceImpl implements QuestionService {
         notificationService.notifyQuestionStatusChange(question, operator.getId(),
                 NotificationTypeEnum.SYSTEM_DELETE_QUESTION, NotificationTypeEnum.SYSTEM_DELETE_COMMENT);
         // 只有公开展示过的问题才计入话题讨论数
-        if (question.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()) {
-            tagClassService.updateTalkCount(question.getTag(), -1);
+        if (question.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()
+                && question.getTopicId() != null && question.getTopicId() > 0) {
+            tagClassService.updateTalkCount(question.getTopicId(), -1);
         }
         questionMapper.alterStatus(questionId, 0);
         log.info("{} {} 删除了问题 {}", isAdmin ? "管理员" : "用户", operator.getId(), questionId);
@@ -490,8 +502,9 @@ public class QuestionServiceImpl implements QuestionService {
         }
         notificationService.notifyQuestionStatusChange(question, admin.getId(),
                 NotificationTypeEnum.SYSTEM_RESET_QUESTION, NotificationTypeEnum.SYSTEM_RESET_COMMENT);
-        if (question.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()) {
-            tagClassService.updateTalkCount(question.getTag(), 1);
+        if (question.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()
+                && question.getTopicId() != null && question.getTopicId() > 0) {
+            tagClassService.updateTalkCount(question.getTopicId(), 1);
         }
         questionMapper.alterStatus(questionId, 1);
         log.info("管理员 {} 恢复了问题 {}", admin.getId(), questionId);

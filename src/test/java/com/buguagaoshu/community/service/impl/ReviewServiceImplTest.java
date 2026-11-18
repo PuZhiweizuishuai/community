@@ -69,7 +69,7 @@ class ReviewServiceImplTest {
         service.approve("question", 10, admin);
 
         // 审核通过后才计入话题讨论数，并通知作者
-        verify(tagClassService).updateTalkCount("Java", 1);
+        verify(tagClassService).updateTalkCount(5L, 1);
         verify(notificationService).createSystemNotification(eq(7L), eq(99L), eq(10L), eq(-1L),
                 eq(NotificationTypeEnum.REVIEW_QUESTION_PASS.getType()), anyString());
         verify(reviewLogMapper).insertSelective(any(ContentReviewLog.class));
@@ -86,7 +86,7 @@ class ReviewServiceImplTest {
                 () -> service.approve("question", 10, admin));
 
         assertEquals(CustomizeErrorCode.REVIEW_ALREADY_HANDLED.getCode(), e.getCode());
-        verify(tagClassService, never()).updateTalkCount(anyString(), anyInt());
+        verify(tagClassService, never()).updateTalkCount(anyLong(), anyInt());
         verify(notificationService, never()).createSystemNotification(anyLong(), anyLong(), anyLong(), anyLong(),
                 anyInt(), anyString());
     }
@@ -171,6 +171,7 @@ class ReviewServiceImplTest {
         Question question = new Question();
         question.setQuestionId(id);
         question.setUserId(userId);
+        question.setTopicId(5L);
         question.setTag(tag);
         question.setTitle("待审核问题");
         question.setStatus(1);

@@ -10,7 +10,7 @@ import lombok.Data;
  * create          2019-08-25 18:57
  */
 @Data
-@Table(value = "comment", camelToUnderline = false)
+@Table(value = "comments", camelToUnderline = false)
 public class Comment {
     /**
      * 评论 id

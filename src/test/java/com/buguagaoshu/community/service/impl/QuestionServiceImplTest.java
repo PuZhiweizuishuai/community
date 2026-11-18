@@ -12,6 +12,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.QuestionContentService;
+import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.service.TagClassService;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,14 +55,17 @@ class QuestionServiceImplTest {
         userBatchLoader = mock(UserBatchLoader.class);
         QuestionContentService questionContentService = mock(QuestionContentService.class);
         SystemConfigService systemConfigService = mock(SystemConfigService.class);
+        QuestionTagService questionTagService = mock(QuestionTagService.class);
+        when(questionTagService.approvedTagsOfQuestions(any())).thenReturn(Map.of());
         when(systemConfigService.isReviewEnabled()).thenReturn(false);
         service = new QuestionServiceImpl(questionMapper, tagClassService, classificationCache,
-                notificationService, userBatchLoader, questionContentService, systemConfigService);
+                notificationService, userBatchLoader, questionContentService, systemConfigService, questionTagService);
 
         question = new Question();
         question.setQuestionId(10);
         question.setUserId(1);
         question.setStatus(1);
+        question.setTopicId(5L);
         question.setTag("Java");
         when(questionMapper.selectOneById(10L)).thenReturn(question);
 
@@ -82,7 +86,7 @@ class QuestionServiceImplTest {
         service.deleteQuestion(10, owner, false);
         verify(notificationService).notifyQuestionStatusChange(eq(question), eq(1L),
                 eq(NotificationTypeEnum.SYSTEM_DELETE_QUESTION), eq(NotificationTypeEnum.SYSTEM_DELETE_COMMENT));
-        verify(tagClassService).updateTalkCount("Java", -1);
+        verify(tagClassService).updateTalkCount(5L, -1);
         verify(questionMapper).alterStatus(10, 0);
     }
 
@@ -104,14 +108,14 @@ class QuestionServiceImplTest {
     void deletingAlreadyDeletedRejected() {
         question.setStatus(0);
         assertThrows(CustomizeException.class, () -> service.deleteQuestion(10, owner, false));
-        verify(tagClassService, never()).updateTalkCount(any(), eq(-1));
+        verify(tagClassService, never()).updateTalkCount(anyLong(), eq(-1));
     }
 
     @Test
     void recoveryRestoresStatusAndCount() {
         question.setStatus(0);
         service.recoveryQuestion(10, admin);
-        verify(tagClassService).updateTalkCount("Java", 1);
+        verify(tagClassService).updateTalkCount(5L, 1);
         verify(questionMapper).alterStatus(10, 1);
     }
 
@@ -133,12 +137,12 @@ class QuestionServiceImplTest {
             q.setCreateTime(1000 - i);
             fetched.add(q);
         }
-        when(questionMapper.getQuestionsByAlterTimeCursor(eq(2000L), eq(500L), isNull(), isNull(), eq(16L), eq(1)))
+        when(questionMapper.getQuestionsByAlterTimeCursor(eq(2000L), eq(500L), isNull(), isNull(), isNull(), eq(16L), eq(1)))
                 .thenReturn(fetched);
         when(questionMapper.selectCountByQuery(any())).thenReturn(100L);
         when(userBatchLoader.loadUsers(any())).thenReturn(Map.of());
 
-        PaginationDto<QuestionDto> page = service.getSomeQuestionDto("1", "15", null, 3, 0, "2000:500");
+        PaginationDto<QuestionDto> page = service.getSomeQuestionDto("1", "15", null, 3, 0, null, "2000:500");
 
         assertEquals(15, page.getData().size());
         Question last = fetched.get(14);
@@ -153,12 +157,12 @@ class QuestionServiceImplTest {
         q.setUserId(1);
         q.setAlterTime(100);
         q.setCreateTime(100);
-        when(questionMapper.getQuestionsByAlterTimeCursor(anyLong(), anyLong(), isNull(), isNull(), anyLong(), eq(1)))
+        when(questionMapper.getQuestionsByAlterTimeCursor(anyLong(), anyLong(), isNull(), isNull(), isNull(), anyLong(), eq(1)))
                 .thenReturn(List.of(q));
         when(questionMapper.selectCountByQuery(any())).thenReturn(1L);
         when(userBatchLoader.loadUsers(any())).thenReturn(Map.of());
 
-        PaginationDto<QuestionDto> page = service.getSomeQuestionDto("1", "15", null, 3, 0, "2000:500");
+        PaginationDto<QuestionDto> page = service.getSomeQuestionDto("1", "15", null, 3, 0, null, "2000:500");
 
         assertNull(page.getNextCursor());
     }
@@ -166,6 +170,6 @@ class QuestionServiceImplTest {
     @Test
     void invalidCursorRejected() {
         assertThrows(CustomizeException.class,
-                () -> service.getSomeQuestionDto("1", "15", null, 3, 0, "not-a-cursor"));
+                () -> service.getSomeQuestionDto("1", "15", null, 3, 0, null, "not-a-cursor"));
     }
 }

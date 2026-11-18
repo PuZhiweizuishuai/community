@@ -13,6 +13,7 @@ import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.model.Advertisement;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.AdminDataService;
+import com.buguagaoshu.community.service.AdminOverviewService;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.service.LogService;
 import com.buguagaoshu.community.service.OnlineUserService;
@@ -23,7 +24,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,6 +53,7 @@ public class AdminPageApiController {
     }
 
     private final AdminDataService adminDataService;
+    private final AdminOverviewService adminOverviewService;
     private final QuestionService questionService;
     private final UserService userService;
     private final OnlineUserService onlineUserService;
@@ -60,12 +61,14 @@ public class AdminPageApiController {
     private final AdvertisementService advertisementService;
 
     public AdminPageApiController(AdminDataService adminDataService,
+                                  AdminOverviewService adminOverviewService,
                                   QuestionService questionService,
                                   UserService userService,
                                   OnlineUserService onlineUserService,
                                   LogService logService,
                                   AdvertisementService advertisementService) {
         this.adminDataService = adminDataService;
+        this.adminOverviewService = adminOverviewService;
         this.questionService = questionService;
         this.userService = userService;
         this.onlineUserService = onlineUserService;
@@ -96,6 +99,7 @@ public class AdminPageApiController {
         data.put("userNumber", userService.getAlluserCount());
         data.put("questionNumber", questionService.getAllQuestionCount());
         data.put("onlineUser", onlineUserService.selectOnlineUserCount());
+        data.put("overview", adminOverviewService.overview());
         PaginationDto<AdminDataDTO> pagination = adminDataService.selectAdminData(page, size);
         data.put("pagination", pagination);
         return ResultDTO.okOf(data);
@@ -119,32 +123,6 @@ public class AdminPageApiController {
             HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
         return ResultDTO.okOf(questionService.getAllQuestionList(page, size));
-    }
-
-    /** 后台搜索，按 type 返回问题或用户分页 */
-    @GetMapping("/search")
-    @RequirePermission(PermissionCodes.ADMIN_SEARCH)
-    public ResultDTO<Map<String, Object>> search(
-            @RequestParam(value = "page", defaultValue = "1") String page,
-            @RequestParam(value = "size", defaultValue = "20") String size,
-            @RequestParam(value = "type", defaultValue = "question") String type,
-            @RequestParam(value = "search", required = false) String keyword,
-            HttpServletRequest request) {
-        AuthUtil.requireAdmin(request);
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("search", keyword);
-        data.put("type", type);
-        if (StringUtils.isBlank(keyword)) {
-            data.put("questions", null);
-            data.put("users", null);
-            return ResultDTO.okOf(data);
-        }
-        // LIKE 搜索：关键字清洗在各 Service 内完成，这里不再拼接正则
-        data.put("questions", "question".equals(type)
-                ? questionService.searchAllQuestionList(keyword, page, size) : null);
-        data.put("users", "user".equals(type)
-                ? userService.searchUser(keyword, page, size) : null);
-        return ResultDTO.okOf(data);
     }
 
     /** 控制面板：日志列表 */

@@ -11,7 +11,7 @@ import lombok.Data;
  * create          2019-10-27 14:29
  */
 @Data
-@Table(value = "followQuestion", camelToUnderline = false)
+@Table(value = "follow_questions", camelToUnderline = false)
 public class FollowQuestion {
     @Id(keyType = KeyType.Auto)
     private long id;

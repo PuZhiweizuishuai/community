@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 @Component(value = "SysRoleMapper")
 public interface SysRoleMapper extends BaseMapper<SysRole> {
 
-    @Select("SELECT * FROM sys_role WHERE code = #{code}")
+    @Select("SELECT * FROM sys_roles WHERE code = #{code}")
     SysRole selectByCode(@Param("code") String code);
 
-    @Select("SELECT * FROM sys_role WHERE name = #{name}")
+    @Select("SELECT * FROM sys_roles WHERE name = #{name}")
     SysRole selectByName(@Param("name") String name);
 }
