@@ -1,11 +1,16 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.FileRecordDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.repository.FileRepository;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.mybatisflex.core.paginate.Page;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,9 +26,12 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/file")
+@RequirePermission(PermissionCodes.ADMIN_FILE)
 public class FileAdminApiController {
 
-    public record IdRequest(long id) {
+    public record IdRequest(
+            @NotNull(message = "文件 ID 不能为空")
+            @Positive(message = "文件 ID 不合法") Long id) {
     }
 
     private final FileRepository fileRepository;
@@ -53,7 +61,7 @@ public class FileAdminApiController {
     }
 
     @PostMapping("/delete")
-    public ResultDTO<Object> delete(@RequestBody IdRequest body, HttpServletRequest request) {
+    public ResultDTO<Object> delete(@Valid @RequestBody IdRequest body, HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
         fileRepository.deleteById(body.id());
         return ResultDTO.okOf();

@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.cache.ClassificationCache;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
@@ -11,6 +13,9 @@ import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,7 +39,14 @@ import static com.buguagaoshu.community.model.table.TagClassTableDef.TAG_CLASS;
  */
 @RestController
 @RequestMapping("/api/admin/topics")
+@RequirePermission(PermissionCodes.ADMIN_TOPIC)
 public class TopicAdminApiController {
+
+    /** 只含 id 的强类型请求体，替代 Map 收参 */
+    public record IdRequest(
+            @NotNull(message = "话题 ID 不能为空")
+            @Positive(message = "话题 ID 不合法") Long id) {
+    }
 
     private final TagClassMapper tagClassMapper;
     private final TagClassTasks tagClassTasks;
@@ -134,14 +146,10 @@ public class TopicAdminApiController {
      * 删除话题（物理删除）。已有帖子仍保留原标签文本，不会再命中话题缓存。
      */
     @PostMapping("/delete")
-    public ResultDTO<Map<String, Object>> delete(@RequestBody Map<String, Object> body,
+    public ResultDTO<Map<String, Object>> delete(@Valid @RequestBody IdRequest body,
                                                  HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        long id = parseId(body.get("id"));
-        if (id <= 0) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
-        }
-        int rows = tagClassMapper.deleteById(id);
+        int rows = tagClassMapper.deleteById(body.id());
         tagClassTasks.TagClassCache();
         siteCache.invalidate(SiteCacheService.TOPICS);
         siteCache.invalidate(SiteCacheService.META + "tagClasses");
@@ -156,16 +164,5 @@ public class TopicAdminApiController {
         siteCache.invalidate(SiteCacheService.TOPICS);
         siteCache.invalidate(SiteCacheService.META + "tagClasses");
         return ResultDTO.okOf(Map.of("refreshed", true));
-    }
-
-    private long parseId(Object value) {
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        try {
-            return Long.parseLong(String.valueOf(value));
-        } catch (Exception e) {
-            return -1;
-        }
     }
 }

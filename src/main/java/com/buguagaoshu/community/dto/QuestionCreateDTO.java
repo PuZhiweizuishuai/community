@@ -3,6 +3,7 @@ package com.buguagaoshu.community.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -16,7 +17,9 @@ public class QuestionCreateDTO {
     @NotBlank(message = "标题不能为空")
     @Size(max = 50, message = "标题不能超过 50 个字符")
     private String title;
+    /** 兼容旧前端把空分类序列化成字符串 "null" 的情况 */
     @NotBlank(message = "请选择问题分类")
+    @Pattern(regexp = "^(?!null$).+$", message = "请选择问题分类")
     private String classification;
     /**
      * 内容段落，1 ~ 3 个，按数组顺序展示

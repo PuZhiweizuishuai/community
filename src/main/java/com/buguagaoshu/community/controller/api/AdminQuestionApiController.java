@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.cache.IndexTopQuestion;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
@@ -11,9 +13,13 @@ import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.StringUtil;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,10 +61,8 @@ public class AdminQuestionApiController {
 
 
     @PostMapping("/api/admin/delete/question")
-    public ResultDTO<Object> deleteQuestion(Long questionId, HttpServletRequest request) {
-        if (questionId == null) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-        }
+    public ResultDTO<Object> deleteQuestion(@RequestParam("questionId") Long questionId,
+                                            HttpServletRequest request) {
         User admin = AuthUtil.currentAdmin(request);
         User user = AuthUtil.currentUser(request);
         if (admin == null && user == null) {
@@ -75,10 +79,9 @@ public class AdminQuestionApiController {
 
 
     @PostMapping("/api/admin/recovery/question")
-    public ResultDTO<Object> recoveryQuestion(Long questionId, HttpServletRequest request) {
-        if (questionId == null) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-        }
+    @RequirePermission(PermissionCodes.ADMIN_QUESTION)
+    public ResultDTO<Object> recoveryQuestion(@RequestParam("questionId") Long questionId,
+                                              HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
         try {
             questionService.recoveryQuestion(questionId, admin);
@@ -89,13 +92,17 @@ public class AdminQuestionApiController {
     }
 
 
+    /** power 仅保留用户等级语义：1 普通用户 / 2 VIP；管理员身份改为 RBAC 角色分配 */
     @PostMapping("/api/admin/update/user")
-    public ResultDTO<Object> alterUserPower(Long userId, Integer power, HttpServletRequest request) {
+    @RequirePermission(PermissionCodes.ADMIN_USER)
+    public ResultDTO<Object> alterUserPower(
+            @RequestParam("userId") Long userId,
+            @RequestParam("power")
+            @Min(value = 1, message = "用户等级仅支持普通用户（1）或 VIP（2），管理员请通过角色分配")
+            @Max(value = 2, message = "用户等级仅支持普通用户（1）或 VIP（2），管理员请通过角色分配")
+            Integer power,
+            HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
-        // power 取值：0 管理员 / 1 普通用户 / 2 VIP
-        if (userId == null || power == null || power < 0 || power > 2) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-        }
         User user = userService.selectUserById(userId);
         if (user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND);
@@ -105,11 +112,10 @@ public class AdminQuestionApiController {
     }
 
     @PostMapping("/api/admin/reset/password")
-    public ResultDTO<Map<String, Object>> resetUserPassword(Long userId, HttpServletRequest request) {
+    @RequirePermission(PermissionCodes.ADMIN_USER)
+    public ResultDTO<Map<String, Object>> resetUserPassword(@RequestParam("userId") Long userId,
+                                                            HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
-        if (userId == null) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-        }
         User user = userService.selectUserById(userId);
         if (user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND);
@@ -124,17 +130,18 @@ public class AdminQuestionApiController {
 
 
     @PostMapping("/api/admin/settingTopQuestion")
-    public ResultDTO<Object> settingTopQuestion(Long id1, Long id2, Long id3, HttpServletRequest request) {
+    @RequirePermission(PermissionCodes.ADMIN_QUESTION)
+    public ResultDTO<Object> settingTopQuestion(
+            @RequestParam(value = "id1", required = false) @Positive(message = "置顶问题 ID 不合法") Long id1,
+            @RequestParam(value = "id2", required = false) @Positive(message = "置顶问题 ID 不合法") Long id2,
+            @RequestParam(value = "id3", required = false) @Positive(message = "置顶问题 ID 不合法") Long id3,
+            HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
         List<Long> ids = new ArrayList<>();
         for (Long id : new Long[]{id1, id2, id3}) {
-            if (id == null) {
-                continue;
+            if (id != null) {
+                ids.add(id);
             }
-            if (id < 0) {
-                return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-            }
-            ids.add(id);
         }
         if (ids.isEmpty()) {
             return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);

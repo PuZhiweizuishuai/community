@@ -7,6 +7,7 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.SignInService;
+import com.buguagaoshu.community.service.UserBanService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,28 +39,37 @@ public class AuthApiController {
     private final SignInService signInService;
     private final NotificationService notificationService;
     private final OnlineUserService onlineUserService;
+    private final UserBanService userBanService;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
 
     public AuthApiController(SignInService signInService,
                              NotificationService notificationService,
-                             OnlineUserService onlineUserService) {
+                             OnlineUserService onlineUserService,
+                             UserBanService userBanService) {
         this.signInService = signInService;
         this.notificationService = notificationService;
         this.onlineUserService = onlineUserService;
+        this.userBanService = userBanService;
     }
 
     /**
-     * 当前登录用户（含未读消息数、后台管理员态）。前端启动时调用一次。
+     * 当前登录用户（含未读消息数、后台权限）。前端启动时调用一次。
+     *
+     * <p>是否管理员由 RBAC 权限决定，因此同时返回 permissions，供前端路由守卫与菜单渲染。
      */
     @GetMapping("/session")
     public ResultDTO<Map<String, Object>> session(HttpServletRequest request) {
         User user = AuthUtil.currentUser(request);
         User admin = AuthUtil.currentAdmin(request);
+        Map<String, Object> ban = user == null ? null : userBanService.banInfo(user.getId());
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("user", AuthUtil.safeUser(user));
         data.put("admin", AuthUtil.safeUser(admin));
+        data.put("permissions", AuthUtil.permissionsOf(user));
+        data.put("banned", ban != null && Boolean.TRUE.equals(ban.get("banned")));
+        data.put("ban", ban);
         data.put("notificationCount", user == null ? 0L
                 : notificationService.getAllNotificationNoReadNumber(user.getId()));
         data.put("loggedIn", user != null);

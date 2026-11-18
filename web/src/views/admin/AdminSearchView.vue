@@ -1,10 +1,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ChevronDown, Crown, RotateCcw, Search, ShieldCheck, Trash2, UserRound } from '@lucide/vue'
+import { ChevronDown, Crown, RotateCcw, Search, Trash2, UserRound } from '@lucide/vue'
 import { adminApi, questionApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
-import { statusLabel, powerLabel } from '@/utils/format'
+import { statusLabel } from '@/utils/format'
 import Avatar from '@/components/Avatar.vue'
 import Pagination from '@/components/Pagination.vue'
 
@@ -40,7 +40,7 @@ async function recover(id) {
 }
 async function setPower(user, power) {
   await adminApi.updateUserPower(user.id, power)
-  toast.success('权限已更新')
+  toast.success('用户等级已更新')
   await load()
 }
 </script>
@@ -81,25 +81,34 @@ async function setPower(user, power) {
 
     <div v-else class="overflow-x-auto">
       <table class="table table-sm">
-        <thead><tr><th>用户</th><th>账号</th><th>邮箱</th><th>权限</th><th>操作</th></tr></thead>
+        <thead><tr><th>用户</th><th>账号</th><th>邮箱</th><th>角色</th><th>等级</th><th>操作</th></tr></thead>
         <tbody>
           <tr v-for="user in data?.users?.data || []" :key="user.id">
             <td><RouterLink :to="`/user/${user.userId}`" class="flex items-center gap-2"><Avatar :src="user.headUrl" :name="user.userName" :size="26" />{{ user.userName }}</RouterLink></td>
             <td>{{ user.userId }}</td>
             <td class="text-xs">{{ user.email }}</td>
-            <td><span class="badge badge-sm badge-ghost">{{ powerLabel(user.power) }}</span></td>
+            <td>
+              <div v-if="user.roleNames?.length" class="flex flex-wrap gap-1">
+                <span v-for="name in user.roleNames" :key="name" class="badge badge-sm badge-outline">{{ name }}</span>
+              </div>
+              <span v-else class="text-xs ui-text-muted">未分配</span>
+            </td>
+            <td>
+              <span class="badge badge-sm" :class="user.power === 2 ? 'badge-warning' : 'badge-ghost'">
+                {{ user.power === 2 ? 'VIP' : '普通用户' }}
+              </span>
+            </td>
             <td>
               <div class="dropdown">
-                <button tabindex="0" class="btn btn-ghost btn-xs">权限 <ChevronDown class="size-3" /></button>
+                <button tabindex="0" class="btn btn-ghost btn-xs">等级 <ChevronDown class="size-3" /></button>
                 <ul tabindex="0" class="menu dropdown-content menu-xs z-30 w-32 rounded-box border ui-border ui-bg p-2 shadow-lg">
-                  <li><button type="button" @click="setPower(user, 0)"><ShieldCheck class="size-3.5" />管理员</button></li>
                   <li><button type="button" @click="setPower(user, 2)"><Crown class="size-3.5" />VIP</button></li>
                   <li><button type="button" @click="setPower(user, 1)"><UserRound class="size-3.5" />普通</button></li>
                 </ul>
               </div>
             </td>
           </tr>
-          <tr v-if="!data?.users?.data?.length"><td colspan="5" class="text-center ui-text-muted">没有匹配的用户</td></tr>
+          <tr v-if="!data?.users?.data?.length"><td colspan="6" class="text-center ui-text-muted">没有匹配的用户</td></tr>
         </tbody>
       </table>
       <Pagination :pagination="data?.users" @change="go({ page: $event })" />

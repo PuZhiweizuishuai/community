@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { TriangleAlert } from '@lucide/vue'
 import { onLoadingChange } from '@/api/request'
+import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import { useMetaStore } from '@/stores/meta'
 import { useThemeStore } from '@/stores/theme'
@@ -15,6 +17,7 @@ const route = useRoute()
 const toast = useToastStore()
 const meta = useMetaStore()
 const theme = useThemeStore()
+const session = useSessionStore()
 
 theme.init()
 
@@ -57,6 +60,12 @@ const adminArea = computed(() => !!route.meta.adminArea && !bare.value)
 
     <template v-else>
       <AppHeader />
+      <div v-if="session.banned" class="page-container mt-3">
+        <div class="alert alert-error py-2 text-sm">
+          <TriangleAlert class="size-4 shrink-0" />
+          <span>{{ session.banMessage || '账号已被封禁，暂时无法发布、评论或上传文件' }}</span>
+        </div>
+      </div>
       <!-- 底部导航栏在 lg 以下常驻，预留空间避免遮挡内容与页脚 -->
       <main class="flex-1 pt-4 pb-24 sm:pt-6 lg:pb-6">
         <RouterView v-slot="{ Component }">

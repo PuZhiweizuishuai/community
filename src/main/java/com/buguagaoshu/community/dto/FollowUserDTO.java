@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 /**
@@ -8,6 +10,9 @@ import lombok.Data;
  */
 @Data
 public class FollowUserDTO {
+    @NotNull(message = "用户 ID 不能为空")
+    @Positive(message = "用户 ID 不合法")
     private Long followUserId;
+
     private String token;
 }

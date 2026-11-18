@@ -7,6 +7,7 @@ import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
+import com.buguagaoshu.community.service.UserBanService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.JwtUtil;
@@ -37,6 +38,7 @@ class SignInServiceImplTest {
     private UserPermissionService userPermissionService;
     private OnlineUserService onlineUserService;
     private RateLimitService rateLimitService;
+    private UserBanService userBanService;
     private SignInServiceImpl signInService;
     private MockedStatic<CaptchaUtil> captchaMock;
     private MockHttpServletRequest request;
@@ -47,10 +49,11 @@ class SignInServiceImplTest {
         userPermissionService = mock(UserPermissionService.class);
         onlineUserService = mock(OnlineUserService.class);
         rateLimitService = mock(RateLimitService.class);
+        userBanService = mock(UserBanService.class);
         JwtUtil jwtUtil = new JwtUtil();
         jwtUtil.setKey("test-secret-key-0123456789-0123456789-abcdef");
         signInService = new SignInServiceImpl(userPermissionService, userService,
-                onlineUserService, jwtUtil, rateLimitService);
+                onlineUserService, jwtUtil, rateLimitService, userBanService);
         ReflectionTestUtils.setField(signInService, "defaultTtlMillis", 7_200_000L);
         captchaMock = mockStatic(CaptchaUtil.class);
         captchaMock.when(() -> CaptchaUtil.ver(anyString(), any())).thenReturn(true);
@@ -113,5 +116,15 @@ class SignInServiceImplTest {
         captchaMock.when(() -> CaptchaUtil.ver(anyString(), any())).thenReturn(false);
         assertThrows(CustomizeException.class, () -> signInService.signIn(
                 "alice@example.com", "secret123", null, "bad", request));
+    }
+
+    @Test
+    void bannedUserCannotLogin() {
+        when(userBanService.isBanned(7)).thenReturn(true);
+        when(userBanService.bannedMessage(7)).thenReturn("账号已被永久封禁");
+
+        assertThrows(CustomizeException.class, () -> signInService.signIn(
+                "alice@example.com", "secret123", null, "abcd", request));
+        verify(onlineUserService, never()).insertOnlineUser(any());
     }
 }

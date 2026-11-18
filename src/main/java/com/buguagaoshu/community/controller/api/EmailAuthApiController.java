@@ -12,7 +12,6 @@ import com.buguagaoshu.community.service.MailService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.service.UserService;
-import com.buguagaoshu.community.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
@@ -97,9 +96,6 @@ public class EmailAuthApiController {
      */
     @PostMapping("/reset-password")
     public ResultDTO<Object> resetPassword(@Valid @RequestBody EmailAuthDtos.ResetPasswordRequest body) {
-        if (!StringUtil.checkPassword(body.getNewPassword())) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR.getCode(), "密码格式不正确（6~30 位字母数字或常用符号）");
-        }
         Long userId = emailTokenService.consumeResetToken(body.getToken());
         if (userId == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR.getCode(), "重置链接无效或已过期，请重新申请");
@@ -129,9 +125,6 @@ public class EmailAuthApiController {
             return ResultDTO.errorOf(CustomizeErrorCode.SYS_ERROR.getCode(), "邮件服务未启用");
         }
         String email = body.getEmail().trim().toLowerCase();
-        if (!StringUtil.checkEmail(email)) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR.getCode(), "邮箱格式错误！");
-        }
         if (userService.selectUserByEmail(email) != null) {
             return ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), "该邮箱已被注册，请直接登录");
         }

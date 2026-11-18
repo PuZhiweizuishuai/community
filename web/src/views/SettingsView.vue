@@ -111,9 +111,9 @@ async function onCropConfirm(dataUrl) {
   uploading.value = true
   try {
     if (kind === 'avatar') {
-      const result = await settingApi.updateHeadUrl(dataUrl)
-      if (result?.success === 1 || result?.success === true) toast.success('头像已更新')
-      else return
+      const url = await settingApi.updateHeadUrl(dataUrl)
+      if (!url) return
+      toast.success('头像已更新')
     } else {
       const formData = new FormData()
       formData.append('editormd-image-file', dataUrlToBlob(dataUrl), 'cover.jpeg')
@@ -157,7 +157,7 @@ async function onCropConfirm(dataUrl) {
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-xl font-bold ui-text-strong">{{ user.userName }}</h1>
             <span v-if="session.power === 2" class="badge badge-warning badge-sm">VIP</span>
-            <span v-else-if="session.power === 0" class="badge badge-error badge-sm">管理员</span>
+            <span v-if="session.isAdmin" class="badge badge-error badge-sm">管理员</span>
           </div>
           <p class="mt-0.5 text-xs ui-text-muted">@{{ user.userId }} · {{ user.email }}</p>
           <p class="line-clamp-1 mt-1 text-sm ui-text-base">{{ user.simpleSelfIntroduction || '还没有写个性签名' }}</p>

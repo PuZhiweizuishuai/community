@@ -23,7 +23,11 @@ async function login() {
   submitting.value = true
   try {
     await authApi.adminLogin({ email: email.value, password: password.value, validateCode: validateCode.value })
-    await session.refresh(true)
+    const data = await session.refresh(true)
+    if (!data?.isAdmin) {
+      toast.error('当前账号没有后台访问权限，请联系超级管理员分配角色')
+      return
+    }
     toast.success('登录成功')
     router.push(route.query.redirect || '/admin/dashboard')
   } catch {

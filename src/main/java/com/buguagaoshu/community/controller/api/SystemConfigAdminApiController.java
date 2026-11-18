@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.component.RateLimitService;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
@@ -9,8 +11,12 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.MailService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.util.AuthUtil;
-import com.buguagaoshu.community.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,15 +35,21 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/config")
+@RequirePermission(PermissionCodes.ADMIN_SYSTEM)
 public class SystemConfigAdminApiController {
 
     public record SaveRequest(Boolean registerEnabled, Boolean chatEnabled, Boolean reviewEnabled,
                               Boolean mailEnabled, String mailHost,
-                              Integer mailPort, String mailUsername, String mailPassword, String mailFrom,
+                              @Min(value = 1, message = "SMTP 端口需为 1~65535")
+                              @Max(value = 65535, message = "SMTP 端口需为 1~65535")
+                              Integer mailPort,
+                              String mailUsername, String mailPassword, String mailFrom,
                               Boolean mailSsl) {
     }
 
-    public record TestMailRequest(String to) {
+    public record TestMailRequest(
+            @NotBlank(message = "请输入收件邮箱")
+            @Email(message = "收件邮箱格式不正确") String to) {
     }
 
     private final SystemConfigService configService;
@@ -73,20 +85,14 @@ public class SystemConfigAdminApiController {
     }
 
     @PostMapping("/save")
-    public ResultDTO<Object> save(@RequestBody SaveRequest body, HttpServletRequest request) {
+    public ResultDTO<Object> save(@Valid @RequestBody SaveRequest body, HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        if (body == null) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
-        }
         SystemConfigService.MailSettings current = configService.mailSettings();
         boolean wasChatEnabled = configService.isChatEnabled();
         boolean chatEnabled = body.chatEnabled() != null ? body.chatEnabled() : wasChatEnabled;
         boolean mailEnabled = body.mailEnabled() != null ? body.mailEnabled() : current.enabled();
         String host = body.mailHost() != null ? body.mailHost().trim() : current.host();
         int port = body.mailPort() != null ? body.mailPort() : current.port();
-        if (port < 1 || port > 65535) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "SMTP 端口需为 1~65535");
-        }
         if (mailEnabled && StringUtils.isBlank(host)) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "启用邮件服务前请先填写 SMTP 服务器地址");
         }
@@ -123,11 +129,8 @@ public class SystemConfigAdminApiController {
 
     /** 用当前已保存的配置发送测试邮件，便于管理员验证 SMTP 是否可用 */
     @PostMapping("/test-mail")
-    public ResultDTO<Object> testMail(@RequestBody TestMailRequest body, HttpServletRequest request) {
+    public ResultDTO<Object> testMail(@Valid @RequestBody TestMailRequest body, HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
-        if (body == null || StringUtils.isBlank(body.to()) || !StringUtil.checkEmail(body.to().trim())) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "请输入有效的收件邮箱");
-        }
         if (!rateLimitService.tryAcquire("testmail:" + admin.getId(), 5, Duration.ofMinutes(10))) {
             throw new CustomizeException(CustomizeErrorCode.TOO_MANY_ATTEMPTS);
         }

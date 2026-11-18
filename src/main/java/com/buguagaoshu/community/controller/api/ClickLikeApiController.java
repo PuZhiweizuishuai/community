@@ -8,6 +8,7 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,7 +31,7 @@ public class ClickLikeApiController {
     }
 
     @PostMapping({"/api/like", "/api/clickLike"})
-    public ResultDTO<Map<String, Object>> clickLike(@RequestBody ClickLikeDTO body,
+    public ResultDTO<Map<String, Object>> clickLike(@Valid @RequestBody ClickLikeDTO body,
                                                     HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         body.setNotifier(user.getId());

@@ -1,15 +1,18 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.cache.ClassificationCache;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
-import com.buguagaoshu.community.exception.CustomizeErrorCode;
-import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.ClassificationMapper;
 import com.buguagaoshu.community.service.ClassificationAdminService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.model.Classification;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,10 +33,13 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/classifications")
+@RequirePermission(PermissionCodes.ADMIN_CLASSIFICATION)
 public class ClassificationAdminApiController {
 
     /** 只含 id 的强类型请求体，替代 Map 收参 */
-    public record IdRequest(Long id) {
+    public record IdRequest(
+            @NotNull(message = "分类 ID 不能为空")
+            @Positive(message = "分类 ID 不合法") Long id) {
     }
 
     private final ClassificationMapper mapper;
@@ -81,12 +87,9 @@ public class ClassificationAdminApiController {
     }
 
     @PostMapping("/delete")
-    public ResultDTO<Map<String, Object>> delete(@RequestBody IdRequest body,
+    public ResultDTO<Map<String, Object>> delete(@Valid @RequestBody IdRequest body,
                                                  HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        if (body == null || body.id() == null || body.id() <= 0) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
-        }
         classificationAdminService.delete(body.id());
         return ResultDTO.okOf(Map.of("deleted", true));
     }

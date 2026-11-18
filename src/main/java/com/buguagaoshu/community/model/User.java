@@ -6,6 +6,8 @@ import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
+import java.util.List;
+
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -72,6 +74,26 @@ public class User {
 
     @Column(ignore = true)
     private int power;
+
+    /** 用户角色（仅用于后台列表展示，不落库） */
+    @Column(ignore = true)
+    private List<Long> roleIds;
+
+    @Column(ignore = true)
+    private List<String> roleCodes;
+
+    @Column(ignore = true)
+    private List<String> roleNames;
+
+    /** 封禁状态（仅后台用户列表装配，不落库） */
+    @Column(ignore = true)
+    private int banType;
+
+    @Column(ignore = true)
+    private long banEndTime;
+
+    @Column(ignore = true)
+    private String banReason;
 
     /**
      * 清除敏感数据

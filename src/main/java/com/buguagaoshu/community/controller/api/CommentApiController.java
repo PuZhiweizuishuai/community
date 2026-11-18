@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.CommentCreateDto;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.ResultDTO;
@@ -38,6 +40,7 @@ public class CommentApiController {
 
 
     @PostMapping("/api/comment")
+    @RequirePermission(PermissionCodes.CONTENT_COMMENT_CREATE)
     public ResultDTO<CommentDto> insertComment(@Valid @RequestBody CommentCreateDto commentDto,
                                                HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);

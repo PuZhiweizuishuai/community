@@ -3,8 +3,6 @@ package com.buguagaoshu.community.controller.api;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.ReviewItemDto;
-import com.buguagaoshu.community.exception.CustomizeErrorCode;
-import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ReviewService;
 import com.buguagaoshu.community.util.AuthUtil;
@@ -55,9 +53,6 @@ public class ReviewApiController {
                                              @Valid @RequestBody ResubmitRequest body,
                                              HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
-        if (body == null) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
-        }
         reviewService.resubmitComment(commentId, body.content(), user);
         return ResultDTO.okOf();
     }

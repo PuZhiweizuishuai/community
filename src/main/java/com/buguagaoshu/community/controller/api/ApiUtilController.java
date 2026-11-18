@@ -35,17 +35,17 @@ public class ApiUtilController {
 
 
     /**
-     * 检查邮箱是否可注册：data.available=false 时 data.msg 为原因
+     * 检查邮箱是否可注册：data.available=false 时 data.message 为原因
      */
     @GetMapping("/api/checkEmail")
     public ResultDTO<Map<String, Object>> checkEmail(String email) {
         if (email == null || !StringUtil.checkEmail(email)) {
-            return ResultDTO.okOf(Map.of("available", false, "msg", "该邮箱格式错误！"));
+            return ResultDTO.okOf(Map.of("available", false, "message", "该邮箱格式错误！"));
         }
         if (userService.selectUserByEmail(email) != null) {
-            return ResultDTO.okOf(Map.of("available", false, "msg", "该邮箱已被注册，请重新输入，或登陆"));
+            return ResultDTO.okOf(Map.of("available", false, "message", "该邮箱已被注册，请重新输入，或登陆"));
         }
-        return ResultDTO.okOf(Map.of("available", true, "msg", "该邮箱可用"));
+        return ResultDTO.okOf(Map.of("available", true, "message", "该邮箱可用"));
     }
 
 
@@ -55,11 +55,11 @@ public class ApiUtilController {
     @GetMapping("/api/checkUserId")
     public ResultDTO<Map<String, Object>> checkUserId(String userId) {
         if (userId == null || !StringUtil.checkUserId(userId)) {
-            return ResultDTO.okOf(Map.of("available", false, "msg", "该账号格式错误！"));
+            return ResultDTO.okOf(Map.of("available", false, "message", "该账号格式错误！"));
         }
         if (userService.selectUserByUserId(userId) != null) {
-            return ResultDTO.okOf(Map.of("available", false, "msg", "该账号已被注册，请重新输入,或更换账号！"));
+            return ResultDTO.okOf(Map.of("available", false, "message", "该账号已被注册，请重新输入,或更换账号！"));
         }
-        return ResultDTO.okOf(Map.of("available", true, "msg", "该账号可用"));
+        return ResultDTO.okOf(Map.of("available", true, "message", "该账号可用"));
     }
 }

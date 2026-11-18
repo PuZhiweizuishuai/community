@@ -1,7 +1,9 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.captcha.CaptchaUtil;
 import com.buguagaoshu.community.component.ViewCountBuffer;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionContentCreateDTO;
@@ -172,6 +174,7 @@ public class QuestionApiController {
      * 编辑前读取原始问题与全部内容段落（含明文阅读密码，仅作者本人）。
      */
     @GetMapping("/{questionId}/edit")
+    @RequirePermission(PermissionCodes.CONTENT_QUESTION_PUBLISH)
     public ResultDTO<Map<String, Object>> edit(@PathVariable("questionId") String questionId,
                                                HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
@@ -210,6 +213,7 @@ public class QuestionApiController {
      * 发布或编辑问题（questionId > 0 且 createTime 与库内一致时为编辑）。
      */
     @PostMapping
+    @RequirePermission(PermissionCodes.CONTENT_QUESTION_PUBLISH)
     public ResultDTO<Map<String, Object>> publish(@Valid @RequestBody QuestionCreateDTO body,
                                                   HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
@@ -218,24 +222,11 @@ public class QuestionApiController {
             throw new CustomizeException(CustomizeErrorCode.CAPTCHA_REQUIRED);
         }
 
-        if (body.getTitle() == null || body.getTitle().isBlank() || body.getTitle().length() > 50) {
-            throw new CustomizeException(CustomizeErrorCode.TITLE_INVALID);
-        }
-        if (body.getClassification() == null || body.getClassification().isBlank()
-                || "null".equals(body.getClassification())) {
-            throw new CustomizeException(CustomizeErrorCode.CLASS_INVALID);
-        }
         List<QuestionContentCreateDTO> items = body.getContents();
-        if (items == null || items.isEmpty() || items.size() > 3) {
-            throw new CustomizeException(CustomizeErrorCode.CONTENT_SEGMENT_LIMIT);
-        }
         List<QuestionContent> contents = new ArrayList<>(items.size());
         for (QuestionContentCreateDTO item : items) {
             if (!QuestionContentTypeEnum.isExist(item.getType())) {
                 throw new CustomizeException(CustomizeErrorCode.CONTENT_TYPE_INVALID);
-            }
-            if (item.getContent() == null || item.getContent().isBlank()) {
-                throw new CustomizeException(CustomizeErrorCode.CONTENT_IS_EMPTY);
             }
             QuestionContent content = new QuestionContent();
             content.setType(item.getType());

@@ -1,8 +1,9 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Check, ChevronDown, ChevronUp, Eye, FileText, Lock, MessageCircle, Minus, Plus, Send, ShieldCheck, Trash2, X } from '@lucide/vue'
+import { Check, ChevronDown, ChevronUp, Eye, FileText, Lock, MessageCircle, Minus, Plus, Send, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/vue'
 import { questionApi } from '@/api'
+import { useSessionStore } from '@/stores/session'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
 import VditorEditor from '@/components/VditorEditor.vue'
@@ -12,6 +13,7 @@ import AdCarousel from '@/components/AdCarousel.vue'
 
 const route = useRoute()
 const router = useRouter()
+const session = useSessionStore()
 const meta = useMetaStore()
 const toast = useToastStore()
 meta.loadTagCategories()
@@ -177,6 +179,11 @@ async function submit() {
         <p class="mt-1 text-sm ui-text-base">清晰的标题、完整的背景与合适的标签，能让你更快得到高质量的回复。</p>
       </div>
       <button class="btn btn-ghost btn-sm" type="button" @click="previewOpen = true"><Eye class="size-4" />预览正文</button>
+    </div>
+
+    <div v-if="!session.can('file:upload')" class="alert alert-warning mb-4 py-2 text-sm">
+      <TriangleAlert class="size-4 shrink-0" />
+      <span>当前账号没有文件上传权限，正文中的图片与附件上传会失败；纯文本发布不受影响。</span>
     </div>
 
     <div class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">

@@ -17,6 +17,7 @@ import com.buguagaoshu.community.service.FollowUserService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,12 +56,11 @@ public class FollowApiController {
     }
 
     @PostMapping({"/api/follow/topic", "/api/followTopic"})
-    public ResultDTO<Map<String, Object>> followTopic(@RequestBody FollowTopicDTO body,
+    public ResultDTO<Map<String, Object>> followTopic(@Valid @RequestBody FollowTopicDTO body,
                                                       HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         Map<String, TagClass> tagMap = tagClassCache.getTagClassMap();
-        TagClass tagClass = tagMap == null || body.getTopicTitle() == null
-                ? null : tagMap.get(body.getTopicTitle());
+        TagClass tagClass = tagMap == null ? null : tagMap.get(body.getTopicTitle());
         if (tagClass == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "话题不存在了，请选择别的话题吧!");
         }
@@ -69,7 +69,7 @@ public class FollowApiController {
     }
 
     @PostMapping({"/api/follow/question", "/api/followQuestion"})
-    public ResultDTO<Map<String, Object>> followQuestion(@RequestBody FollowQuestionDTO body,
+    public ResultDTO<Map<String, Object>> followQuestion(@Valid @RequestBody FollowQuestionDTO body,
                                                          HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         Question question = questionMapper.selectQuestionById(body.getFollowQuestionId(), 1);
@@ -81,7 +81,7 @@ public class FollowApiController {
     }
 
     @PostMapping({"/api/follow/user", "/api/followUser"})
-    public ResultDTO<Map<String, Object>> followUser(@RequestBody FollowUserDTO body,
+    public ResultDTO<Map<String, Object>> followUser(@Valid @RequestBody FollowUserDTO body,
                                                      HttpServletRequest request) {
         User user = AuthUtil.requireUser(request);
         User target = userService.selectUserById(body.getFollowUserId());

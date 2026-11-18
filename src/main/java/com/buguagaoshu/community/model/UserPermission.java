@@ -16,10 +16,10 @@ public class UserPermission {
     @Id(keyType = KeyType.None)
     private long id;
     /**
-     * 权限
-     * 0 最高权限即管理员
+     * 用户等级
      * 1 普通用户
      * 2 vip
+     * 管理员身份已迁移到 RBAC 角色（sys_user_role），不再使用 power 判断
      * */
     private int power;
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeft,
@@ -20,6 +20,7 @@ import {
   Tags,
   Users,
   X,
+  KeyRound,
 } from '@lucide/vue'
 import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
@@ -54,18 +55,22 @@ function readCollapsed() {
 }
 
 const menus = [
-  { label: '数据概览', to: '/admin/dashboard', icon: LayoutDashboard },
-  { label: '问题管理', to: '/admin/questions', icon: MessageCircleQuestion },
-  { label: '内容审核', to: '/admin/reviews', icon: ShieldCheck },
-  { label: '用户管理', to: '/admin/users', icon: Users },
-  { label: '站内搜索', to: '/admin/search', icon: Search },
-  { label: '控制面板', to: '/admin/controller', icon: Settings },
-  { label: '存储配置', to: '/admin/storage', icon: HardDrive },
-  { label: '文件管理', to: '/admin/files', icon: FolderOpen },
-  { label: '话题管理', to: '/admin/topics', icon: Tags },
-  { label: '分类管理', to: '/admin/classifications', icon: ListTree },
-  { label: '广告与新闻', to: '/admin/advertisements', icon: Megaphone },
+  { label: '数据概览', to: '/admin/dashboard', icon: LayoutDashboard, permission: 'admin:access' },
+  { label: '问题管理', to: '/admin/questions', icon: MessageCircleQuestion, permission: 'admin:question' },
+  { label: '内容审核', to: '/admin/reviews', icon: ShieldCheck, permission: 'admin:review' },
+  { label: '用户管理', to: '/admin/users', icon: Users, permission: 'admin:user' },
+  { label: '角色权限', to: '/admin/roles', icon: KeyRound, permission: 'admin:role' },
+  { label: '站内搜索', to: '/admin/search', icon: Search, permission: 'admin:search' },
+  { label: '控制面板', to: '/admin/controller', icon: Settings, permission: 'admin:system' },
+  { label: '存储配置', to: '/admin/storage', icon: HardDrive, permission: 'admin:storage' },
+  { label: '文件管理', to: '/admin/files', icon: FolderOpen, permission: 'admin:file' },
+  { label: '话题管理', to: '/admin/topics', icon: Tags, permission: 'admin:topic' },
+  { label: '分类管理', to: '/admin/classifications', icon: ListTree, permission: 'admin:classification' },
+  { label: '广告与新闻', to: '/admin/advertisements', icon: Megaphone, permission: 'admin:advertisement' },
 ]
+
+// 菜单按当前用户权限过滤：角色权限变更后刷新会话即可看到对应入口
+const visibleMenus = computed(() => menus.filter((item) => session.can(item.permission)))
 
 watch(() => route.fullPath, () => (menuOpen.value = false))
 
@@ -75,7 +80,7 @@ function doSearch() {
 
 async function logout() {
   await session.adminLogout()
-  toast.success('已退出后台')
+  toast.success('已退出登录')
   router.push('/admin/login')
 }
 </script>
@@ -96,7 +101,7 @@ async function logout() {
       </div>
       <nav class="flex-1 space-y-1 overflow-y-auto p-3">
         <RouterLink
-          v-for="item in menus"
+          v-for="item in visibleMenus"
           :key="item.to"
           :to="item.to"
           class="admin-nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
@@ -152,7 +157,7 @@ async function logout() {
             </button>
             <ul tabindex="0" class="menu dropdown-content menu-sm z-50 mt-2 w-40 rounded-box border ui-border p-2">
               <li><RouterLink to="/"><Home class="size-4" />返回前台</RouterLink></li>
-              <li><button type="button" @click="logout"><LogOut class="size-4" />退出后台</button></li>
+              <li><button type="button" @click="logout"><LogOut class="size-4" />退出登录</button></li>
             </ul>
           </div>
         </div>

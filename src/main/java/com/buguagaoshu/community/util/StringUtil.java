@@ -14,6 +14,10 @@ public class StringUtil {
     /** BCrypt 编码器线程安全，全局单例（spring-security-crypto，无需整个 Spring Security） */
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
+    /** 密码规则：6~30 位字母、数字或常用符号（同时供 @Pattern 声明式校验复用） */
+    public static final String PASSWORD_REGEX =
+            "^([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){6,30}$";
+
     /**
      * 密码加密
      */
@@ -45,14 +49,6 @@ public class StringUtil {
                 return false;
             }
         }
-    }
-
-    /**
-     * 验证密码格式
-     */
-    public static boolean checkPassword(String password) {
-        String regx = "^([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){6,30}$";
-        return password.matches(regx);
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.AuthUtil;
@@ -17,6 +19,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/cache")
+@RequirePermission(PermissionCodes.ADMIN_SYSTEM)
 public class CacheAdminApiController {
 
     private final SiteCacheService siteCache;

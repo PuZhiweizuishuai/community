@@ -44,7 +44,7 @@ const raw = await api.upload('/file/upload', formData)     // multipart，保留
 组件能力：
 
 - `credentials: 'include'`，统一超时（20s）、`AbortController`、全局 loading 计数。
-- 自动归一化两类后端响应：`{ code, message, data }`（成功返回 `data`）与 `{ success, msg }`；失败统一抛 `ApiError`，含 `code` / `status` / `payload`。
+- 自动归一化统一响应体 `{ status, message, timestamp, data }`：成功只返回 `data`，失败统一抛 `ApiError`（含 `status` / `payload`），HTTP 状态码与响应体 `status` 一致。
 - 全局回调：`setErrorHandler`（toast）、`setUnauthorizedHandler`（401 跳登录/后台登录），在 `src/main.js` 注册。
 - `assetUrl()` 把后端返回的 `/image/...`、`/file/...` 转成可访问地址；`captchaUrl()` 生成带随机参数的验证码图片地址。
 
@@ -68,12 +68,13 @@ src/assets/       main.css（Tailwind + daisyUI + Markdown 排版）
 
 ## 与后端约定的要点
 
-- 登录态：`GET /api/auth/session` 返回 `{ user, admin, notificationCount, loggedIn, isAdmin, token }`；登录/退出为 `POST /api/auth/login|logout`。
-- 需要登录的接口返回 HTTP 401 + `{ code: 2003 }`；需要管理员的返回 HTTP 401 + `{ code: 401 }`。
+- 登录态：`GET /api/auth/session` 返回 `{ user, admin, permissions, banned, ban, notificationCount, loggedIn, isAdmin }`；`admin` 与 `permissions` 由后端 RBAC 角色权限计算，登录/退出为 `POST /api/auth/login|logout`。
+- 需要登录的接口返回 HTTP 401 + `{ status: 401, message }`；需要后台权限的接口按权限点校验，未授予 `admin:access` 或缺少具体权限统一返回 HTTP 403 + `{ status: 403, message }`。
+- 社区写接口按权限点校验：发布/编辑问题 `content:question:publish`、发表评论 `content:comment:create`、上传文件 `file:upload`；被封禁用户的写请求统一返回 HTTP 403 与封禁提示。
 - 分页对象字段：`data`、`nowPage`、`totalPage`、`pages`、`showFirstPage`、`showPrevious`、`showNext`、`showEndPage`、`allCount`。
-- Vditor 上传字段名 `file[]`，后端 `/api/file/upload` 返回 `{ code: 0, msg, data: { errFiles, succMap } }`。
+- Vditor 上传字段名 `file[]`，为兼容编辑器协议，`/api/file/upload` 仍返回 `{ code: 0, msg, data: { errFiles, succMap } }`，是统一响应体之外的唯一特例。
 - 聊天室：SockJS 连接 `/ws`，订阅 `/topic/public`，发送 `/app/chat.addUser` 与 `/app/chat.sendMessage`。`sockjs-client` 依赖 webpack 注入的 `global`，因此 `vite.config.js` 里用 `define: { global: 'globalThis' }` 做兼容，删除该配置会导致聊天室白屏。
-- 后台话题分类：`/admin/topics` 对应 `GET/POST /api/admin/topics*`，保存后服务端立即刷新 `TagClassCache`；话题图标可复用 `/api/file/image/upload`（管理员会话同样允许）。
+- 后台话题分类：`/admin/topics` 对应 `GET/POST /api/admin/topics*`，保存后服务端立即刷新 `TagClassCache`；话题图标可复用 `/api/file/image/upload`（登录用户含管理员均可上传）。
 - 图片裁剪：`ImageCropper.vue` 输出 JPEG dataURL，头像走 `/api/update/HeadUrl`（imgBase），封面转成 Blob 后走 `/api/file/image/upload`（字段名 `editormd-image-file`，`type=top`）。
 - 主题：`<html data-theme>` 由 daisyUI 5 驱动；`index.html` 的内联脚本先读 `localStorage('community-theme-mode')` 再决定首屏主题。自定义组件颜色走 `main.css` 里的 CSS 变量，`[data-theme='dark']` 下还有针对显式 slate / white 工具类的覆盖。
 - **Vditor 主题**：代码高亮/内容主题由 Vditor 运行时从 CDN 注入 `<link>`，只传 `preview.mode='dark'` 不会切换。统一走 `utils/vditorTheme.js` 的 `vditorPreviewTheme(isDark)`；`main.css` 里另有 `[data-theme='dark']` 作用域的 GitHub Dark token 配色兜底，CDN 失败也不会变回白底代码块。

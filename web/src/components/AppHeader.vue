@@ -87,13 +87,17 @@ async function logout() {
 }
 
 const badge = computed(() => (session.notificationCount > 99 ? '99+' : session.notificationCount))
+// 未登录时保留「发起」入口（点击后去登录）；已登录但无权限或被封禁时隐藏
+const canPublish = computed(
+  () => !session.loggedIn || (session.can('content:question:publish') && !session.banned),
+)
 
 /** 移动端底部导航：主操作「发起」居中凸起，桌面端改用顶部横向导航 */
 const bottomTabs = computed(() => [
   { label: '首页', to: '/', icon: House, active: active('/') },
   { label: '话题', to: '/topics', icon: Hash, active: active('/topics') },
   ...(meta.chatEnabled ? [{ label: '聊天室', to: '/chat', icon: MessageCircle, active: active('/chat') }] : []),
-  { label: '发起', to: '/publish', icon: SquarePen, primary: true, active: active('/publish') },
+  ...(canPublish.value ? [{ label: '发起', to: '/publish', icon: SquarePen, primary: true, active: active('/publish') }] : []),
   {
     label: session.loggedIn ? '我的' : '登录',
     to: session.loggedIn ? `/user/${session.user?.userId}` : '/sign-in',
@@ -184,7 +188,7 @@ const bottomTabs = computed(() => [
           </span>
         </RouterLink>
 
-        <RouterLink v-if="session.loggedIn" to="/publish" class="btn btn-primary btn-sm hidden lg:inline-flex">
+        <RouterLink v-if="session.loggedIn && canPublish" to="/publish" class="btn btn-primary btn-sm hidden lg:inline-flex">
           <SquarePen class="size-4" />
           发起讨论
         </RouterLink>
@@ -197,6 +201,7 @@ const bottomTabs = computed(() => [
             <li class="menu-title px-2 py-1 truncate">
               {{ session.user?.userName }}
               <span v-if="session.power === 2" class="badge badge-warning badge-xs ml-1">VIP</span>
+              <span v-if="session.banned" class="badge badge-error badge-xs ml-1">已封禁</span>
             </li>
             <li><RouterLink :to="`/user/${session.user?.userId}`"><UserRound class="size-4" />我的主页</RouterLink></li>
             <li><RouterLink to="/messages"><Bell class="size-4" />消息通知</RouterLink></li>

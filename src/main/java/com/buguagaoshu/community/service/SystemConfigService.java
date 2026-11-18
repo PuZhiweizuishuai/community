@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * 系统配置（注册开关、SMTP 邮件等）读写入口。
- * 读走 30 秒 TTL 内存缓存（与 AdminPermissionChecker 同策略，多实例部署时
+ * 读走 30 秒 TTL 内存缓存（与 PermissionChecker 同策略，多实例部署时
  * 其它节点最迟 30 秒感知变更）；保存后立即刷新本机缓存。
  */
 @Service

@@ -1,15 +1,20 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.ReviewDetailDto;
 import com.buguagaoshu.community.dto.ReviewItemDto;
-import com.buguagaoshu.community.exception.CustomizeErrorCode;
-import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ReviewService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,12 +30,19 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/reviews")
+@RequirePermission(PermissionCodes.ADMIN_REVIEW)
 public class AdminReviewApiController {
 
-    public record ActionRequest(String type, Long id) {
+    public record ActionRequest(
+            @NotBlank(message = "审核目标类型不能为空") String type,
+            @NotNull(message = "审核目标 ID 不能为空") @Positive(message = "审核目标 ID 不合法") Long id) {
     }
 
-    public record RejectRequest(String type, Long id, String reason, String suggestion) {
+    public record RejectRequest(
+            @NotBlank(message = "审核目标类型不能为空") String type,
+            @NotNull(message = "审核目标 ID 不能为空") @Positive(message = "审核目标 ID 不合法") Long id,
+            @NotBlank(message = "请填写审核不通过原因") @Size(max = 500, message = "审核原因不能超过 500 个字符") String reason,
+            @Size(max = 500, message = "修改意见不能超过 500 个字符") String suggestion) {
     }
 
     private final ReviewService reviewService;
@@ -66,21 +78,15 @@ public class AdminReviewApiController {
     }
 
     @PostMapping("/approve")
-    public ResultDTO<Object> approve(@RequestBody ActionRequest body, HttpServletRequest request) {
+    public ResultDTO<Object> approve(@Valid @RequestBody ActionRequest body, HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
-        if (body == null || body.type() == null || body.id() == null || body.id() <= 0) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
-        }
         reviewService.approve(body.type(), body.id(), admin);
         return ResultDTO.okOf();
     }
 
     @PostMapping("/reject")
-    public ResultDTO<Object> reject(@RequestBody RejectRequest body, HttpServletRequest request) {
+    public ResultDTO<Object> reject(@Valid @RequestBody RejectRequest body, HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
-        if (body == null || body.type() == null || body.id() == null || body.id() <= 0) {
-            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
-        }
         reviewService.reject(body.type(), body.id(), body.reason(), body.suggestion(), admin);
         return ResultDTO.okOf();
     }

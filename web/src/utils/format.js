@@ -42,12 +42,6 @@ export function statusLabel(status) {
   return Number(status) === 1 ? '正常' : '已删除'
 }
 
-export function powerLabel(power) {
-  if (power === 0) return '管理员'
-  if (power === 2) return 'VIP'
-  return '普通用户'
-}
-
 export function notificationIcon(type) {
   if (type >= 6) return 'system'
   if (type === 3) return 'like'

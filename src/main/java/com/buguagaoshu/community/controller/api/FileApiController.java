@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.FileDTO;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.UserMapper;
@@ -57,13 +59,14 @@ public class FileApiController {
      * type=top 时同时把文件设为用户主页封面。
      */
     @PostMapping("/upload")
+    @RequirePermission(PermissionCodes.FILE_UPLOAD)
     public Object upload(@RequestParam(value = "editormd-image-file", required = false) MultipartFile editorFile,
                          @RequestParam(value = "file[]", required = false) MultipartFile[] vditorFiles,
                          @RequestParam(value = "file", required = false) MultipartFile singleFile,
                          @RequestParam(value = "type", required = false) String type,
                          HttpServletRequest request) {
         boolean editorMd = editorFile != null;
-        // 后台登录态保存在 session.admin，编辑话题图标/广告图时同样需要允许上传
+        // 管理员与普通用户共用 session.user，后台身份由 RBAC 权限判定
         User user = AuthUtil.currentUser(request);
         if (user == null) {
             user = AuthUtil.currentAdmin(request);

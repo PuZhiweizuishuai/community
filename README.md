@@ -39,7 +39,16 @@ npm run dev
 
 打包后端：`mvn clean package` → `java -jar target/community-0.0.1-SNAPSHOT.jar`。
 
-> 第一个管理员账号：注册后手动把数据库权限表 `power` 改为 `0`，再从 `/admin/login` 进入后台。
+> 第一个管理员账号：注册后把账号加入内置超级管理员角色（把邮箱换成自己的账号），再从 `/admin/login` 进入后台；后续可在后台「角色权限」中新增角色并分配权限。
+>
+> ```sql
+> INSERT INTO sys_user_role (userId, roleId)
+> SELECT u.id, r.id FROM users u JOIN sys_role r ON r.code = 'super_admin'
+> WHERE u.email = 'you@example.com';
+> ```
+>
+> 新用户注册后会自动获得「社区成员」角色（发布问题、发表评论、上传文件），
+> 该默认角色的权限可在后台「角色权限」中动态调整；用户管理页支持临时 / 永久封禁与解封。
 
 ## 目录速览
 

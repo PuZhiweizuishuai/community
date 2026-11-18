@@ -63,6 +63,7 @@ const reviewStatus = computed(() => Number(question.value?.reviewStatus ?? 1))
 const reviewPending = computed(() => reviewStatus.value === 0)
 const reviewRejected = computed(() => reviewStatus.value === 2)
 const ads = computed(() => meta.adsFor('question'))
+const canComment = computed(() => session.canWrite('content:comment:create'))
 meta.loadAds('question')
 
 const sortTabs = [
@@ -178,6 +179,10 @@ async function toggleTwoLevel(comment) {
 
 function replyTo(comment, target) {
   if (!requireLogin()) return
+  if (!canComment.value) {
+    toast.warning('当前账号没有发表评论权限')
+    return
+  }
   const targetCommentId = target?.commentId ?? comment.commentId
   // 再次点击同一目标的回复按钮时收起输入框
   if (replyComposer.value?.targetCommentId === targetCommentId) {
@@ -220,6 +225,10 @@ async function onReplyCreated(created) {
 
 async function submitComment() {
   if (!requireLogin()) return
+  if (!canComment.value) {
+    toast.warning('当前账号没有发表评论权限')
+    return
+  }
   const content = commentEditor.value?.getValue?.() ?? commentText.value
   if (!content.trim()) {
     toast.warning('评论内容不能为空')
@@ -248,9 +257,8 @@ async function submitComment() {
     await loadComments()
     // 回复后解锁「回复可见」段落：重新拉取详情让服务端下发内容
     if (contents.value.some((s) => s.locked && s.type === 2)) await loadQuestion()
-  } catch (error) {
+  } catch {
     captchaRef.value?.refresh?.()
-    if (error?.code === 2003) requireLogin()
   } finally {
     submitting.value = false
   }
@@ -370,7 +378,7 @@ async function removeQuestion() {
             <button class="btn btn-sm" :class="followed ? 'btn-primary' : 'btn-outline'" type="button" @click="followQuestion">
               <Star class="size-4" />{{ followed ? '已关注' : '关注问题' }}
             </button>
-            <RouterLink v-if="canEdit" :to="`/publish/${question.questionId}`" class="btn btn-ghost btn-sm"><SquarePen class="size-4" />编辑</RouterLink>
+            <RouterLink v-if="canEdit && session.canWrite('content:question:publish')" :to="`/publish/${question.questionId}`" class="btn btn-ghost btn-sm"><SquarePen class="size-4" />编辑</RouterLink>
             <button v-if="canEdit || session.isAdmin" class="btn btn-ghost btn-sm text-rose-500" type="button" @click="removeQuestion"><Trash2 class="size-4" />删除</button>
           </div>
         </article>
@@ -418,7 +426,7 @@ async function removeQuestion() {
                     <component :is="expanded[comment.commentId] ? ChevronUp : ChevronDown" class="size-3.5" />
                     {{ expanded[comment.commentId] ? '收起' : `展开 ${comment.commentCount} 条回复` }}
                   </button>
-                  <button type="button" class="flex items-center gap-1 transition-colors hover:text-indigo-600" @click="replyTo(comment)"><Reply class="size-3.5" />回复</button>
+                  <button v-if="canComment" type="button" class="flex items-center gap-1 transition-colors hover:text-indigo-600" @click="replyTo(comment)"><Reply class="size-3.5" />回复</button>
                 </div>
 
                 <!-- 回复一级评论：输入框就地展开，不再跳转到底部 -->
@@ -443,7 +451,7 @@ async function removeQuestion() {
                         </div>
                         <div class="mt-1"><MarkdownView :content="normalizeCommentMarkdown(child.content)" :anchor="0" /></div>
                       </div>
-                      <button type="button" class="btn btn-ghost btn-xs" @click="replyTo(comment, child)">回复</button>
+                      <button v-if="canComment" type="button" class="btn btn-ghost btn-xs" @click="replyTo(comment, child)">回复</button>
                     </div>
                     <!-- 回复二级评论：在对应回复下方就地展开 -->
                     <CommentComposer
@@ -470,7 +478,7 @@ async function removeQuestion() {
           <div v-if="reviewStatus !== 1" class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center text-sm ui-text-base">
             内容审核通过后才能发表评论
           </div>
-          <template v-else-if="session.loggedIn">
+          <template v-else-if="canComment">
             <VditorEditor ref="commentEditor" v-model="commentText" :height="220" placeholder="友善地表达你的观点…" />
             <div class="mt-3 flex flex-wrap items-center gap-3">
               <div class="w-56"><Captcha ref="captchaRef" v-model="captcha" /></div>
@@ -480,6 +488,9 @@ async function removeQuestion() {
             </div>
             <p v-if="meta.reviewEnabled" class="mt-2 text-xs ui-text-muted">当前社区已开启内容审核，评论需管理员审核通过后才公开展示。</p>
           </template>
+          <div v-else-if="session.loggedIn" class="rounded-xl border border-dashed ui-border ui-bg-soft p-5 text-center text-sm ui-text-base">
+            当前账号没有发表评论权限，请联系管理员。
+          </div>
           <div v-else class="py-6 text-center text-sm ui-text-base">
             <RouterLink :to="{ name: 'sign-in', query: { redirect: route.fullPath } }" class="btn btn-primary btn-sm">登录后参与讨论</RouterLink>
           </div>

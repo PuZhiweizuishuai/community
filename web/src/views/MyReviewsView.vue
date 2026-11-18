@@ -13,12 +13,14 @@ import {
   X,
 } from '@lucide/vue'
 import { reviewApi } from '@/api'
+import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import Pagination from '@/components/Pagination.vue'
 import VditorEditor from '@/components/VditorEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
+const session = useSessionStore()
 const toast = useToastStore()
 
 const type = computed(() => route.query.type || 'question')
@@ -170,10 +172,10 @@ async function confirmEdit() {
               </div>
 
               <div class="mt-3 flex flex-wrap items-center gap-2">
-                <RouterLink v-if="item.type === 'question'" :to="`/publish/${item.id}`" class="btn btn-primary btn-xs">
+                <RouterLink v-if="item.type === 'question' && session.canWrite('content:question:publish')" :to="`/publish/${item.id}`" class="btn btn-primary btn-xs">
                   <SquarePen class="size-3.5" />修改并重新提交
                 </RouterLink>
-                <button v-else class="btn btn-primary btn-xs" type="button" @click="openEdit(item)">
+                <button v-else-if="item.type === 'comment'" class="btn btn-primary btn-xs" type="button" @click="openEdit(item)">
                   <SquarePen class="size-3.5" />修改并重新提交
                 </button>
                 <RouterLink :to="`/question/${item.questionId || item.id}`" class="btn btn-ghost btn-xs">查看原帖</RouterLink>
@@ -198,7 +200,7 @@ async function confirmEdit() {
           <h3 class="mb-2 font-semibold ui-text-strong">快捷导航</h3>
           <div class="space-y-1 text-xs">
             <RouterLink to="/messages?type=5" class="link-muted block">消息通知</RouterLink>
-            <RouterLink to="/publish" class="link-muted block">发起讨论</RouterLink>
+            <RouterLink v-if="session.canWrite('content:question:publish')" to="/publish" class="link-muted block">发起讨论</RouterLink>
           </div>
         </section>
       </aside>

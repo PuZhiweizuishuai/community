@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.controller;
 
+import com.buguagaoshu.community.dto.ResultDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,11 +13,11 @@ import java.util.Map;
 public class RootApiController {
 
     @GetMapping("/")
-    public Map<String, Object> index() {
-        return Map.of(
+    public ResultDTO<Map<String, Object>> index() {
+        return ResultDTO.okOf(Map.of(
                 "name", "community-api",
-                "message", "这是前后端分离后的 REST API 服务，页面请访问 Vue 前端（默认 http://localhost:5173）",
+                "description", "这是前后端分离后的 REST API 服务，页面请访问 Vue 前端（默认 http://localhost:5173）",
                 "meta", "/api/meta",
-                "session", "/api/auth/session");
+                "session", "/api/auth/session"));
     }
 }

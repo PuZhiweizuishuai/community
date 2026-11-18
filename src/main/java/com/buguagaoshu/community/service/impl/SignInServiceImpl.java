@@ -8,6 +8,7 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.SignInService;
+import com.buguagaoshu.community.service.UserBanService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
@@ -42,6 +43,8 @@ public class SignInServiceImpl implements SignInService {
 
     private final RateLimitService rateLimitService;
 
+    private final UserBanService userBanService;
+
     /** 非「记住我」token 有效期，默认 2 小时 */
     @Value("${jwt.ttl}")
     private long defaultTtlMillis;
@@ -49,12 +52,13 @@ public class SignInServiceImpl implements SignInService {
     @Autowired
     public SignInServiceImpl(UserPermissionService userPermissionService, UserService userService,
                              OnlineUserService onlineUserService, JwtUtil jwtUtil,
-                             RateLimitService rateLimitService) {
+                             RateLimitService rateLimitService, UserBanService userBanService) {
         this.userPermissionService = userPermissionService;
         this.userService = userService;
         this.onlineUserService = onlineUserService;
         this.jwtUtil = jwtUtil;
         this.rateLimitService = rateLimitService;
+        this.userBanService = userBanService;
     }
 
     @Override
@@ -80,6 +84,11 @@ public class SignInServiceImpl implements SignInService {
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_PASSWORD_ERROR);
         }
         rateLimitService.reset(limitKey);
+
+        if (userBanService.isBanned(user.getId())) {
+            throw new CustomizeException(CustomizeErrorCode.FORBIDDEN.getCode(),
+                    userBanService.bannedMessage(user.getId()));
+        }
 
         long ttlMillis = rememberMe ? REMEMBER_ME_TTL_MILLIS : defaultTtlMillis;
         UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());

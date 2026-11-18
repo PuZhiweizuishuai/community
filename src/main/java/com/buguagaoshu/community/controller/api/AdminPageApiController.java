@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.AdminDataDTO;
 import com.buguagaoshu.community.dto.AdvertisementBatchDTO;
 import com.buguagaoshu.community.dto.AdvertisementOperationResult;
@@ -18,6 +20,9 @@ import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,11 +38,19 @@ import java.util.Map;
 
 /**
  * 后台管理页面数据接口（对应原 admin/*.html）。
- * 所有接口都要求会话中存在 admin，未登录返回 401 + code 401。
+ * 权限由 {@code @RequirePermission} + PermissionInterceptor 统一校验。
  */
 @RestController
 @RequestMapping("/api/admin")
 public class AdminPageApiController {
+
+    /** 广告投放/结束投放请求：id 必填，position/time 仅投放时使用 */
+    public record AdvertisementActionRequest(
+            @NotNull(message = "广告 ID 不能为空")
+            @Positive(message = "广告 ID 不合法") Long id,
+            String position,
+            Long time) {
+    }
 
     private final AdminDataService adminDataService;
     private final QuestionService questionService;
@@ -67,11 +80,13 @@ public class AdminPageApiController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("admin", AuthUtil.safeUser(admin));
         data.put("isAdmin", admin != null);
+        data.put("permissions", AuthUtil.permissionsOf(admin));
         return ResultDTO.okOf(data);
     }
 
     /** 仪表盘：统计卡 + 近期数据表格（ECharts 数据源） */
     @GetMapping("/dashboard")
+    @RequirePermission(PermissionCodes.ADMIN_ACCESS)
     public ResultDTO<Map<String, Object>> dashboard(
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "20") String size,
@@ -87,6 +102,7 @@ public class AdminPageApiController {
     }
 
     @GetMapping("/users")
+    @RequirePermission(PermissionCodes.ADMIN_USER)
     public ResultDTO<PaginationDto<User>> users(
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "20") String size,
@@ -96,6 +112,7 @@ public class AdminPageApiController {
     }
 
     @GetMapping("/questions")
+    @RequirePermission(PermissionCodes.ADMIN_QUESTION)
     public ResultDTO<PaginationDto<QuestionDto>> questions(
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "20") String size,
@@ -106,6 +123,7 @@ public class AdminPageApiController {
 
     /** 后台搜索，按 type 返回问题或用户分页 */
     @GetMapping("/search")
+    @RequirePermission(PermissionCodes.ADMIN_SEARCH)
     public ResultDTO<Map<String, Object>> search(
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "20") String size,
@@ -131,6 +149,7 @@ public class AdminPageApiController {
 
     /** 控制面板：日志列表 */
     @GetMapping("/controller")
+    @RequirePermission(PermissionCodes.ADMIN_SYSTEM)
     public ResultDTO<Map<String, Object>> controller(HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
         Map<String, Object> data = new LinkedHashMap<>();
@@ -139,6 +158,7 @@ public class AdminPageApiController {
     }
 
     @GetMapping("/advertisements")
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
     public ResultDTO<PaginationDto<Advertisement>> advertisements(
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "20") String size,
@@ -148,6 +168,7 @@ public class AdminPageApiController {
     }
 
     @GetMapping("/advertisements/{id}")
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
     public ResultDTO<Advertisement> advertisement(@PathVariable("id") long id,
                                                   HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
@@ -159,52 +180,54 @@ public class AdminPageApiController {
     // ------------------------------------------------------------------
 
     @PostMapping("/advertisement/add")
-    public ResultDTO<Object> add(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
+    public ResultDTO<Object> add(@Valid @RequestBody CreateAdvertisement body, HttpServletRequest request) {
         boolean ok = advertisementService.insertAdvertisement(body, AuthUtil.requireAdmin(request)) == 1;
         return ok ? ResultDTO.okOf() : ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
     }
 
     @PostMapping("/advertisement/alter")
-    public ResultDTO<Object> alter(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
+    public ResultDTO<Object> alter(@Valid @RequestBody CreateAdvertisement body, HttpServletRequest request) {
         boolean ok = advertisementService.alterAdvertisement(body, AuthUtil.requireAdmin(request)) == 1;
         return ok ? ResultDTO.okOf() : ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
     }
 
     /** 各投放位置容量 / 已用 / 剩余，供后台批量投放前查看 */
     @GetMapping("/advertisement/positions")
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
     public ResultDTO<Map<String, Object>> positions(HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
         return ResultDTO.okOf(Map.of("positions", advertisementService.positionStats()));
     }
 
     @PostMapping("/advertisement/setting")
-    public ResultDTO<Object> setting(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
+    public ResultDTO<Object> setting(@Valid @RequestBody AdvertisementActionRequest body,
+                                     HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
-        if (body.getId() == null) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-        }
         AdvertisementBatchDTO batch = new AdvertisementBatchDTO();
-        batch.setIds(List.of(body.getId()));
-        batch.setPosition(body.getPosition());
-        batch.setTime(body.getTime());
+        batch.setIds(List.of(body.id()));
+        batch.setPosition(body.position());
+        batch.setTime(body.time());
         AdvertisementOperationResult result = advertisementService.batchSetting(batch, admin).get(0);
         return result.isSuccess() ? ResultDTO.okOf()
                 : ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), result.getMessage());
     }
 
     @PostMapping("/advertisement/close")
-    public ResultDTO<Object> close(@RequestBody CreateAdvertisement body, HttpServletRequest request) {
-        if (body.getId() == null) {
-            return ResultDTO.errorOf(CustomizeErrorCode.PARAM_ERROR);
-        }
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
+    public ResultDTO<Object> close(@Valid @RequestBody AdvertisementActionRequest body,
+                                   HttpServletRequest request) {
         AdvertisementOperationResult result = advertisementService.batchClose(
-                List.of(body.getId()), AuthUtil.requireAdmin(request)).get(0);
+                List.of(body.id()), AuthUtil.requireAdmin(request)).get(0);
         return result.isSuccess() ? ResultDTO.okOf()
                 : ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), result.getMessage());
     }
 
     /** 批量投放：返回逐条回执 + 汇总 */
     @PostMapping("/advertisement/batch-setting")
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
     public ResultDTO<Map<String, Object>> batchSetting(@RequestBody AdvertisementBatchDTO body,
                                                        HttpServletRequest request) {
         List<AdvertisementOperationResult> results =
@@ -214,6 +237,7 @@ public class AdminPageApiController {
 
     /** 批量结束投放 */
     @PostMapping("/advertisement/batch-close")
+    @RequirePermission(PermissionCodes.ADMIN_ADVERTISEMENT)
     public ResultDTO<Map<String, Object>> batchClose(@RequestBody AdvertisementBatchDTO body,
                                                      HttpServletRequest request) {
         List<AdvertisementOperationResult> results =

@@ -74,13 +74,13 @@ async function checkEmail() {
   emailTip.value = ''
   if (!form.email || !emailValid.value) return
   const result = await authApi.checkEmail(form.email.trim())
-  emailTip.value = result?.available === false ? result.msg : ''
+  emailTip.value = result?.available === false ? result.message : ''
 }
 async function checkUserId() {
   userIdTip.value = ''
   if (!form.userId.trim()) return
   const result = await authApi.checkUserId(form.userId.trim())
-  userIdTip.value = result?.available === false ? result.msg : ''
+  userIdTip.value = result?.available === false ? result.message : ''
 }
 
 async function register() {

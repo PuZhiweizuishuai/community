@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.model.StorageConfig;
 import com.buguagaoshu.community.repository.StorageConfigRepository;
@@ -22,6 +24,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/storage")
+@RequirePermission(PermissionCodes.ADMIN_STORAGE)
 public class StorageAdminApiController {
 
     public record SaveRequest(Long id, String name, String endpoint, String region, String accessKey,

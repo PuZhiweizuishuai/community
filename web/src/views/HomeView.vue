@@ -129,7 +129,7 @@ const tagClass = computed(() => data.value?.tagClass || null)
             <h1 class="text-xl font-bold ui-text-strong">发现</h1>
             <p class="mt-0.5 text-xs ui-text-muted">看看社区里正在讨论什么</p>
           </div>
-          <RouterLink v-if="session.loggedIn" to="/publish" class="btn btn-primary btn-sm hidden sm:inline-flex"><Plus class="size-4" />发起讨论</RouterLink>
+          <RouterLink v-if="session.canWrite('content:question:publish')" to="/publish" class="btn btn-primary btn-sm hidden sm:inline-flex"><Plus class="size-4" />发起讨论</RouterLink>
         </div>
 
         <div v-if="loading && !data" class="surface space-y-3 p-4">

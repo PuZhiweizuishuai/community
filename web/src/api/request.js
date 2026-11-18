@@ -5,8 +5,8 @@
  *   - baseURL（开发走 Vite 代理 /api，生产可配 VITE_API_BASE 指向后端域名）
  *   - credentials: 'include'（Spring Session 的 SESSION cookie 必须随请求携带）
  *   - JSON / 表单 / multipart 三种请求体
- *   - 后端两类历史响应体归一化：{ code, message, data } 与 { success, msg }
- *   - HTTP 状态码、业务错误码统一抛 ApiError
+ *   - 统一响应体 { status, message, timestamp, data } 归一化：成功只返回 data
+ *   - HTTP 状态码统一抛 ApiError（status 与响应体 status 一致）
  *   - 全局 loading 计数、全局错误提示、401 登录态失效回调
  *
  * 用法：
@@ -20,12 +20,11 @@
 export const BASE_URL = import.meta.env.VITE_API_BASE || '/api'
 export const ASSET_BASE = import.meta.env.VITE_ASSET_BASE || ''
 
-/** 业务/网络错误 */
+/** 业务/网络错误：status 与后端响应体 status、HTTP 状态码保持一致 */
 export class ApiError extends Error {
-  constructor(message, { code = -1, status = 0, payload = null, cause } = {}) {
+  constructor(message, { status = 0, payload = null, cause } = {}) {
     super(message || '请求失败，请稍后重试')
     this.name = 'ApiError'
-    this.code = code
     this.status = status
     this.payload = payload
     this.cause = cause
@@ -102,25 +101,21 @@ function defaultHeaders(bodyType) {
   return { Accept: 'application/json' }
 }
 
-function normalize(payload, status) {
+/** 统一响应体 { status, message, timestamp, data }：成功取 data，失败抛 ApiError */
+function normalize(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload
-
-  // 统一响应体 { code, message, data }
-  if ('code' in payload && 'message' in payload) {
-    if (payload.code === 200) return payload.data !== undefined ? payload.data : payload
-    throw new ApiError(payload.message, { code: payload.code, status, payload })
+  if ('status' in payload && 'message' in payload) {
+    const ok = Number(payload.status) >= 200 && Number(payload.status) < 300
+    if (ok) return payload.data !== undefined ? payload.data : payload
+    throw new ApiError(payload.message, { status: payload.status, payload })
   }
-  // 老接口响应体 { success, msg, ... }
-  if ('success' in payload) {
-    if (payload.success === true || payload.success === 1) return payload
-    throw new ApiError(payload.msg || payload.message || '操作失败', {
-      code: 400,
-      status,
-      payload,
-    })
-  }
-  // Vditor 上传响应 { code: 0|1, msg, data }，由 upload() 单独处理
+  // 非统一响应体（如 Vditor 上传协议）按原样返回，由调用方自行解析
   return payload
+}
+
+/** 登录接口自身的 401 表示凭证错误，不触发「登录态失效」的全局跳转 */
+function isAuthEndpoint(url) {
+  return /\/auth\/login$|\/admin\/login$/.test(url)
 }
 
 /**
@@ -179,15 +174,15 @@ export async function request(path, options = {}) {
     }
 
     if (!response.ok) {
-      if (response.status === 401 && unauthorizedHandler) unauthorizedHandler(payload, url)
-      const message =
-        (payload && (payload.message || payload.msg)) ||
-        `请求失败（HTTP ${response.status}）`
-      throw new ApiError(message, { code: payload?.code ?? response.status, status: response.status, payload })
+      if (response.status === 401 && unauthorizedHandler && !isAuthEndpoint(url)) {
+        unauthorizedHandler(payload, url)
+      }
+      const message = payload?.message || `请求失败（HTTP ${response.status}）`
+      throw new ApiError(message, { status: payload?.status ?? response.status, payload })
     }
 
     if (raw || responseType !== 'json') return payload
-    return normalize(payload, response.status)
+    return normalize(payload)
   } catch (error) {
     const apiError =
       error instanceof ApiError
@@ -222,7 +217,7 @@ export const api = {
       bodyType: 'multipart',
       raw: true,
     }),
-  /** 需要读取完整响应体（如 { success, msg, url }）时使用 */
+  /** 需要读取完整响应体（如第三方上传协议）时使用 */
   raw: (path, options = {}) => request(path, { ...options, raw: true }),
 }
 

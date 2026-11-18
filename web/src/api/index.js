@@ -105,6 +105,21 @@ export const adminApi = {
   batchCloseAd: (ids) => api.post('/admin/advertisement/batch-close', { ids }),
   updateUserPower: (userId, power) => api.form('/admin/update/user', { userId, power }),
   resetPassword: (userId) => api.form('/admin/reset/password', { userId }),
+  // RBAC 角色与权限
+  roles: () => api.get('/admin/roles'),
+  roleOptions: () => api.get('/admin/roles/options'),
+  permissions: () => api.get('/admin/permissions'),
+  rolePermissionIds: (id) => api.get(`/admin/roles/${id}/permissions`),
+  saveRole: (data) => api.post('/admin/roles/save', data),
+  deleteRole: (id) => api.post('/admin/roles/delete', { id }),
+  saveRolePermissions: (roleId, permissionIds) =>
+    api.post('/admin/roles/permissions', { roleId, permissionIds }),
+  userRoles: (userId) => api.get(`/admin/users/${userId}/roles`),
+  saveUserRoles: (userId, roleIds) => api.post('/admin/users/roles', { userId, roleIds }),
+  // 用户封禁 / 解封
+  userBan: (userId) => api.get(`/admin/users/${userId}/ban`),
+  banUser: (userId, data) => api.post(`/admin/users/${userId}/ban`, data),
+  unbanUser: (userId) => api.post(`/admin/users/${userId}/unban`, {}),
   settingTop: (ids) =>
     api.form('/admin/settingTopQuestion', { id1: ids[0], id2: ids[1], id3: ids[2] }),
   refreshCache: (name) => api.post(`/admin/updateHot${name}`, {}),

@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.LogDTO;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
@@ -9,6 +11,8 @@ import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.FileUtil;
 import com.buguagaoshu.community.util.StringUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,9 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
  * create          2019-11-07 22:41
@@ -29,6 +30,7 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 @Controller
 @Slf4j
+@RequirePermission(PermissionCodes.ADMIN_SYSTEM)
 class AdminLogApiController {
     /**
      * 下载日志
@@ -60,7 +62,7 @@ class AdminLogApiController {
     public ResponseEntity<Object> downloadLog(@PathVariable("filename") String filename,
                                               @RequestParam(value = "type", defaultValue = "download") String type,
                                               HttpServletRequest request) {
-        User user = (User) request.getSession().getAttribute("admin");
+        User user = AuthUtil.currentAdmin(request);
         if (user == null) {
             return ResponseEntity.notFound().build();
         }
@@ -81,7 +83,7 @@ class AdminLogApiController {
 
     @PostMapping({"/api/admin/log/delete", "/admin/log/delete"})
     @ResponseBody
-    public ResultDTO<Object> deleteLog(@RequestBody LogDTO logDTO, HttpServletRequest request) {
+    public ResultDTO<Object> deleteLog(@Valid @RequestBody LogDTO logDTO, HttpServletRequest request) {
         User admin = AuthUtil.requireAdmin(request);
         User user = userService.selectUserById(admin.getId());
         if (user == null || !StringUtil.judgePassword(logDTO.getPassword(), user.getPassword())) {

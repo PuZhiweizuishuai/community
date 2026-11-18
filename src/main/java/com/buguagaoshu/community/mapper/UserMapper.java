@@ -1,6 +1,7 @@
 package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserBanStatus;
 import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.util.UpdateEntity;
 import org.apache.ibatis.annotations.Insert;
@@ -11,6 +12,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -128,4 +130,30 @@ public interface UserMapper extends BaseMapper<User> {
 
     @Select("select COUNT(*) from users where MATCH(userName, userId, simpleSelfIntroduction, selfIntroduction) AGAINST(#{search} IN BOOLEAN MODE)")
     Long searchUserCount(@Param("search") String search);
+
+    // ------------------------------------------------------------------
+    // 用户封禁
+    // ------------------------------------------------------------------
+
+    @Select("SELECT id AS userId, banType, banEndTime, banReason FROM users WHERE id = #{userId}")
+    UserBanStatus selectBanStatus(@Param("userId") long userId);
+
+    @Select("""
+            <script>
+            SELECT id AS userId, banType, banEndTime, banReason
+            FROM users
+            WHERE id IN
+            <foreach collection="userIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+            </script>
+            """)
+    List<UserBanStatus> selectBanStatusByUserIds(@Param("userIds") Collection<Long> userIds);
+
+    @Update("UPDATE users SET banType = #{banType}, banEndTime = #{banEndTime}, banReason = #{banReason}, "
+            + "banTime = #{banTime}, banOperator = #{banOperator} WHERE id = #{userId}")
+    int updateBanStatus(@Param("userId") long userId,
+                        @Param("banType") int banType,
+                        @Param("banEndTime") long banEndTime,
+                        @Param("banReason") String banReason,
+                        @Param("banTime") long banTime,
+                        @Param("banOperator") long banOperator);
 }

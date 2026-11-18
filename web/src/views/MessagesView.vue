@@ -131,7 +131,7 @@ meta.loadAds('message')
           <div class="space-y-1 text-xs">
             <RouterLink to="/settings" class="link-muted block">个人设置</RouterLink>
             <RouterLink v-if="session.user" :to="`/user/${session.user.userId}`" class="link-muted block">我的主页</RouterLink>
-            <RouterLink to="/publish" class="link-muted block">发起讨论</RouterLink>
+            <RouterLink v-if="session.canWrite('content:question:publish')" to="/publish" class="link-muted block">发起讨论</RouterLink>
           </div>
         </section>
         <AdCarousel :items="ads" title="社区推广" />

@@ -1,5 +1,7 @@
 package com.buguagaoshu.community.controller.api;
 
+import com.buguagaoshu.community.annotation.RequirePermission;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.schedule.HotQuestionTasks;
@@ -23,6 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 @RestController
 @Slf4j
+@RequirePermission(PermissionCodes.ADMIN_SYSTEM)
 public class HotCacheApiController {
     private final HotTagTasks hotTagTasks;
 

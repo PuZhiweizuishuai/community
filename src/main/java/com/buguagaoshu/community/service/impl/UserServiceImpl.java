@@ -5,6 +5,8 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.mapper.UserPermissionMapper;
 import com.buguagaoshu.community.model.UserPermission;
+import com.buguagaoshu.community.service.RbacService;
+import com.buguagaoshu.community.service.UserBanService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
@@ -34,10 +36,17 @@ public class UserServiceImpl implements UserService {
 
     private final UserPermissionMapper userPermissionMapper;
 
+    private final RbacService rbacService;
+
+    private final UserBanService userBanService;
+
     @Autowired
-    public UserServiceImpl(UserMapper userMapper, UserPermissionMapper userPermissionMapper) {
+    public UserServiceImpl(UserMapper userMapper, UserPermissionMapper userPermissionMapper,
+                           RbacService rbacService, UserBanService userBanService) {
         this.userMapper = userMapper;
         this.userPermissionMapper = userPermissionMapper;
+        this.rbacService = rbacService;
+        this.userBanService = userBanService;
     }
 
     @Override
@@ -152,7 +161,7 @@ public class UserServiceImpl implements UserService {
         return paginationDto;
     }
 
-    /** 批量装配权限并剥离密码，替代逐用户查询 */
+    /** 批量装配权限、角色并剥离密码，替代逐用户查询 */
     private void fillPower(List<User> userList) {
         if (userList.isEmpty()) {
             return;
@@ -167,6 +176,8 @@ public class UserServiceImpl implements UserService {
             }
             user.clean();
         }
+        rbacService.fillUserRoles(userList);
+        userBanService.fillBanStatus(userList);
     }
 
     private PaginationDto<User> emptyPage(String page, String size) {
