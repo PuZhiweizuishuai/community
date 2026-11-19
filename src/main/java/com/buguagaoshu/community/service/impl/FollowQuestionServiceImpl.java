@@ -7,7 +7,6 @@ import com.buguagaoshu.community.model.FollowQuestion;
 import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.service.FollowQuestionService;
 import com.buguagaoshu.community.service.QuestionService;
-import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,7 @@ public class FollowQuestionServiceImpl implements FollowQuestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int insertFollowQuestion(FollowQuestionDTO followQuestionDTO, Question question, long userId) {
         FollowQuestion followQuestion = new FollowQuestion();
         followQuestion.setFollowQuestionId(question.getQuestionId());
@@ -83,9 +82,6 @@ public class FollowQuestionServiceImpl implements FollowQuestionService {
         long[] param = NumberUtils.getPageAndSize(page, size, allCount);
         List<FollowQuestion> followQuestions = followQuestionMapper.selectListByQuery(
                 query.orderBy(FOLLOW_QUESTION.ID.desc()).limit(param[0], param[1]));
-        for (FollowQuestion followQuestion : followQuestions) {
-            followQuestion.setTime(DateFormatUtil.getTimeDifference(followQuestion.getCreateTime(), System.currentTimeMillis()));
-        }
         PaginationDto<FollowQuestion> followQuestionPaginationDto = new PaginationDto<>();
         followQuestionPaginationDto.setData(followQuestions);
         followQuestionPaginationDto.setPagination(param[2], param[3], param[1]);

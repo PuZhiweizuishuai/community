@@ -33,7 +33,7 @@ public class FollowTopicServiceImpl implements FollowTopicService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int insertFollowTop(FollowTopicDTO followTopicDTO, long userId, TagClass tagClass) {
         FollowTopic followTopic = new FollowTopic();
         followTopic.setTopicId(tagClass.getId());

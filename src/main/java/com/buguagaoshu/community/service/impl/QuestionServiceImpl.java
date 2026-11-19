@@ -5,7 +5,6 @@ import com.buguagaoshu.community.component.UserBatchLoader;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
-import com.buguagaoshu.community.enums.QuestionContentTypeEnum;
 import com.buguagaoshu.community.enums.QuestionSortType;
 import com.buguagaoshu.community.enums.ReviewStatusEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
@@ -21,7 +20,6 @@ import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.service.TagClassService;
-import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.buguagaoshu.community.util.StringUtil;
@@ -36,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.buguagaoshu.community.model.table.QuestionTableDef.QUESTION;
 
@@ -129,13 +126,8 @@ public class QuestionServiceImpl implements QuestionService {
 
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int createQuestion(Question question, List<QuestionContent> contents, List<String> tagNames) {
-        // description 只保留普通段落的公开副本，受保护内容不写入 questions 表
-        question.setDescription(contents.stream()
-                .filter(c -> c.getType() == QuestionContentTypeEnum.NORMAL.getType())
-                .map(QuestionContent::getContent)
-                .collect(Collectors.joining("\n\n")));
         boolean reviewRequired = systemConfigService.isReviewEnabled();
         if (question.getQuestionId() == -1) {
             question.setCreateTime(System.currentTimeMillis());
@@ -244,8 +236,6 @@ public class QuestionServiceImpl implements QuestionService {
         for (Question question : questionList) {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
-            questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
             questionDto.setUser(userMap.get(question.getUserId()));
             questionDto.setTags(tagMap.getOrDefault(question.getQuestionId(), List.of()));
             questionDto.setTopicTitle(topicTitle(question.getTopicId()));
@@ -328,8 +318,6 @@ public class QuestionServiceImpl implements QuestionService {
         for (Question question : questionList) {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
-            questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
             // 个人主页的问题列表同样需要作者信息，否则前端头像与 /user/{userId} 链接会变成 undefined
             questionDto.setUser(userMap.get(question.getUserId()));
             questionDto.setTags(tagMap.getOrDefault(question.getQuestionId(), List.of()));
@@ -345,11 +333,14 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public PaginationDto<QuestionDto> getTopicQuestions(long topicId, String page, String size, String tag) {
+    public PaginationDto<QuestionDto> getTopicQuestions(long topicId, String page, String size, String tag,
+                                                        Integer classification) {
         String tagName = StringUtils.trimToNull(tag);
-        long total = questionMapper.countTopicQuestions(topicId, tagName);
+        Integer classCode = classification != null && classification != 0 ? classification : null;
+        long total = questionMapper.countTopicQuestions(topicId, tagName, classCode);
         long[] param = NumberUtils.getPageAndSize(page, size, total);
-        List<Question> questionList = questionMapper.selectTopicQuestions(topicId, tagName, param[0], param[1]);
+        List<Question> questionList = questionMapper.selectTopicQuestions(topicId, tagName, classCode,
+                param[0], param[1]);
 
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
         paginationDto.setData(toDtoList(questionList));
@@ -378,11 +369,31 @@ public class QuestionServiceImpl implements QuestionService {
         User user = userBatchLoader.loadUsers(List.of(question.getUserId()), true).get(question.getUserId());
         QuestionDto questionDto = new QuestionDto();
         BeanUtils.copyProperties(question, questionDto);
-        questionDto.setCreateTime(DateFormatUtil.getTimeDifference(question.getCreateTime(), System.currentTimeMillis()));
-        questionDto.setAlterTime(DateFormatUtil.getTimeDifference(question.getAlterTime(), System.currentTimeMillis()));
         questionDto.setUser(user);
         questionDto.setTopicTitle(topicTitle(question.getTopicId()));
         return questionDto;
+    }
+
+    @Override
+    public List<QuestionDto> selectQuestionDtosByIds(List<Long> questionIds) {
+        if (questionIds == null || questionIds.isEmpty()) {
+            return List.of();
+        }
+        List<Question> questions = questionMapper.selectListByQuery(QueryWrapper.create()
+                .where(QUESTION.QUESTION_ID.in(questionIds))
+                .and(QUESTION.STATUS.eq(1))
+                .select(QuestionMapper.LIST_QUERY_COLUMNS));
+        Map<Long, User> userMap = userBatchLoader.loadUsers(
+                questions.stream().map(Question::getUserId).toList(), true);
+        List<QuestionDto> result = new ArrayList<>(questions.size());
+        for (Question question : questions) {
+            QuestionDto questionDto = new QuestionDto();
+            BeanUtils.copyProperties(question, questionDto);
+            questionDto.setUser(userMap.get(question.getUserId()));
+            questionDto.setTopicTitle(topicTitle(question.getTopicId()));
+            result.add(questionDto);
+        }
+        return result;
     }
 
     @Override
@@ -467,7 +478,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteQuestion(long questionId, User operator, boolean isAdmin) {
         Question question = questionMapper.selectOneById(questionId);
         if (question == null) {
@@ -491,7 +502,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void recoveryQuestion(long questionId, User admin) {
         Question question = questionMapper.selectOneById(questionId);
         if (question == null) {
@@ -518,9 +529,8 @@ public class QuestionServiceImpl implements QuestionService {
         List<QuestionDto> questionDtos = questionList.stream().map(question -> {
             QuestionDto questionDto = new QuestionDto();
             BeanUtils.copyProperties(question, questionDto);
-            questionDto.setCreateTime(StringUtil.foematTime(question.getCreateTime()));
-            questionDto.setAlterTime(StringUtil.foematTime(question.getAlterTime()));
             questionDto.setUser(userMap.get(question.getUserId()));
+            questionDto.setTopicTitle(topicTitle(question.getTopicId()));
             return questionDto;
         }).toList();
 

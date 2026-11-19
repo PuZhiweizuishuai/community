@@ -8,6 +8,7 @@ import com.buguagaoshu.community.model.Classification;
 import com.buguagaoshu.community.service.ClassificationAdminService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -33,7 +34,7 @@ public class ClassificationAdminServiceImpl implements ClassificationAdminServic
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Classification save(Classification body) {
         if (body == null || StringUtils.isBlank(body.getKind()) || StringUtils.isBlank(body.getName())) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
@@ -54,8 +55,9 @@ public class ClassificationAdminServiceImpl implements ClassificationAdminServic
         }
 
         // 编辑时若前端未回传编号，保留原编号；新增时才自动分配下一个编号
+        boolean autoCode = body.getCode() == null || body.getCode() <= 0;
         int code;
-        if (body.getCode() == null || body.getCode() <= 0) {
+        if (autoCode) {
             code = isNew ? mapper.maxCode(kind) + 1 : old.getCode();
         } else {
             code = body.getCode();
@@ -79,7 +81,21 @@ public class ClassificationAdminServiceImpl implements ClassificationAdminServic
 
         if (isNew) {
             body.setCreateTime(now);
-            mapper.insertSelective(body);
+            try {
+                mapper.insertSelective(body);
+            } catch (DuplicateKeyException e) {
+                if (!autoCode) {
+                    throw new CustomizeException(409, "分类编号或名称已被占用");
+                }
+                // 自动编号并发撞号：重新取号重试一次
+                body.setId(null);
+                body.setCode(mapper.maxCode(kind) + 1);
+                try {
+                    mapper.insertSelective(body);
+                } catch (DuplicateKeyException again) {
+                    throw new CustomizeException(409, "分类编号分配冲突，请重试");
+                }
+            }
         } else {
             body.setCreateTime(old.getCreateTime());
             mapper.update(body);
@@ -94,7 +110,7 @@ public class ClassificationAdminServiceImpl implements ClassificationAdminServic
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void delete(long id) {
         Classification target = id <= 0 ? null : mapper.selectById(id);
         if (target == null) {

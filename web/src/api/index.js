@@ -26,6 +26,7 @@ export const metaApi = {
   get: () => api.get('/meta'),
   hot: () => api.get('/meta/hot'),
   hotUsers: () => api.get('/meta/hot-users'),
+  topicOptions: (params) => api.get('/meta/topic-options', params),
   tagCategories: () => api.get('/meta/tag-categories'),
   ads: (position) => api.get('/meta/ads', { position }),
   adClick: (url, id) => api.get('/meta/ad', { url, id }),
@@ -48,7 +49,7 @@ export const questionApi = {
 
 export const commentApi = {
   create: (data) => api.post('/comment', data),
-  twoLevel: (commentId) => api.get(`/twoLevelComment/${commentId}`),
+  twoLevel: (commentId, params) => api.get(`/twoLevelComment/${commentId}`, params),
 }
 
 export const interactionApi = {

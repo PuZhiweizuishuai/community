@@ -24,7 +24,7 @@ import { useSessionStore } from '@/stores/session'
 import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 import { useMetaStore } from '@/stores/meta'
-import { splitTags, shortNumber, normalizeCommentMarkdown } from '@/utils/format'
+import { splitTags, shortNumber, normalizeCommentMarkdown, timeAgo } from '@/utils/format'
 import Avatar from '@/components/Avatar.vue'
 import CommentComposer from '@/components/CommentComposer.vue'
 import MarkdownView from '@/components/MarkdownView.vue'
@@ -62,6 +62,9 @@ const expanded = ref({})
 // 当前正在回复的评论：parentCommentId 为根评论，targetCommentId 为被回复评论
 const replyComposer = ref(null)
 const twoLevel = ref({})
+const twoLevelPages = ref({})
+const twoLevelLoading = ref({})
+const TWO_LEVEL_PAGE_SIZE = 10
 const tocRef = ref(null)
 
 /** 正文各段落渲染完成后，基于整个正文容器生成右侧目录 */
@@ -155,6 +158,8 @@ async function loadComments() {
     })
     expanded.value = {}
     twoLevel.value = {}
+    twoLevelPages.value = {}
+    twoLevelLoading.value = {}
     replyComposer.value = null
   } finally {
     commentsLoading.value = false
@@ -216,15 +221,32 @@ async function followQuestion() {
   toast.success(followed.value ? '关注成功' : '已取消关注')
 }
 
+async function loadTwoLevel(comment, page = 1) {
+  const rootId = comment.commentId
+  if (twoLevelLoading.value[rootId]) return
+  twoLevelLoading.value[rootId] = true
+  try {
+    const result = await commentApi.twoLevel(rootId, {
+      page,
+      size: TWO_LEVEL_PAGE_SIZE,
+    })
+    twoLevel.value[rootId] = result?.data || []
+    twoLevelPages.value[rootId] = result || null
+  } finally {
+    twoLevelLoading.value[rootId] = false
+  }
+}
+
 async function toggleTwoLevel(comment) {
-  if (expanded.value[comment.commentId]) {
-    expanded.value[comment.commentId] = false
+  const rootId = comment.commentId
+  if (expanded.value[rootId]) {
+    expanded.value[rootId] = false
     return
   }
-  if (!twoLevel.value[comment.commentId]) {
-    twoLevel.value[comment.commentId] = await commentApi.twoLevel(comment.commentId)
+  if (!twoLevelPages.value[rootId]) {
+    await loadTwoLevel(comment, 1)
   }
-  expanded.value[comment.commentId] = true
+  expanded.value[rootId] = true
 }
 
 function replyTo(comment, target) {
@@ -263,12 +285,10 @@ async function onReplyCreated(created) {
   const root = comments.value.find((comment) => comment.commentId === rootId)
   if (root) root.commentCount = Number(root.commentCount || 0) + 1
   if (question.value) question.value.commentCount = Number(question.value.commentCount || 0) + 1
-  if (twoLevel.value[rootId]) {
-    twoLevel.value[rootId].push(created)
-  } else {
-    // 未展开过该评论时拉取完整回复列表，保证已有回复和新回复一起展示
-    twoLevel.value[rootId] = await commentApi.twoLevel(rootId)
-  }
+  // 新回复排序在末尾：直接跳到最后一页，保证新回复可见
+  const total = Number(root?.commentCount || 1)
+  const lastPage = Math.max(1, Math.ceil(total / TWO_LEVEL_PAGE_SIZE))
+  await loadTwoLevel({ commentId: rootId }, lastPage)
   expanded.value[rootId] = true
   toast.success('回复发布成功')
 }
@@ -439,7 +459,7 @@ async function submitReport() {
               :to="`/topics/${question.topicId}`"
               class="badge badge-sm badge-primary hover:opacity-80"
             >
-              {{ question.topicTitle || meta.topicTitle(question.topicId) || '话题' }}
+              {{ question.topicTitle || '话题' }}
             </RouterLink>
             <span class="badge badge-outline ui-border ui-text-brand">{{
               meta.classificationLabel(question.classification)
@@ -457,7 +477,7 @@ async function submitReport() {
               <Avatar :src="question.user?.headUrl" :name="question.user?.userName" :size="22" />
               {{ question.user?.userName }}
             </RouterLink>
-            <span>发布于 {{ question.createTime }}</span>
+            <span>发布于 {{ timeAgo(question.createTime) || '未知' }}</span>
             <span class="flex items-center gap-1"
               ><Eye class="size-3.5" />{{ shortNumber(question.viewCount) }} 次浏览</span
             >
@@ -617,7 +637,7 @@ async function submitReport() {
                     >回复 @{{ comment.targetName }}</span
                   >
                   <span class="ui-text-muted">{{
-                    comment.modifiedTime || comment.createTime
+                    timeAgo(comment.modifiedTime || comment.createTime) || '刚刚'
                   }}</span>
                 </div>
                 <div class="mt-1.5">
@@ -689,7 +709,7 @@ async function submitReport() {
                         <div class="text-xs ui-text-base">
                           <b class="ui-text-strong">{{ child.user?.userName }}</b>
                           <span v-if="child.targetName"> 回复 @{{ child.targetName }}</span>
-                          · {{ child.createTime }}
+                          · {{ timeAgo(child.createTime) || '刚刚' }}
                         </div>
                         <div class="mt-1">
                           <MarkdownView
@@ -732,6 +752,43 @@ async function submitReport() {
                       @created="onReplyCreated"
                       @cancel="closeReplyComposer"
                     />
+                  </div>
+
+                  <div v-if="twoLevelLoading[comment.commentId]" class="text-center text-xs ui-text-muted">
+                    正在加载回复…
+                  </div>
+                  <div
+                    v-else-if="Number(twoLevelPages[comment.commentId]?.totalPage || 1) > 1"
+                    class="flex flex-wrap items-center justify-between gap-2 border-t ui-border pt-2 text-xs ui-text-muted"
+                  >
+                    <button
+                      class="btn btn-ghost btn-xs"
+                      type="button"
+                      :disabled="Number(twoLevelPages[comment.commentId]?.nowPage || 1) <= 1"
+                      @click="
+                        loadTwoLevel(comment, Number(twoLevelPages[comment.commentId]?.nowPage || 1) - 1)
+                      "
+                    >
+                      上一页
+                    </button>
+                    <span>
+                      第 {{ twoLevelPages[comment.commentId]?.nowPage || 1 }} /
+                      {{ twoLevelPages[comment.commentId]?.totalPage || 1 }} 页 · 共
+                      {{ twoLevelPages[comment.commentId]?.allCount || 0 }} 条回复
+                    </span>
+                    <button
+                      class="btn btn-ghost btn-xs"
+                      type="button"
+                      :disabled="
+                        Number(twoLevelPages[comment.commentId]?.nowPage || 1) >=
+                        Number(twoLevelPages[comment.commentId]?.totalPage || 1)
+                      "
+                      @click="
+                        loadTwoLevel(comment, Number(twoLevelPages[comment.commentId]?.nowPage || 1) + 1)
+                      "
+                    >
+                      下一页
+                    </button>
                   </div>
                 </div>
               </div>

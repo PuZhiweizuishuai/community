@@ -17,7 +17,6 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
-import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-
-import static com.buguagaoshu.community.model.table.CommentTableDef.COMMENT;
 import java.util.stream.Collectors;
 
 /**
@@ -182,7 +179,7 @@ public class NotificationServiceImpl implements NotificationService {
             throw new CustomizeException(CustomizeErrorCode.READ_NOTIFICATION_FAIL);
         }
         if (notification.getStatus() == 0) {
-            notificationMapper.readNotification(id);
+            notificationMapper.readNotification(id, user.getId());
         }
         NotificationDTO notificationDTO = new NotificationDTO();
         notificationDTO.setId(notification.getId());
@@ -235,11 +232,11 @@ public class NotificationServiceImpl implements NotificationService {
         // 作者收问题级通知，评论者收评论级通知；同一人既是作者又是评论者时只收问题级通知
         Map<Long, NotificationTypeEnum> receivers = new LinkedHashMap<>();
         receivers.put(question.getUserId(), questionType);
-        List<Comment> comments = commentMapper.selectListByQuery(QueryWrapper.create()
-                .where(COMMENT.QUESTION_ID.eq(question.getQuestionId()))
-                .and(COMMENT.STATUS.eq(1)).and(COMMENT.REVIEW_STATUS.eq(1)));
-        for (Comment comment : comments) {
-            receivers.putIfAbsent(comment.getCommentator(), commentType);
+        // 只取评论者 ID，不加载评论正文
+        for (Long commentator : commentMapper.selectDistinctCommentators(question.getQuestionId())) {
+            if (commentator != null) {
+                receivers.putIfAbsent(commentator, commentType);
+            }
         }
         long now = System.currentTimeMillis();
         List<Notification> notifications = new ArrayList<>();

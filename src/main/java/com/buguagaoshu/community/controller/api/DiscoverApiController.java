@@ -1,9 +1,11 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.cache.TagClassCache;
+import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.dto.ResultDTO;
+import com.buguagaoshu.community.dto.TopicModeratorDto;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.FollowTopic;
@@ -164,8 +166,10 @@ public class DiscoverApiController {
             case "fans" -> followUserService.getFansList(user.getId(), page, size);
             default -> questionService.getQuestionByUserId(page, size, user.getId());
         });
-        List<FollowTopic> followTopics = followTopicService.selectUserFollowTopic(user.getId());
-        data.put("followTopics", "topic".equals(tab) ? followTopics : List.<FollowTopic>of());
+        List<FollowTopic> followTopics = "topic".equals(tab)
+                ? followTopicService.selectUserFollowTopic(user.getId())
+                : List.of();
+        data.put("followTopics", followTopics);
         return ResultDTO.okOf(data);
     }
 
@@ -186,11 +190,15 @@ public class DiscoverApiController {
             throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
         }
         User user = AuthUtil.currentUser(request);
+        List<TopicModeratorDto> moderators = topicModerationService.moderators(tagClass.getId());
+        boolean isModerator = user != null
+                && (AuthUtil.hasPermission(user, PermissionCodes.ADMIN_QUESTION)
+                || moderators.stream().anyMatch(item -> item.getUserId() == user.getId()));
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("tagClass", tagClass);
         data.put("followTag", isFollowed(user, tagClass.getId()));
-        data.put("moderators", topicModerationService.moderators(tagClass.getId()));
-        data.put("isModerator", topicModerationService.isModerator(user, tagClass.getId()));
+        data.put("moderators", moderators);
+        data.put("isModerator", isModerator);
         return ResultDTO.okOf(data);
     }
 
@@ -202,11 +210,23 @@ public class DiscoverApiController {
             @PathVariable("id") long id,
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "15") String size,
-            @RequestParam(value = "tag", required = false) String tag) {
+            @RequestParam(value = "tag", required = false) String tag,
+            @RequestParam(value = "class", defaultValue = "0") String classification) {
         if (tagClassCache.getById(id) == null) {
             throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
         }
-        return ResultDTO.okOf(questionService.getTopicQuestions(id, page, size, tag));
+        return ResultDTO.okOf(questionService.getTopicQuestions(id, page, size, tag,
+                parseClassCode(classification)));
+    }
+
+    /** 0 或非法值表示「全部」，不参与过滤 */
+    private Integer parseClassCode(String classification) {
+        try {
+            int code = Integer.parseInt(classification);
+            return code > 0 ? code : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private boolean isFollowed(User user, long topicId) {

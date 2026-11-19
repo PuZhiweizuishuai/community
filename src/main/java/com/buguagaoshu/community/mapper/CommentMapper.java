@@ -7,7 +7,10 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 import static com.buguagaoshu.community.model.table.CommentTableDef.COMMENT;
 
@@ -41,6 +44,10 @@ public interface CommentMapper extends BaseMapper<Comment> {
 
     @Update("update comments set commentCount=commentCount+#{commentCount} where commentId=#{commentId}")
     int updateCommentCount(Comment comment);
+
+    /** 帖子下所有有效评论者（去重），删帖通知只需接收人 ID，不加载评论正文 */
+    @Select("select distinct commentator from comments where questionId=#{questionId} and status=1 and reviewStatus=1")
+    List<Long> selectDistinctCommentators(@Param("questionId") long questionId);
 
     /**
      * 更新点赞数（原子增量）

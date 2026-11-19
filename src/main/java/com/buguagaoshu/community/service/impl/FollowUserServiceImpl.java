@@ -39,7 +39,7 @@ public class FollowUserServiceImpl implements FollowUserService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int insertFollowUser(long followUserId, long userId, User follow) {
         FollowUser followUser = new FollowUser();
         followUser.setFollowUserId(followUserId);

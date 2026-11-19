@@ -6,7 +6,11 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.util.UpdateEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+import java.util.Map;
 
 import static com.buguagaoshu.community.model.table.AdvertisementTableDef.ADVERTISEMENT;
 
@@ -70,4 +74,14 @@ public interface AdvertisementMapper extends BaseMapper<Advertisement> {
         }
         return (int) selectCountByQuery(query);
     }
+
+    /** 各位置有效投放数聚合：一次查询替代 9 次 COUNT */
+    @Select("select position, count(*) as total from advertisements " +
+            "where status=1 and endTime>#{now} group by position")
+    List<Map<String, Object>> countActiveGroupByPosition(@Param("now") long now);
+
+    /** 关闭已过期广告：一条范围 UPDATE 替代逐条回写 */
+    @Update("update advertisements set status=0, startTime=0, endTime=0, modifiedUser=0 " +
+            "where status=1 and endTime<#{now}")
+    int closeExpired(@Param("now") long now);
 }

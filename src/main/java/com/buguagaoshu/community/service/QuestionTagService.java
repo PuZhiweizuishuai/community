@@ -34,6 +34,9 @@ public interface QuestionTagService {
     /** 按关联表重算 questions.tag 冗余列（只包含已通过标签） */
     void refreshTagNames(long questionId);
 
+    /** 批量重算 questions.tag 冗余列，单条 SQL 覆盖整批帖子 */
+    void refreshTagNames(Collection<Long> questionIds);
+
     /** 帖子关联的全部标签（含未通过，仅供管理场景） */
     List<Tag> tagsOfQuestion(long questionId);
 

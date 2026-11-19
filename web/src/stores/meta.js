@@ -8,7 +8,6 @@ const EMPTY = {
   hotUsers: [],
   tagCategories: [],
   classifications: [],
-  topics: [],
   sorts: [],
   topicTypes: [],
   advertisements: {},
@@ -92,7 +91,6 @@ export const useMetaStore = defineStore('meta', () => {
   const hotQuestions = computed(() => data.value.hotQuestions || [])
   const hotUsers = computed(() => data.value.hotUsers || [])
   const classifications = computed(() => data.value.classifications || [])
-  const topics = computed(() => data.value.topics || [])
   const sorts = computed(() => data.value.sorts || [])
   const topicTypes = computed(() => data.value.topicTypes || [])
   const tagCategories = computed(() => data.value.tagCategories || [])
@@ -118,11 +116,6 @@ export const useMetaStore = defineStore('meta', () => {
     return item?.label || String(code)
   }
 
-  function topicTitle(id) {
-    const item = topics.value.find((t) => Number(t.id) === Number(id))
-    return item?.title || ''
-  }
-
   return {
     data,
     loaded,
@@ -137,12 +130,10 @@ export const useMetaStore = defineStore('meta', () => {
     hotQuestions,
     hotUsers,
     classifications,
-    topics,
     sorts,
     topicTypes,
     tagCategories,
     classificationLabel,
-    topicTitle,
     chatEnabled,
     setChatEnabled,
     reviewEnabled,

@@ -23,6 +23,13 @@ public interface SysRolePermissionMapper {
     @Insert("INSERT IGNORE INTO sys_role_permissions(roleId, permissionId) VALUES(#{roleId}, #{permissionId})")
     int insertIgnore(@Param("roleId") long roleId, @Param("permissionId") long permissionId);
 
+    /** 批量授权：一条 SQL 写入整批权限点 */
+    @Insert("<script>INSERT IGNORE INTO sys_role_permissions(roleId, permissionId) VALUES " +
+            "<foreach collection='permissionIds' item='permissionId' separator=','>" +
+            "(#{roleId}, #{permissionId})</foreach></script>")
+    int insertIgnoreBatch(@Param("roleId") long roleId,
+                          @Param("permissionIds") java.util.Collection<Long> permissionIds);
+
     @Select("SELECT roleId, COUNT(*) AS total FROM sys_role_permissions GROUP BY roleId")
     List<Map<String, Object>> countPermissionsByRole();
 }

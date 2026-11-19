@@ -5,8 +5,11 @@ import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.util.UpdateEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.buguagaoshu.community.model.table.NotificationTableDef.NOTIFICATION;
 
@@ -70,6 +73,10 @@ public interface NotificationMapper extends BaseMapper<Notification> {
                 .where(NOTIFICATION.RECEIVER.eq(receiver)).and(NOTIFICATION.STATUS.eq(0)).and(NOTIFICATION.TYPE.eq(type)));
     }
 
+    /** 未读数按类型聚合：一次查询替代回复/点赞/系统三次 COUNT */
+    @Select("SELECT type, COUNT(*) AS total FROM notifications WHERE receiver=#{receiver} AND status=0 GROUP BY type")
+    List<Map<String, Object>> countUnreadGroupByType(@Param("receiver") long receiver);
+
     /** 回复通知列表 */
     default List<Notification> getAllCommentNotification(long page, long size, long receiver) {
         return selectListByQuery(QueryWrapper.create()
@@ -91,17 +98,22 @@ public interface NotificationMapper extends BaseMapper<Notification> {
                 .orderBy(NOTIFICATION.ID.desc()).limit(page, size));
     }
 
-    /** 设置消息已读 */
-    default int readNotification(long id) {
-        Notification update = UpdateEntity.of(Notification.class, id);
+    /** 设置消息已读：只更新属于当前接收人的未读行 */
+    default int readNotification(long id, long receiver) {
+        Notification update = UpdateEntity.of(Notification.class);
         update.setStatus(1);
-        return update(update);
+        return updateByQuery(update, QueryWrapper.create()
+                .where(NOTIFICATION.ID.eq(id))
+                .and(NOTIFICATION.RECEIVER.eq(receiver))
+                .and(NOTIFICATION.STATUS.eq(0)));
     }
 
-    /** 一键已读 */
+    /** 一键已读：只扫描未读行 */
     default int readAll(long receiver) {
         Notification update = UpdateEntity.of(Notification.class);
         update.setStatus(1);
-        return updateByQuery(update, QueryWrapper.create().where(NOTIFICATION.RECEIVER.eq(receiver)));
+        return updateByQuery(update, QueryWrapper.create()
+                .where(NOTIFICATION.RECEIVER.eq(receiver))
+                .and(NOTIFICATION.STATUS.eq(0)));
     }
 }

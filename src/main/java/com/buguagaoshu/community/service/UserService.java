@@ -50,6 +50,14 @@ public interface UserService {
     int insertUser(User user);
 
     /**
+     * 注册新用户：用户、权限、默认角色三表在同一事务内写入，避免产生半完成账号。
+     *
+     * @param user 新用户类（密码为明文，内部完成加密）
+     * @return 1 成功；-1 邮箱重复；-2 账号重复
+     */
+    int register(User user);
+
+    /**
      * 通过 id 更改用户名
      *
      * @param id          用户 ID
@@ -81,10 +89,10 @@ public interface UserService {
      * 通过 id 更改登陆时间
      *
      * @param id       用户 ID
-     * @param lastTime 上次登陆时间
+     * @param lastTime 上次登陆时间（毫秒时间戳）
      * @return 1 成功
      */
-    int updateUserLastTimeById(long id, String lastTime);
+    int updateUserLastTimeById(long id, long lastTime);
 
     /**
      * 通过 id 更改用户头像

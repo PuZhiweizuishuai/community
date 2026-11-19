@@ -2,6 +2,7 @@ package com.buguagaoshu.community.component;
 
 import com.buguagaoshu.community.mapper.SysPermissionMapper;
 import com.buguagaoshu.community.util.AuthUtil;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -56,5 +57,12 @@ public class PermissionChecker implements AuthUtil.PermissionCheckerRef {
     /** 角色或角色权限变更后失效全部用户 */
     public void evictAll() {
         cache.clear();
+    }
+
+    /** 定时清理过期条目，避免按 userId 无限增长 */
+    @Scheduled(fixedRate = 60_000)
+    public void evictExpired() {
+        long now = System.currentTimeMillis();
+        cache.entrySet().removeIf(entry -> entry.getValue().expireAt() <= now);
     }
 }

@@ -50,9 +50,10 @@ public interface QuestionMapper extends BaseMapper<Question> {
 
     /**
      * 插入问题。viewCount/status 等列依赖数据库默认值，不能按实体全字段插入，保留显式列 SQL。
+     * 正文存放在 question_content 表，description 列不再写入。
      */
-    @Insert("insert into questions(userId, title, classification, topicId, description, fileUrl, tag, createTime, alterTime, reviewStatus) " +
-            "values (#{userId}, #{title}, #{classification}, #{topicId}, #{description}, #{fileUrl}, #{tag}, #{createTime}, #{alterTime}, #{reviewStatus})")
+    @Insert("insert into questions(userId, title, classification, topicId, fileUrl, tag, createTime, alterTime, reviewStatus) " +
+            "values (#{userId}, #{title}, #{classification}, #{topicId}, #{fileUrl}, #{tag}, #{createTime}, #{alterTime}, #{reviewStatus})")
     @Options(useGeneratedKeys = true, keyProperty = "questionId", keyColumn = "questionId")
     int createQuestion(Question question);
 
@@ -64,7 +65,6 @@ public interface QuestionMapper extends BaseMapper<Question> {
         update.setTitle(question.getTitle());
         update.setClassification(question.getClassification());
         update.setTopicId(question.getTopicId());
-        update.setDescription(question.getDescription());
         update.setFileUrl(question.getFileUrl());
         update.setTag(question.getTag());
         update.setAlterTime(question.getAlterTime());
@@ -88,6 +88,16 @@ public interface QuestionMapper extends BaseMapper<Question> {
     /** 冗余标签列刷新：唯一的写入入口在 QuestionTagService */
     @Update("update questions set tag=#{tag} where questionId=#{questionId}")
     int updateQuestionTag(@Param("questionId") long questionId, @Param("tag") String tag);
+
+    /**
+     * 批量重算冗余标签列：一条 UPDATE 替代逐帖 SELECT + UPDATE。
+     */
+    @Update("<script>update questions q set q.tag = coalesce((select group_concat(t.name order by t.id separator ',') " +
+            "from question_tags qt join tags t on t.id=qt.tagId " +
+            "where qt.questionId=q.questionId and t.status=1), '') " +
+            "where q.questionId in <foreach collection='questionIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</script>")
+    int refreshQuestionTagNames(@Param("questionIds") Collection<Long> questionIds);
 
     /** 吧务：话题内置顶 */
     @Update("update questions set isTop=#{isTop} where questionId=#{questionId}")
@@ -147,6 +157,16 @@ public interface QuestionMapper extends BaseMapper<Question> {
     int increaseViewCount(@Param("questionId") long questionId, @Param("delta") long delta);
 
     /**
+     * 浏览数批量回写：一条 CASE WHEN 语句覆盖整批问题，替代逐行 UPDATE。
+     */
+    @Update("<script>update questions set viewCount = viewCount + case questionId " +
+            "<foreach collection='deltas' index='id' item='delta'>when #{id} then #{delta} </foreach>" +
+            "end where questionId in " +
+            "<foreach collection='deltas' index='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</script>")
+    int updateViewCountBatch(@Param("deltas") Map<Long, Long> deltas);
+
+    /**
      * 评论数加 n（原子增量）
      */
     @Update("update questions set commentCount=commentCount+#{commentCount} where questionId=#{questionId}")
@@ -167,7 +187,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
     /**
      * 相关问题：与当前问题共享任意一个「已通过」标签。
      */
-    @Select("select * from questions q where q.questionId!=#{questionId} and q.status=#{status} and q.reviewStatus=1 " +
+    @Select("select " + LIST_COLUMNS + " from questions q where q.questionId!=#{questionId} and q.status=#{status} and q.reviewStatus=1 " +
             "and exists (select 1 from question_tags qt join question_tags mine on mine.tagId=qt.tagId " +
             "join tags t on t.id=qt.tagId and t.status=1 where qt.questionId=q.questionId and mine.questionId=#{questionId}) " +
             "order by q.questionId desc limit #{size}")
@@ -178,7 +198,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
     // 关键字搜索：FULLTEXT(ngram) 布尔模式，走 ft_questions_title_tag 索引
     // ------------------------------------------------------------------
 
-    @Select("select * from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1 order by questionId desc limit #{page}, #{size}")
+    @Select("select " + LIST_COLUMNS + " from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1 order by questionId desc limit #{page}, #{size}")
     List<Question> fulltextSearchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
     @Select("select COUNT(*) from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1")
@@ -222,17 +242,21 @@ public interface QuestionMapper extends BaseMapper<Question> {
      * 话题帖子流：置顶优先，其余按最后活跃时间倒序。
      */
     @Select("<script>select " + LIST_COLUMNS + " from questions where topicId=#{topicId} and status=1 and reviewStatus=1 " +
+            "<if test='classification != null'>and classification=#{classification} </if>" +
             "<if test='tag != null'>and exists (select 1 from question_tags qt join tags t on t.id=qt.tagId " +
             "where qt.questionId=questions.questionId and t.status=1 and t.name=#{tag}) </if>" +
             "order by isTop desc, alterTime desc, questionId desc limit #{offset}, #{size}</script>")
     List<Question> selectTopicQuestions(@Param("topicId") long topicId, @Param("tag") String tag,
+                                        @Param("classification") Integer classification,
                                         @Param("offset") long offset, @Param("size") long size);
 
     @Select("<script>select count(*) from questions where topicId=#{topicId} and status=1 and reviewStatus=1 " +
+            "<if test='classification != null'>and classification=#{classification} </if>" +
             "<if test='tag != null'>and exists (select 1 from question_tags qt join tags t on t.id=qt.tagId " +
             "where qt.questionId=questions.questionId and t.status=1 and t.name=#{tag}) </if>" +
             "</script>")
-    long countTopicQuestions(@Param("topicId") long topicId, @Param("tag") String tag);
+    long countTopicQuestions(@Param("topicId") long topicId, @Param("tag") String tag,
+                             @Param("classification") Integer classification);
 
     /**
      * 批量统计各用户的问题数（活跃用户榜单装配用）

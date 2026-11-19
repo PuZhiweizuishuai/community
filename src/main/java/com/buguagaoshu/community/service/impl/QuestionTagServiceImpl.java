@@ -35,6 +35,8 @@ public class QuestionTagServiceImpl implements QuestionTagService {
     /** 与前端发布页上限保持一致 */
     public static final int MAX_TAGS = 5;
     public static final int MAX_TAG_NAME_LENGTH = 50;
+    /** 集合化 UPDATE 的单批上限 */
+    private static final int BATCH_SIZE = 500;
 
     private final TagMapper tagMapper;
     private final QuestionTagMapper questionTagMapper;
@@ -48,7 +50,7 @@ public class QuestionTagServiceImpl implements QuestionTagService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public List<Tag> resolveTags(List<String> names, long userId) {
         if (names == null || names.isEmpty()) {
             return List.of();
@@ -105,7 +107,7 @@ public class QuestionTagServiceImpl implements QuestionTagService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void replaceQuestionTags(long questionId, List<Tag> tags) {
         List<Long> oldTagIds = questionTagMapper.selectByQuestionId(questionId).stream()
                 .map(QuestionTag::getTagId).toList();
@@ -129,7 +131,7 @@ public class QuestionTagServiceImpl implements QuestionTagService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void saveQuestionTags(long questionId, List<String> names, long userId) {
         replaceQuestionTags(questionId, resolveTags(names, userId));
     }
@@ -139,6 +141,18 @@ public class QuestionTagServiceImpl implements QuestionTagService {
         List<String> names = questionTagMapper.selectApprovedTagNames(questionId);
         String joined = names == null ? "" : String.join(",", names);
         questionMapper.updateQuestionTag(questionId, joined);
+    }
+
+    @Override
+    public void refreshTagNames(Collection<Long> questionIds) {
+        if (questionIds == null || questionIds.isEmpty()) {
+            return;
+        }
+        List<Long> ids = questionIds.stream().filter(id -> id != null && id > 0).toList();
+        // 单条 UPDATE 覆盖整批帖子，每批 500 避免锁行过多
+        for (int i = 0; i < ids.size(); i += BATCH_SIZE) {
+            questionMapper.refreshQuestionTagNames(ids.subList(i, Math.min(i + BATCH_SIZE, ids.size())));
+        }
     }
 
     @Override
@@ -190,11 +204,9 @@ public class QuestionTagServiceImpl implements QuestionTagService {
         if (tagIds == null || tagIds.isEmpty()) {
             return;
         }
-        for (Long tagId : tagIds) {
-            if (tagId == null) {
-                continue;
-            }
-            tagMapper.updateUsageCount(tagId, tagMapper.countUsage(tagId));
+        List<Long> ids = tagIds.stream().filter(id -> id != null && id > 0).toList();
+        for (int i = 0; i < ids.size(); i += BATCH_SIZE) {
+            tagMapper.refreshUsageCounts(ids.subList(i, Math.min(i + BATCH_SIZE, ids.size())));
         }
     }
 

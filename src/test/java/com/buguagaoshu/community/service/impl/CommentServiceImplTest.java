@@ -121,8 +121,9 @@ class CommentServiceImplTest {
     @Test
     void emptyThreadReturnsEmptyList() {
         when(commentMapper.selectListByQuery(any())).thenReturn(List.of());
+        when(commentMapper.selectCountByQuery(any())).thenReturn(0L);
 
-        assertTrue(service.getTwoLevelCommentByParent("1").isEmpty());
+        assertTrue(service.getTwoLevelCommentByParent("1", "1", "10").getData().isEmpty());
     }
 
     private static Comment comment(long id, int type, long parentId, long parentCommentId, long commentator) {

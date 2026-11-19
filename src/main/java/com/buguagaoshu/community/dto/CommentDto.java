@@ -56,14 +56,14 @@ public class CommentDto {
     private long commentCount;
 
     /**
-     * 创建时间
+     * 创建时间（毫秒时间戳，展示格式由前端决定）
      */
-    private String createTime;
+    private long createTime;
 
     /**
-     * 修改时间
+     * 修改时间（毫秒时间戳，展示格式由前端决定）
      */
-    private String modifiedTime;
+    private long modifiedTime;
 
     private User user;
 

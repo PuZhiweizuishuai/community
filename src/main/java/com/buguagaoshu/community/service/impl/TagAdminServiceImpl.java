@@ -15,11 +15,13 @@ import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagAdminService;
+import com.buguagaoshu.community.util.CacheInvalidation;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,7 +113,7 @@ public class TagAdminServiceImpl implements TagAdminService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Tag approve(long id, User admin) {
         Tag tag = requireTag(id);
         if (tag.getStatus() == ReviewStatusEnum.APPROVED.getStatus()) {
@@ -124,11 +126,15 @@ public class TagAdminServiceImpl implements TagAdminService {
                 "你创建的标签「" + tag.getName() + "」已通过审核，所有关联帖子现在会公开显示该标签");
         invalidateCaches();
         log.info("管理员 {} 通过标签 {}（{}）", admin.getId(), id, tag.getName());
-        return requireTag(id);
+        tag.setStatus(ReviewStatusEnum.APPROVED.getStatus());
+        tag.setReviewerId(admin.getId());
+        tag.setReviewTime(now);
+        tag.setRejectReason(null);
+        return tag;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Tag reject(long id, String reason, User admin) {
         Tag tag = requireTag(id);
         String cleanReason = StringUtils.trimToNull(reason);
@@ -138,18 +144,23 @@ public class TagAdminServiceImpl implements TagAdminService {
         if (cleanReason.length() > 200) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "不通过原因不能超过 200 个字符");
         }
+        long now = System.currentTimeMillis();
         tagMapper.updateStatus(id, ReviewStatusEnum.REJECTED.getStatus(), admin.getId(),
-                System.currentTimeMillis(), cleanReason);
+                now, cleanReason);
         refreshQuestionsOfTag(id);
         notifyCreator(tag, admin, NotificationTypeEnum.TAG_REVIEW_REJECT,
                 "你创建的标签「" + tag.getName() + "」未通过审核：" + cleanReason);
         invalidateCaches();
         log.info("管理员 {} 拒绝标签 {}（{}）：{}", admin.getId(), id, tag.getName(), cleanReason);
-        return requireTag(id);
+        tag.setStatus(ReviewStatusEnum.REJECTED.getStatus());
+        tag.setReviewerId(admin.getId());
+        tag.setReviewTime(now);
+        tag.setRejectReason(cleanReason);
+        return tag;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Tag rename(long id, String name, User admin) {
         Tag tag = requireTag(id);
         String cleanName = StringUtils.trimToNull(name);
@@ -163,24 +174,28 @@ public class TagAdminServiceImpl implements TagAdminService {
         if (same != null && same.getId() != id) {
             throw new CustomizeException(409, "已存在同名标签「" + cleanName + "」");
         }
-        tagMapper.updateName(id, cleanName);
+        try {
+            tagMapper.updateName(id, cleanName);
+        } catch (DuplicateKeyException e) {
+            // 并发重命名撞唯一键，按同名冲突处理
+            throw new CustomizeException(409, "已存在同名标签「" + cleanName + "」");
+        }
         refreshQuestionsOfTag(id);
         invalidateCaches();
         log.info("管理员 {} 将标签 {} 重命名为 {}", admin.getId(), id, cleanName);
-        return requireTag(id);
+        tag.setName(cleanName);
+        return tag;
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void delete(long id, User admin) {
         Tag tag = requireTag(id);
         // 先记住受影响的帖子，解除关联后再刷新冗余列，否则被删标签仍会留在 questions.tag
         Set<Long> questionIds = new java.util.HashSet<>(questionTagMapper.selectQuestionIdsByTagId(id));
         questionTagMapper.deleteByTagId(id);
         tagMapper.deleteById(id);
-        for (Long questionId : questionIds) {
-            questionTagService.refreshTagNames(questionId);
-        }
+        questionTagService.refreshTagNames(questionIds);
         invalidateCaches();
         log.info("管理员 {} 删除标签 {}（{}）", admin.getId(), id, tag.getName());
     }
@@ -196,9 +211,7 @@ public class TagAdminServiceImpl implements TagAdminService {
     /** 标签审核状态/名称变化后，重算所有关联帖子的冗余标签列 */
     private void refreshQuestionsOfTag(long tagId) {
         Set<Long> questionIds = new java.util.HashSet<>(questionTagMapper.selectQuestionIdsByTagId(tagId));
-        for (Long questionId : questionIds) {
-            questionTagService.refreshTagNames(questionId);
-        }
+        questionTagService.refreshTagNames(questionIds);
     }
 
     private void notifyCreator(Tag tag, User admin, NotificationTypeEnum type, String content) {
@@ -210,9 +223,11 @@ public class TagAdminServiceImpl implements TagAdminService {
     }
 
     private void invalidateCaches() {
-        siteCache.invalidate(SiteCacheService.HOME);
-        siteCache.invalidate(SiteCacheService.META + "hots");
-        siteCache.invalidate(SiteCacheService.META + "tagCategories");
-        siteCache.invalidate(SiteCacheService.META + "approvedTags");
+        CacheInvalidation.afterCommit(() -> {
+            siteCache.invalidate(SiteCacheService.HOME);
+            siteCache.invalidate(SiteCacheService.META + "hots");
+            siteCache.invalidate(SiteCacheService.META + "tagCategories");
+            siteCache.invalidate(SiteCacheService.META + "approvedTags");
+        });
     }
 }

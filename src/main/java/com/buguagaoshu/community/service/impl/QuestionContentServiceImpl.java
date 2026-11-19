@@ -41,7 +41,7 @@ public class QuestionContentServiceImpl implements QuestionContentService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void replaceContents(long questionId, List<QuestionContent> contents) {
         for (int i = 0; i < contents.size(); i++) {
             QuestionContent content = contents.get(i);

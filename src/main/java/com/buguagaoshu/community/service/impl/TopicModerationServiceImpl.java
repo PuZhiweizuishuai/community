@@ -18,6 +18,7 @@ import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.service.TopicModerationService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
+import com.buguagaoshu.community.util.CacheInvalidation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
@@ -107,7 +108,7 @@ public class TopicModerationServiceImpl implements TopicModerationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TopicModerator assign(long topicId, String userCode, String role, User admin) {
         TagClass topic = tagClassService.findById(topicId);
         if (topic == null) {
@@ -152,9 +153,7 @@ public class TopicModerationServiceImpl implements TopicModerationService {
 
     @Override
     public void remove(long topicId, long userId, User admin) {
-        TopicModerator exists = moderatorMapper.selectOne(topicId, userId);
-        if (exists != null) {
-            moderatorMapper.deleteById(exists.getId());
+        if (moderatorMapper.deleteByTopicAndUser(topicId, userId) > 0) {
             log.info("管理员 {} 卸任话题 {} 的吧务 {}", admin.getId(), topicId, userId);
         }
     }
@@ -190,7 +189,7 @@ public class TopicModerationServiceImpl implements TopicModerationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateTags(long topicId, long questionId, List<String> tagNames, User operator) {
         requireQuestionOfTopic(topicId, questionId, operator);
         if (tagNames != null && tagNames.size() > 5) {
@@ -215,7 +214,9 @@ public class TopicModerationServiceImpl implements TopicModerationService {
     }
 
     private void invalidateCaches() {
-        siteCache.invalidate(SiteCacheService.HOME);
-        siteCache.invalidate(SiteCacheService.TOPICS);
+        CacheInvalidation.afterCommit(() -> {
+            siteCache.invalidate(SiteCacheService.HOME);
+            siteCache.invalidate(SiteCacheService.TOPICS);
+        });
     }
 }

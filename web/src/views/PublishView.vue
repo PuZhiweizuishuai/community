@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Check, ChevronDown, ChevronUp, Eye, FileText, Lock, MessageCircle, Minus, Plus, Send, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/vue'
-import { questionApi } from '@/api'
+import { discoverApi, metaApi, questionApi } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
@@ -33,6 +33,12 @@ const classification = ref(0)
 const topicId = ref(0)
 const topicKeyword = ref('')
 const showTopicPanel = ref(false)
+const selectedTopic = ref(null)
+const topicOptions = ref([])
+const topicLoading = ref(false)
+let topicLoaded = false
+let topicRequestSeq = 0
+let topicSearchTimer = null
 const segments = ref([newSegment()])
 const tags = ref([])
 const tagInput = ref('')
@@ -58,12 +64,55 @@ function segmentTypeLabel(type) {
 
 const editClasses = computed(() => meta.classifications.filter((c) => c.value !== 0))
 const ads = computed(() => meta.adsFor('publish'))
-const selectedTopic = computed(() => meta.topics.find((t) => Number(t.id) === Number(topicId.value)) || null)
-const filteredTopics = computed(() => {
-  const kw = topicKeyword.value.trim().toLowerCase()
-  const list = meta.topics
-  if (!kw) return list
-  return list.filter((t) => String(t.title || '').toLowerCase().includes(kw))
+/** 编辑页 / 从话题页带 ?topic= 进入时，按 id 拉取话题标题用于回显 */
+async function loadTopicById(id) {
+  const topicIdNum = Number(id)
+  if (!topicIdNum) {
+    selectedTopic.value = null
+    return
+  }
+  if (selectedTopic.value && Number(selectedTopic.value.id) === topicIdNum) return
+  try {
+    const data = await discoverApi.topic(topicIdNum)
+    if (Number(topicId.value) === topicIdNum && data?.tagClass) {
+      selectedTopic.value = { id: data.tagClass.id, title: data.tagClass.title }
+    }
+  } catch {
+    if (Number(topicId.value) === topicIdNum) selectedTopic.value = null
+  }
+}
+
+/** 话题选择器按需加载：只取前 20 个，输入关键字后由后端过滤 */
+async function loadTopicOptions(keyword = '') {
+  const seq = ++topicRequestSeq
+  topicLoading.value = true
+  try {
+    const list = await metaApi.topicOptions({ keyword: keyword || undefined, limit: 20 })
+    if (seq === topicRequestSeq) {
+      topicOptions.value = Array.isArray(list) ? list : []
+      topicLoaded = true
+    }
+  } catch {
+    if (seq === topicRequestSeq) topicOptions.value = []
+  } finally {
+    if (seq === topicRequestSeq) topicLoading.value = false
+  }
+}
+
+function openTopicPanel() {
+  showTopicPanel.value = true
+  if (!topicLoaded) loadTopicOptions(topicKeyword.value)
+}
+
+function toggleTopicPanel() {
+  if (showTopicPanel.value) showTopicPanel.value = false
+  else openTopicPanel()
+}
+
+watch(topicKeyword, (keyword) => {
+  if (!showTopicPanel.value) return
+  clearTimeout(topicSearchTimer)
+  topicSearchTimer = setTimeout(() => loadTopicOptions(keyword), 300)
 })
 
 const checks = computed(() => {
@@ -89,10 +138,12 @@ async function loadEdit() {
     title.value = ''
     classification.value = 0
     topicId.value = Number(route.query.topic || 0)
+    selectedTopic.value = null
     segments.value = [newSegment()]
     tags.value = []
     questionId.value = -1
     createTime.value = 0
+    await loadTopicById(topicId.value)
     return
   }
   const data = await questionApi.edit(editId.value)
@@ -100,6 +151,7 @@ async function loadEdit() {
   title.value = question.title || ''
   classification.value = Number(question.classification || 0)
   topicId.value = Number(question.topicId || 0)
+  selectedTopic.value = null
   tags.value = (data.tags || []).map((t) => t.name)
   createTime.value = question.createTime || 0
   questionId.value = question.questionId
@@ -107,13 +159,29 @@ async function loadEdit() {
   segments.value = list.length ? list : [newSegment()]
   await nextTick()
   segments.value.forEach((s) => editorRefs[s.key]?.setValue?.(s.content))
+  await loadTopicById(topicId.value)
 }
 watch(editId, loadEdit, { immediate: true })
 
+// 同一路由下从话题页再次进入（仅 query 变化）时同步预选话题
+watch(() => route.query.topic, (topic) => {
+  if (editId.value) return
+  const id = Number(topic || 0)
+  if (id === Number(topicId.value)) return
+  topicId.value = id
+  loadTopicById(id)
+})
+
 function chooseTopic(topic) {
   topicId.value = Number(topic.id)
+  selectedTopic.value = { id: topic.id, title: topic.title }
   topicKeyword.value = ''
   showTopicPanel.value = false
+}
+
+function clearTopic() {
+  topicId.value = 0
+  selectedTopic.value = null
 }
 
 function addTag(tag) {
@@ -228,10 +296,10 @@ async function submit() {
             <span class="mb-2 block text-xs font-medium ui-text-base">话题 <span class="text-rose-500">*</span></span>
             <p class="mb-2 text-xs ui-text-muted">每篇帖子只属于一个话题，类似贴吧的「吧」；发布后可在话题页浏览与关注。</p>
             <div class="relative">
-              <div v-if="selectedTopic" class="mb-2 flex items-center gap-2">
+              <div v-if="topicId" class="mb-2 flex items-center gap-2">
                 <span class="badge badge-primary badge-sm gap-1">
-                  {{ selectedTopic.title }}
-                  <button type="button" class="inline-flex" aria-label="清除话题" @click="topicId = 0"><X class="size-3" /></button>
+                  {{ selectedTopic?.title || '已选择话题' }}
+                  <button type="button" class="inline-flex" aria-label="清除话题" @click="clearTopic"><X class="size-3" /></button>
                 </span>
               </div>
               <div class="join w-full">
@@ -239,15 +307,15 @@ async function submit() {
                   v-model="topicKeyword"
                   class="input input-bordered input-sm join-item min-w-0 flex-1 focus:outline-none"
                   placeholder="搜索并选择话题"
-                  @focus="showTopicPanel = true"
+                  @focus="openTopicPanel"
                 />
-                <button class="btn btn-sm join-item" type="button" @click="showTopicPanel = !showTopicPanel">
+                <button class="btn btn-sm join-item" type="button" @click="toggleTopicPanel">
                   <component :is="showTopicPanel ? ChevronUp : ChevronDown" class="size-4" />
                 </button>
               </div>
               <div v-if="showTopicPanel" class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border ui-border ui-bg p-1 shadow-lg">
                 <button
-                  v-for="topic in filteredTopics"
+                  v-for="topic in topicOptions"
                   :key="topic.id"
                   type="button"
                   class="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-indigo-50 hover:text-indigo-600"
@@ -256,7 +324,9 @@ async function submit() {
                   <span>{{ topic.title }}</span>
                   <Check v-if="Number(topic.id) === Number(topicId)" class="size-3.5" />
                 </button>
-                <p v-if="!filteredTopics.length" class="px-3 py-4 text-center text-xs ui-text-muted">没有匹配的话题</p>
+                <p v-if="topicLoading" class="px-3 py-4 text-center text-xs ui-text-muted">加载中…</p>
+                <p v-else-if="!topicOptions.length" class="px-3 py-4 text-center text-xs ui-text-muted">没有匹配的话题</p>
+                <p v-else class="px-3 py-2 text-center text-[11px] ui-text-muted">仅显示前 20 个话题，输入关键字可继续搜索</p>
               </div>
             </div>
           </div>

@@ -35,11 +35,13 @@ public interface CommentService {
 
 
     /**
-     * 返回某条一级评论下的全部回复（二级回复统一归属根评论）
+     * 分页返回某条一级评论下的回复（二级回复统一归属根评论）
      * @param parentId 根评论 ID
-     * @return 回复列表，没有回复时返回空列表
+     * @param page 页码
+     * @param size 每页显示数量
+     * @return 回复分页，没有回复时返回空分页
      * */
-    List<CommentDto> getTwoLevelCommentByParent(String parentId);
+    PaginationDto<CommentDto> getTwoLevelCommentByParent(String parentId, String page, String size);
 
     /**
      * 审核通过后执行发布副作用：问题/根评论计数 +1，并向被回复人发送回复通知。

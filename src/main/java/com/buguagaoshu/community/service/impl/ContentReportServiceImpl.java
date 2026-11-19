@@ -118,15 +118,9 @@ public class ContentReportServiceImpl implements ContentReportService {
             fillCommentTarget(report, dto.getTargetId(), reporter);
         }
 
-        long duplicate = reportMapper.selectCountByQuery(QueryWrapper.create()
-                .where(CONTENT_REPORT.TARGET_TYPE.eq(report.getTargetType()))
-                .and(CONTENT_REPORT.TARGET_ID.eq(report.getTargetId()))
-                .and(CONTENT_REPORT.REPORTER_ID.eq(reporter.getId()))
-                .and(CONTENT_REPORT.STATUS.eq(ReportStatusEnum.PENDING.getStatus())));
-        if (duplicate > 0) {
+        if (reportMapper.insertIfNoPending(report) != 1) {
             throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(), "你已举报过该内容，请等待管理员处理");
         }
-        reportMapper.insert(report);
         log.info("用户 {} 举报 {} {}，理由：{}", reporter.getId(), report.getTargetType(),
                 report.getTargetId(), reason.getCode());
     }

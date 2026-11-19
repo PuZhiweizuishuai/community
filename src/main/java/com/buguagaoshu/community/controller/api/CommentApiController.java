@@ -4,6 +4,7 @@ import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.CommentCreateDto;
 import com.buguagaoshu.community.dto.CommentDto;
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.model.Comment;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 
 import static com.buguagaoshu.community.dto.ResultDTO.okOf;
 
@@ -65,8 +65,10 @@ public class CommentApiController {
     }
 
     @GetMapping("/api/twoLevelComment/{commentId}")
-    public ResultDTO backTwoLevelComment(@PathVariable("commentId") String commentId) {
-        List<CommentDto> commentDtos = commentService.getTwoLevelCommentByParent(commentId);
-        return ResultDTO.okOf(commentDtos);
+    public ResultDTO<PaginationDto<CommentDto>> backTwoLevelComment(
+            @PathVariable("commentId") String commentId,
+            @RequestParam(value = "page", defaultValue = "1") String page,
+            @RequestParam(value = "size", defaultValue = "10") String size) {
+        return ResultDTO.okOf(commentService.getTwoLevelCommentByParent(commentId, page, size));
     }
 }

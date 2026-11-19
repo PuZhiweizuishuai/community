@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,18 +95,16 @@ public class TopicAdminApiController {
             @RequestParam(value = "keyword", required = false) String keyword,
             HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        List<TagClass> all = tagClassMapper.selectAll();
-        if (all == null) {
-            all = List.of();
+        Integer typeCode = null;
+        if (StringUtils.isNotBlank(type)) {
+            try {
+                typeCode = Integer.valueOf(type.trim());
+            } catch (NumberFormatException e) {
+                return ResultDTO.okOf(Map.of("topics", List.of(), "total", 0));
+            }
         }
-        final String kw = StringUtils.isBlank(keyword) ? null : keyword.trim().toLowerCase();
-        List<TagClass> result = all.stream()
-                .filter(t -> type == null || type.isBlank() || String.valueOf(t.getType()).equals(type))
-                .filter(t -> kw == null
-                        || (t.getTitle() != null && t.getTitle().toLowerCase().contains(kw))
-                        || (t.getSimpleDesc() != null && t.getSimpleDesc().toLowerCase().contains(kw)))
-                .sorted(Comparator.comparingInt(TagClass::getType).thenComparingLong(TagClass::getId))
-                .toList();
+        String kw = StringUtils.trimToNull(keyword);
+        List<TagClass> result = tagClassMapper.selectAdminList(typeCode, kw);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("topics", result);
         data.put("total", result.size());

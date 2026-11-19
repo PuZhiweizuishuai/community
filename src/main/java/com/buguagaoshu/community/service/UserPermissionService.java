@@ -35,7 +35,7 @@ public interface UserPermissionService {
      * @param power 权限值
      * @return 结果
      * */
-    int updateUserPermissionById(long id, int power,  String modifier, String updateTime);
+    int updateUserPermissionById(long id, int power, String modifier, long updateTime);
 
 
     /**
@@ -44,5 +44,5 @@ public interface UserPermissionService {
      * @param power 权限值
      * @return 结果
      * */
-    int updateDueTime(@Param("id") long id, int power, String modifier, String updateTime, long dueTime);
+    int updateDueTime(@Param("id") long id, int power, String modifier, long updateTime, long dueTime);
 }

@@ -14,6 +14,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -98,6 +99,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int register(User user) {
+        int result = insertUser(user);
+        if (result != 1) {
+            return result;
+        }
+        // 用户、权限、默认角色必须同时成功，否则会出现无法登录的账号
+        UserPermission userPermission = new UserPermission(user.getId(), 1, "0",
+                user.getCreationTime(), user.getCreationTime());
+        userPermissionMapper.insertSelectiveWithPk(userPermission);
+        rbacService.assignRoleByCode(user.getId(), RbacService.DEFAULT_ROLE_CODE);
+        return 1;
+    }
+
+    @Override
     public int updateUserNameById(long id, String newUserName) {
         return userMapper.updateUserNameById(id, newUserName);
     }
@@ -107,10 +123,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public int updateUserEmailById(long id, String newEmail) {
-        if (selectUserByEmail(newEmail) != null) {
+        try {
+            return userMapper.updateUserEmailById(id, newEmail);
+        } catch (DuplicateKeyException e) {
             return -1;
         }
-        return userMapper.updateUserEmailById(id, newEmail);
     }
 
     @Override
@@ -119,7 +136,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public int updateUserLastTimeById(long id, String lastTime) {
+    public int updateUserLastTimeById(long id, long lastTime) {
         return userMapper.updateUserLastTimeById(id, lastTime);
     }
 

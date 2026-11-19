@@ -6,7 +6,7 @@ import { adminApi, questionApi } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
-import { statusLabel } from '@/utils/format'
+import { formatDateTime, statusLabel } from '@/utils/format'
 import Pagination from '@/components/Pagination.vue'
 
 const route = useRoute()
@@ -46,7 +46,7 @@ async function recover(id) {
           <td><RouterLink :to="`/question/${item.questionId}`" class="line-clamp-1 max-w-xs hover:text-indigo-600">{{ item.title }}</RouterLink></td>
           <td><span class="badge badge-sm badge-outline">{{ meta.classificationLabel(item.classification) }}</span></td>
           <td><RouterLink :to="`/user/${item.user?.userId}`" class="text-xs hover:text-indigo-600">{{ item.user?.userName }}</RouterLink></td>
-          <td class="text-xs">{{ item.createTime }}</td>
+          <td class="text-xs">{{ formatDateTime(item.createTime) }}</td>
           <td><span class="badge badge-sm" :class="item.status === 1 ? 'badge-success' : 'badge-error'">{{ statusLabel(item.status) }}</span></td>
           <td>
             <button v-if="item.status === 1" class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item.questionId)"><Trash2 class="size-3.5" />删除</button>

@@ -1,7 +1,7 @@
 <script setup>
 import { Eye, Inbox, MessageCircle, Pin, Sparkles, ThumbsUp } from '@lucide/vue'
 import Avatar from '@/components/Avatar.vue'
-import { splitTags, shortNumber } from '@/utils/format'
+import { splitTags, shortNumber, timeAgo } from '@/utils/format'
 import { useMetaStore } from '@/stores/meta'
 
 /** 后端某些列表可能没带作者，缺数据时退化为纯文本，避免出现 /user/undefined */
@@ -42,7 +42,13 @@ const tagsOf = (item) => {
         <Avatar v-else :src="item.user?.headUrl" :name="item.user?.userName" :size="38" />
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
-            <span v-if="item.topicId" class="badge badge-sm badge-primary">{{ item.topicTitle || meta.topicTitle(item.topicId) || '话题' }}</span>
+            <RouterLink
+              v-if="item.topicId"
+              :to="`/topics/${item.topicId}`"
+              class="badge badge-sm badge-primary hover:opacity-80"
+            >
+              {{ item.topicTitle || '话题' }}
+            </RouterLink>
             <span v-if="item.isTop" class="badge badge-sm badge-warning gap-1"><Pin class="size-3" />置顶</span>
             <span v-if="item.isEssence" class="badge badge-sm badge-success gap-1"><Sparkles class="size-3" />精华</span>
             <span v-if="item.classification" class="badge badge-sm badge-outline ui-border ui-text-brand">
@@ -64,7 +70,7 @@ const tagsOf = (item) => {
               {{ item.user?.userName || '匿名用户' }}
             </RouterLink>
             <span v-else>{{ item.user?.userName || '匿名用户' }}</span>
-            <span>{{ item.alterTime || item.createTime || '刚刚' }}</span>
+            <span>{{ timeAgo(item.alterTime || item.createTime) || '刚刚' }}</span>
             <span class="flex items-center gap-1"><ThumbsUp class="size-3.5" /> {{ shortNumber(item.likeCount) }}</span>
             <span class="flex items-center gap-1"><MessageCircle class="size-3.5" /> {{ shortNumber(item.commentCount) }}</span>
             <span class="flex items-center gap-1"><Eye class="size-3.5" /> {{ shortNumber(item.viewCount) }}</span>

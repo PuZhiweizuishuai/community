@@ -23,6 +23,7 @@ import com.buguagaoshu.community.service.QuestionContentService;
 import com.buguagaoshu.community.service.ReviewService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.util.CacheInvalidation;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -221,7 +222,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void approve(String type, long id, User admin) {
         ReviewTargetTypeEnum targetType = requireType(type);
         long now = System.currentTimeMillis();
@@ -260,12 +261,12 @@ public class ReviewServiceImpl implements ReviewService {
                 comment.getQuestionId(), comment.getCommentId(),
                 NotificationTypeEnum.REVIEW_COMMENT_PASS.getType(),
                 "你的评论已通过审核，现已公开展示：" + StringUtil.subString(comment.getContent(), 100));
-        siteCache.invalidate(SiteCacheService.HOME);
+        CacheInvalidation.afterCommit(() -> siteCache.invalidate(SiteCacheService.HOME));
         log.info("管理员 {} 审核通过评论 {}", admin.getId(), id);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void reject(String type, long id, String reason, String suggestion, User admin) {
         ReviewTargetTypeEnum targetType = requireType(type);
         String cleanReason = StringUtils.trimToNull(reason);
@@ -314,7 +315,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void resubmitComment(long commentId, String content, User user) {
         String cleanContent = content == null ? "" : content.trim();
         if (cleanContent.isEmpty()) {
@@ -489,7 +490,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private void invalidateQuestionCache() {
-        siteCache.invalidate(SiteCacheService.HOME);
-        siteCache.invalidate(SiteCacheService.META + "hots");
+        CacheInvalidation.afterCommit(() -> {
+            siteCache.invalidate(SiteCacheService.HOME);
+            siteCache.invalidate(SiteCacheService.META + "hots");
+        });
     }
 }

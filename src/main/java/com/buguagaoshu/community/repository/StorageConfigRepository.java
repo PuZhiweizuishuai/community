@@ -91,6 +91,19 @@ public class StorageConfigRepository {
                 .and(FILE_RECORD.STATUS.eq(FileRecord.STATUS_NORMAL)));
     }
 
+    /** 各存储配置的文件数，供列表页一次性装配 */
+    public Map<Long, Long> fileCounts() {
+        Map<Long, Long> counts = new java.util.LinkedHashMap<>();
+        for (Map<String, Object> row : fileRecordMapper.countNormalGroupByStorageId()) {
+            Object storageId = row.get("storageId");
+            Object total = row.get("total");
+            if (storageId instanceof Number id && total instanceof Number count) {
+                counts.put(id.longValue(), count.longValue());
+            }
+        }
+        return counts;
+    }
+
     /**
      * 新增/修改配置。id=0 仅允许修改名称与启用状态；
      * secretKey 留空表示沿用已保存的密钥。

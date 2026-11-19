@@ -42,6 +42,8 @@ public class SiteCacheService {
     public static final String INVALIDATE_CHANNEL = "sitecache:invalidate";
     private static final String KEY_PREFIX = "sitecache:";
     private static final long L1_TTL_MILLIS = 2_000L;
+    /** Redis 键数量扫描结果缓存 30 秒，避免仪表盘每次打开都全量 SCAN */
+    private static final long KEY_COUNT_TTL_MILLIS = 30_000L;
 
     private record Entry(Object value, long expireAt) {
         boolean expired(long now) {
@@ -54,6 +56,8 @@ public class SiteCacheService {
     private final ConcurrentHashMap<String, Object> loadLocks = new ConcurrentHashMap<>();
     private final AtomicLong hits = new AtomicLong();
     private final AtomicLong misses = new AtomicLong();
+    private volatile long redisKeyCount;
+    private volatile long redisKeyCountAt;
 
     private final RedisTemplate<String, Object> redis;
     private final StringRedisTemplate stringRedis;
@@ -150,7 +154,12 @@ public class SiteCacheService {
             keys.add(item);
         });
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("size", l1.size() + countRedisKeys());
+        // 键数量 30 秒内复用上次扫描结果，避免仪表盘每次打开都全量 SCAN
+        if (now - redisKeyCountAt > KEY_COUNT_TTL_MILLIS) {
+            redisKeyCount = countRedisKeys();
+            redisKeyCountAt = now;
+        }
+        data.put("size", l1.size() + redisKeyCount);
         data.put("l1Size", l1.size());
         data.put("hits", hit);
         data.put("misses", miss);

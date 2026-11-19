@@ -12,12 +12,17 @@ import com.buguagaoshu.community.model.SysRole;
 import com.buguagaoshu.community.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
+import java.util.Collection;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,8 +62,10 @@ class RbacServiceImplTest {
         rbacService.saveRolePermissions(5L, List.of(9L));
 
         verify(sysRolePermissionMapper).deleteByRoleId(5L);
-        verify(sysRolePermissionMapper).insertIgnore(5L, 9L);
-        verify(sysRolePermissionMapper).insertIgnore(5L, 1L);
+        ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.forClass(Collection.class);
+        verify(sysRolePermissionMapper).insertIgnoreBatch(eq(5L), ids.capture());
+        assertEquals(2, ids.getValue().size());
+        assertTrue(ids.getValue().containsAll(List.of(9L, 1L)));
         verify(permissionChecker).evictAll();
     }
 
@@ -72,7 +79,10 @@ class RbacServiceImplTest {
 
         rbacService.saveRolePermissions(6L, List.of(15L));
 
-        verify(sysRolePermissionMapper).insertIgnore(6L, 15L);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<Long>> ids = ArgumentCaptor.forClass(Collection.class);
+        verify(sysRolePermissionMapper).insertIgnoreBatch(eq(6L), ids.capture());
+        assertEquals(List.of(15L), List.copyOf(ids.getValue()));
         verify(sysRolePermissionMapper, never()).insertIgnore(6L, 1L);
         verify(sysPermissionMapper, never()).selectByCode("admin:access");
     }

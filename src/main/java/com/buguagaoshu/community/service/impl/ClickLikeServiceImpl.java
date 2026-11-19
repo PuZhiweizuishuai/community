@@ -47,7 +47,7 @@ public class ClickLikeServiceImpl implements ClickLikeService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ClickLikeTypeEnum createClickLike(ClickLikeDTO clickLikeDTO) {
         ClickLike clickLike = new ClickLike();
         clickLike.setNotifier(clickLikeDTO.getNotifier());

@@ -49,10 +49,8 @@ class NotificationServiceImplTest {
         Question question = new Question();
         question.setQuestionId(10);
         question.setUserId(1);
-        Comment c1 = comment(1); // 作者本人也是评论者
-        Comment c2 = comment(2);
-        Comment c3 = comment(3); // 操作者本人
-        when(commentMapper.selectListByQuery(any())).thenReturn(List.of(c1, c2, c3));
+        // 评论者：1 既是作者也是评论者，2 普通评论者，3 操作者本人
+        when(commentMapper.selectDistinctCommentators(10L)).thenReturn(List.of(1L, 2L, 3L));
 
         service.notifyQuestionStatusChange(question, 3,
                 NotificationTypeEnum.SYSTEM_DELETE_QUESTION, NotificationTypeEnum.SYSTEM_DELETE_COMMENT);

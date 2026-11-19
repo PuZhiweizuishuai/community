@@ -22,7 +22,7 @@ public class HotTagCache {
     /** 榜单容量 */
     private static final int MAX = 20;
 
-    private List<String> hots = new ArrayList<>();
+    private volatile List<String> hots = new ArrayList<>();
 
     public void updateTags(Map<String, Long> tags) {
         if (tags == null || tags.isEmpty()) {

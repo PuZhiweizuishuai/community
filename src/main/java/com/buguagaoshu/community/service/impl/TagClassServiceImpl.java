@@ -4,13 +4,16 @@ import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.TagClassService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 
 /**
@@ -59,6 +62,31 @@ public class TagClassServiceImpl implements TagClassService {
             }
         }
         return tagClassList;
+    }
+
+    @Override
+    public List<TagClass> searchEnabledTopics(String keyword, int limit) {
+        int max = Math.min(Math.max(limit, 1), 50);
+        String kw = StringUtils.trimToNull(keyword);
+        List<TagClass> cached = tagClassCache.getTagClassList();
+        if (cached == null) {
+            cached = tagClassMapper.selectAll();
+        }
+        if (cached == null) {
+            return List.of();
+        }
+        Comparator<TagClass> byPopularity = Comparator
+                .comparingLong(TagClass::getFollowCount).reversed()
+                .thenComparing(Comparator.comparingLong(TagClass::getTalkCount).reversed())
+                .thenComparingLong(TagClass::getId);
+        String lower = kw == null ? null : kw.toLowerCase(Locale.ROOT);
+        return cached.stream()
+                .filter(topic -> topic.getStatus() == 1)
+                .filter(topic -> lower == null || (topic.getTitle() != null
+                        && topic.getTitle().toLowerCase(Locale.ROOT).contains(lower)))
+                .sorted(byPopularity)
+                .limit(max)
+                .toList();
     }
 
     @Override

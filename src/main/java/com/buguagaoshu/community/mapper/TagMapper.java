@@ -46,11 +46,12 @@ public interface TagMapper extends BaseMapper<Tag> {
         return update(update);
     }
 
-    @Update("update tags set usageCount=#{usageCount} where id=#{id}")
-    int updateUsageCount(@Param("id") long id, @Param("usageCount") long usageCount);
-
-    @Select("select count(*) from question_tags where tagId=#{tagId}")
-    long countUsage(@Param("tagId") long tagId);
+    /** 按关联表批量原子重算使用数，避免 COUNT + 覆盖写造成并发丢更新 */
+    @Update("<script>update tags t set t.usageCount = " +
+            "(select count(*) from question_tags qt where qt.tagId=t.id) " +
+            "where t.id in <foreach collection='tagIds' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</script>")
+    int refreshUsageCounts(@Param("tagIds") java.util.Collection<Long> tagIds);
 
     @Select("select count(*) from question_tags where tagId=#{tagId} and questionId in " +
             "(select questionId from questions where status=1 and reviewStatus=1)")

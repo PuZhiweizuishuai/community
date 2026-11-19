@@ -69,7 +69,7 @@ class ContentReportServiceImplTest {
         comment.setReviewStatus(ReviewStatusEnum.APPROVED.getStatus());
         when(commentMapper.selectOneById(20L)).thenReturn(comment);
         when(questionMapper.selectOneById(10L)).thenReturn(question(10L, 3L));
-        when(reportMapper.selectCountByQuery(any())).thenReturn(0L);
+        when(reportMapper.insertIfNoPending(any())).thenReturn(1);
 
         ContentReportCreateDto dto = new ContentReportCreateDto();
         dto.setTargetType("comment");
@@ -80,7 +80,7 @@ class ContentReportServiceImplTest {
         service.create(dto, reporter);
 
         ArgumentCaptor<ContentReport> inserted = ArgumentCaptor.forClass(ContentReport.class);
-        verify(reportMapper).insert(inserted.capture());
+        verify(reportMapper).insertIfNoPending(inserted.capture());
         ContentReport saved = inserted.getValue();
         assertEquals("comment", saved.getTargetType());
         assertEquals(10L, saved.getQuestionId());
@@ -102,7 +102,7 @@ class ContentReportServiceImplTest {
         CustomizeException exception = assertThrows(CustomizeException.class,
                 () -> service.create(dto, reporter));
         assertEquals(400, exception.getCode());
-        verify(reportMapper, never()).insert(any(ContentReport.class));
+        verify(reportMapper, never()).insertIfNoPending(any(ContentReport.class));
     }
 
     @Test

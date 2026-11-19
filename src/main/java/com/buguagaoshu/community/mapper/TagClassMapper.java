@@ -2,9 +2,14 @@ package com.buguagaoshu.community.mapper;
 
 import com.buguagaoshu.community.model.TagClass;
 import com.mybatisflex.core.BaseMapper;
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.util.UpdateEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+
+import static com.buguagaoshu.community.model.table.TagClassTableDef.TAG_CLASS;
 
 /**
  * @author Pu Zhiwei {@literal puzhiweipuzhiwei@foxmail.com}
@@ -37,5 +42,18 @@ public interface TagClassMapper extends BaseMapper<TagClass> {
         update.setStatus(tagClass.getStatus());
         update.setModifiedTime(tagClass.getModifiedTime());
         return update(update);
+    }
+
+    /** 后台话题列表：过滤与排序下推到数据库，避免全表加载后内存筛选 */
+    default List<TagClass> selectAdminList(Integer type, String keyword) {
+        QueryWrapper query = QueryWrapper.create();
+        if (type != null) {
+            query.and(TAG_CLASS.TYPE.eq(type));
+        }
+        if (keyword != null) {
+            query.and(TAG_CLASS.TITLE.like(keyword).or(TAG_CLASS.SIMPLE_DESC.like(keyword)));
+        }
+        query.orderBy(TAG_CLASS.TYPE.asc()).orderBy(TAG_CLASS.ID.asc());
+        return selectListByQuery(query);
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -57,11 +58,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     private final AdvertisementMapper advertisementMapper;
     private final AdvertisementCache advertisementCache;
+    private final TransactionTemplate transactionTemplate;
 
     public AdvertisementServiceImpl(AdvertisementMapper advertisementMapper,
-                                    AdvertisementCache advertisementCache) {
+                                    AdvertisementCache advertisementCache,
+                                    TransactionTemplate transactionTemplate) {
         this.advertisementMapper = advertisementMapper;
         this.advertisementCache = advertisementCache;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Override
@@ -83,7 +87,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int alterAdvertisement(CreateAdvertisement dto, User user) {
         if (dto.getId() == null) {
             return 0;
@@ -146,7 +150,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int settingAdvertisement(CreateAdvertisement dto, User user) {
         if (dto == null || dto.getId() == null) {
             return 0;
@@ -155,7 +159,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public int closeAdvertisement(CreateAdvertisement dto, User user) {
         if (dto == null || dto.getId() == null) {
             return 0;
@@ -164,52 +168,63 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
     @Override
-    @Transactional
     public synchronized List<AdvertisementOperationResult> batchSetting(AdvertisementBatchDTO batch, User user) {
-        List<AdvertisementOperationResult> results = new ArrayList<>();
-        if (batch == null || batch.getIds() == null || batch.getIds().isEmpty()) {
-            results.add(AdvertisementOperationResult.of(null, null, 0, "请至少选择一条广告"));
+        // synchronized 必须在事务外释放：编程式事务把锁包住，避免容量判断读到未提交数据
+        return transactionTemplate.execute(status -> {
+            List<AdvertisementOperationResult> results = new ArrayList<>();
+            if (batch == null || batch.getIds() == null || batch.getIds().isEmpty()) {
+                results.add(AdvertisementOperationResult.of(null, null, 0, "请至少选择一条广告"));
+                return results;
+            }
+            if (!VALID_POSITIONS.contains(batch.getPosition())) {
+                results.add(AdvertisementOperationResult.of(null, null, 0, "投放位置不合法"));
+                return results;
+            }
+            if (batch.getTime() == null || batch.getTime() < 1 || batch.getTime() > MAX_DAYS) {
+                results.add(AdvertisementOperationResult.of(null, null, 0, "投放天数需在 1 ~ 365 天之间"));
+                return results;
+            }
+            // 去重，避免同一条广告重复提交占用名额
+            Set<Long> ids = new LinkedHashSet<>(batch.getIds());
+            for (Long id : ids) {
+                results.add(applySetting(id, batch.getPosition(), batch.getTime(), user));
+            }
             return results;
-        }
-        if (!VALID_POSITIONS.contains(batch.getPosition())) {
-            results.add(AdvertisementOperationResult.of(null, null, 0, "投放位置不合法"));
-            return results;
-        }
-        if (batch.getTime() == null || batch.getTime() < 1 || batch.getTime() > MAX_DAYS) {
-            results.add(AdvertisementOperationResult.of(null, null, 0, "投放天数需在 1 ~ 365 天之间"));
-            return results;
-        }
-        // 去重，避免同一条广告重复提交占用名额
-        Set<Long> ids = new LinkedHashSet<>(batch.getIds());
-        for (Long id : ids) {
-            results.add(applySetting(id, batch.getPosition(), batch.getTime(), user));
-        }
-        return results;
+        });
     }
 
     @Override
-    @Transactional
     public synchronized List<AdvertisementOperationResult> batchClose(List<Long> ids, User user) {
-        List<AdvertisementOperationResult> results = new ArrayList<>();
-        if (ids == null || ids.isEmpty()) {
-            results.add(AdvertisementOperationResult.of(null, null, 0, "请至少选择一条广告"));
+        return transactionTemplate.execute(status -> {
+            List<AdvertisementOperationResult> results = new ArrayList<>();
+            if (ids == null || ids.isEmpty()) {
+                results.add(AdvertisementOperationResult.of(null, null, 0, "请至少选择一条广告"));
+                return results;
+            }
+            for (Long id : new LinkedHashSet<>(ids)) {
+                results.add(applyClose(id, user));
+            }
             return results;
-        }
-        for (Long id : new LinkedHashSet<>(ids)) {
-            results.add(applyClose(id, user));
-        }
-        return results;
+        });
     }
 
     @Override
     public List<Map<String, Object>> positionStats() {
         long now = System.currentTimeMillis();
+        Map<String, Long> usedByPosition = new LinkedHashMap<>();
+        for (Map<String, Object> row : advertisementMapper.countActiveGroupByPosition(now)) {
+            Object position = row.get("position");
+            Object total = row.get("total");
+            if (position instanceof String key && total instanceof Number count) {
+                usedByPosition.put(key, count.longValue());
+            }
+        }
         List<Map<String, Object>> result = new ArrayList<>();
         for (String position : POSITIONS) {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("position", position);
             item.put("max", advertisementCache.AD_MAX_NUMBER);
-            int used = advertisementMapper.countActiveByPosition(position, now, null);
+            long used = usedByPosition.getOrDefault(position, 0L);
             item.put("used", used);
             item.put("available", Math.max(0, advertisementCache.AD_MAX_NUMBER - used));
             result.add(item);

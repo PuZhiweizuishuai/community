@@ -14,8 +14,10 @@ import com.buguagaoshu.community.model.SysRole;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserRoleRow;
 import com.buguagaoshu.community.service.RbacService;
+import com.buguagaoshu.community.util.CacheInvalidation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,20 +118,13 @@ public class RbacServiceImpl implements RbacService {
                     "角色说明不能超过 " + MAX_DESCRIPTION_LENGTH + " 个字符");
         }
         long now = System.currentTimeMillis();
-        SysRole sameName = sysRoleMapper.selectByName(name);
         boolean isNew = command.id() == null || command.id() <= 0;
-        if (sameName != null && (isNew || sameName.getId() != command.id())) {
-            throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(), "角色名称「" + name + "」已存在");
-        }
 
         if (isNew) {
             String code = StringUtils.trimToEmpty(command.code()).toLowerCase();
             if (!ROLE_CODE_PATTERN.matcher(code).matches()) {
                 throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(),
                         "角色编码需以小写字母开头，仅包含小写字母、数字和下划线，长度 3~32");
-            }
-            if (sysRoleMapper.selectByCode(code) != null) {
-                throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(), "角色编码「" + code + "」已存在");
             }
             SysRole role = new SysRole();
             role.setCode(code);
@@ -140,7 +135,11 @@ public class RbacServiceImpl implements RbacService {
             role.setSortOrder(command.sortOrder() == null ? 0 : command.sortOrder());
             role.setCreateTime(now);
             role.setUpdateTime(now);
-            sysRoleMapper.insert(role);
+            try {
+                sysRoleMapper.insert(role);
+            } catch (DuplicateKeyException e) {
+                throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(), "角色名称或编码已存在");
+            }
             log.info("新增角色 {}（{}），角色ID {}", name, code, role.getId());
             return role;
         }
@@ -159,8 +158,12 @@ public class RbacServiceImpl implements RbacService {
             role.setStatus(command.status() != null && command.status() == 0 ? 0 : 1);
         }
         role.setUpdateTime(now);
-        sysRoleMapper.update(role);
-        permissionChecker.evictAll();
+        try {
+            sysRoleMapper.update(role);
+        } catch (DuplicateKeyException e) {
+            throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(), "角色名称「" + name + "」已存在");
+        }
+        CacheInvalidation.afterCommit(permissionChecker::evictAll);
         log.info("更新角色 {}（{}），角色ID {}", name, role.getCode(), role.getId());
         return role;
     }
@@ -176,7 +179,7 @@ public class RbacServiceImpl implements RbacService {
             throw new CustomizeException(CustomizeErrorCode.FORBIDDEN.getCode(), "内置角色不可删除");
         }
         sysRoleMapper.deleteById(roleId);
-        permissionChecker.evictAll();
+        CacheInvalidation.afterCommit(permissionChecker::evictAll);
         log.info("删除角色 {}（{}），角色ID {}", role.getName(), role.getCode(), roleId);
     }
 
@@ -223,10 +226,10 @@ public class RbacServiceImpl implements RbacService {
             }
         }
         sysRolePermissionMapper.deleteByRoleId(roleId);
-        for (Long permissionId : ids) {
-            sysRolePermissionMapper.insertIgnore(roleId, permissionId);
+        if (!ids.isEmpty()) {
+            sysRolePermissionMapper.insertIgnoreBatch(roleId, ids);
         }
-        permissionChecker.evictAll();
+        CacheInvalidation.afterCommit(permissionChecker::evictAll);
         log.info("更新角色 {} 的权限，共 {} 个权限点", role.getName(), ids.size());
     }
 
@@ -251,10 +254,10 @@ public class RbacServiceImpl implements RbacService {
         }
         ensureSuperAdminRemains(userId, ids);
         sysUserRoleMapper.deleteByUserId(userId);
-        for (Long roleId : ids) {
-            sysUserRoleMapper.insertIgnore(userId, roleId);
+        if (!ids.isEmpty()) {
+            sysUserRoleMapper.insertIgnoreBatch(userId, ids);
         }
-        permissionChecker.evict(userId);
+        CacheInvalidation.afterCommit(() -> permissionChecker.evict(userId));
         log.info("更新用户 {} 的角色，共 {} 个角色", userId, ids.size());
     }
 
@@ -266,7 +269,7 @@ public class RbacServiceImpl implements RbacService {
             return;
         }
         sysUserRoleMapper.insertIgnore(userId, role.getId());
-        permissionChecker.evict(userId);
+        CacheInvalidation.afterCommit(() -> permissionChecker.evict(userId));
     }
 
     @Override

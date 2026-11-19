@@ -66,17 +66,30 @@ public class ClassificationAdminApiController {
         List<Classification> result = (all == null ? List.<Classification>of() : all).stream()
                 .filter(item -> StringUtils.isBlank(kind) || kind.equals(item.getKind()))
                 .toList();
+        Map<Integer, Long> questionCounts = toCountMap(mapper.countQuestionsGroupByClassification());
+        Map<Integer, Long> topicCounts = toCountMap(mapper.countQuestionsGroupByTopicType());
         result.forEach(item -> {
-            if (Classification.KIND_QUESTION.equals(item.getKind())) {
-                item.setUsageCount(mapper.countQuestionsByClassification(item.getCode()));
-            } else {
-                item.setUsageCount(mapper.countQuestionsByTopicType(item.getCode()));
-            }
+            Map<Integer, Long> counts = Classification.KIND_QUESTION.equals(item.getKind())
+                    ? questionCounts : topicCounts;
+            item.setUsageCount(counts.getOrDefault(item.getCode(), 0L));
         });
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("list", result);
         data.put("total", result.size());
         return ResultDTO.okOf(data);
+    }
+
+    /** 聚合结果转 code → total 映射，忽略非法行 */
+    private Map<Integer, Long> toCountMap(List<Map<String, Object>> rows) {
+        Map<Integer, Long> counts = new LinkedHashMap<>();
+        for (Map<String, Object> row : rows) {
+            Object code = row.get("code");
+            Object total = row.get("total");
+            if (code instanceof Number codeValue && total instanceof Number totalValue) {
+                counts.put(codeValue.intValue(), totalValue.longValue());
+            }
+        }
+        return counts;
     }
 
     @PostMapping("/save")

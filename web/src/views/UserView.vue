@@ -10,6 +10,7 @@ import QuestionList from '@/components/QuestionList.vue'
 import Pagination from '@/components/Pagination.vue'
 import AdCarousel from '@/components/AdCarousel.vue'
 import { useMetaStore } from '@/stores/meta'
+import { formatDateTime, timeAgo } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,7 +85,7 @@ meta.loadAds('userHome')
       <div v-if="showDetail" class="border-t ui-border px-5 py-4 text-sm ui-text-base">
         <p><b>自我介绍：</b>{{ user.selfIntroduction || '暂无' }}</p>
         <p class="mt-1"><b>爱好：</b>{{ user.likes || '暂无' }}</p>
-        <p class="mt-1"><b>注册时间：</b>{{ user.creationTime || '未知' }}</p>
+        <p class="mt-1"><b>注册时间：</b>{{ user.creationTime ? formatDateTime(user.creationTime) : '未知' }}</p>
       </div>
     </div>
 
@@ -115,7 +116,7 @@ meta.loadAds('userHome')
             class="surface mb-3 flex items-center justify-between p-4 hover:border-indigo-200"
           >
             <span class="line-clamp-1 text-sm ui-text-strong">{{ item.followQuestionTitle }}</span>
-            <span class="text-xs ui-text-muted">{{ item.time }}</span>
+            <span class="text-xs ui-text-muted">{{ timeAgo(item.createTime) || '刚刚' }}</span>
           </RouterLink>
         </template>
 

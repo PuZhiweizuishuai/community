@@ -19,7 +19,8 @@ show variables LIKE 'collation_%';
 ALTER DATABASE community CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
--- TODO 修改时间为bigint 方便后期排序
+-- 注意：用户相关时间字段的历史定义仍是 VARCHAR(19)，
+-- 由 Flyway V18 迁移统一转换为 BIGINT（毫秒时间戳），此处保留历史基线不直接修改。
 
 -- 创建用户表
 CREATE TABLE users

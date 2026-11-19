@@ -25,6 +25,12 @@ public interface SysUserRoleMapper {
     @Insert("INSERT IGNORE INTO sys_user_roles(userId, roleId) VALUES(#{userId}, #{roleId})")
     int insertIgnore(@Param("userId") long userId, @Param("roleId") long roleId);
 
+    /** 批量分配角色：一条 SQL 写入整批角色 */
+    @Insert("<script>INSERT IGNORE INTO sys_user_roles(userId, roleId) VALUES " +
+            "<foreach collection='roleIds' item='roleId' separator=','>" +
+            "(#{userId}, #{roleId})</foreach></script>")
+    int insertIgnoreBatch(@Param("userId") long userId, @Param("roleIds") java.util.Collection<Long> roleIds);
+
     @Select("SELECT COUNT(*) FROM sys_user_roles WHERE roleId = #{roleId}")
     long countUsersByRoleId(@Param("roleId") long roleId);
 

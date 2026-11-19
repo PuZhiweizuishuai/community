@@ -60,17 +60,16 @@ public class AdvertisementTasks {
     }
 
     private void rebuildCache() {
-        List<Advertisement> advertisementList = advertisementMapper.selectListByQuery(QueryWrapper.create()
-                .where(ADVERTISEMENT.STATUS.eq(1)).orderBy(ADVERTISEMENT.ID.desc()));
-        Map<String, Map<Long, Object>> byPosition = new HashMap<>();
         long now = System.currentTimeMillis();
+        // 过期广告用一条范围 UPDATE 统一关闭，避免逐条回写
+        advertisementMapper.closeExpired(now);
+        List<Advertisement> advertisementList = advertisementMapper.selectListByQuery(QueryWrapper.create()
+                .where(ADVERTISEMENT.STATUS.eq(1)).and(ADVERTISEMENT.END_TIME.ge(now))
+                .orderBy(ADVERTISEMENT.ID.desc()));
+        Map<String, Map<Long, Object>> byPosition = new HashMap<>();
         for (Advertisement advertisement : advertisementList) {
-            if (advertisement.getEndTime() >= now) {
-                byPosition.computeIfAbsent(advertisement.getPosition(), p -> new ConcurrentHashMap<>())
-                        .put(advertisement.getId(), advertisement);
-            } else {
-                close(advertisement);
-            }
+            byPosition.computeIfAbsent(advertisement.getPosition(), p -> new ConcurrentHashMap<>())
+                    .put(advertisement.getId(), advertisement);
         }
         advertisementCache.setHomeAdvertisementMap(byPosition.getOrDefault(HOME, new ConcurrentHashMap<>()));
         advertisementCache.setPublishAdvertisementMap(byPosition.getOrDefault(PUBLISH, new ConcurrentHashMap<>()));
@@ -82,14 +81,5 @@ public class AdvertisementTasks {
         advertisementCache.setNewsMap(byPosition.getOrDefault(NEWS, new ConcurrentHashMap<>()));
         advertisementCache.setSearchMap(byPosition.getOrDefault(SEARCH, new ConcurrentHashMap<>()));
         log.info("加载广告数据完成！");
-    }
-
-
-    private void close(Advertisement advertisement) {
-        advertisement.setStartTime(0);
-        advertisement.setEndTime(0);
-        advertisement.setModifiedUser(0);
-        advertisement.setStatus(0);
-        advertisementMapper.updateAdvertisementSetting(advertisement);
     }
 }

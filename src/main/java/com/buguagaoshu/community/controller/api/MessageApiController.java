@@ -48,13 +48,43 @@ public class MessageApiController {
                 notificationService.getAllNotification(page, size, user.getId(), type);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("notifications", pagination);
-        data.put("commentCount", notificationMapper.getNoReadCommentCount(user.getId()));
-        data.put("likeCount", notificationMapper.getNoReadLikeCount(user.getId()));
-        data.put("systemCount", notificationMapper.getNoReadSystemCount(user.getId()));
-        data.put("totalCount", notificationService.getAllNotificationNoReadNumber(user.getId()));
+        Map<String, Long> unread = unreadCounts(user.getId());
+        data.put("commentCount", unread.get("comment"));
+        data.put("likeCount", unread.get("like"));
+        data.put("systemCount", unread.get("system"));
+        data.put("totalCount", unread.get("total"));
         data.put("type", type);
         data.put("user", AuthUtil.safeUser(user));
         return ResultDTO.okOf(data);
+    }
+
+    /** 一次 GROUP BY 聚合替代回复/点赞/系统/总数四次 COUNT */
+    private Map<String, Long> unreadCounts(long userId) {
+        long comment = 0;
+        long like = 0;
+        long system = 0;
+        for (Map<String, Object> row : notificationMapper.countUnreadGroupByType(userId)) {
+            Object typeValue = row.get("type");
+            Object totalValue = row.get("total");
+            if (!(typeValue instanceof Number type) || !(totalValue instanceof Number total)) {
+                continue;
+            }
+            int code = type.intValue();
+            long count = total.longValue();
+            if (code <= 2) {
+                comment += count;
+            } else if (code <= 4) {
+                like += count;
+            } else {
+                system += count;
+            }
+        }
+        Map<String, Long> result = new LinkedHashMap<>();
+        result.put("comment", comment);
+        result.put("like", like);
+        result.put("system", system);
+        result.put("total", comment + like + system);
+        return result;
     }
 
     /**

@@ -31,4 +31,11 @@ public interface TopicModeratorMapper extends BaseMapper<TopicModerator> {
                 .where(TOPIC_MODERATOR.TOPIC_ID.eq(topicId))
                 .and(TOPIC_MODERATOR.USER_ID.eq(userId)));
     }
+
+    /** 卸任：直接按话题 + 用户删除，省去先查后删 */
+    default int deleteByTopicAndUser(long topicId, long userId) {
+        return deleteByQuery(QueryWrapper.create()
+                .where(TOPIC_MODERATOR.TOPIC_ID.eq(topicId))
+                .and(TOPIC_MODERATOR.USER_ID.eq(userId)));
+    }
 }

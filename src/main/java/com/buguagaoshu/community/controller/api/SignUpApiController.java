@@ -7,12 +7,9 @@ import com.buguagaoshu.community.dto.UpdateEmailRequest;
 import com.buguagaoshu.community.dto.UpdateUserNameRequest;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.model.User;
-import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.EmailTokenService;
 import com.buguagaoshu.community.service.MailService;
-import com.buguagaoshu.community.service.RbacService;
 import com.buguagaoshu.community.service.SystemConfigService;
-import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.IpUtil;
@@ -36,8 +33,6 @@ import java.time.Duration;
 public class SignUpApiController {
     private final UserService userService;
 
-    private final UserPermissionService userPermissionService;
-
     private final RateLimitService rateLimitService;
 
     private final MailService mailService;
@@ -46,20 +41,15 @@ public class SignUpApiController {
 
     private final SystemConfigService systemConfigService;
 
-    private final RbacService rbacService;
-
     @Autowired
-    public SignUpApiController(UserService userService, UserPermissionService userPermissionService,
-                               RateLimitService rateLimitService, MailService mailService,
-                               EmailTokenService emailTokenService, SystemConfigService systemConfigService,
-                               RbacService rbacService) {
+    public SignUpApiController(UserService userService, RateLimitService rateLimitService,
+                               MailService mailService, EmailTokenService emailTokenService,
+                               SystemConfigService systemConfigService) {
         this.userService = userService;
-        this.userPermissionService = userPermissionService;
         this.rateLimitService = rateLimitService;
         this.mailService = mailService;
         this.emailTokenService = emailTokenService;
         this.systemConfigService = systemConfigService;
-        this.rbacService = rbacService;
     }
 
 
@@ -102,20 +92,13 @@ public class SignUpApiController {
         // 补全数据
         setDefaultHeadUrl(user);
         user.setUserTopPhotoUrl("/image/101-desktop-wallpaper.png");
-        user.setCreationTime(StringUtil.getNowTime());
-        user.setLastTime(StringUtil.getNowTime());
+        long now = System.currentTimeMillis();
+        user.setCreationTime(now);
+        user.setLastTime(now);
 
-        int result = userService.insertUser(user);
+        int result = userService.register(user);
         return switch (result) {
-            case 1 -> {
-                // 写入权限信息
-                UserPermission userPermission = new UserPermission(user.getId(), 1, "0",
-                        StringUtil.getNowTime(), System.currentTimeMillis());
-                userPermissionService.insertUserPermission(userPermission);
-                // 默认授予「社区成员」角色：发布问题、发表评论、上传文件
-                rbacService.assignRoleByCode(user.getId(), RbacService.DEFAULT_ROLE_CODE);
-                yield ResultDTO.okOf();
-            }
+            case 1 -> ResultDTO.okOf();
             case -1 -> ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), "该邮箱已被注册，请重新输入，或登陆");
             case -2 -> ResultDTO.errorOf(CustomizeErrorCode.CONFLICT.getCode(), "该账号已被注册，请更换账号");
             default -> ResultDTO.errorOf(CustomizeErrorCode.SYS_ERROR);

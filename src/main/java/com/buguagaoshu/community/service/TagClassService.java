@@ -18,6 +18,15 @@ public interface TagClassService {
     List<TagClass> getTagClassByTypeNotUserPage(String type);
 
     /**
+     * 发布页话题选择器：只返回启用中的话题，支持标题关键字过滤，最多 limit 条。
+     *
+     * @param keyword 标题关键字，为空时按热度返回
+     * @param limit   返回条数上限（内部钳制到 1~50）
+     * @return 精简后的话题列表
+     */
+    List<TagClass> searchEnabledTopics(String keyword, int limit);
+
+    /**
      * 按话题 ID 调整讨论数（原子增量）。话题为单选，不再拆标签字符串。
      *
      * @param topicId 话题 ID

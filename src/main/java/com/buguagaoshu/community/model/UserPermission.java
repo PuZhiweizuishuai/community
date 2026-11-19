@@ -30,9 +30,9 @@ public class UserPermission {
     private String modifier;
 
     /**
-     * 修改时间
+     * 修改时间（毫秒时间戳）
      * */
-    private String updateTime;
+    private long updateTime;
 
     /**
      * Vip 到期时间
@@ -43,7 +43,7 @@ public class UserPermission {
 
     }
 
-    public UserPermission(long id, int power, String modifier, String updateTime, long dueTime) {
+    public UserPermission(long id, int power, String modifier, long updateTime, long dueTime) {
         this.id = id;
         this.power = power;
         this.modifier = modifier;

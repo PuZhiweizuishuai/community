@@ -5,7 +5,6 @@ import com.buguagaoshu.community.cache.ClassificationCache;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.HotUserCache;
-import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.TagDTO;
 import com.buguagaoshu.community.dto.UserDto;
@@ -14,12 +13,12 @@ import com.buguagaoshu.community.enums.QuestionSortType;
 import com.buguagaoshu.community.enums.TagClassTypeEnum;
 import com.buguagaoshu.community.model.Classification;
 import com.buguagaoshu.community.model.Tag;
-import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.SystemConfigService;
+import com.buguagaoshu.community.service.TagClassService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,7 +50,7 @@ public class MetaApiController {
     private final ClassificationCache classificationCache;
     private final SiteCacheService siteCache;
     private final SystemConfigService systemConfigService;
-    private final TagClassCache tagClassCache;
+    private final TagClassService tagClassService;
     private final QuestionTagService questionTagService;
 
     public MetaApiController(HotTagCache hotTagCache,
@@ -63,7 +62,7 @@ public class MetaApiController {
                              ClassificationCache classificationCache,
                              SiteCacheService siteCache,
                              SystemConfigService systemConfigService,
-                             TagClassCache tagClassCache,
+                             TagClassService tagClassService,
                              QuestionTagService questionTagService) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
@@ -74,7 +73,7 @@ public class MetaApiController {
         this.classificationCache = classificationCache;
         this.siteCache = siteCache;
         this.systemConfigService = systemConfigService;
-        this.tagClassCache = tagClassCache;
+        this.tagClassService = tagClassService;
         this.questionTagService = questionTagService;
     }
 
@@ -87,9 +86,6 @@ public class MetaApiController {
         data.put("sorts", sorts());
         data.put("topicTypes", siteCache.get(SiteCacheService.CLASSIFICATION + "topic", 300_000,
                 this::topicTypes));
-        // 发帖话题单选器：只下发启用中的话题精简字段，避免把简介/图标等大字段塞进基础字典
-        data.put("topics", siteCache.get(SiteCacheService.TOPICS + "options", 60_000,
-                this::topicOptions));
         // 在线人数会查库，缓存 30 秒避免每次请求都打 MySQL
         data.put("onlineCount", siteCache.get(SiteCacheService.META + "onlineCount", 30_000,
                 onlineUserService::selectOnlineUserCount));
@@ -116,6 +112,24 @@ public class MetaApiController {
     public ResultDTO<List<UserDto>> hotUsers() {
         return ResultDTO.okOf(siteCache.get(SiteCacheService.META + "hotUsers", 60_000,
                 hotUserCache::getUserDtoList));
+    }
+
+    /**
+     * 发布页话题选择器：按关键字搜索启用中的话题，最多返回 limit 条，
+     * 避免一次性把全部话题下发给前端造成渲染卡顿。
+     */
+    @GetMapping("/topic-options")
+    public ResultDTO<List<Map<String, Object>>> topicOptions(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "limit", defaultValue = "20") int limit) {
+        return ResultDTO.okOf(tagClassService.searchEnabledTopics(keyword, limit).stream()
+                .map(topic -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", topic.getId());
+                    item.put("title", topic.getTitle());
+                    item.put("type", topic.getType());
+                    return item;
+                }).toList());
     }
 
     /** 标签建议：已通过标签按使用数排序，发布页据此展示可选标签 */
@@ -206,23 +220,6 @@ public class MetaApiController {
         item.put("label", label);
         item.put("id", id);
         return item;
-    }
-
-    /** 发帖话题单选器数据：只包含启用中的话题 */
-    private List<Map<String, Object>> topicOptions() {
-        List<TagClass> topics = tagClassCache.getTagClassList();
-        if (topics == null) {
-            return List.of();
-        }
-        return topics.stream()
-                .filter(topic -> topic.getStatus() == 1)
-                .map(topic -> {
-                    Map<String, Object> item = new LinkedHashMap<>();
-                    item.put("id", topic.getId());
-                    item.put("title", topic.getTitle());
-                    item.put("type", topic.getType());
-                    return item;
-                }).toList();
     }
 
     /** 已通过标签按使用数排序，包装成发布页原有的分组结构 */

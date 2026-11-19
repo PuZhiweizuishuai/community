@@ -37,7 +37,7 @@ public class UserPermissionServiceImpl implements UserPermissionService {
     }
 
     @Override
-    public int updateUserPermissionById(long id, int power, String modifier, String updateTime) {
+    public int updateUserPermissionById(long id, int power, String modifier, long updateTime) {
         UserPermission update = UpdateEntity.of(UserPermission.class, id);
         update.setPower(power);
         update.setModifier(modifier);
@@ -46,7 +46,7 @@ public class UserPermissionServiceImpl implements UserPermissionService {
     }
 
     @Override
-    public int updateDueTime(long id, int power, String modifier, String updateTime, long dueTime) {
+    public int updateDueTime(long id, int power, String modifier, long updateTime, long dueTime) {
         UserPermission update = UpdateEntity.of(UserPermission.class, id);
         update.setPower(power);
         update.setModifier(modifier);

@@ -20,6 +20,7 @@ const confirm = useConfirmStore()
 
 const id = computed(() => route.params.id)
 const page = computed(() => route.query.page || '1')
+const classification = computed(() => route.query.class || '0')
 const topic = ref(null)
 const moderators = ref([])
 const isModerator = ref(false)
@@ -40,7 +41,11 @@ async function loadTopic() {
 async function loadQuestions() {
   loading.value = true
   try {
-    pagination.value = await discoverApi.topicQuestions(id.value, { page: page.value, size: 15 })
+    pagination.value = await discoverApi.topicQuestions(id.value, {
+      page: page.value,
+      size: 15,
+      class: classification.value,
+    })
   } finally {
     loading.value = false
   }
@@ -54,7 +59,7 @@ watch(
   },
   { immediate: true },
 )
-watch(page, loadQuestions)
+watch([page, classification], loadQuestions)
 
 function goPage(next) {
   if (Number(next) === Number(page.value)) return
@@ -153,6 +158,20 @@ async function saveTags() {
       <p v-if="isModerator" class="mt-3 flex items-center gap-1 text-xs ui-text-brand">
         <Tags class="size-3.5" />你当前是该话题吧务，可在帖子下方进行置顶、加精、改标签与删除操作。
       </p>
+    </div>
+
+    <!-- 问题类型筛选：与首页一致 -->
+    <div class="surface mb-4 flex flex-wrap items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
+      <span class="mr-1 text-xs ui-text-muted">类型</span>
+      <RouterLink
+        v-for="item in meta.classifications"
+        :key="item.value"
+        class="btn btn-xs ui-text-base"
+        :class="String(classification) === String(item.value) ? 'btn-primary' : 'btn-ghost'"
+        :to="{ name: 'topic-detail', params: { id }, query: { class: item.value } }"
+      >
+        {{ item.label }}
+      </RouterLink>
     </div>
 
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">

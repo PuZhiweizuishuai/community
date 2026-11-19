@@ -49,7 +49,8 @@ public interface QuestionService {
     /**
      * 话题帖子流：置顶优先，其余按最后活跃时间倒序。
      */
-    PaginationDto<QuestionDto> getTopicQuestions(long topicId, String page, String size, String tag);
+    PaginationDto<QuestionDto> getTopicQuestions(long topicId, String page, String size, String tag,
+                                                 Integer classification);
 
     /**
      * 查找问题
@@ -57,6 +58,11 @@ public interface QuestionService {
      * @return 问题 DTO
      * */
     QuestionDto selectQuestionById(String questionId);
+
+    /**
+     * 批量查询问题 DTO（列表列，不含正文），供首页置顶等榜单装配。
+     */
+    List<QuestionDto> selectQuestionDtosByIds(List<Long> questionIds);
 
     /**
      * 查找问题

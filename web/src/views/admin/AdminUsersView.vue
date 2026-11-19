@@ -8,6 +8,7 @@ import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import Avatar from '@/components/Avatar.vue'
 import Pagination from '@/components/Pagination.vue'
+import { formatDateTime } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -175,7 +176,7 @@ async function confirmReset() {
           </td>
           <td>{{ user.userId }}</td>
           <td class="text-xs">{{ user.email }}</td>
-          <td class="text-xs">{{ user.creationTime }}</td>
+          <td class="text-xs">{{ formatDateTime(user.creationTime) }}</td>
           <td>
             <div v-if="user.roleNames?.length" class="flex flex-wrap gap-1">
               <span v-for="name in user.roleNames" :key="name" class="badge badge-sm badge-outline">{{ name }}</span>

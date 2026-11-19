@@ -105,7 +105,7 @@ public class SignInServiceImpl implements SignInService {
         hashMap.put("user", user);
         // cookie MaxAge（秒）：非记住我为会话级 cookie
         hashMap.put("time", rememberMe ? (int) (ttlMillis / 1000) : -1);
-        userService.updateUserLastTimeById(user.getId(), StringUtil.getNowTime());
+        userService.updateUserLastTimeById(user.getId(), now);
         return hashMap;
     }
 }

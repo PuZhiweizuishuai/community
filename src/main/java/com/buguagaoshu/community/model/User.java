@@ -40,9 +40,9 @@ public class User {
     private String sex;
     private String school;
     private String major;
-    private String creationTime;
+    private long creationTime;
     private String headUrl;
-    private String lastTime;
+    private long lastTime;
     private String userTopPhotoUrl;
 
     /**

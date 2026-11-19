@@ -51,6 +51,22 @@ export function formatDateTime(value) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+/**
+ * 毫秒时间戳 → 相对时间：1 分钟内显示秒、1 小时内显示分钟、24 小时内显示小时、
+ * 4 天内显示天，更早显示完整日期。由前端计算，后端只返回时间戳。
+ */
+export function timeAgo(value) {
+  const time = Number(value)
+  if (!time || !Number.isFinite(time)) return ''
+  const diff = Date.now() - time
+  if (diff < 0) return formatDateTime(time)
+  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))} 秒前`
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`
+  if (diff < 345_600_000) return `${Math.floor(diff / 86_400_000)} 天前`
+  return formatDateTime(time)
+}
+
 export function notificationIcon(type) {
   if (type >= 6) return 'system'
   if (type === 3) return 'like'

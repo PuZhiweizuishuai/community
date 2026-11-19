@@ -12,7 +12,6 @@ import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
-import com.buguagaoshu.community.util.StringUtil;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -107,7 +106,7 @@ public class AdminQuestionApiController {
         if (user == null) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND);
         }
-        userPermissionService.updateUserPermissionById(user.getId(), power, admin.getUserId(), StringUtil.getNowTime());
+        userPermissionService.updateUserPermissionById(user.getId(), power, admin.getUserId(), System.currentTimeMillis());
         return ResultDTO.okOf();
     }
 

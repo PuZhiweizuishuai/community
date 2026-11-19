@@ -12,8 +12,10 @@ import com.buguagaoshu.community.model.UserBanLog;
 import com.buguagaoshu.community.model.UserBanStatus;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserBanService;
+import com.buguagaoshu.community.util.CacheInvalidation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -242,6 +244,13 @@ public class UserBanServiceImpl implements UserBanService {
     }
 
     private void evict(long userId) {
-        cache.remove(userId);
+        CacheInvalidation.afterCommit(() -> cache.remove(userId));
+    }
+
+    /** 定时清理过期条目，避免按 userId 无限增长 */
+    @Scheduled(fixedRate = 60_000)
+    public void evictExpired() {
+        long now = System.currentTimeMillis();
+        cache.entrySet().removeIf(entry -> entry.getValue().expireAt() <= now);
     }
 }

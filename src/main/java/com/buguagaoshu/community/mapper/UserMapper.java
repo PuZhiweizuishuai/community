@@ -49,7 +49,7 @@ public interface UserMapper extends BaseMapper<User> {
         return update(update);
     }
 
-    default int updateUserLastTimeById(long id, String lastTime) {
+    default int updateUserLastTimeById(long id, long lastTime) {
         User update = UpdateEntity.of(User.class, id);
         update.setLastTime(lastTime);
         return update(update);
@@ -125,7 +125,11 @@ public interface UserMapper extends BaseMapper<User> {
     // 用户搜索：FULLTEXT(ngram) 布尔模式，保留 SQL
     // ------------------------------------------------------------------
 
-    @Select("select * from users where MATCH(userName, userId, simpleSelfIntroduction, selfIntroduction) AGAINST(#{search} IN BOOLEAN MODE) order by id desc limit #{page}, #{size}")
+    /** 搜索列表列：排除 password 与自我介绍大字段 */
+    String SEARCH_COLUMNS = "id, userId, userName, email, age, sex, school, major, creationTime, lastTime, " +
+            "headUrl, userTopPhotoUrl, simpleSelfIntroduction, followCount, fansCount, likeCount";
+
+    @Select("select " + SEARCH_COLUMNS + " from users where MATCH(userName, userId, simpleSelfIntroduction, selfIntroduction) AGAINST(#{search} IN BOOLEAN MODE) order by id desc limit #{page}, #{size}")
     List<User> searchUser(@Param("search") String search, @Param("page") long page, @Param("size") long size);
 
     @Select("select COUNT(*) from users where MATCH(userName, userId, simpleSelfIntroduction, selfIntroduction) AGAINST(#{search} IN BOOLEAN MODE)")

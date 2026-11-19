@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.buguagaoshu.community.model.table.ClassificationTableDef.CLASSIFICATION;
 import static com.mybatisflex.core.query.QueryMethods.max;
@@ -69,6 +70,15 @@ public interface ClassificationMapper extends BaseMapper<Classification> {
     /** 问题分类：questions.classification 存的是分类 code */
     @Select("select count(*) from questions where classification=#{code}")
     long countQuestionsByClassification(@Param("code") int code);
+
+    /** 分类使用数聚合：一次查询替代逐分类 COUNT */
+    @Select("select classification as code, count(*) as total from questions group by classification")
+    List<Map<String, Object>> countQuestionsGroupByClassification();
+
+    /** 话题分类使用数聚合 */
+    @Select("select t.type as code, count(*) as total from questions q join topics t on t.id=q.topicId " +
+            "where q.status=1 and q.reviewStatus=1 group by t.type")
+    List<Map<String, Object>> countQuestionsGroupByTopicType();
 
     /** 话题分类：统计归类到该分类下所有话题的帖子数 */
     @Select("select count(*) from questions q join topics t on t.id = q.topicId " +

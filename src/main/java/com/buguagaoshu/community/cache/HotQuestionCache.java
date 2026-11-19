@@ -17,7 +17,7 @@ public class HotQuestionCache {
 
     private static final int MAX = 10;
 
-    private List<HotQuestionDTO> hotQuestionDTOList = new ArrayList<>();
+    private volatile List<HotQuestionDTO> hotQuestionDTOList = new ArrayList<>();
 
     public void updateHotQuestion(List<HotQuestionDTO> candidates) {
         if (candidates == null || candidates.isEmpty()) {

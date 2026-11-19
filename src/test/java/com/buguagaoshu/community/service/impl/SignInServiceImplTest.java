@@ -67,7 +67,7 @@ class SignInServiceImplTest {
         user.setPassword(StringUtil.BCryptPassword("secret123"));
         when(userService.selectUserByEmail("alice@example.com")).thenReturn(user);
         when(userPermissionService.selectUserPermissionById(7))
-                .thenReturn(new UserPermission(7, 1, "0", "2026-01-01 00:00:00", 0));
+                .thenReturn(new UserPermission(7, 1, "0", 1_767_225_600_000L, 0));
     }
 
     @AfterEach

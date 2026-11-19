@@ -44,6 +44,7 @@ public class StorageAdminApiController {
     @GetMapping
     public ResultDTO<List<Map<String, Object>>> list(HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
+        Map<Long, Long> fileCounts = storageConfigRepository.fileCounts();
         List<Map<String, Object>> views = storageConfigRepository.list().stream().map(config -> {
             Map<String, Object> view = new LinkedHashMap<>();
             view.put("id", config.getId());
@@ -57,7 +58,7 @@ public class StorageAdminApiController {
             view.put("pathStyleAccess", config.getPathStyleAccess());
             view.put("urlExpireSeconds", config.getUrlExpireSeconds());
             view.put("enabled", config.getEnabled());
-            view.put("fileCount", storageConfigRepository.fileCount(config.getId()));
+            view.put("fileCount", fileCounts.getOrDefault(config.getId(), 0L));
             view.put("createTime", config.getCreateTime());
             view.put("modifiedTime", config.getModifiedTime());
             return view;

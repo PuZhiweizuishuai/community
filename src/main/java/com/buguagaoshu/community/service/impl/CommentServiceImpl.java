@@ -17,7 +17,6 @@ import com.buguagaoshu.community.model.*;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.SystemConfigService;
-import com.buguagaoshu.community.util.DateFormatUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -73,7 +72,7 @@ public class CommentServiceImpl implements CommentService {
      * 插入评论：审核开启时先进入待审核区，通过后才计数并通知被回复人
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CommentDto insertComment(Comment comment) {
         if (comment.getParentId() <= 0) {
             throw new CustomizeException(CustomizeErrorCode.TARGET_PARAM_NOT_FOUND);
@@ -95,49 +94,37 @@ public class CommentServiceImpl implements CommentService {
         comment.setReviewStatus(reviewRequired
                 ? ReviewStatusEnum.PENDING.getStatus() : ReviewStatusEnum.APPROVED.getStatus());
 
+        // 回复链路只加载一次目标与根评论，后续计数/通知直接复用内存对象
+        Comment target = null;
+        Comment root = null;
         if (CommentTypeEnum.COMMENT.getType().equals(comment.getType())) {
-            insertReply(comment, question);
+            target = selectCommentByCommentId(comment.getParentId());
+            if (target == null || target.getQuestionId() != question.getQuestionId()) {
+                throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
+            }
+            root = resolveRootComment(target);
+            if (root == null || root.getType() != CommentTypeEnum.QUESTION.getType()) {
+                throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
+            }
+            comment.setParentCommentId(root.getCommentId());
+            comment.setParentId(target.getCommentId());
         } else {
-            insertQuestionComment(comment, question);
+            if (comment.getParentId() != question.getQuestionId()) {
+                throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+            }
+            comment.setParentCommentId(-1);
         }
+        commentMapper.insertComment(comment);
+        // 数据库默认 status=1，内存对象同步该值，避免直接组装 DTO 时状态为 0
+        comment.setStatus(1);
 
         if (reviewRequired) {
             notifyReviewSubmitted(comment);
         } else {
-            publishApprovedComment(comment);
+            publishApprovedComment(comment, question, target, root);
         }
 
-        return getCommentDtoById(comment.getCommentId());
-    }
-
-    /**
-     * 回复问题：一级评论固定 parentId 指向问题，parentCommentId 用 -1 占位。
-     */
-    private void insertQuestionComment(Comment comment, Question question) {
-        if (comment.getParentId() != question.getQuestionId()) {
-            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
-        }
-        comment.setParentCommentId(-1);
-        commentMapper.insertComment(comment);
-    }
-
-    /**
-     * 回复评论：所有回复都扁平化挂到根评论下，parentId 保留被回复评论用于展示「回复 @xxx」。
-     * 这样无论回复一级还是二级评论，都能在同一条评论的回复列表中展示。
-     */
-    private void insertReply(Comment comment, Question question) {
-        Comment target = selectCommentByCommentId(comment.getParentId());
-        if (target == null || target.getQuestionId() != question.getQuestionId()) {
-            throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
-        }
-        Comment root = resolveRootComment(target);
-        if (root == null || root.getType() != CommentTypeEnum.QUESTION.getType()) {
-            throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
-        }
-
-        comment.setParentCommentId(root.getCommentId());
-        comment.setParentId(target.getCommentId());
-        commentMapper.insertComment(comment);
+        return toCommentDtos(List.of(comment)).get(0);
     }
 
     /**
@@ -145,13 +132,23 @@ public class CommentServiceImpl implements CommentService {
      * 该方法只应在评论真正公开时调用一次（审核关闭时插入后立即调用，审核开启时审核通过后调用）。
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void publishApprovedComment(Comment comment) {
         Question question = questionMapper.selectQuestionById(comment.getQuestionId(), 1);
         if (question == null) {
             return;
         }
+        Comment target = null;
+        Comment root = null;
+        if (comment.getType() == CommentTypeEnum.COMMENT.getType()) {
+            root = selectCommentByCommentId(comment.getParentCommentId());
+            target = selectCommentByCommentId(comment.getParentId());
+        }
+        publishApprovedComment(comment, question, target, root);
+    }
 
+    /** 发布副作用内部实现：question/target/root 由调用方预先加载，避免重复 SELECT */
+    private void publishApprovedComment(Comment comment, Question question, Comment target, Comment root) {
         // 新评论会改变问题的最后活跃时间与回复总数
         questionMapper.alterQuestionAlterTime(System.currentTimeMillis(), comment.getQuestionId());
         Question countUpdate = new Question();
@@ -161,14 +158,12 @@ public class CommentServiceImpl implements CommentService {
 
         if (comment.getType() == CommentTypeEnum.COMMENT.getType()) {
             // 只累加根评论的回复数；二级评论不再承载回复计数
-            Comment root = selectCommentByCommentId(comment.getParentCommentId());
             if (root != null) {
                 Comment rootCount = new Comment();
                 rootCount.setCommentId(root.getCommentId());
                 rootCount.setCommentCount(1);
                 commentMapper.updateCommentCount(rootCount);
             }
-            Comment target = selectCommentByCommentId(comment.getParentId());
             if (target != null) {
                 createNotification(comment, target.getCommentator(), "",
                         StringUtil.subString(comment.getContent(), 200),
@@ -201,17 +196,6 @@ public class CommentServiceImpl implements CommentService {
             root = selectCommentByCommentId(root.getParentCommentId());
         }
         return root;
-    }
-
-    /**
-     * 按评论 ID 装配单条评论的展示数据。
-     */
-    private CommentDto getCommentDtoById(long commentId) {
-        Comment comment = selectCommentByCommentId(commentId);
-        if (comment == null) {
-            return null;
-        }
-        return toCommentDtos(List.of(comment)).get(0);
     }
 
     @Override
@@ -252,21 +236,29 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentDto> getTwoLevelCommentByParent(String parentId) {
+    public PaginationDto<CommentDto> getTwoLevelCommentByParent(String parentId, String page, String size) {
         long id;
         try {
             id = Long.valueOf(parentId);
         } catch (Exception e) {
             throw new CustomizeException(CustomizeErrorCode.COMMENT_NOT_FOUND);
         }
-        List<Comment> comments = commentMapper.selectListByQuery(QueryWrapper.create()
+        QueryWrapper query = QueryWrapper.create()
                 .where(COMMENT.PARENT_COMMENT_ID.eq(id))
                 .and(COMMENT.TYPE.eq(CommentTypeEnum.COMMENT.getType()))
                 .and(COMMENT.STATUS.eq(1))
-                .and(COMMENT.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()))
-                .orderBy(COMMENT.CREATE_TIME.asc(), COMMENT.COMMENT_ID.asc()));
-        // 没有回复属于正常状态，返回空列表而不是抛错，避免前端展开时被错误提示打断
-        return toCommentDtos(comments);
+                .and(COMMENT.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()));
+        long allCount = commentMapper.selectCountByQuery(query);
+        long[] param = NumberUtils.getPageAndSize(page, size, allCount);
+        List<Comment> comments = commentMapper.selectListByQuery(query
+                .orderBy(COMMENT.CREATE_TIME.asc(), COMMENT.COMMENT_ID.asc())
+                .limit(param[0], param[1]));
+
+        PaginationDto<CommentDto> paginationDto = new PaginationDto<>();
+        paginationDto.setData(toCommentDtos(comments));
+        paginationDto.setAllCount(allCount);
+        paginationDto.setPagination(param[2], param[3], param[1]);
+        return paginationDto;
     }
 
     /**
@@ -290,13 +282,10 @@ public class CommentServiceImpl implements CommentService {
         targetCommentMap.values().forEach(c -> userIds.add(c.getCommentator()));
 
         Map<Long, User> userMap = userBatchLoader.loadUsers(userIds, true);
-        long now = System.currentTimeMillis();
         return comments.stream().map(comment -> {
             CommentDto commentDto = new CommentDto();
             BeanUtils.copyProperties(comment, commentDto);
             commentDto.setUser(userMap.get(comment.getCommentator()));
-            commentDto.setCreateTime(DateFormatUtil.getTimeDifference(comment.getCreateTime(), now));
-            commentDto.setModifiedTime(DateFormatUtil.getTimeDifference(comment.getModifiedTime(), now));
 
             if (comment.getType() == CommentTypeEnum.COMMENT.getType()
                     && comment.getParentId() != comment.getParentCommentId()) {

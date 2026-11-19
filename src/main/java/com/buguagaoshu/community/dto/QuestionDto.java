@@ -30,8 +30,10 @@ public class QuestionDto {
     private long likeCount;
     private long followCount;
     private String tag;
-    private String createTime;
-    private String alterTime;
+    /** 创建时间（毫秒时间戳，展示格式由前端决定） */
+    private long createTime;
+    /** 最后修改时间（毫秒时间戳，展示格式由前端决定） */
+    private long alterTime;
     private int status;
     private int reviewStatus = 1;
     private String reviewReason;
