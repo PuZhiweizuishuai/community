@@ -17,6 +17,10 @@ import java.util.Set;
  *
  * <p>登录接口放行，保证被误封或换账号时可以重新登录；真正的登录封禁在
  * SignInService / 后台登录中单独校验。
+ *
+ * <p>注册接口<b>不放行</b>：被封禁用户带着会话去注册新账号会被拦下，
+ * 避免「换个邮箱重新注册」绕过封禁。匿名注册不受影响——
+ * {@link AuthUtil#currentUser} 对匿名请求返回 null，条件不成立。
  */
 @Component
 public class BanInterceptor implements HandlerInterceptor {
@@ -25,8 +29,7 @@ public class BanInterceptor implements HandlerInterceptor {
             "/api/auth/login",
             "/api/admin/login",
             "/api/auth/logout",
-            "/api/admin/logout",
-            "/api/register"
+            "/api/admin/logout"
     );
 
     private final UserBanService userBanService;

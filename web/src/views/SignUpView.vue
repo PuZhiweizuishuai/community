@@ -6,6 +6,7 @@ import { authApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 import Captcha from '@/components/Captcha.vue'
 import AuthShell from '@/components/AuthShell.vue'
+import { checkPassword, PASSWORD_HINT } from '@/utils/validate'
 
 const router = useRouter()
 const toast = useToastStore()
@@ -89,7 +90,7 @@ async function register() {
   if (!userIdValid.value) return (errorMessage.value = '账号 ID 需为 3~20 位字母、数字、下划线或连字符')
   if (!form.userName.trim()) return (errorMessage.value = '请填写昵称')
   if (!emailValid.value) return (errorMessage.value = '请输入有效的邮箱地址')
-  if (form.password.length < 6) return (errorMessage.value = '密码至少 6 位')
+  if (checkPassword(form.password)) return (errorMessage.value = checkPassword(form.password))
   if (form.password !== form.password2) return (errorMessage.value = '两次输入的密码不一致')
   if (!form.validateCode.trim()) return (errorMessage.value = '请输入验证码')
   if (mailEnabled.value && !mailCode.value.trim()) return (errorMessage.value = '请输入邮箱验证码')
@@ -154,7 +155,7 @@ async function register() {
         <label class="form-control">
           <span class="label-text mb-1 text-sm font-medium ui-text-strong">密码</span>
           <div class="relative">
-            <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="input input-bordered w-full pr-10" placeholder="至少 6 位" autocomplete="new-password" />
+            <input v-model="form.password" :type="showPassword ? 'text' : 'password'" class="input input-bordered w-full pr-10" :placeholder="PASSWORD_HINT" autocomplete="new-password" />
             <button class="btn btn-ghost btn-xs absolute right-1 top-1/2 -translate-y-1/2" type="button" :aria-label="showPassword ? '隐藏密码' : '显示密码'" @click="showPassword = !showPassword">
               <component :is="showPassword ? EyeOff : Eye" class="size-4" />
             </button>

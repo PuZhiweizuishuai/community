@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.service;
 
+import com.buguagaoshu.community.dto.AdminQuestionDetailDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.model.Question;
@@ -112,7 +113,18 @@ public interface QuestionService {
 
     long getAllQuestionCount();
 
-    PaginationDto<QuestionDto> getAllQuestionList(String page, String size);
+    /**
+     * 后台问题管理列表：含已删除问题，支持按删除状态与标题/标签关键字筛选。
+     *
+     * @param status  -1 全部；1 正常；0 已删除
+     * @param keyword 标题或标签关键字，可为空
+     */
+    PaginationDto<QuestionDto> getAdminQuestionList(String status, String keyword, String page, String size);
+
+    /**
+     * 后台问题详情：问题信息 + 全部正文段落（管理员可见密码/回复可见内容）。
+     */
+    AdminQuestionDetailDto getAdminQuestionDetail(long questionId);
 
 
     /**

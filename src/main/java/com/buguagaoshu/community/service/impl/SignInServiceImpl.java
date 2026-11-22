@@ -15,6 +15,7 @@ import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.JwtUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import com.buguagaoshu.community.captcha.CaptchaUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,14 @@ import java.util.HashMap;
  * 登陆方法的具体实现
  */
 @Service
+@Slf4j
 public class SignInServiceImpl implements SignInService {
 
     /** 「记住我」token 有效期：7 天 */
     private static final long REMEMBER_ME_TTL_MILLIS = 7 * 24 * 3600 * 1000L;
+
+    /** 单 IP 失败阈值：比单账号阈值宽，避免 NAT 出口下正常用户互相影响 */
+    private static final int IP_MAX_FAILURES = 30;
 
     private final UserService userService;
 
@@ -69,21 +74,25 @@ public class SignInServiceImpl implements SignInService {
         if (StringUtil.isEmpty(email) || StringUtil.isEmpty(password)) {
             throw new CustomizeException(CustomizeErrorCode.SIGN_IN_EMAIL_OR_PASSWORD_NULL);
         }
-        String limitKey = "login:" + email.toLowerCase();
-        if (rateLimitService.isLocked(limitKey)) {
+        // 双维度限流：邮箱维度防单账号爆破，IP 维度防「大量账号 + 同一弱口令」撞库
+        String emailLimitKey = "login:" + email.toLowerCase();
+        String ip = IpUtil.getIpAddr(request);
+        String ipLimitKey = "login:ip:" + ip;
+        if (rateLimitService.isLocked(emailLimitKey) || rateLimitService.isLocked(ipLimitKey, IP_MAX_FAILURES)) {
             throw new CustomizeException(CustomizeErrorCode.TOO_MANY_ATTEMPTS);
         }
         boolean rememberMe = remember != null;
         User user = userService.selectUserByEmail(email);
-        if (user == null) {
-            rateLimitService.recordFailure(limitKey);
-            throw new CustomizeException(CustomizeErrorCode.SIGN_IN_EMAIL_ERROR);
+        // 账号不存在与密码错误返回同一错误码，避免攻击者枚举已注册邮箱
+        if (user == null || !StringUtil.judgePassword(password, user.getPassword())) {
+            rateLimitService.recordFailure(emailLimitKey);
+            rateLimitService.recordFailure(ipLimitKey);
+            log.warn("登录失败（邮箱或密码错误），邮箱 {}，IP {}", StringUtil.maskEmail(email), ip);
+            throw new CustomizeException(CustomizeErrorCode.SIGN_IN_CREDENTIALS_ERROR);
         }
-        if (!StringUtil.judgePassword(password, user.getPassword())) {
-            rateLimitService.recordFailure(limitKey);
-            throw new CustomizeException(CustomizeErrorCode.SIGN_IN_PASSWORD_ERROR);
-        }
-        rateLimitService.reset(limitKey);
+        // 登录成功只清账号维度计数；IP 维度计数保留到窗口自然过期，
+        // 否则攻击者用一个自己的正常账号即可清空 IP 计数
+        rateLimitService.reset(emailLimitKey);
 
         if (userBanService.isBanned(user.getId())) {
             throw new CustomizeException(CustomizeErrorCode.FORBIDDEN.getCode(),
@@ -92,8 +101,8 @@ public class SignInServiceImpl implements SignInService {
 
         long ttlMillis = rememberMe ? REMEMBER_ME_TTL_MILLIS : defaultTtlMillis;
         UserPermission userPermission = userPermissionService.selectUserPermissionById(user.getId());
-        String token = jwtUtil.createJWT(user.getId(), user.getUserId(), user.getUserName(), email,
-                userPermission.getPower(), ttlMillis);
+        // token 只携带用户 ID，其余信息由服务端按需查库，避免敏感字段在 payload 中明文可见
+        String token = jwtUtil.createJWT(user.getId(), ttlMillis);
         long now = System.currentTimeMillis();
         onlineUserService.insertOnlineUser(new OnlineUser(user.getId(), user.getUserName(), token,
                 IpUtil.getIpAddr(request), now, now + ttlMillis));

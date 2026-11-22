@@ -8,6 +8,7 @@ import { useToastStore } from '@/stores/toast'
 import Avatar from '@/components/Avatar.vue'
 import Captcha from '@/components/Captcha.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
+import { checkPassword, PASSWORD_HINT } from '@/utils/validate'
 
 const session = useSessionStore()
 const toast = useToastStore()
@@ -71,7 +72,8 @@ async function saveProfile() {
 }
 
 async function savePassword() {
-  if (pwd.value.newPassword.length < 6) return toast.warning('新密码至少 6 位')
+  const pwdError = checkPassword(pwd.value.newPassword)
+  if (pwdError) return toast.warning(pwdError)
   if (pwd.value.newPassword !== pwd.value.confirm) return toast.warning('两次输入的新密码不一致')
   saving.value = true
   try {
@@ -252,7 +254,7 @@ async function onCropConfirm(dataUrl) {
         <div v-else-if="tab === 'security'" class="max-w-md space-y-5">
           <div>
             <h2 class="text-base font-semibold ui-text-strong">修改密码</h2>
-            <p class="mt-1 text-xs ui-text-muted">密码需为 6 ~ 30 位字母、数字或常见符号</p>
+            <p class="mt-1 text-xs ui-text-muted">{{ PASSWORD_HINT }}</p>
           </div>
           <label class="form-control"><span class="label-text mb-1.5 font-medium ui-text-strong">原密码</span><input v-model="pwd.oldPassword" type="password" class="input input-bordered w-full" autocomplete="current-password" /></label>
           <label class="form-control"><span class="label-text mb-1.5 font-medium ui-text-strong">新密码</span><input v-model="pwd.newPassword" type="password" class="input input-bordered w-full" autocomplete="new-password" /></label>

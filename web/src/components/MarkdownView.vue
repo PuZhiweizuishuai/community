@@ -4,6 +4,7 @@ import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import { useThemeStore } from '@/stores/theme'
 import { vditorPreviewTheme, vditorThemeOf } from '@/utils/vditorTheme'
+import { bindVditorCopyDelegate, hardenVditorInlineHandlers } from '@/utils/vditorCsp'
 
 const theme = useThemeStore()
 
@@ -15,6 +16,7 @@ const emit = defineEmits(['rendered'])
 
 const el = ref(null)
 let disposed = false
+let unbindCopy = () => {}
 
 async function render() {
   if (!el.value || disposed) return
@@ -26,14 +28,24 @@ async function render() {
     mode: vditorThemeOf(theme.isDark).previewMode,
     anchor: props.anchor,
     markdown: { toc: true },
-    after: () => emit('rendered', el.value),
+    after: () => {
+      // 剥掉 Vditor 注入的内联事件处理器（严格 CSP 下会被拦截），改用委托复制
+      hardenVditorInlineHandlers(el.value)
+      emit('rendered', el.value)
+    },
   })
 }
 
-onMounted(render)
+onMounted(() => {
+  unbindCopy = bindVditorCopyDelegate(el.value)
+  render()
+})
 watch(() => props.content, render)
 watch(() => theme.isDark, render)
-onBeforeUnmount(() => (disposed = true))
+onBeforeUnmount(() => {
+  disposed = true
+  unbindCopy()
+})
 </script>
 
 <template>

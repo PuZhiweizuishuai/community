@@ -6,8 +6,23 @@ MYSQL_PASSWORD: change-me
 
 REDIS_HOST: 127.0.0.1
 REDIS_PORT: 6379
+# 生产必须设置密码：redis.conf 里 requirepass + bind 内网地址
 REDIS_PASSWORD: change-me
 
 JWT_KEY: change-me-to-a-random-secret-at-least-32-bytes
+
+# ---------------------------------------------------------------
+# 生产环境（SPRING_PROFILES_ACTIVE=prod）额外需要的变量
+# ---------------------------------------------------------------
+# 前端真实域名，逗号分隔，禁止使用 *
+# APP_CORS_ALLOWED_ORIGINS: https://your-domain.com,https://www.your-domain.com
+# Nginx 所在地址：只有来自这些地址的 X-Forwarded-For 才会被采信
+# TRUSTED_PROXIES: 127.0.0.1,::1
+# 对外 HTTPS 由 Nginx 终止，cookie 必须带 Secure 标记
+# COOKIE_SECURE: true
+# 找回密码邮件中的前端链接前缀
+# FRONTEND_BASE_URL: https://your-domain.com
+# 接口文档开关（prod profile 已默认关闭，仅需显式覆盖时设置）
+# SPRINGDOC_ENABLED: false
 
 # 对象存储（S3 兼容）凭据不再放这里：在管理后台「存储配置」页面维护，持久化到 storage_config 表

@@ -5,6 +5,11 @@ import 'vditor/dist/index.css'
 import { EDITOR_UPLOAD_URL } from '@/api'
 import { useThemeStore } from '@/stores/theme'
 import { vditorPreviewTheme, vditorThemeOf } from '@/utils/vditorTheme'
+import {
+  bindVditorCopyDelegate,
+  hardenVditorInlineHandlers,
+  observeVditorInlineHandlers,
+} from '@/utils/vditorCsp'
 
 const theme = useThemeStore()
 
@@ -21,6 +26,9 @@ const holderId = `vditor-${Math.random().toString(36).slice(2)}`
 const holder = ref(null)
 let editor = null
 let editorReady = false
+// 严格 CSP 下 Vditor 的内联事件处理器会被拦截，这里用监听 + 委托代替
+let stopObserving = () => {}
+let unbindCopy = () => {}
 // Vditor 构造是异步的：初始化完成前收到的值先暂存，after 回调里统一写入
 let pendingValue = null
 let internalUpdate = false
@@ -104,6 +112,7 @@ function options() {
         applyValue(pendingValue)
         pendingValue = null
       }
+      hardenVditorInlineHandlers(holder.value)
       emit('ready', editor)
     },
   }
@@ -112,9 +121,14 @@ function options() {
 onMounted(() => {
   // Vditor 构造函数内部会自行初始化，不要再手动调用 init()
   editor = new Vditor(holder.value, options())
+  // 预览面板会反复重绘，持续剥掉内联事件处理器并用事件委托接管复制按钮
+  stopObserving = observeVditorInlineHandlers(holder.value)
+  unbindCopy = bindVditorCopyDelegate(holder.value)
 })
 
 onBeforeUnmount(() => {
+  stopObserving()
+  unbindCopy()
   try {
     editor?.destroy?.()
   } catch {

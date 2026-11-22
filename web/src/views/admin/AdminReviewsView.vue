@@ -193,7 +193,7 @@ async function confirmReject() {
             v-for="tab in typeTabs"
             :key="tab.value"
             class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition"
-            :class="type === tab.value ? 'bg-white shadow-sm ui-text-brand' : 'ui-text-base hover:ui-text-strong'"
+            :class="type === tab.value ? 'ui-bg shadow-sm ui-text-brand' : 'ui-text-base hover:ui-text-strong'"
             type="button"
             @click="updateQuery({ type: tab.value })"
           >

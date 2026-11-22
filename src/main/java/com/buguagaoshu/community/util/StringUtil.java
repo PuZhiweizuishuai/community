@@ -14,9 +14,15 @@ public class StringUtil {
     /** BCrypt 编码器线程安全，全局单例（spring-security-crypto，无需整个 Spring Security） */
     private static final BCryptPasswordEncoder PASSWORD_ENCODER = new BCryptPasswordEncoder();
 
-    /** 密码规则：6~30 位字母、数字或常用符号（同时供 @Pattern 声明式校验复用） */
+    /**
+     * 密码规则：8~30 位，必须同时包含字母与数字，允许常用符号（同时供 @Pattern 声明式校验复用）。
+     * 禁止纯数字/纯字母弱口令（如 12345678、password）。
+     */
     public static final String PASSWORD_REGEX =
-            "^([A-Z]|[a-z]|[0-9]|[`~!@#$%^&*()+=|{}':;',\\\\\\\\[\\\\\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]){6,30}$";
+            "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d`~!@#$%^&*()+=|{}':;,\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“'。，、？]{8,30}$";
+
+    /** 密码规则提示语，DTO 与前端共用同一文案 */
+    public static final String PASSWORD_MESSAGE = "密码需为 8~30 位，且同时包含字母和数字";
 
     /**
      * 密码加密
@@ -161,6 +167,34 @@ public class StringUtil {
             return null;
         }
         return cleaned;
+    }
+
+    /**
+     * 邮箱脱敏，用于日志与审计：puzhiwei@foxmail.com → p******@foxmail.com。
+     * 避免把用户完整邮箱写进日志文件。
+     */
+    public static String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "";
+        }
+        int at = email.indexOf('@');
+        if (at <= 0) {
+            return "***";
+        }
+        String local = email.substring(0, at);
+        String domain = email.substring(at);
+        if (local.length() <= 2) {
+            return local.charAt(0) + "***" + domain;
+        }
+        return local.charAt(0) + "******" + domain;
+    }
+
+    /**
+     * 密码强度校验：至少 8 位，且同时包含字母与数字（可含常用符号）。
+     * 与 {@link #PASSWORD_REGEX} 语义一致，供服务层二次校验使用。
+     */
+    public static boolean isStrongPassword(String password) {
+        return password != null && password.matches(PASSWORD_REGEX);
     }
 
     public static String subString(String str, int n) {

@@ -37,6 +37,7 @@ import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -294,5 +295,21 @@ public class QuestionApiController {
         data.put("questionId", question.getQuestionId());
         data.put("reviewStatus", question.getReviewStatus());
         return ResultDTO.okOf(data);
+    }
+
+    /**
+     * 作者删除自己的问题（软删除）。
+     *
+     * <p>后台路径 {@code /api/admin/delete/question} 只允许管理员调用，
+     * 用户自助删除走这里，所有权由 {@code QuestionService.deleteQuestion} 校验。
+     */
+    @DeleteMapping("/{questionId}")
+    public ResultDTO<Object> deleteQuestion(@PathVariable("questionId") Long questionId,
+                                            HttpServletRequest request) {
+        User user = AuthUtil.requireUser(request);
+        questionService.deleteQuestion(questionId, user, false);
+        siteCache.invalidate(SiteCacheService.HOME);
+        siteCache.invalidate(SiteCacheService.META + "hots");
+        return ResultDTO.okOf();
     }
 }

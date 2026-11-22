@@ -181,7 +181,7 @@ async function submitHandle() {
             class="rounded-md px-3 py-1.5 text-sm font-medium transition"
             :class="
               status === tab.value
-                ? 'bg-white shadow-sm ui-text-brand'
+                ? 'ui-bg shadow-sm ui-text-brand'
                 : 'ui-text-base hover:ui-text-strong'
             "
             type="button"

@@ -25,7 +25,7 @@ public class EmailAuthDtos {
         @NotBlank(message = "重置链接无效")
         private String token;
         @NotBlank(message = "新密码不能为空")
-        @Pattern(regexp = StringUtil.PASSWORD_REGEX, message = "密码需为 6~30 位字母、数字或常用符号")
+        @Pattern(regexp = StringUtil.PASSWORD_REGEX, message = StringUtil.PASSWORD_MESSAGE)
         private String newPassword;
     }
 

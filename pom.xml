@@ -10,13 +10,13 @@
     </parent>
     <groupId>com.buguagaoshu.community</groupId>
     <artifactId>community</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>2.0.0</version>
     <name>community</name>
     <description>community</description>
 
     <properties>
         <!-- Spring Boot 4 基线 17，本升级使用最新的 LTS Java 25 -->
-        <java.version>25</java.version>
+        <java.version>21</java.version>
         <!-- 4.x 分支才是适配 Spring Boot 4 / Spring Framework 7 的 MyBatis starter -->
         <mybatis-flex.version>1.11.8</mybatis-flex.version>
         <jjwt.version>0.13.0</jjwt.version>

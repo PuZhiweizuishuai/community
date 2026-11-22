@@ -14,6 +14,7 @@ import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.captcha.CaptchaUtil;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -70,5 +71,18 @@ public class CommentApiController {
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "10") String size) {
         return ResultDTO.okOf(commentService.getTwoLevelCommentByParent(commentId, page, size));
+    }
+
+    /**
+     * 作者删除自己的评论（软删除）。所有权由服务层校验，
+     * 管理员删除评论走 {@code /api/admin/comments/{id}/delete}。
+     */
+    @DeleteMapping("/api/comment/{commentId}")
+    public ResultDTO<Object> deleteComment(@PathVariable("commentId") @Positive(message = "评论 ID 不合法") long commentId,
+                                          HttpServletRequest request) {
+        User user = AuthUtil.requireUser(request);
+        commentService.deleteOwnComment(commentId, user);
+        siteCache.invalidate(SiteCacheService.HOME);
+        return ResultDTO.okOf();
     }
 }

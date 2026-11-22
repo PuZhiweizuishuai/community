@@ -14,7 +14,7 @@ public class UpdatePasswordRequest {
     private String oldPassword;
 
     @NotBlank(message = "新密码不能为空")
-    @Pattern(regexp = StringUtil.PASSWORD_REGEX, message = "密码需为 6~30 位字母、数字或常用符号")
+    @Pattern(regexp = StringUtil.PASSWORD_REGEX, message = StringUtil.PASSWORD_MESSAGE)
     private String newPassword;
 
     @NotBlank(message = "请输入图形验证码")

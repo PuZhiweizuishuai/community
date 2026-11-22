@@ -1,0 +1,35 @@
+# 生产环境配置：SPRING_PROFILES_ACTIVE=prod
+#
+# HTTPS 由前端 Nginx 终止（后端只监听内网 HTTP），因此这里不配置 server.ssl；
+# Nginx 必须转发 X-Forwarded-Proto / X-Forwarded-For，后端已开启
+# server.forward-headers-strategy=native 来识别真实协议与客户端 IP。
+#
+# 本文件只放「不涉及密钥」的开关；数据库、Redis、JWT 等凭据仍通过环境变量注入。
+# 若沿用 application-local.yml 存放凭据，这里把它一并导入（optional：文件不存在也不报错）；
+# 环境变量优先级高于配置文件，生产上可用环境变量覆盖其中任意一项。
+spring:
+  config:
+    import: optional:classpath:application-local.yml
+
+springdoc:
+  # 生产不暴露接口文档
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+app:
+  cookie:
+    # 对外是 HTTPS（Nginx 终止），token cookie 必须带 Secure 标记
+    secure: ${COOKIE_SECURE:true}
+
+server:
+  servlet:
+    session:
+      cookie:
+        # 登录态主 cookie（SESSION）同样必须带 Secure
+        secure: ${COOKIE_SECURE:true}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:info}

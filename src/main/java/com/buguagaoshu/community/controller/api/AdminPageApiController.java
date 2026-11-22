@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller.api;
 import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.AdminDataDTO;
+import com.buguagaoshu.community.dto.AdminQuestionDetailDto;
 import com.buguagaoshu.community.dto.AdvertisementBatchDTO;
 import com.buguagaoshu.community.dto.AdvertisementOperationResult;
 import com.buguagaoshu.community.dto.CreateAdvertisement;
@@ -118,11 +119,23 @@ public class AdminPageApiController {
     @GetMapping("/questions")
     @RequirePermission(PermissionCodes.ADMIN_QUESTION)
     public ResultDTO<PaginationDto<QuestionDto>> questions(
+            @RequestParam(value = "status", defaultValue = "-1") String status,
+            @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "20") String size,
             HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        return ResultDTO.okOf(questionService.getAllQuestionList(page, size));
+        return ResultDTO.okOf(questionService.getAdminQuestionList(status, keyword, page, size));
+    }
+
+    /** 问题详情：含全部正文段落，供后台判断内容是否违规后再删除/恢复 */
+    @GetMapping("/questions/{id}")
+    @RequirePermission(PermissionCodes.ADMIN_QUESTION)
+    public ResultDTO<AdminQuestionDetailDto> questionDetail(
+            @PathVariable("id") @Positive(message = "问题 ID 不合法") long id,
+            HttpServletRequest request) {
+        AuthUtil.requireAdmin(request);
+        return ResultDTO.okOf(questionService.getAdminQuestionDetail(id));
     }
 
     /** 控制面板：日志列表 */

@@ -4,6 +4,7 @@ import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.enums.CommentSortTypeEnum;
 import com.buguagaoshu.community.model.Comment;
+import com.buguagaoshu.community.model.User;
 
 import java.util.List;
 
@@ -49,4 +50,15 @@ public interface CommentService {
      * @param comment 已通过审核的评论
      */
     void publishApprovedComment(Comment comment);
+
+    /**
+     * 作者删除自己的评论（软删除）。
+     *
+     * <p>删除后：已通过审核的评论回退问题/根评论的回复数；待审核或被驳回的评论
+     * 本来就没有计数，直接置为删除状态即可。所有权校验在服务层完成。
+     *
+     * @param commentId 评论 ID
+     * @param user      当前登录用户
+     */
+    void deleteOwnComment(long commentId, User user);
 }

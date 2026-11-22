@@ -20,6 +20,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -53,26 +54,47 @@ public class FileRepository {
         this.userMapper = userMapper;
     }
 
+    /**
+     * 上传前校验：后缀白名单 + 文件头（魔数）一致性。
+     *
+     * <p>只看后缀无法阻止「改后缀伪装」，例如把 HTML/JS 命名为 .pdf 上传。
+     * 这里对全部允许类型校验真实文件头，并配合文件接口的
+     * {@code X-Content-Type-Options: nosniff} 与 attachment 下载策略，阻断存储型 XSS。
+     */
     public void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "没有收到文件");
         }
         String fileName = file.getOriginalFilename();
+        if (fileName == null || fileName.isBlank()) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "文件名不能为空");
+        }
         if (!FileUtil.checkFileType(fileName)) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "不支持的文件格式");
         }
-        if (ImageUtil.checkFileType(fileName)) {
-            try {
-                // 魔数校验：后缀可伪造，文件头必须是真实图片
-                if (!ImageUtil.isImageContent(file.getBytes())) {
-                    throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "图片内容不合法");
-                }
-            } catch (CustomizeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "文件读取失败");
+        FileUtil.MagicType actual;
+        try {
+            actual = FileUtil.detectMagicType(readHead(file));
+        } catch (Exception e) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "文件读取失败");
+        }
+        if (!FileUtil.isMagicConsistent(fileName, actual)) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "文件内容与后缀不一致");
+        }
+    }
+
+    /** 只读取文件头，避免把 10MB 文件整块读进内存 */
+    private byte[] readHead(MultipartFile file) throws java.io.IOException {
+        byte[] head = new byte[FileUtil.MAGIC_HEAD_LENGTH];
+        try (InputStream in = file.getInputStream()) {
+            int read = in.readNBytes(head, 0, head.length);
+            if (read < head.length) {
+                byte[] shorter = new byte[read];
+                System.arraycopy(head, 0, shorter, 0, read);
+                return shorter;
             }
         }
+        return head;
     }
 
     public FileRecord upload(MultipartFile file, User uploader) {

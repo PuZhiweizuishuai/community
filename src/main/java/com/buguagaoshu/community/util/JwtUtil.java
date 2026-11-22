@@ -51,15 +51,21 @@ public class JwtUtil {
         }
     }
 
-    public String createJWT(long id, String userId, String userName, String email, int power, long ttlMillis) {
+    /**
+     * 签发「记住我」token。
+     *
+     * <p>payload 只放用户 ID（jti）与签发/过期时间：JWT 的 payload 只是 Base64 编码，
+     * 任何拿到 token 的人都能解码，因此不写入 email / userName / 角色等敏感信息，
+     * 这些信息在恢复会话时由服务端按 userId 查库获取。
+     *
+     * @param id        用户主键
+     * @param ttlMillis 有效期（毫秒），<= 0 表示不设过期
+     */
+    public String createJWT(long id, long ttlMillis) {
         long nowMillis = System.currentTimeMillis();
         JwtBuilder jwtBuilder = Jwts.builder()
                 .id(Long.toString(id))
-                .subject(userId)
                 .issuedAt(new Date(nowMillis))
-                .claim("roles", power)
-                .claim("email", email)
-                .claim("userName", userName)
                 .signWith(signingKey());
         if (ttlMillis > 0) {
             jwtBuilder.expiration(new Date(nowMillis + ttlMillis));

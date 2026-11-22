@@ -43,13 +43,18 @@ export const questionApi = {
   edit: (id) => api.get(`/questions/${encodeURIComponent(id)}/edit`),
   save: (data) => api.post('/questions', data),
   unlockContent: (id, data) => api.post(`/questions/${encodeURIComponent(id)}/content/unlock`, data),
-  remove: (questionId) => api.form('/admin/delete/question', { questionId }),
+  // 作者删除自己的问题（后端校验所有权）
+  remove: (questionId) => api.delete(`/questions/${encodeURIComponent(questionId)}`),
+  // 管理员删帖 / 恢复（后台路径，需要 admin:question 权限）
+  adminRemove: (questionId) => api.form('/admin/delete/question', { questionId }),
   recover: (questionId) => api.form('/admin/recovery/question', { questionId }),
 }
 
 export const commentApi = {
   create: (data) => api.post('/comment', data),
   twoLevel: (commentId, params) => api.get(`/twoLevelComment/${commentId}`, params),
+  // 作者删除自己的评论（后端校验所有权）
+  remove: (commentId) => api.delete(`/comment/${encodeURIComponent(commentId)}`),
 }
 
 export const interactionApi = {
@@ -110,6 +115,7 @@ export const adminApi = {
   dashboard: (params) => api.get('/admin/dashboard', params),
   users: (params) => api.get('/admin/users', params),
   questions: (params) => api.get('/admin/questions', params),
+  questionDetail: (id) => api.get(`/admin/questions/${encodeURIComponent(id)}`),
   comments: (params) => api.get('/admin/comments', params),
   commentDetail: (id) => api.get(`/admin/comments/${id}`),
   deleteComment: (id) => api.post(`/admin/comments/${id}/delete`, {}),

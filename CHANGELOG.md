@@ -1,5 +1,75 @@
 # 更新日志（Changelog）
 
+## 2026-11-22 · 后台「问题管理」重构：筛选、详情与删除/恢复闭环
+
+对齐「评论管理」页的交互与设计系统，替换原先只有一张全量表格、无筛选无详情的问题管理页。
+
+### 前端（`web/src/views/admin/AdminQuestionsView.vue`）
+
+- **页头卡片**：图标 + 标题 + 说明 + 刷新按钮，与评论 / 内容审核 / 举报管理统一；筛选栏、表格、分页、空状态（`Inbox` + 文案随筛选变化）也沿用同一套结构与语义类。
+- **筛选**：状态标签「全部问题 / 正常 / 已删除」+ 关键字搜索（标题或标签），条件全部落在路由 query（`status` / `keyword` / `page`），刷新与分享链接可复现；右下角实时显示「共 N 条问题」。
+- **列表**：列改为 ID / 问题标题（含话题与最多 3 个标签，超出折叠为 +N）/ 分类 / 发起人 / 浏览·回复 / 审核 / 状态 / 发布时间 / 操作；已删除行 `opacity-70`，操作列按状态切换「删除」「恢复」。
+- **详情弹窗**：标题、作者、话题、标签、浏览/回复/点赞/关注统计 + 全部正文段落（含「密码可见」「回复可见」，管理员可见）+ 审核记录，底部提供「查看前台页面」与「删除/恢复问题」。
+- 表格行高统一、长标签不再挤压标题列；激活标签底色由 `bg-white` 改为 `ui-bg`，夜间模式下不再出现刺眼白块（评论管理 / 举报管理 / 内容审核同步该改动）。
+
+### 后端
+
+- `GET /api/admin/questions` 新增 `status`（-1 全部 / 1 正常 / 0 已删除）与 `keyword`（标题或标签模糊匹配）参数，替换原 `getAllQuestionList`；计数与列表共用同一份条件，关键字模糊匹配用 `title LIKE ? OR tag LIKE ?` 并整体加括号，与状态条件 AND 组合。
+- 新增 `QuestionService#getAdminQuestionList` 与 `QuestionService#getAdminQuestionDetail`；`paginationDto` 抽出 `toQuestionDto` 复用作者与话题标题装配。
+- 新增 `GET /api/admin/questions/{id}`（`@RequirePermission(admin:question)`）返回 `AdminQuestionDetailDto`（问题 + 全部正文段落），正文复用 `QuestionContentService#visibleContents(..., isAdmin=true)`，管理员不受密码/回复可见限制。
+- 前端 `adminApi.questionDetail(id)` 对接该接口。
+
+## 2026-11-22 · 安全加固：按《后端安全审计与优化方案》落地
+
+对应 `docs/后端安全审计与优化方案.md`。HTTPS 按部署约定由 Nginx 终止，应用层不配置 `server.ssl`。
+
+### 高风险
+
+- **H-1 安全响应头**：新增 `config/SecurityHeadersFilter`，统一注入 `X-Frame-Options: SAMEORIGIN`、`X-Content-Type-Options: nosniff`、`Referrer-Policy`、`Permissions-Policy`、`Cross-Origin-Opener-Policy`、CSP，HTTPS 请求（`X-Forwarded-Proto=https`）追加 HSTS。`/api/file/**` 不设 CSP，避免影响图片/PDF 预览。
+  - 默认 CSP 放行同源 + `https://unpkg.com`（Vditor 运行时 CDN）、`data:`/`blob:`（裁剪、预览）；`app.security.csp` 可覆盖，`app.security.csp-enabled=false` 可关闭。
+  - 为兼容 `script-src 'self'`，首屏主题脚本从 `index.html` 内联移出为 `web/public/theme-boot.js`。
+  - Vditor 代码块的「复制」按钮原本用内联 `onclick` 实现，严格 CSP 下会被拦截；新增 `web/src/utils/vditorCsp.js` 剥掉内联属性并改用事件委托复制，`MarkdownView` / `VditorEditor` 均已接入（复制功能实测可用）。
+
+### 中风险
+
+- **M-1 后台默认拒绝**：`PermissionInterceptor` 对 `/api/admin/**` 下未标注 `@RequirePermission` 的接口兜底要求 `admin:access`，白名单仅 `login` / `logout` / `session`。
+  - `POST /api/admin/delete/question` 补 `@RequirePermission(admin:question)`，只允许管理员；
+  - 作者删自己的帖子改走新增的 `DELETE /api/questions/{questionId}`（服务层校验所有权），前端 `questionApi.remove` 同步切换，后台列表改用 `questionApi.adminRemove`。
+- **M-2 登录 IP 维度限流**：`RateLimitService.isLocked(key, max)` 支持按维度设置阈值；登录（前台 / 后台）同时校验邮箱维度（5 次/15 分钟）与 IP 维度（30 次/15 分钟）。登录成功只清邮箱维度，避免用正常账号清空 IP 计数。
+- **M-3 登录防枚举**：新增 `SIGN_IN_CREDENTIALS_ERROR`（「邮箱或密码错误！」），账号不存在与密码错误返回同一响应；旧 `SIGN_IN_EMAIL_ERROR` / `SIGN_IN_PASSWORD_ERROR` 标记 `@Deprecated`。
+- **M-4 JWT 瘦身**：`JwtUtil.createJWT(id, ttl)` 只写 `jti`（用户 ID）与签发/过期时间，移除 `email` / `userName` / `roles` claim（恢复会话时按 ID 查库）。
+- **M-5 文件魔数校验**：`FileUtil.detectMagicType` / `isMagicConsistent` 覆盖 PDF、ZIP/OOXML/APK、OLE2、RAR、7Z、JPEG/PNG/GIF/BMP/WEBP、MP4、MP3、WAV；`FileRepository.validate` 对所有允许类型校验文件头，只读前 16 字节。
+- **M-6 封禁绕过**：`BanInterceptor` 移除 `/api/register` 放行，被封禁账号无法注册新号；匿名注册不受影响。
+- **M-7 Swagger 开关**：`springdoc.api-docs/swagger-ui.enabled` 改由 `SPRINGDOC_ENABLED` 控制（默认 true），新增 `application-prod.yml` 默认关闭。
+
+### 配置与生产
+
+- 新增 `src/main/resources/application-prod.yml`：关闭接口文档、`COOKIE_SECURE` 默认 true、日志级别可由 `LOG_LEVEL_ROOT` 覆盖；并通过 `spring.config.import: optional:classpath:application-local.yml` 复用本地凭据文件（环境变量优先级更高，可覆盖）。
+- **L-1 cookie Secure 真正生效**：`@EnableRedisHttpSession` 是手工开启的，Spring Boot 的 `server.servlet.session.cookie.*` 不会自动生效，原先 `SESSION` cookie 不带 Secure。现在 `HttpSessionConfig` 显式声明 `CookieSerializer`（HttpOnly + SameSite=Lax + 由 `COOKIE_SECURE` 控制 Secure），与「记住我」token cookie 保持同一开关。
+- `server.forward-headers-strategy: native`：Nginx 反代下正确识别 `X-Forwarded-For` / `X-Forwarded-Proto`（限流 IP、HSTS 判定都依赖它）。
+- `app.cors.allowed-origins` 改由 `APP_CORS_ALLOWED_ORIGINS` 注入；`app.trusted-proxies` 改由 `TRUSTED_PROXIES` 注入并写入 `application.yml`。
+- `application-example.yml` 补充生产变量清单（CORS、可信代理、Cookie Secure、前端域名、Swagger 开关）。
+
+### 功能与健壮性
+
+- **F-1 评论删除**：新增 `DELETE /api/comment/{commentId}`，服务层校验作者身份后软删除并回退问题/根评论计数；问题详情页对本人评论提供「删除」入口。
+- **F-2 限流降级告警**：`RateLimitService` 在 Redis 异常时累计失败次数，并按 60 秒节流输出 error 日志（`degradedCount()` 可供监控采集）。
+- **F-3 日志脱敏**：新增 `StringUtil.maskEmail`，登录失败日志只记录 `p******@domain` 与 IP。
+- **L-6 密码强度**：`PASSWORD_REGEX` 改为 8~30 位且必须同时含字母与数字，提示语统一为 `StringUtil.PASSWORD_MESSAGE`；前端新增 `web/src/utils/validate.js`，注册 / 改密 / 重置密码三处共用。
+
+### 未实施
+
+- **L-4 HTTPS**：按约定由 Nginx 终止 TLS，应用不配置 `server.ssl`。
+- **L-5 重置密码加验证码**：方案标注为可选加固，本次未改（重置 token 已是一次性因子）。
+
+## 2026-11-19 · 修复：后端直接托管 Vue 打包产物
+
+- **根因**：`RootApiController` 以 `@RestController` 显式映射 `/`，优先级高于 Spring Boot 的静态欢迎页，导致 `static/index.html` 永远不会返回。
+- **修复**：
+  - `RootApiController` 改为普通 `@Controller`，`/` 转发到 `/index.html`；原 API 自描述信息迁到 `GET /api/info`。
+  - 新增 `SpaStaticResourceConfig`：注册 `classpath:/static/` 资源处理器，并在自定义 `PathResourceResolver` 中对无扩展名且非 `/api`、`/ws`、`/assets`、`/image`、`/captche` 等前缀的 404 路径回退到 `index.html`，解决 Vue history 模式深链接刷新 404。
+- 前端构建产物放在 `src/main/resources/static/` 即可，`http://localhost:8080/` 直接打开页面，API 仍走 `/api/**`。
+
 ## 2026-11-18
 
 重构权限管理

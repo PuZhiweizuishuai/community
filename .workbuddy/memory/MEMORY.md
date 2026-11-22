@@ -23,6 +23,18 @@
 - **2026-11-16 起统一设计系统**：颜色 / 文字层级一律用 `main.css` 的 CSS 变量与语义类 `ui-text-strong|base|muted|brand`、`ui-bg|ui-bg-soft|ui-bg-brand|ui-bg-page`、`ui-border`，**不要再写 `text-slate-*` / `bg-white` / `border-slate-*`**；圆角用 `--radius-*`、阴影用 `--shadow-*`；卡片标题用 `.section-title`、空状态用 `.empty-state`、标签用 `.chip`。新组件沿用这套类，暗色模式自动适配。
 - **移动端布局**：`<lg` 时 AppHeader 渲染固定底部导航（因此 `App.vue` 的 main 需保留 `pb-24 lg:pb-6`）；后台侧栏 `<md` 为抽屉；全屏页用 `100dvh` + `env(safe-area-inset-*)`；输入框在 `<sm` 由 CSS 强制 16px 防 iOS 缩放。
 - **Vditor 主题**：代码高亮与内容主题是运行时 CDN 注入的 `<link>`，`preview.mode` 不管这个；统一走 `web/src/utils/vditorTheme.js` 的 `vditorPreviewTheme(isDark)`，编辑器切换主题要调 `setTheme(editor, content, code)` 三参数。`main.css` 有 `[data-theme='dark']` 作用域的 GitHub Dark 兜底，改动 Vditor 相关组件时别删。
+- **后台列表页统一范式**（评论管理 → 问题管理已照此重构）：页头 `surface` 卡片（渐变图标 + 标题 + 说明 + 刷新）+ 筛选 `surface`（`ui-bg-soft` 胶囊里放状态标签、`共 N 条`、右侧 join 搜索）+ `surface overflow-hidden` 表格（空状态用 `Inbox`，加载/空行用 `colspan`）+ `Pagination` + 详情 `dialog.modal modal-open` 弹窗，条件全部放路由 query（`status`/`keyword`/`page`）。激活标签用 `ui-bg`（不要 `bg-white`，夜间是白块）；表格中文标题列必须给 `min-w-[260px]` 否则被挤成极窄多行。
+
+## 安全基线（2026-11-22 起）
+
+- **安全响应头**：`config/SecurityHeadersFilter` 统一注入 X-Frame-Options / nosniff / Referrer-Policy / Permissions-Policy / COOP / CSP，HTTPS 时加 HSTS（按 `request.isSecure()` 或 `X-Forwarded-Proto`）。`/api/file/**` 不设 CSP。
+- **CSP 与 Vditor**：`script-src 'self'`（不含 unsafe-inline）。Vditor 会注入内联 `onclick` 的代码块复制按钮，必须靠 `web/src/utils/vditorCsp.js` 剥离 + 事件委托；新增 Vditor 使用点时记得接入。HTML 里不要写内联 `<script>`（首屏主题脚本在 `web/public/theme-boot.js`）。CSP 出问题先看 `app.security.csp-enabled`。
+- **Cookie**：手工 `@EnableRedisHttpSession` 后 `server.servlet.session.cookie.*` 不生效，SESSION cookie 的 Secure/HttpOnly/SameSite 由 `HttpSessionConfig.cookieSerializer` 统一控制（读 `COOKIE_SECURE`）；「记住我」token cookie 走 `app.cookie.secure`。生产用 `SPRING_PROFILES_ACTIVE=prod`（关 Swagger、Secure 默认 true、导入 application-local.yml 凭据）。
+- **鉴权**：`PermissionInterceptor` 对 `/api/admin/**` 默认拒绝（白名单只有 login/logout/session）。新增后台接口务必标 `@RequirePermission`；用户侧操作不要放 `/api/admin/` 下（作者删帖是 `DELETE /api/questions/{id}`，删评论是 `DELETE /api/comment/{id}`）。
+- **登录**：邮箱 + IP 双维度限流（`RateLimitService.isLocked(key, max)`），失败统一 `SIGN_IN_CREDENTIALS_ERROR`，日志用 `StringUtil.maskEmail`。密码规则 8~30 位且含字母+数字，前端校验统一 `web/src/utils/validate.js`。
+- **上传**：`FileUtil.detectMagicType` / `isMagicConsistent` 对所有允许类型做文件头一致性校验（OOXML/APK 按 ZIP、老 Office 按 OLE2）。
+- **HTTPS 不在应用层做**：由 Nginx 终止 TLS；应用需 `server.forward-headers-strategy: native`，Nginx 必须传 `X-Forwarded-Proto` / `X-Forwarded-For`。
+
 
 ## 测试环境
 

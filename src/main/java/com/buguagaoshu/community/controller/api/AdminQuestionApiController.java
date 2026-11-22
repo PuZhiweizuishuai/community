@@ -59,17 +59,17 @@ public class AdminQuestionApiController {
     }
 
 
+    /**
+     * 后台删帖：仅管理员可用。作者删除自己的帖子走 {@code DELETE /api/questions/{questionId}}，
+     * 不再共用此路径，避免「普通用户可访问后台接口」的语义混乱。
+     */
     @PostMapping("/api/admin/delete/question")
+    @RequirePermission(PermissionCodes.ADMIN_QUESTION)
     public ResultDTO<Object> deleteQuestion(@RequestParam("questionId") Long questionId,
                                             HttpServletRequest request) {
-        User admin = AuthUtil.currentAdmin(request);
-        User user = AuthUtil.currentUser(request);
-        if (admin == null && user == null) {
-            throw new CustomizeException(CustomizeErrorCode.NO_LOGIN);
-        }
-        User operator = admin != null ? admin : user;
+        User admin = AuthUtil.requireAdmin(request);
         try {
-            questionService.deleteQuestion(questionId, operator, admin != null);
+            questionService.deleteQuestion(questionId, admin, true);
             return ResultDTO.okOf();
         } catch (CustomizeException e) {
             return ResultDTO.errorOf(e);

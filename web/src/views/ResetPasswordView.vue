@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { authApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 import AuthShell from '@/components/AuthShell.vue'
+import { checkPassword, PASSWORD_HINT } from '@/utils/validate'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,7 +17,8 @@ const submitting = ref(false)
 
 async function submit() {
   if (!token.value) return toast.error('重置链接无效，请重新申请')
-  if (newPassword.value.length < 6) return toast.warning('新密码至少 6 位')
+  const pwdError = checkPassword(newPassword.value)
+  if (pwdError) return toast.warning(pwdError)
   if (newPassword.value !== confirm.value) return toast.warning('两次输入的密码不一致')
   submitting.value = true
   try {
@@ -39,7 +41,7 @@ async function submit() {
     <form v-else class="space-y-4" novalidate @submit.prevent="submit">
       <label class="form-control">
         <span class="label-text mb-1 text-sm font-medium ui-text-strong">新密码</span>
-        <input v-model="newPassword" type="password" class="input input-bordered w-full" placeholder="至少 6 位" autocomplete="new-password" />
+        <input v-model="newPassword" type="password" class="input input-bordered w-full" :placeholder="PASSWORD_HINT" autocomplete="new-password" />
       </label>
       <label class="form-control">
         <span class="label-text mb-1 text-sm font-medium ui-text-strong">确认新密码</span>

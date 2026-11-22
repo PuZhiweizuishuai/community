@@ -27,7 +27,7 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "密码不能为空")
-    @Pattern(regexp = StringUtil.PASSWORD_REGEX, message = "密码需为 6~30 位字母、数字或常用符号")
+    @Pattern(regexp = StringUtil.PASSWORD_REGEX, message = StringUtil.PASSWORD_MESSAGE)
     private String password;
 
     @Size(max = 2, message = "性别不合法")

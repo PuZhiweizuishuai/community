@@ -55,25 +55,49 @@ spring:
 
 server:
   port: 8080
+  # 生产部署在 Nginx 之后：识别 X-Forwarded-For / X-Forwarded-Proto，
+  # 否则限流拿到的都是代理 IP、request.isSecure() 永远为 false
+  forward-headers-strategy: native
+  servlet:
+    session:
+      cookie:
+        # 登录态主要靠 SESSION cookie（Spring Session），必须与 app.cookie.secure 同步开启
+        secure: ${COOKIE_SECURE:false}
+        http-only: true
+        same-site: Lax
+
+# 接口文档：生产环境用 SPRINGDOC_ENABLED=false（或 SPRING_PROFILES_ACTIVE=prod）关闭
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
 
 # 前后端分离：仅当 Vue 前端独立部署（非 Vite 代理）时需要放开跨域来源
 app:
   cors:
-    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+    # 生产必须配置真实前端域名（逗号分隔），禁止使用 *
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   cookie:
-    # 生产启用 HTTPS 后改为 true，token cookie 将带 Secure 标记
+    # 生产启用 HTTPS（Nginx 终止）后必须为 true，token cookie 才会带 Secure 标记
     secure: ${COOKIE_SECURE:false}
+  # 反向代理层地址白名单：只有来自这些地址的请求才解析 X-Forwarded-For
+  trusted-proxies: ${TRUSTED_PROXIES:127.0.0.1,::1}
+  # 安全响应头：CSP 默认放行同源 + unpkg（Vditor CDN），需要调整时覆盖 csp
+  security:
+    csp-enabled: ${SECURITY_CSP_ENABLED:true}
+    csp: ${SECURITY_CSP:}
+    hsts-enabled: ${SECURITY_HSTS_ENABLED:true}
   mail:
     # 配置好 SMTP 后改为 true（或 MAIL_ENABLED=true），启用找回密码与注册邮箱验证码
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:}
   # 找回密码邮件中的前端链接地址
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
-#  ssl:
-#    key-store: buguagaoshu.key
-#    key-store-type: PKCS12
-#    key-alias: buguagaoshu
-#    key-store-password: buguagaoshu
+
+# HTTPS 不在应用层启用：生产由 Nginx 终止 TLS 并反代到本服务的 8080，
+# 应用侧只需 server.forward-headers-strategy=native（见上）以识别 X-Forwarded-Proto。
 
 # 应用根目录下的文件名
 File:

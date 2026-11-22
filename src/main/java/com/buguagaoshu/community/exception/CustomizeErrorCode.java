@@ -10,10 +10,16 @@ package com.buguagaoshu.community.exception;
  * create          2019-08-25 16:25
  */
 public enum CustomizeErrorCode implements ICustomizeErrorCode {
+    /** @deprecated 会暴露「账号是否存在」，改用 {@link #SIGN_IN_CREDENTIALS_ERROR} */
+    @Deprecated
     SIGN_IN_EMAIL_ERROR(1001, 401, "登陆账号（邮箱）错误！"),
+    /** @deprecated 会暴露「账号是否存在」，改用 {@link #SIGN_IN_CREDENTIALS_ERROR} */
+    @Deprecated
     SIGN_IN_PASSWORD_ERROR(1002, 401, "登陆密码错误！"),
     SIGN_IN_CAPTCHA_ERROR(1003, 400, "验证码错误！"),
     SIGN_IN_EMAIL_OR_PASSWORD_NULL(1004, 400, "用户名和密码不能为空"),
+    /** 登录失败统一提示：不区分「账号不存在」与「密码错误」，防止账号枚举 */
+    SIGN_IN_CREDENTIALS_ERROR(1005, 401, "邮箱或密码错误！"),
     QUESTION_NOT_FOUND(2001, 404, "你找到问题不在了，要不要换个试试？"),
     TARGET_PARAM_NOT_FOUND(2002, 400, "未选中任何问题或评论进行回复"),
     NO_LOGIN(2003, 401, "当前操作需要登录，请登陆后重试"),

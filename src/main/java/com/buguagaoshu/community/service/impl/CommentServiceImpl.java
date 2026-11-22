@@ -203,6 +203,46 @@ public class CommentServiceImpl implements CommentService {
         return commentMapper.selectCommentByCommentId(commentId, 1);
     }
 
+    /**
+     * 作者删除自己的评论：软删除 + 计数回退。
+     *
+     * <p>与管理员删除的区别：不发送「已被管理员删除」通知，仅作者本人可操作。
+     * 被删除评论下的二级回复保留（与后台删除行为一致），前端按评论状态过滤展示。
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteOwnComment(long commentId, User user) {
+        Comment comment = commentMapper.selectOneById(commentId);
+        if (comment == null || comment.getStatus() != 1) {
+            throw new CustomizeException(CustomizeErrorCode.NOT_FOUND.getCode(), "评论不存在或已被删除");
+        }
+        if (comment.getCommentator() != user.getId()) {
+            throw new CustomizeException(CustomizeErrorCode.FORBIDDEN);
+        }
+        // 条件更新：并发下只有一个请求能把 1 改成 0
+        if (commentMapper.alterStatus(commentId, 0, 1) != 1) {
+            throw new CustomizeException(CustomizeErrorCode.CONFLICT);
+        }
+        if (comment.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()) {
+            adjustCommentCount(comment, -1);
+        }
+    }
+
+    /** 删除评论后回退计数：问题回复数始终回退，二级回复同时回退根评论的回复数 */
+    private void adjustCommentCount(Comment comment, int delta) {
+        Question questionUpdate = new Question();
+        questionUpdate.setQuestionId(comment.getQuestionId());
+        questionUpdate.setCommentCount(delta);
+        questionMapper.updateQuestionCommentCount(questionUpdate);
+
+        if (comment.getType() == CommentTypeEnum.COMMENT.getType() && comment.getParentCommentId() > 0) {
+            Comment rootUpdate = new Comment();
+            rootUpdate.setCommentId(comment.getParentCommentId());
+            rootUpdate.setCommentCount(delta);
+            commentMapper.updateCommentCount(rootUpdate);
+        }
+    }
+
     @Override
     public PaginationDto<CommentDto> getCommentDtoByQuestionIdForQuestion(String questionId, String page, String size, CommentSortTypeEnum commentSortTypeEnum) {
         long qId;

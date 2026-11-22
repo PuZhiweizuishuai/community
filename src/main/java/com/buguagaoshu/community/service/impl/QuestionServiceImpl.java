@@ -2,6 +2,7 @@ package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.cache.ClassificationCache;
 import com.buguagaoshu.community.component.UserBatchLoader;
+import com.buguagaoshu.community.dto.AdminQuestionDetailDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.enums.NotificationTypeEnum;
@@ -458,12 +459,60 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public PaginationDto<QuestionDto> getAllQuestionList(String page, String size) {
-        long allQuestionCount = questionMapper.selectCountByQuery(QueryWrapper.create());
+    public PaginationDto<QuestionDto> getAdminQuestionList(String status, String keyword, String page, String size) {
+        Integer statusFilter = parseAdminStatus(status);
+        String search = StringUtil.sanitizeSearchKeyword(keyword);
+        long allQuestionCount = questionMapper.selectCountByQuery(adminQuestionCondition(statusFilter, search));
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
-        List<Question> questionList = questionMapper.selectListByQuery(QueryWrapper.create()
-                .orderBy(QUESTION.QUESTION_ID.desc()).limit(param[0], param[1]));
+        List<Question> questionList = questionMapper.selectListByQuery(
+                adminQuestionCondition(statusFilter, search)
+                        .select(QuestionMapper.LIST_QUERY_COLUMNS)
+                        .orderBy(QUESTION.QUESTION_ID.desc())
+                        .limit(param[0], param[1]));
         return paginationDto(questionList, allQuestionCount, param);
+    }
+
+    @Override
+    public AdminQuestionDetailDto getAdminQuestionDetail(long questionId) {
+        Question question = questionMapper.selectOneById(questionId);
+        if (question == null) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+        AdminQuestionDetailDto detail = new AdminQuestionDetailDto();
+        Map<Long, User> userMap = userBatchLoader.loadUsers(List.of(question.getUserId()), true);
+        detail.setQuestion(toQuestionDto(question, userMap));
+        // 管理员需要看到全部正文（含密码可见/回复可见段落）才能判断内容是否违规
+        detail.setContents(questionContentService.visibleContents(questionId, question.getUserId(), null, true));
+        return detail;
+    }
+
+    /** 后台筛选状态：-1 / 空 表示全部；仅允许 0 与 1 */
+    private Integer parseAdminStatus(String status) {
+        if (StringUtils.isBlank(status) || "-1".equals(status.trim())) {
+            return null;
+        }
+        int value;
+        try {
+            value = Integer.parseInt(status.trim());
+        } catch (NumberFormatException e) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
+        }
+        if (value != 0 && value != 1) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
+        }
+        return value;
+    }
+
+    /** 后台列表条件：删除状态 + 标题/标签关键字，计数与列表共用，避免 SQL 双份维护 */
+    private QueryWrapper adminQuestionCondition(Integer status, String keyword) {
+        QueryWrapper query = QueryWrapper.create();
+        if (status != null) {
+            query.and(QUESTION.STATUS.eq(status));
+        }
+        if (keyword != null) {
+            query.and(QUESTION.TITLE.like(keyword).or(QUESTION.TAG.like(keyword)));
+        }
+        return query;
     }
 
     @Override
@@ -526,18 +575,23 @@ public class QuestionServiceImpl implements QuestionService {
         Map<Long, User> userMap = userBatchLoader.loadUsers(
                 questionList.stream().map(Question::getUserId).toList(), true);
 
-        List<QuestionDto> questionDtos = questionList.stream().map(question -> {
-            QuestionDto questionDto = new QuestionDto();
-            BeanUtils.copyProperties(question, questionDto);
-            questionDto.setUser(userMap.get(question.getUserId()));
-            questionDto.setTopicTitle(topicTitle(question.getTopicId()));
-            return questionDto;
-        }).toList();
+        List<QuestionDto> questionDtos = questionList.stream()
+                .map(question -> toQuestionDto(question, userMap))
+                .toList();
 
         PaginationDto<QuestionDto> paginationDto = new PaginationDto<>();
         paginationDto.setData(questionDtos);
         paginationDto.setPagination(param[2], param[3], param[1]);
         paginationDto.setAllCount(allQuestionCount);
         return paginationDto;
+    }
+
+    /** 问题实体 → DTO：补齐作者与所属话题标题 */
+    private QuestionDto toQuestionDto(Question question, Map<Long, User> userMap) {
+        QuestionDto questionDto = new QuestionDto();
+        BeanUtils.copyProperties(question, questionDto);
+        questionDto.setUser(userMap.get(question.getUserId()));
+        questionDto.setTopicTitle(topicTitle(question.getTopicId()));
+        return questionDto;
     }
 }

@@ -249,6 +249,34 @@ async function toggleTwoLevel(comment) {
   expanded.value[rootId] = true
 }
 
+/** 只有评论作者本人可以删除自己的评论 */
+function canDeleteComment(comment) {
+  return Number(comment?.user?.id) === Number(session.user?.id)
+}
+
+async function removeComment(comment, parentComment) {
+  if (
+    !(await confirm.ask({
+      title: '删除回复',
+      message: '确定删除这条回复吗？删除后无法恢复。',
+      confirmText: '删除',
+      danger: true,
+    }))
+  )
+    return
+  await commentApi.remove(comment.commentId)
+  toast.success('回复已删除')
+  if (question.value) {
+    question.value.commentCount = Math.max(0, Number(question.value.commentCount || 0) - 1)
+  }
+  // 二级回复删除后刷新当前页；一级评论删除后重新拉取评论列表
+  if (parentComment) {
+    await loadTwoLevel(parentComment, Number(twoLevelPages.value[parentComment.commentId]?.nowPage || 1))
+  } else {
+    await loadComments()
+  }
+}
+
 function replyTo(comment, target) {
   if (!requireLogin()) return
   if (!canComment.value) {
@@ -683,6 +711,14 @@ async function submitReport() {
                   >
                     <Flag class="size-3.5" />举报
                   </button>
+                  <button
+                    v-if="canDeleteComment(comment)"
+                    type="button"
+                    class="flex items-center gap-1 transition-colors hover:text-rose-500"
+                    @click="removeComment(comment)"
+                  >
+                    <Trash2 class="size-3.5" />删除
+                  </button>
                 </div>
 
                 <!-- 回复一级评论：输入框就地展开，不再跳转到底部 -->
@@ -736,6 +772,14 @@ async function submitReport() {
                           "
                         >
                           举报
+                        </button>
+                        <button
+                          v-if="canDeleteComment(child)"
+                          type="button"
+                          class="btn btn-ghost btn-xs text-rose-500"
+                          @click="removeComment(child, comment)"
+                        >
+                          删除
                         </button>
                       </div>
                     </div>

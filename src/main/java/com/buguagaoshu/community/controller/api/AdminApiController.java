@@ -13,6 +13,7 @@ import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserBanService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.util.AuthUtil;
+import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.Cookie;
@@ -43,6 +44,9 @@ import static com.buguagaoshu.community.model.table.UserTableDef.USER;
 @Slf4j
 public class AdminApiController {
 
+    /** 单 IP 失败阈值：与前台登录共用同一口径 */
+    private static final int IP_MAX_FAILURES = 30;
+
     private final UserMapper userMapper;
     private final OnlineUserService onlineUserService;
     private final UserPermissionService userPermissionService;
@@ -69,18 +73,19 @@ public class AdminApiController {
         if (!CaptchaUtil.ver(body.getValidateCode(), request)) {
             return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_CAPTCHA_ERROR);
         }
+        // 与前台登录一致：邮箱 + IP 双维度限流，且失败提示不区分账号/密码错误
         String limitKey = "adminLogin:" + body.getEmail().toLowerCase();
-        if (rateLimitService.isLocked(limitKey)) {
+        String ip = IpUtil.getIpAddr(request);
+        String ipLimitKey = "adminLogin:ip:" + ip;
+        if (rateLimitService.isLocked(limitKey) || rateLimitService.isLocked(ipLimitKey, IP_MAX_FAILURES)) {
             return ResultDTO.errorOf(CustomizeErrorCode.TOO_MANY_ATTEMPTS);
         }
         User user = userMapper.selectOneByQuery(QueryWrapper.create().where(USER.EMAIL.eq(body.getEmail())));
-        if (user == null) {
+        if (user == null || !StringUtil.judgePassword(body.getPassword(), user.getPassword())) {
             rateLimitService.recordFailure(limitKey);
-            return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_EMAIL_ERROR);
-        }
-        if (!StringUtil.judgePassword(body.getPassword(), user.getPassword())) {
-            rateLimitService.recordFailure(limitKey);
-            return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_PASSWORD_ERROR);
+            rateLimitService.recordFailure(ipLimitKey);
+            log.warn("后台登录失败（邮箱或密码错误），邮箱 {}，IP {}", StringUtil.maskEmail(body.getEmail()), ip);
+            return ResultDTO.errorOf(CustomizeErrorCode.SIGN_IN_CREDENTIALS_ERROR);
         }
         if (userBanService.isBanned(user.getId())) {
             rateLimitService.recordFailure(limitKey);
