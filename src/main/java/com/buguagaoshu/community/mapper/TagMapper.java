@@ -54,6 +54,7 @@ public interface TagMapper extends BaseMapper<Tag> {
     int refreshUsageCounts(@Param("tagIds") java.util.Collection<Long> tagIds);
 
     @Select("select count(*) from question_tags where tagId=#{tagId} and questionId in " +
-            "(select questionId from questions where status=1 and reviewStatus=1)")
+            "(select q.questionId from questions q join topics t on t.id=q.topicId " +
+            "where q.status=1 and q.reviewStatus=1 and t.reviewStatus=1 and t.status=1 and t.visibility=0)")
     long countPublicUsage(@Param("tagId") long tagId);
 }

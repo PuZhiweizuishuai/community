@@ -10,9 +10,11 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
+import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.Notification;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.util.NumberUtils;
@@ -40,15 +42,19 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final CommentMapper commentMapper;
 
+    private final TagClassMapper tagClassMapper;
+
     private final UserBatchLoader userBatchLoader;
 
     @Autowired
     public NotificationServiceImpl(NotificationMapper notificationMapper,
                                    QuestionMapper questionMapper, CommentMapper commentMapper,
+                                   TagClassMapper tagClassMapper,
                                    UserBatchLoader userBatchLoader) {
         this.notificationMapper = notificationMapper;
         this.questionMapper = questionMapper;
         this.commentMapper = commentMapper;
+        this.tagClassMapper = tagClassMapper;
         this.userBatchLoader = userBatchLoader;
     }
 
@@ -115,13 +121,23 @@ public class NotificationServiceImpl implements NotificationService {
                         .collect(Collectors.toMap(Comment::getCommentId, Function.identity()));
         Set<Long> questionIds = notifications.stream()
                 .filter(n -> n.getType() != NotificationTypeEnum.LIKE_COMMENT.getType()
-                        && n.getType() != NotificationTypeEnum.REPLY_COMMENT.getType())
+                        && n.getType() != NotificationTypeEnum.REPLY_COMMENT.getType()
+                        && !NotificationTypeEnum.isTopicType(n.getType())
+                        && !NotificationTypeEnum.isTagType(n.getType()))
                 .map(Notification::getOuterId)
                 .filter(qid -> qid > 0)
                 .collect(Collectors.toSet());
         Map<Long, Question> questionMap = questionIds.isEmpty() ? Map.of()
                 : questionMapper.selectListByIds(questionIds).stream()
                         .collect(Collectors.toMap(Question::getQuestionId, Function.identity()));
+        Set<Long> topicIds = notifications.stream()
+                .filter(n -> NotificationTypeEnum.isTopicType(n.getType()))
+                .map(Notification::getOuterId)
+                .filter(tid -> tid > 0)
+                .collect(Collectors.toSet());
+        Map<Long, TagClass> topicMap = topicIds.isEmpty() ? Map.of()
+                : tagClassMapper.selectListByIds(topicIds).stream()
+                        .collect(Collectors.toMap(TagClass::getId, Function.identity()));
 
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
         for (Notification notification : notifications) {
@@ -146,6 +162,12 @@ public class NotificationServiceImpl implements NotificationService {
                 Comment comment = commentMap.get(notification.getCommentId());
                 notificationDTO.setOuterTitle(comment == null || comment.getStatus() == 0
                         ? "内容已删除" : StringUtil.subString(comment.getContent(), 25));
+            } else if (NotificationTypeEnum.isTopicType(notification.getType())) {
+                TagClass topic = topicMap.get(notification.getOuterId());
+                notificationDTO.setOuterTitle(topic == null ? "话题已删除" : topic.getTitle());
+            } else if (NotificationTypeEnum.isTagType(notification.getType())) {
+                // 标签通知没有详情页，标题置空避免误显示「内容已删除」和错误跳转
+                notificationDTO.setOuterTitle(null);
             } else {
                 Question question = questionMap.get(notification.getOuterId());
                 notificationDTO.setOuterTitle(question == null ? "内容已删除" : question.getTitle());

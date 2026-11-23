@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { History, Search, X } from '@lucide/vue'
-import { discoverApi } from '@/api'
+import { discoverApi, assetUrl } from '@/api'
 import { addHistory, clearHistory, getHistory, removeHistory } from '@/utils/searchHistory'
 import QuestionList from '@/components/QuestionList.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -67,14 +67,22 @@ function wipeHistory() {
 
 const questions = computed(() => data.value?.questions?.data || [])
 const users = computed(() => data.value?.users?.data || [])
-const pagination = computed(() => (type.value === 'user' ? data.value?.users : data.value?.questions))
+const topics = computed(() => data.value?.topics?.data || [])
+const typeLabel = computed(() => ({ question: '问题', topic: '话题', user: '用户' }[type.value] || '问题'))
+const pagination = computed(() => (data.value?.[type.value === 'user' ? 'users' : type.value === 'topic' ? 'topics' : 'questions']))
+
+function visibilityLabel(visibility) {
+  if (Number(visibility) === 2) return '私有 · 仅邀请'
+  if (Number(visibility) === 1) return '私有 · 可申请'
+  return ''
+}
 </script>
 
 <template>
   <div class="page-container">
     <div class="surface mb-4 p-4">
       <form class="join w-full" @submit.prevent="doSearch">
-        <input v-model="input" class="input input-bordered join-item w-full focus:outline-none" placeholder="搜索问题、用户…" autocomplete="off" />
+        <input v-model="input" class="input input-bordered join-item w-full focus:outline-none" placeholder="搜索问题、话题、用户…" autocomplete="off" />
         <button class="btn btn-primary join-item" type="submit"><Search class="size-4" />搜索</button>
       </form>
 
@@ -101,17 +109,35 @@ const pagination = computed(() => (type.value === 'user' ? data.value?.users : d
             「{{ keyword || '全部' }}」的搜索结果
           </h1>
           <button class="btn btn-sm" :class="type === 'question' ? 'btn-primary' : 'btn-ghost'" type="button" @click="go({ type: 'question', page: 1 })">问题</button>
+          <button class="btn btn-sm" :class="type === 'topic' ? 'btn-primary' : 'btn-ghost'" type="button" @click="go({ type: 'topic', page: 1 })">话题</button>
           <button class="btn btn-sm" :class="type === 'user' ? 'btn-primary' : 'btn-ghost'" type="button" @click="go({ type: 'user', page: 1 })">用户</button>
         </div>
 
         <p v-if="keyword" class="mb-3 text-xs ui-text-muted">
-          共找到 {{ pagination?.allCount ?? 0 }} 条{{ type === 'user' ? '用户' : '问题' }}结果
+          共找到 {{ pagination?.allCount ?? 0 }} 条{{ typeLabel }}结果
         </p>
 
         <div v-if="loading && !data" class="surface empty-state">正在搜索…</div>
 
         <template v-else-if="type === 'question'">
           <QuestionList :items="questions" empty-text="没有找到相关问题，换个关键词试试～" />
+        </template>
+
+        <template v-else-if="type === 'topic'">
+          <div v-if="!topics.length" class="surface empty-state">没有找到相关话题</div>
+          <div v-else class="grid gap-3 sm:grid-cols-2">
+            <RouterLink v-for="topic in topics" :key="topic.id" :to="`/topics/${topic.id}`" class="surface flex items-start gap-3 p-4 hover:border-indigo-200">
+              <img :src="assetUrl(topic.image)" :alt="topic.title" class="h-14 w-14 shrink-0 rounded-lg object-cover" />
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <h2 class="font-medium ui-text-strong">{{ topic.title }}</h2>
+                  <span v-if="Number(topic.visibility) > 0" class="badge badge-xs badge-warning">{{ visibilityLabel(topic.visibility) }}</span>
+                </div>
+                <p class="line-clamp-2 mt-1 text-xs ui-text-base">{{ topic.simpleDesc || '暂无简介' }}</p>
+                <p class="mt-2 text-xs ui-text-muted">{{ topic.followCount }} 人关注 · {{ topic.talkCount }} 条讨论</p>
+              </div>
+            </RouterLink>
+          </div>
         </template>
 
         <template v-else>

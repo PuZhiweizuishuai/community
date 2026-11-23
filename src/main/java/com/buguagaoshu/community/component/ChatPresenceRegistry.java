@@ -1,7 +1,10 @@
 package com.buguagaoshu.community.component;
 
+import com.buguagaoshu.community.model.ChatMessage;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -66,5 +69,20 @@ public class ChatPresenceRegistry {
 
     public int count() {
         return online.size();
+    }
+
+    /** 在线成员快照（key 为 userId），用于 JOIN / LEAVE 时下发给前端成员列表 */
+    public Map<String, Presence> snapshot() {
+        return Map.copyOf(online);
+    }
+
+    /** 在线成员列表，按昵称排序，保证所有客户端看到的顺序一致 */
+    public List<ChatMessage.Member> members() {
+        return online.entrySet().stream()
+                .map(entry -> new ChatMessage.Member(entry.getKey(),
+                        entry.getValue().userName(), entry.getValue().image()))
+                .sorted(Comparator.comparing(ChatMessage.Member::getName,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
     }
 }

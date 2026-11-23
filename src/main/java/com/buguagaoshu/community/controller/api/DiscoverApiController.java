@@ -1,13 +1,15 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.cache.TagClassCache;
-import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.dto.ResultDTO;
+import com.buguagaoshu.community.dto.TopicAccessDto;
 import com.buguagaoshu.community.dto.TopicModeratorDto;
+import com.buguagaoshu.community.enums.TopicMemberStatusEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
+import com.buguagaoshu.community.mapper.TopicMemberMapper;
 import com.buguagaoshu.community.model.FollowTopic;
 import com.buguagaoshu.community.model.FollowUser;
 import com.buguagaoshu.community.model.TagClass;
@@ -18,9 +20,11 @@ import com.buguagaoshu.community.service.FollowUserService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.service.TopicAccessService;
 import com.buguagaoshu.community.service.TopicModerationService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
+import com.buguagaoshu.community.util.NumberUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +54,8 @@ public class DiscoverApiController {
     private final TagClassCache tagClassCache;
     private final SiteCacheService siteCache;
     private final TopicModerationService topicModerationService;
+    private final TopicAccessService topicAccessService;
+    private final TopicMemberMapper topicMemberMapper;
 
     public DiscoverApiController(QuestionService questionService,
                                  UserService userService,
@@ -59,7 +65,9 @@ public class DiscoverApiController {
                                  FollowUserService followUserService,
                                  TagClassCache tagClassCache,
                                  SiteCacheService siteCache,
-                                 TopicModerationService topicModerationService) {
+                                 TopicModerationService topicModerationService,
+                                 TopicAccessService topicAccessService,
+                                 TopicMemberMapper topicMemberMapper) {
         this.siteCache = siteCache;
         this.questionService = questionService;
         this.userService = userService;
@@ -69,6 +77,8 @@ public class DiscoverApiController {
         this.followUserService = followUserService;
         this.tagClassCache = tagClassCache;
         this.topicModerationService = topicModerationService;
+        this.topicAccessService = topicAccessService;
+        this.topicMemberMapper = topicMemberMapper;
     }
 
     /**
@@ -86,20 +96,22 @@ public class DiscoverApiController {
 
     /**
      * 搜索页（原 /search/{keyword}、/search/{keyword}/user）。
-     * 一次返回问题与用户两套分页结果，前端按 tab 切换。
+     * 一次返回问题与用户两套分页结果，前端按 tab 切换；type=topic 时附带话题结果。
      */
     @GetMapping("/search")
     public ResultDTO<Map<String, Object>> search(
             @RequestParam(value = "search", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "10") String size,
-            @RequestParam(value = "type", defaultValue = "question") String type) {
+            @RequestParam(value = "type", defaultValue = "question") String type,
+            HttpServletRequest request) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("search", keyword);
         data.put("type", type);
         if (StringUtils.isBlank(keyword)) {
             data.put("questions", new PaginationDto<QuestionDto>());
             data.put("users", new PaginationDto<User>());
+            data.put("topics", new PaginationDto<TagClass>());
             return ResultDTO.okOf(data);
         }
         // LIKE 搜索：关键字长度与通配符清洗在 Service 内完成
@@ -110,6 +122,11 @@ public class DiscoverApiController {
         users.setSearch(keyword);
         data.put("questions", questions);
         data.put("users", users);
+        PaginationDto<TagClass> topics = "topic".equals(type)
+                ? tagClassService.searchTopics(keyword, page, size, AuthUtil.currentUser(request))
+                : new PaginationDto<>();
+        topics.setSearch(keyword);
+        data.put("topics", topics);
         return ResultDTO.okOf(data);
     }
 
@@ -147,6 +164,8 @@ public class DiscoverApiController {
         user.clean();
 
         User nowUser = AuthUtil.currentUser(request);
+        boolean isSelf = nowUser != null && nowUser.getId() == user.getId();
+        boolean privacyHidden = !isSelf && isPrivacyHidden(user, tab);
         boolean isFollowUser = false;
         if (nowUser != null) {
             FollowUser followUser = new FollowUser();
@@ -159,18 +178,42 @@ public class DiscoverApiController {
         data.put("user", user);
         data.put("tab", tab);
         data.put("isFollowUser", isFollowUser);
-        data.put("isSelf", nowUser != null && nowUser.getId() == user.getId());
-        data.put("pagination", switch (tab) {
+        data.put("isSelf", isSelf);
+        data.put("privacyHidden", privacyHidden);
+        data.put("pagination", privacyHidden ? emptyPagination(page, size) : switch (tab) {
             case "questions" -> followQuestionService.selectUserFollowQuestion(user.getId(), page, size);
             case "user" -> followUserService.getFollowUserList(user.getId(), page, size);
             case "fans" -> followUserService.getFansList(user.getId(), page, size);
             default -> questionService.getQuestionByUserId(page, size, user.getId());
         });
-        List<FollowTopic> followTopics = "topic".equals(tab)
-                ? followTopicService.selectUserFollowTopic(user.getId())
+        // 个人主页的关注话题列表同样受话题可见性与用户隐私开关约束
+        List<FollowTopic> followTopics = !privacyHidden && "topic".equals(tab)
+                ? followTopicService.selectUserFollowTopic(user.getId()).stream()
+                        .filter(item -> topicAccessService.resolve(item.getTopicId(), nowUser).visible())
+                        .toList()
                 : List.of();
         data.put("followTopics", followTopics);
         return ResultDTO.okOf(data);
+    }
+
+    /** 其他用户访问时，个人主页各子列表是否被隐私开关隐藏 */
+    private boolean isPrivacyHidden(User user, String tab) {
+        return switch (tab) {
+            case "questions" -> user.getShowFollowQuestions() == 0;
+            case "topic" -> user.getShowFollowTopics() == 0;
+            case "user" -> user.getShowFollowingUsers() == 0;
+            case "fans" -> user.getShowFans() == 0;
+            default -> false;
+        };
+    }
+
+    private PaginationDto<Object> emptyPagination(String page, String size) {
+        long[] param = NumberUtils.getPageAndSize(page, size, 0);
+        PaginationDto<Object> pagination = new PaginationDto<>();
+        pagination.setData(List.of());
+        pagination.setPagination(param[2], param[3], param[1]);
+        pagination.setAllCount(0);
+        return pagination;
     }
 
     /**
@@ -190,15 +233,32 @@ public class DiscoverApiController {
             throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
         }
         User user = AuthUtil.currentUser(request);
+        TopicAccessDto access = topicAccessService.resolve(tagClass.getId(), user);
+        if (!access.visible()) {
+            // 私有隐藏话题对非成员统一按 404 处理，避免泄露存在性
+            throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
+        }
+        boolean canManage = access.isOwner() || access.isModerator() || access.isAdmin();
         List<TopicModeratorDto> moderators = topicModerationService.moderators(tagClass.getId());
-        boolean isModerator = user != null
-                && (AuthUtil.hasPermission(user, PermissionCodes.ADMIN_QUESTION)
-                || moderators.stream().anyMatch(item -> item.getUserId() == user.getId()));
+        Map<String, Object> accessData = new LinkedHashMap<>();
+        accessData.put("visible", access.visible());
+        accessData.put("canViewContent", access.canViewContent());
+        accessData.put("isMember", access.isMember());
+        accessData.put("isOwner", access.isOwner());
+        accessData.put("isModerator", access.isModerator());
+        accessData.put("isAdmin", access.isAdmin());
+        accessData.put("joinStatus", access.joinStatus());
+        accessData.put("joinType", access.joinType());
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("tagClass", tagClass);
         data.put("followTag", isFollowed(user, tagClass.getId()));
         data.put("moderators", moderators);
-        data.put("isModerator", isModerator);
+        data.put("isModerator", canManage);
+        data.put("access", accessData);
+        data.put("pendingApplicationCount", canManage
+                ? topicMemberMapper.countByTopic(tagClass.getId(),
+                        TopicMemberStatusEnum.PENDING.getCode(), "apply")
+                : 0);
         return ResultDTO.okOf(data);
     }
 
@@ -211,10 +271,12 @@ public class DiscoverApiController {
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "size", defaultValue = "15") String size,
             @RequestParam(value = "tag", required = false) String tag,
-            @RequestParam(value = "class", defaultValue = "0") String classification) {
+            @RequestParam(value = "class", defaultValue = "0") String classification,
+            HttpServletRequest request) {
         if (tagClassCache.getById(id) == null) {
             throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
         }
+        topicAccessService.requireContentAccess(id, AuthUtil.currentUser(request));
         return ResultDTO.okOf(questionService.getTopicQuestions(id, page, size, tag,
                 parseClassCode(classification)));
     }

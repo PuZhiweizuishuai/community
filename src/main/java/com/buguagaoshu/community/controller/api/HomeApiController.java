@@ -104,11 +104,29 @@ public class HomeApiController {
 
         boolean defaultPage = "1".equals(page) && (tag == null || tag.isBlank())
                 && topicId == null && "3".equals(sort) && "0".equals(classification);
-        data.put("topQuestions", defaultPage ? indexTopQuestion.getTopQuestion() : List.of());
-        // 话题卡片：只有按话题筛选时才有内容
+        data.put("topQuestions", defaultPage ? publicTopQuestions() : List.of());
+        // 话题卡片：只有按公开话题筛选时才有内容，私有话题只在话题页内展示
         TagClass topic = topicId == null ? null : tagClassCache.getById(topicId);
+        if (topic != null && (topic.getVisibility() != 0 || topic.getReviewStatus() != 1 || topic.getStatus() != 1)) {
+            topic = null;
+        }
         data.put("tagClass", topic);
         return data;
+    }
+
+    /**
+     * 首页置顶是内存快照，话题改为私有后必须读取时再过滤，避免标题泄露。
+     */
+    private List<QuestionDto> publicTopQuestions() {
+        return indexTopQuestion.getTopQuestion().stream()
+                .filter(item -> isPublicTopic(item.getTopicId()))
+                .toList();
+    }
+
+    private boolean isPublicTopic(Long topicId) {
+        TagClass topic = topicId == null ? null : tagClassCache.getById(topicId);
+        return topic != null && topic.getVisibility() == 0
+                && topic.getReviewStatus() == 1 && topic.getStatus() == 1;
     }
 
     private Long parseTopicId(String topic) {

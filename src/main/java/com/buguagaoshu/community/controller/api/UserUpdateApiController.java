@@ -3,6 +3,7 @@ package com.buguagaoshu.community.controller.api;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.UpdatePasswordRequest;
 import com.buguagaoshu.community.dto.UpdateProfileRequest;
+import com.buguagaoshu.community.dto.UserPrivacySettingsDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.UserMapper;
@@ -126,6 +127,27 @@ public class UserUpdateApiController {
         return ResultDTO.okOf();
     }
 
+
+    /**
+     * 更新个人主页隐私开关。
+     */
+    @PostMapping("/api/update/privacy")
+    public ResultDTO<Object> updatePrivacy(@Valid @RequestBody UserPrivacySettingsDTO body,
+                                           HttpServletRequest request) {
+        User user = AuthUtil.requireUser(request);
+        int showFollowQuestions = Boolean.TRUE.equals(body.getShowFollowQuestions()) ? 1 : 0;
+        int showFollowTopics = Boolean.TRUE.equals(body.getShowFollowTopics()) ? 1 : 0;
+        int showFans = Boolean.TRUE.equals(body.getShowFans()) ? 1 : 0;
+        int showFollowingUsers = Boolean.TRUE.equals(body.getShowFollowingUsers()) ? 1 : 0;
+        userMapper.updatePrivacySettings(user.getId(), showFollowQuestions, showFollowTopics,
+                showFans, showFollowingUsers);
+        user.setShowFollowQuestions(showFollowQuestions);
+        user.setShowFollowTopics(showFollowTopics);
+        user.setShowFans(showFans);
+        user.setShowFollowingUsers(showFollowingUsers);
+        request.getSession().setAttribute("user", user);
+        return ResultDTO.okOf();
+    }
 
     /**
      * 更新密码：成功后吊销该用户全部「记住我」token 与当前会话，需重新登录。

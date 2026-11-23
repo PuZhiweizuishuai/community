@@ -23,9 +23,15 @@ const data = ref(null)
 // 内容审核相关系统消息：点击后进入「我的审核」修改/查看
 const REVIEW_TYPES = [10, 11, 12, 13, 14, 15]
 const REVIEW_COMMENT_TYPES = [11, 13, 15]
+// 话题通知：outerId 指向话题 ID
+const TOPIC_TYPES = [22, 23, 24, 25, 26, 27]
 
 function isReviewMessage(value) {
   return REVIEW_TYPES.includes(Number(value))
+}
+
+function isTopicMessage(value) {
+  return TOPIC_TYPES.includes(Number(value))
 }
 
 function reviewQuery(value) {
@@ -33,9 +39,11 @@ function reviewQuery(value) {
 }
 
 function itemLink(item) {
-  return isReviewMessage(item.type)
-    ? { name: 'my-reviews', query: reviewQuery(item.type) }
-    : `/question/${item.outerid}`
+  if (isReviewMessage(item.type)) {
+    return { name: 'my-reviews', query: reviewQuery(item.type) }
+  }
+  if (isTopicMessage(item.type)) return `/topics/${item.outerid}`
+  return `/question/${item.outerid}`
 }
 
 const tabs = [
@@ -59,6 +67,10 @@ async function openMessage(item) {
     const result = await messageApi.read(item.id)
     if (isReviewMessage(result?.type)) {
       router.push({ name: 'my-reviews', query: reviewQuery(result.type) })
+      return
+    }
+    if (isTopicMessage(result?.type) && result?.outerId) {
+      router.push(`/topics/${result.outerId}`)
       return
     }
     if (result?.outerId) router.push(`/question/${result.outerId}`)

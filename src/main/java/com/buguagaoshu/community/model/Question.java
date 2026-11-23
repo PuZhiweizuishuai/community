@@ -32,6 +32,8 @@ public class Question {
     private int isTop;
     /** 加精 */
     private int isEssence;
+    /** 可见性：0 公开，1 登录可见 */
+    private int visibility;
     private long createTime;
     private long alterTime;
 

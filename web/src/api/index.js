@@ -12,6 +12,7 @@ export const authApi = {
   logout: () => api.post('/auth/logout', {}),
   register: (data) => api.form('/register', data),
   features: () => api.get('/auth/features'),
+  loginHistory: (params) => api.get('/auth/login-history', params),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),
   resetPassword: (data) => api.post('/auth/reset-password', data),
   sendRegisterCode: (data) => api.post('/auth/send-register-code', data),
@@ -68,6 +69,17 @@ export const discoverApi = {
   topics: (type) => api.get('/topics', { type }),
   topic: (id) => api.get(`/topics/${encodeURIComponent(id)}`),
   topicQuestions: (id, params) => api.get(`/topics/${encodeURIComponent(id)}/questions`, params),
+  createTopic: (data) => api.post('/topics', data),
+  myTopics: () => api.get('/topics/mine'),
+  joinTopic: (id, data) => api.post(`/topics/${id}/join`, data || {}),
+  acceptTopicInvite: (id) => api.post(`/topics/${id}/invites/accept`, {}),
+  declineTopicInvite: (id) => api.post(`/topics/${id}/invites/decline`, {}),
+  topicMembers: (id, params) => api.get(`/topics/${id}/members`, params),
+  inviteTopicMember: (id, data) => api.post(`/topics/${id}/invites`, data),
+  reviewTopicApplication: (id, memberId, data) =>
+    api.post(`/topics/${id}/applications/${memberId}/review`, data),
+  removeTopicMember: (id, userId) => api.post(`/topics/${id}/members/remove`, { userId }),
+  updateTopicSettings: (id, data) => api.post(`/topics/${id}/settings`, data),
   search: (params) => api.get('/search', params),
   userList: (params) => api.get('/users', params),
   userHome: (userId, params) => api.get(`/users/${encodeURIComponent(userId)}`, params),
@@ -104,6 +116,7 @@ export const reportApi = {
 
 export const settingApi = {
   updateData: (data) => api.form('/update/data', data),
+  updatePrivacy: (data) => api.post('/update/privacy', data),
   updatePassword: (data) => api.form('/update/password', data),
   updateHeadUrl: (imgBase) => api.form('/update/HeadUrl', { imgBase }),
   // 统一上传入口 /api/file/upload，兼容 editormd-image-file 与 file[] 字段
@@ -146,6 +159,7 @@ export const adminApi = {
     api.post('/admin/roles/permissions', { roleId, permissionIds }),
   userRoles: (userId) => api.get(`/admin/users/${userId}/roles`),
   saveUserRoles: (userId, roleIds) => api.post('/admin/users/roles', { userId, roleIds }),
+  userLoginHistory: (userId, params) => api.get(`/admin/users/${userId}/login-history`, params),
   // 用户封禁 / 解封
   userBan: (userId) => api.get(`/admin/users/${userId}/ban`),
   banUser: (userId, data) => api.post(`/admin/users/${userId}/ban`, data),

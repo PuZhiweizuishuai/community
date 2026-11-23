@@ -4,7 +4,9 @@ import com.buguagaoshu.community.cache.TagClassCache;
 import com.buguagaoshu.community.dto.FollowQuestionDTO;
 import com.buguagaoshu.community.dto.FollowTopicDTO;
 import com.buguagaoshu.community.dto.FollowUserDTO;
+import com.buguagaoshu.community.dto.QuestionAccessDto;
 import com.buguagaoshu.community.dto.ResultDTO;
+import com.buguagaoshu.community.dto.TopicAccessDto;
 import com.buguagaoshu.community.enums.ReviewStatusEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.mapper.QuestionMapper;
@@ -14,6 +16,8 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.FollowQuestionService;
 import com.buguagaoshu.community.service.FollowTopicService;
 import com.buguagaoshu.community.service.FollowUserService;
+import com.buguagaoshu.community.service.QuestionAccessService;
+import com.buguagaoshu.community.service.TopicAccessService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,19 +44,25 @@ public class FollowApiController {
     private final FollowQuestionService followQuestionService;
     private final FollowUserService followUserService;
     private final UserService userService;
+    private final TopicAccessService topicAccessService;
+    private final QuestionAccessService questionAccessService;
 
     public FollowApiController(TagClassCache tagClassCache,
                                FollowTopicService followTopicService,
                                QuestionMapper questionMapper,
                                FollowQuestionService followQuestionService,
                                FollowUserService followUserService,
-                               UserService userService) {
+                               UserService userService,
+                               TopicAccessService topicAccessService,
+                               QuestionAccessService questionAccessService) {
         this.tagClassCache = tagClassCache;
         this.followTopicService = followTopicService;
         this.questionMapper = questionMapper;
         this.followQuestionService = followQuestionService;
         this.followUserService = followUserService;
         this.userService = userService;
+        this.topicAccessService = topicAccessService;
+        this.questionAccessService = questionAccessService;
     }
 
     @PostMapping({"/api/follow/topic", "/api/followTopic"})
@@ -61,6 +71,13 @@ public class FollowApiController {
         User user = AuthUtil.requireUser(request);
         TagClass tagClass = body.getTopicId() == null ? null : tagClassCache.getById(body.getTopicId());
         if (tagClass == null) {
+            return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "话题不存在了，请选择别的话题吧!");
+        }
+        TopicAccessDto access = topicAccessService.resolve(tagClass.getId(), user);
+        if (!access.visible()) {
+            return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "话题不存在了，请选择别的话题吧!");
+        }
+        if (!access.canViewContent()) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "话题不存在了，请选择别的话题吧!");
         }
         int result = followTopicService.insertFollowTop(body, user.getId(), tagClass);
@@ -73,6 +90,13 @@ public class FollowApiController {
         User user = AuthUtil.requireUser(request);
         Question question = questionMapper.selectQuestionById(body.getFollowQuestionId(), 1);
         if (question == null || question.getReviewStatus() != ReviewStatusEnum.APPROVED.getStatus()) {
+            return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "问题不存在了，请选择别的问题吧!");
+        }
+        QuestionAccessDto access = questionAccessService.resolve(question, user, null);
+        if (!access.visible()) {
+            return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "问题不存在了，请选择别的问题吧!");
+        }
+        if (!access.canViewContent()) {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_FOUND.getCode(), "问题不存在了，请选择别的问题吧!");
         }
         int result = followQuestionService.insertFollowQuestion(body, question, user.getId());

@@ -53,6 +53,7 @@ const commentsLoading = ref(false)
 const liked = ref(false)
 const followed = ref(false)
 const canEdit = ref(false)
+const loginRequired = ref(false)
 const commentText = ref('')
 const captcha = ref('')
 const captchaRef = ref(null)
@@ -116,12 +117,17 @@ async function loadQuestion() {
     const data = await questionApi.detail(id.value)
     question.value = data.question
     contents.value = data.contents || []
+    loginRequired.value = !!data.loginRequired
     liked.value = !!data.isQuestionClickLike
     followed.value = !!data.isFollowQuestion
     canEdit.value = !!data.canEdit
   } finally {
     loading.value = false
   }
+}
+
+function goSignIn() {
+  router.push({ name: 'sign-in', query: { redirect: route.fullPath } })
 }
 
 async function unlockSegment(segment) {
@@ -149,6 +155,7 @@ function goReply() {
 }
 
 async function loadComments() {
+  if (loginRequired.value || !question.value) return
   commentsLoading.value = true
   try {
     commentPage.value = await questionApi.comments(id.value, {
@@ -170,16 +177,23 @@ async function loadRelevant() {
   relevant.value = (await questionApi.relevant(id.value)) || []
 }
 
-// 问题正文与相关问题只在切换问题时加载，评论排序/翻页不重复查问题
+// 问题正文与相关问题只在切换问题时加载，评论排序/翻页不重复查问题；
+// 登录可见的帖子匿名不请求正文、评论与相关问题
 watch(
   id,
-  () => {
-    loadQuestion()
+  async () => {
+    await loadQuestion()
+    if (loginRequired.value) {
+      relevant.value = []
+      commentPage.value = null
+      return
+    }
     loadRelevant()
+    loadComments()
   },
   { immediate: true },
 )
-watch([id, page, sort], loadComments, { immediate: true })
+watch([page, sort], loadComments)
 
 function updateQuery(patch) {
   router.push({
@@ -520,7 +534,14 @@ async function submitReport() {
             >
           </div>
 
-          <div ref="bodyEl" class="my-5 space-y-4 border-t ui-border pt-4">
+          <div v-if="loginRequired" class="my-5 rounded-xl border border-dashed ui-border ui-bg-soft p-8 text-center">
+            <Lock class="mx-auto size-7 ui-text-muted" />
+            <p class="mt-3 text-base font-semibold ui-text-strong">该帖子设置为登录后可见</p>
+            <p class="mt-1 text-xs ui-text-muted">登录后即可查看完整正文、评论与相关讨论</p>
+            <button class="btn btn-primary btn-sm mt-4" type="button" @click="goSignIn">登录后查看</button>
+          </div>
+
+          <div v-else ref="bodyEl" class="my-5 space-y-4 border-t ui-border pt-4">
             <div v-for="segment in contents" :key="segment.contentId">
               <MarkdownView
                 v-if="!segment.locked"
@@ -577,7 +598,7 @@ async function submitReport() {
             </RouterLink>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 border-t ui-border pt-4">
+          <div v-if="!loginRequired" class="flex flex-wrap items-center gap-2 border-t ui-border pt-4">
             <button
               class="btn btn-sm"
               :class="liked ? 'btn-primary' : 'btn-outline'"
@@ -621,8 +642,8 @@ async function submitReport() {
           </div>
         </article>
 
-        <!-- 回复列表 -->
-        <section id="comments" class="surface mt-5 p-5">
+        <!-- 回复列表：登录可见的帖子匿名不展示 -->
+        <section v-if="!loginRequired" id="comments" class="surface mt-5 p-5">
           <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-base font-semibold ui-text-strong">
               全部回复（{{ question.commentCount }}）

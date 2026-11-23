@@ -10,11 +10,12 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  Tags,
   TriangleAlert,
   X,
   XCircle,
 } from '@lucide/vue'
-import { adminApi } from '@/api'
+import { adminApi, assetUrl } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 import { useMetaStore } from '@/stores/meta'
@@ -33,7 +34,7 @@ const page = computed(() => route.query.page || '1')
 const keyword = ref(String(route.query.keyword || ''))
 
 const data = ref(null)
-const counts = ref({ question: 0, comment: 0, total: 0 })
+const counts = ref({ question: 0, comment: 0, topic: 0, total: 0 })
 const loading = ref(false)
 const busyId = ref(null)
 
@@ -47,6 +48,7 @@ const rejectForm = reactive({ reason: '', suggestion: '' })
 const typeTabs = [
   { value: 'question', label: '问题', icon: MessageCircleQuestion },
   { value: 'comment', label: '评论', icon: MessageCircle },
+  { value: 'topic', label: '话题', icon: Tags },
 ]
 const statusTabs = [
   { value: '0', label: '待审核' },
@@ -61,6 +63,18 @@ function statusMeta(value) {
   return { label: '已通过', cls: 'badge-success' }
 }
 
+const typeLabel = (value) => ({ question: '问题', comment: '评论', topic: '话题' })[value] || '内容'
+const visibilityLabel = (value) =>
+  Number(value) === 2 ? '私有 · 仅邀请' : Number(value) === 1 ? '私有 · 可申请' : '公开'
+const topicTypeLabel = (value) =>
+  meta.topicTypes.find((item) => Number(item.value) === Number(value))?.label || '未分类'
+const searchPlaceholder = computed(() => {
+  if (type.value === 'question') return '搜索问题标题'
+  if (type.value === 'comment') return '搜索评论内容'
+  return '搜索话题名称 / 简介'
+})
+const isTopicReject = computed(() => rejectTarget.value?.type === 'topic')
+
 async function load() {
   loading.value = true
   try {
@@ -69,12 +83,19 @@ async function load() {
       adminApi.reviewCount(),
     ])
     data.value = list
-    counts.value = { question: 0, comment: 0, total: 0, ...(summary || {}) }
+    counts.value = { question: 0, comment: 0, topic: 0, total: 0, ...(summary || {}) }
   } finally {
     loading.value = false
   }
 }
 watch([type, status, page], load, { immediate: true })
+watch(
+  () => route.query.keyword,
+  (value) => {
+    keyword.value = String(value || '')
+    load()
+  },
+)
 
 function updateQuery(patch) {
   const next = { ...route.query, page: 1, ...patch }
@@ -97,8 +118,9 @@ async function openDetail(item) {
 }
 
 async function approve(item) {
-  const name = item.type === 'question' ? '问题' : '评论'
-  if (!(await confirm.ask({ title: '通过审核', message: `确认通过该${name}？通过后将立即公开展示。`, confirmText: '通过' }))) return
+  const name = typeLabel(item.type)
+  const extra = item.type === 'topic' ? '，创建者将自动成为吧主' : ''
+  if (!(await confirm.ask({ title: '通过审核', message: `确认通过该${name}？通过后将立即公开展示${extra}。`, confirmText: '通过' }))) return
   busyId.value = `${item.type}-${item.id}`
   try {
     await adminApi.approveReview(item.type, item.id)
@@ -127,7 +149,7 @@ async function confirmReject() {
       type: rejectTarget.value.type,
       id: rejectTarget.value.id,
       reason,
-      suggestion: rejectForm.suggestion.trim(),
+      suggestion: isTopicReject.value ? '' : rejectForm.suggestion.trim(),
     })
     toast.success('已驳回并通知作者')
     rejectTarget.value = null
@@ -151,7 +173,7 @@ async function confirmReject() {
           </span>
           <div>
             <h1 class="text-lg font-bold ui-text-strong">内容审核</h1>
-            <p class="mt-0.5 text-sm ui-text-base">审核用户发布的问题与评论，通过后才对其他用户可见；驳回时请填写原因与修改意见</p>
+            <p class="mt-0.5 text-sm ui-text-base">统一审核用户发布的问题、评论与新建话题，通过后才对其他用户可见；驳回时请填写原因</p>
           </div>
         </div>
         <button class="btn btn-ghost btn-sm" type="button" :disabled="loading" @click="load">
@@ -161,7 +183,7 @@ async function confirmReject() {
     </div>
 
     <!-- 待审概览 -->
-    <div class="grid gap-3 sm:grid-cols-3">
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <div class="surface flex items-center justify-between gap-3 p-4">
         <div>
           <p class="text-xs font-medium ui-text-muted">待审核问题</p>
@@ -175,6 +197,13 @@ async function confirmReject() {
           <p class="mt-1 text-2xl font-bold" :class="counts.comment ? 'text-amber-600' : 'ui-text-strong'">{{ counts.comment }}</p>
         </div>
         <span class="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white"><MessageCircle class="size-5" /></span>
+      </div>
+      <div class="surface flex items-center justify-between gap-3 p-4">
+        <div>
+          <p class="text-xs font-medium ui-text-muted">待审核话题</p>
+          <p class="mt-1 text-2xl font-bold" :class="counts.topic ? 'text-amber-600' : 'ui-text-strong'">{{ counts.topic }}</p>
+        </div>
+        <span class="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white"><Tags class="size-5" /></span>
       </div>
       <div class="surface flex items-center justify-between gap-3 p-4">
         <div>
@@ -195,7 +224,7 @@ async function confirmReject() {
             class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition"
             :class="type === tab.value ? 'ui-bg shadow-sm ui-text-brand' : 'ui-text-base hover:ui-text-strong'"
             type="button"
-            @click="updateQuery({ type: tab.value })"
+            @click="updateQuery({ type: tab.value, keyword: '' })"
           >
             <component :is="tab.icon" class="size-4" />{{ tab.label }}
             <span v-if="counts[tab.value]" class="badge badge-warning badge-xs">{{ counts[tab.value] }}</span>
@@ -214,7 +243,7 @@ async function confirmReject() {
           </button>
         </div>
         <form class="join ml-auto" @submit.prevent="submitSearch">
-          <input v-model="keyword" class="input input-bordered input-sm join-item w-44 sm:w-56" :placeholder="type === 'question' ? '搜索问题标题' : '搜索评论内容'" />
+          <input v-model="keyword" class="input input-bordered input-sm join-item w-44 sm:w-56" :placeholder="searchPlaceholder" />
           <button class="btn btn-sm btn-primary join-item" type="submit"><Search class="size-4" />搜索</button>
         </form>
       </div>
@@ -227,9 +256,9 @@ async function confirmReject() {
           <thead>
             <tr>
               <th class="w-16">ID</th>
-              <th>{{ type === 'question' ? '问题标题' : '评论内容' }}</th>
+              <th>{{ type === 'question' ? '问题标题' : type === 'comment' ? '评论内容' : '话题名称' }}</th>
               <th class="w-36">作者</th>
-              <th class="w-44">{{ type === 'question' ? '分类 / 标签' : '所属问题' }}</th>
+              <th class="w-44">{{ type === 'question' ? '分类 / 标签' : type === 'comment' ? '所属问题' : '分类 / 可见性' }}</th>
               <th class="w-40">提交时间</th>
               <th class="w-24">状态</th>
               <th class="w-52 text-right">操作</th>
@@ -240,15 +269,27 @@ async function confirmReject() {
               <td class="text-xs ui-text-muted">{{ item.id }}</td>
               <td>
                 <p class="line-clamp-2 max-w-md text-sm font-medium ui-text-strong">{{ item.title || '（无内容）' }}</p>
+                <p v-if="item.type === 'topic'" class="mt-0.5 line-clamp-1 text-xs ui-text-muted">{{ item.description || '暂无话题简介' }}</p>
                 <p v-if="item.reviewReason" class="mt-0.5 line-clamp-1 text-xs text-rose-500">驳回原因：{{ item.reviewReason }}</p>
               </td>
               <td>
-                <RouterLink :to="`/user/${item.authorUserId}`" class="line-clamp-1 text-xs hover:text-indigo-600">{{ item.authorName || '未知用户' }}</RouterLink>
+                <RouterLink
+                  v-if="item.authorUserId"
+                  :to="`/user/${item.authorUserId}`"
+                  class="line-clamp-1 text-xs hover:text-indigo-600"
+                >
+                  {{ item.authorName || '未知用户' }}
+                </RouterLink>
+                <span v-else class="text-xs ui-text-muted">系统</span>
               </td>
               <td class="text-xs ui-text-base">
                 <template v-if="item.type === 'question'">
                   <span class="badge badge-outline badge-sm">{{ meta.classificationLabel(item.classification) }}</span>
                   <span class="mt-1 block truncate ui-text-muted">{{ item.tag }}</span>
+                </template>
+                <template v-else-if="item.type === 'topic'">
+                  <span class="badge badge-outline badge-sm">{{ topicTypeLabel(item.topicType) }}</span>
+                  <span class="mt-1 block text-xs ui-text-muted">{{ visibilityLabel(item.visibility) }}</span>
                 </template>
                 <RouterLink v-else :to="`/question/${item.questionId}`" class="line-clamp-2 hover:text-indigo-600">{{ item.questionTitle || '问题已删除' }}</RouterLink>
               </td>
@@ -300,7 +341,7 @@ async function confirmReject() {
               <ShieldCheck class="size-5" />
             </span>
             <div>
-              <h3 class="text-base font-semibold ui-text-strong">{{ detail.item.type === 'question' ? '审核问题' : '审核评论' }} #{{ detail.item.id }}</h3>
+              <h3 class="text-base font-semibold ui-text-strong">审核{{ typeLabel(detail.item.type) }} #{{ detail.item.id }}</h3>
               <p class="mt-0.5 text-xs ui-text-muted">
                 {{ detail.item.authorName || '未知用户' }} · {{ detail.item.createTime }}
                 <span class="badge badge-sm ml-1" :class="statusMeta(detail.item.reviewStatus).cls">{{ statusMeta(detail.item.reviewStatus).label }}</span>
@@ -312,7 +353,36 @@ async function confirmReject() {
 
         <div v-if="detailLoading" class="py-10 text-center text-sm ui-text-muted">加载中…</div>
         <div v-else class="mt-4 max-h-[55vh] space-y-4 overflow-y-auto pr-1">
-          <template v-if="detail.item.type === 'question'">
+          <template v-if="detail.item.type === 'topic'">
+            <div class="rounded-xl border ui-border p-4">
+              <div class="flex items-start gap-3">
+                <img
+                  :src="assetUrl(detail.item.image)"
+                  alt="话题图标"
+                  class="h-14 w-14 shrink-0 rounded-xl object-cover ui-bg-soft"
+                />
+                <div class="min-w-0">
+                  <h4 class="text-lg font-bold ui-text-strong">{{ detail.item.title }}</h4>
+                  <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span class="badge badge-outline badge-sm">{{ topicTypeLabel(detail.item.topicType) }}</span>
+                    <span
+                      class="badge badge-sm"
+                      :class="Number(detail.item.visibility) === 0 ? 'badge-ghost' : 'badge-warning'"
+                    >
+                      {{ visibilityLabel(detail.item.visibility) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-3 whitespace-pre-line text-sm leading-relaxed ui-text-base">
+                {{ detail.item.description || '暂无话题简介' }}
+              </p>
+              <RouterLink :to="`/topics/${detail.item.id}`" class="btn btn-ghost btn-xs mt-3">
+                <Eye class="size-3.5" />查看话题主页
+              </RouterLink>
+            </div>
+          </template>
+          <template v-else-if="detail.item.type === 'question'">
             <div class="rounded-xl border ui-border p-4">
               <h4 class="text-lg font-bold ui-text-strong">{{ detail.item.title }}</h4>
               <div class="mt-2 flex flex-wrap items-center gap-2 text-xs ui-text-muted">
@@ -364,21 +434,31 @@ async function confirmReject() {
         <div class="flex items-start gap-3">
           <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-red-500 text-white"><XCircle class="size-5" /></span>
           <div class="min-w-0">
-            <h3 class="text-base font-semibold ui-text-strong">驳回{{ rejectTarget.type === 'question' ? '问题' : '评论' }}</h3>
+            <h3 class="text-base font-semibold ui-text-strong">驳回{{ typeLabel(rejectTarget.type) }}</h3>
             <p class="mt-1 line-clamp-2 text-sm ui-text-base">「{{ rejectTarget.title }}」</p>
           </div>
         </div>
         <label class="form-control mt-4">
           <span class="label-text mb-1 text-xs font-medium ui-text-base">审核不通过原因 <span class="text-rose-500">*</span></span>
-          <textarea v-model="rejectForm.reason" rows="3" maxlength="500" class="textarea textarea-bordered w-full text-sm focus:outline-none" placeholder="例如：内容包含广告推广信息，不符合社区规范" />
-          <span class="mt-1 text-right text-xs ui-text-muted">{{ rejectForm.reason.length }} / 500</span>
+          <textarea
+            v-model="rejectForm.reason"
+            rows="3"
+            :maxlength="isTopicReject ? 200 : 500"
+            class="textarea textarea-bordered w-full text-sm focus:outline-none"
+            :placeholder="isTopicReject ? '例如：话题名称或简介不符合社区规范' : '例如：内容包含广告推广信息，不符合社区规范'"
+          />
+          <span class="mt-1 text-right text-xs ui-text-muted">{{ rejectForm.reason.length }} / {{ isTopicReject ? 200 : 500 }}</span>
         </label>
-        <label class="form-control mt-2">
+        <label v-if="!isTopicReject" class="form-control mt-2">
           <span class="label-text mb-1 text-xs font-medium ui-text-base">修改意见（选填）</span>
           <textarea v-model="rejectForm.suggestion" rows="3" maxlength="500" class="textarea textarea-bordered w-full text-sm focus:outline-none" placeholder="告诉作者如何修改才能通过审核，例如：请删除推广链接并补充问题背景" />
           <span class="mt-1 text-right text-xs ui-text-muted">{{ rejectForm.suggestion.length }} / 500</span>
         </label>
-        <p class="mt-2 text-xs ui-text-muted">驳回后作者会在消息中心收到原因与修改意见，可修改后重新提交审核。</p>
+        <p class="mt-2 text-xs ui-text-muted">
+          {{ isTopicReject
+            ? '驳回后话题创建者会在消息中心收到原因，可调整后重新发起话题申请。'
+            : '驳回后作者会在消息中心收到原因与修改意见，可修改后重新提交审核。' }}
+        </p>
         <div class="modal-action">
           <button class="btn btn-ghost btn-sm" type="button" @click="rejectTarget = null">取消</button>
           <button class="btn btn-error btn-sm" type="button" :disabled="rejecting" @click="confirmReject">

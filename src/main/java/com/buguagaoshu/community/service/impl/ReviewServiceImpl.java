@@ -13,9 +13,11 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.ContentReviewLogMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
+import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.ContentReviewLog;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.NotificationService;
@@ -23,6 +25,7 @@ import com.buguagaoshu.community.service.QuestionContentService;
 import com.buguagaoshu.community.service.ReviewService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.service.TopicService;
 import com.buguagaoshu.community.util.CacheInvalidation;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
@@ -41,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static com.buguagaoshu.community.model.table.CommentTableDef.COMMENT;
 import static com.buguagaoshu.community.model.table.QuestionTableDef.QUESTION;
+import static com.buguagaoshu.community.model.table.TagClassTableDef.TAG_CLASS;
 
 /**
  * 内容审核实现。
@@ -60,9 +64,12 @@ public class ReviewServiceImpl implements ReviewService {
     private static final int MAX_REASON_LENGTH = 500;
     private static final int MAX_SUGGESTION_LENGTH = 500;
     private static final int MAX_COMMENT_LENGTH = 5000;
+    /** topics.reviewReason 列为 varchar(200) */
+    private static final int MAX_TOPIC_REASON_LENGTH = 200;
 
     private final QuestionMapper questionMapper;
     private final CommentMapper commentMapper;
+    private final TagClassMapper tagClassMapper;
     private final ContentReviewLogMapper reviewLogMapper;
     private final CommentService commentService;
     private final TagClassService tagClassService;
@@ -70,14 +77,18 @@ public class ReviewServiceImpl implements ReviewService {
     private final QuestionContentService questionContentService;
     private final UserBatchLoader userBatchLoader;
     private final SiteCacheService siteCache;
+    private final TopicService topicService;
 
     public ReviewServiceImpl(QuestionMapper questionMapper, CommentMapper commentMapper,
+                             TagClassMapper tagClassMapper,
                              ContentReviewLogMapper reviewLogMapper, CommentService commentService,
                              TagClassService tagClassService, NotificationService notificationService,
                              QuestionContentService questionContentService,
-                             UserBatchLoader userBatchLoader, SiteCacheService siteCache) {
+                             UserBatchLoader userBatchLoader, SiteCacheService siteCache,
+                             TopicService topicService) {
         this.questionMapper = questionMapper;
         this.commentMapper = commentMapper;
+        this.tagClassMapper = tagClassMapper;
         this.reviewLogMapper = reviewLogMapper;
         this.commentService = commentService;
         this.tagClassService = tagClassService;
@@ -85,6 +96,7 @@ public class ReviewServiceImpl implements ReviewService {
         this.questionContentService = questionContentService;
         this.userBatchLoader = userBatchLoader;
         this.siteCache = siteCache;
+        this.topicService = topicService;
     }
 
     @Override
@@ -93,15 +105,21 @@ public class ReviewServiceImpl implements ReviewService {
         ReviewTargetTypeEnum targetType = requireType(type);
         int reviewStatus = parseStatus(status);
         String search = StringUtil.sanitizeSearchKeyword(keyword);
-        return targetType == ReviewTargetTypeEnum.QUESTION
-                ? listQuestions(null, reviewStatus, search, page, size, false)
-                : listComments(null, reviewStatus, search, page, size, false);
+        return switch (targetType) {
+            case QUESTION -> listQuestions(null, reviewStatus, search, page, size, false);
+            case COMMENT -> listComments(null, reviewStatus, search, page, size, false);
+            case TOPIC -> listTopics(reviewStatus, search, page, size);
+        };
     }
 
     @Override
     public PaginationDto<ReviewItemDto> listMine(long userId, String type, String status,
                                                  String page, String size) {
         ReviewTargetTypeEnum targetType = requireType(type);
+        if (targetType == ReviewTargetTypeEnum.TOPIC) {
+            // 用户侧话题进度在「我的话题」查看，内容审核只处理问题与评论
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
+        }
         int reviewStatus = parseStatus(status);
         return targetType == ReviewTargetTypeEnum.QUESTION
                 ? listQuestions(userId, reviewStatus, null, page, size, true)
@@ -195,6 +213,38 @@ public class ReviewServiceImpl implements ReviewService {
         return query;
     }
 
+    private PaginationDto<ReviewItemDto> listTopics(int reviewStatus, String keyword,
+                                                    String page, String size) {
+        QueryWrapper condition = topicCondition(reviewStatus, keyword);
+        long count = tagClassMapper.selectCountByQuery(condition);
+        long[] param = NumberUtils.getPageAndSize(page, size, count);
+        QueryWrapper query = topicCondition(reviewStatus, keyword);
+        query.orderBy(reviewStatus == ReviewStatusEnum.PENDING.getStatus()
+                        ? TAG_CLASS.CREATE_TIME.asc() : TAG_CLASS.ID.desc())
+                .limit(param[0], param[1]);
+        List<TagClass> topics = tagClassMapper.selectListByQuery(query);
+
+        Set<Long> userIds = topics.stream()
+                .flatMap(topic -> java.util.stream.Stream.of(topic.getCreatedBy(), topic.getReviewerId()))
+                .filter(id -> id != null && id > 0)
+                .collect(Collectors.toSet());
+        Map<Long, User> userMap = userBatchLoader.loadUsers(userIds);
+
+        List<ReviewItemDto> items = topics.stream().map(topic -> toItem(topic, userMap)).toList();
+        return pagination(items, count, param);
+    }
+
+    private QueryWrapper topicCondition(int reviewStatus, String keyword) {
+        QueryWrapper query = QueryWrapper.create();
+        if (reviewStatus >= 0) {
+            query.and(TAG_CLASS.REVIEW_STATUS.eq(reviewStatus));
+        }
+        if (keyword != null) {
+            query.and(TAG_CLASS.TITLE.like(keyword).or(TAG_CLASS.SIMPLE_DESC.like(keyword)));
+        }
+        return query;
+    }
+
     @Override
     public ReviewDetailDto detail(String type, long id) {
         ReviewTargetTypeEnum targetType = requireType(type);
@@ -208,6 +258,16 @@ public class ReviewServiceImpl implements ReviewService {
             // 管理员审核必须看到全部正文，包括密码可见/回复可见段落
             dto.setContents(questionContentService.visibleContents(
                     question.getQuestionId(), question.getUserId(), null, true));
+            return dto;
+        }
+
+        if (targetType == ReviewTargetTypeEnum.TOPIC) {
+            TagClass topic = tagClassMapper.selectOneById(id);
+            if (topic == null) {
+                throw new CustomizeException(CustomizeErrorCode.REVIEW_NOT_FOUND);
+            }
+            dto.setItem(toItem(topic, loadTopicUsers(topic)));
+            dto.setContents(List.of());
             return dto;
         }
 
@@ -226,6 +286,17 @@ public class ReviewServiceImpl implements ReviewService {
     public void approve(String type, long id, User admin) {
         ReviewTargetTypeEnum targetType = requireType(type);
         long now = System.currentTimeMillis();
+        if (targetType == ReviewTargetTypeEnum.TOPIC) {
+            TagClass topic = tagClassMapper.selectOneById(id);
+            if (topic == null) {
+                throw new CustomizeException(CustomizeErrorCode.REVIEW_NOT_FOUND);
+            }
+            // 复用话题审核：通过后自动任命创建者为吧主并通知
+            topicService.reviewTopic(id, true, null, admin);
+            writeLog(ReviewTargetTypeEnum.TOPIC, id, ReviewActionEnum.APPROVE, admin.getId(), null, null);
+            log.info("管理员 {} 审核通过话题 {}", admin.getId(), id);
+            return;
+        }
         if (targetType == ReviewTargetTypeEnum.QUESTION) {
             Question question = questionMapper.selectOneById(id);
             if (question == null || question.getStatus() == 0) {
@@ -280,6 +351,23 @@ public class ReviewServiceImpl implements ReviewService {
         }
         String cleanSuggestion = StringUtils.trimToNull(suggestion);
         long now = System.currentTimeMillis();
+
+        if (targetType == ReviewTargetTypeEnum.TOPIC) {
+            if (cleanReason.length() > MAX_TOPIC_REASON_LENGTH) {
+                throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(),
+                        "话题审核原因不能超过 " + MAX_TOPIC_REASON_LENGTH + " 个字符");
+            }
+            TagClass topic = tagClassMapper.selectOneById(id);
+            if (topic == null) {
+                throw new CustomizeException(CustomizeErrorCode.REVIEW_NOT_FOUND);
+            }
+            topicService.reviewTopic(id, false, cleanReason, admin);
+            // 话题没有「修改意见」字段，只记录原因
+            writeLog(ReviewTargetTypeEnum.TOPIC, id, ReviewActionEnum.REJECT, admin.getId(),
+                    cleanReason, null);
+            log.info("管理员 {} 驳回话题 {}：{}", admin.getId(), id, cleanReason);
+            return;
+        }
 
         if (targetType == ReviewTargetTypeEnum.QUESTION) {
             Question question = questionMapper.selectOneById(id);
@@ -355,10 +443,13 @@ public class ReviewServiceImpl implements ReviewService {
         long commentCount = commentMapper.selectCountByQuery(QueryWrapper.create()
                 .where(COMMENT.STATUS.eq(1))
                 .and(COMMENT.REVIEW_STATUS.eq(ReviewStatusEnum.PENDING.getStatus())));
+        long topicCount = tagClassMapper.selectCountByQuery(QueryWrapper.create()
+                .where(TAG_CLASS.REVIEW_STATUS.eq(ReviewStatusEnum.PENDING.getStatus())));
         Map<String, Long> counts = new LinkedHashMap<>();
         counts.put("question", questionCount);
         counts.put("comment", commentCount);
-        counts.put("total", questionCount + commentCount);
+        counts.put("topic", topicCount);
+        counts.put("total", questionCount + commentCount + topicCount);
         return counts;
     }
 
@@ -410,6 +501,28 @@ public class ReviewServiceImpl implements ReviewService {
         return item;
     }
 
+    private ReviewItemDto toItem(TagClass topic, Map<Long, User> userMap) {
+        long authorId = topic.getCreatedBy() == null ? 0 : topic.getCreatedBy();
+        long reviewerId = topic.getReviewerId() == null ? 0 : topic.getReviewerId();
+        ReviewItemDto item = baseItem(topic.getId(), ReviewTargetTypeEnum.TOPIC,
+                authorId, reviewerId, userMap);
+        item.setTitle(topic.getTitle());
+        item.setContent(topic.getSimpleDesc());
+        item.setDescription(topic.getSimpleDesc());
+        item.setImage(topic.getImage());
+        item.setTopicType(topic.getType());
+        item.setVisibility(topic.getVisibility());
+        item.setClassification(topic.getType());
+        item.setReviewStatus(topic.getReviewStatus());
+        item.setStatus(topic.getStatus());
+        item.setCreateTime(StringUtil.foematTime(topic.getCreateTime()));
+        if (topic.getReviewTime() != null && topic.getReviewTime() > 0) {
+            item.setReviewTime(StringUtil.foematTime(topic.getReviewTime()));
+        }
+        item.setReviewReason(topic.getReviewReason());
+        return item;
+    }
+
     private ReviewItemDto toItem(Comment comment, Question question, Map<Long, User> userMap) {
         ReviewItemDto item = baseItem(comment.getCommentId(), ReviewTargetTypeEnum.COMMENT,
                 comment.getCommentator(), comment.getReviewerId(), userMap);
@@ -449,6 +562,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     private Map<Long, User> loadUsers(long... ids) {
         Set<Long> set = java.util.Arrays.stream(ids).filter(id -> id > 0).boxed()
+                .collect(Collectors.toSet());
+        return userBatchLoader.loadUsers(set);
+    }
+
+    private Map<Long, User> loadTopicUsers(TagClass topic) {
+        Set<Long> set = java.util.stream.Stream.of(topic.getCreatedBy(), topic.getReviewerId())
+                .filter(id -> id != null && id > 0)
                 .collect(Collectors.toSet());
         return userBatchLoader.loadUsers(set);
     }

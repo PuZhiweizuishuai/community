@@ -25,6 +25,14 @@
 - **Vditor 主题**：代码高亮与内容主题是运行时 CDN 注入的 `<link>`，`preview.mode` 不管这个；统一走 `web/src/utils/vditorTheme.js` 的 `vditorPreviewTheme(isDark)`，编辑器切换主题要调 `setTheme(editor, content, code)` 三参数。`main.css` 有 `[data-theme='dark']` 作用域的 GitHub Dark 兜底，改动 Vditor 相关组件时别删。
 - **后台列表页统一范式**（评论管理 → 问题管理已照此重构）：页头 `surface` 卡片（渐变图标 + 标题 + 说明 + 刷新）+ 筛选 `surface`（`ui-bg-soft` 胶囊里放状态标签、`共 N 条`、右侧 join 搜索）+ `surface overflow-hidden` 表格（空状态用 `Inbox`，加载/空行用 `colspan`）+ `Pagination` + 详情 `dialog.modal modal-open` 弹窗，条件全部放路由 query（`status`/`keyword`/`page`）。激活标签用 `ui-bg`（不要 `bg-white`，夜间是白块）；表格中文标题列必须给 `min-w-[260px]` 否则被挤成极窄多行。
 
+## 聊天室（2026-11-23 改版）
+
+- 输入区是 `components/ChatComposer.vue`：Vditor `ir` 模式，**只做 Markdown 编辑，不接上传**（`upload.handler` 返回提示，零后端请求）。Enter 发送、Shift+Enter 换行（用 `execCommand('insertParagraph')` 补，Vditor 本身不支持软换行）、Ctrl/⌘+Enter 发送；`caretInStructure()` 判断光标在 li / blockquote / pre / table 或正在输入块级语法时让编辑器接管回车。
+- 注意 3 个 Vditor 容器坑：① **IR 编辑区根节点本身就是 `<pre class="vditor-reset">`**，`closest('pre')` 判断"光标在代码块里"会永远命中，导致回车永不发送，判断时要排除该根节点；② 外层卡片不能用 `overflow:hidden`，会裁掉 Vditor 向上弹出的工具栏 tooltip / 表情面板，同时工具栏要 `z-index:5` 盖住输入区；③ Vditor 自带 `.vditor-content{min-height:60px}`，固定高度容器必须覆盖成 `min-height:0`，否则内容溢出盖住下方按钮。
+- **中文输入法回车**：组合态 Enter 的 keydown 是 `isComposing=true`/keyCode 229，不要在 keydown 直接发送（第一下会被吞，用户要按两次）。做法：keydown 只 `preventDefault+stopPropagation` 拦 Vditor，发送放 keyup + `compositionend.capture` 兜底并用 rAF 等 input 回调同步；发送条件也不要依赖 Vditor 的 `after`（等 CDN Lute 加载完才 ready）。
+- 消息渲染走 `components/ChatMarkdown.vue`（`Vditor.md2html` + LRU 缓存），Lute 从 unpkg 加载约 3.7MB，加载期间务必先显示纯文本，否则气泡是空白。
+- `ChatMessage` 带 `time`（毫秒）与 `members`（仅 JOIN/LEAVE 下发），前端据此做日期分隔、合并与在线成员列表；`sendMessage` 服务端限制 4000 字符。
+
 ## 安全基线（2026-11-22 起）
 
 - **安全响应头**：`config/SecurityHeadersFilter` 统一注入 X-Frame-Options / nosniff / Referrer-Policy / Permissions-Policy / COOP / CSP，HTTPS 时加 HSTS（按 `request.isSecure()` 或 `X-Forwarded-Proto`）。`/api/file/**` 不设 CSP。

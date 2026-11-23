@@ -8,6 +8,7 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserBanService;
+import com.buguagaoshu.community.service.UserLoginHistoryService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.JwtUtil;
@@ -39,6 +40,7 @@ class SignInServiceImplTest {
     private OnlineUserService onlineUserService;
     private RateLimitService rateLimitService;
     private UserBanService userBanService;
+    private UserLoginHistoryService userLoginHistoryService;
     private SignInServiceImpl signInService;
     private MockedStatic<CaptchaUtil> captchaMock;
     private MockHttpServletRequest request;
@@ -50,10 +52,11 @@ class SignInServiceImplTest {
         onlineUserService = mock(OnlineUserService.class);
         rateLimitService = mock(RateLimitService.class);
         userBanService = mock(UserBanService.class);
+        userLoginHistoryService = mock(UserLoginHistoryService.class);
         JwtUtil jwtUtil = new JwtUtil();
         jwtUtil.setKey("test-secret-key-0123456789-0123456789-abcdef");
         signInService = new SignInServiceImpl(userPermissionService, userService,
-                onlineUserService, jwtUtil, rateLimitService, userBanService);
+                onlineUserService, jwtUtil, rateLimitService, userBanService, userLoginHistoryService);
         ReflectionTestUtils.setField(signInService, "defaultTtlMillis", 7_200_000L);
         captchaMock = mockStatic(CaptchaUtil.class);
         captchaMock.when(() -> CaptchaUtil.ver(anyString(), any())).thenReturn(true);
@@ -83,6 +86,7 @@ class SignInServiceImplTest {
         ArgumentCaptor<OnlineUser> captor = ArgumentCaptor.forClass(OnlineUser.class);
         verify(onlineUserService).insertOnlineUser(captor.capture());
         assertEquals(7 * 24 * 3600 * 1000L, captor.getValue().getExpireTime() - captor.getValue().getTime());
+        verify(userLoginHistoryService).record(7, "127.0.0.1", null, 1);
     }
 
     @Test

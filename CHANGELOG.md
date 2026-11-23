@@ -1,5 +1,36 @@
 # 更新日志（Changelog）
 
+## 2026-11-23 · 聊天室改版：布局重构 + Markdown 富文本（Vditor）
+
+引入 Vditor 的「Markdown 编辑 + Markdown 渲染」能力，**不使用其文件上传功能**（上传按钮不进工具栏，`upload.handler` 直接返回提示，不会向后端发起任何请求），聊天室整体布局同步重排。
+
+### 前端
+
+- **页面结构**（`web/src/views/ChatRoomView.vue`）：顶栏（返回 / 标题 / 连接状态胶囊 / 守则 / 主题 / 本人头像）+ 消息流 + 输入区；宽屏（`lg`）右侧新增在线成员、聊天室守则、Markdown 速记三张卡片，窄屏隐藏。
+- **消息流**：按日期分隔（今天 / 昨天 / 日期），同一发送者 5 分钟内的连续消息合并（只保留首条头像与昵称），显示 `HH:mm` 时间；本人消息靠右、品牌色气泡，他人靠左、卡片气泡。消息不足一屏时贴着输入区显示（`.chat-stream-inner { margin-top: auto }`）。
+- **回到底部**：离开底部时浮动显示「回到底部 / N 条新消息」，页面不再强制把用户拽回底部。
+- **新增 `ChatComposer.vue`**：Vditor `ir` 模式作为输入区，工具栏只保留 Markdown 相关按钮；`Enter` 发送、`Shift + Enter` 换行（Vditor 未实现软换行，这里用 `execCommand('insertParagraph')` 补上），光标在列表 / 引用 / 代码块内或正在输入 ``` / `- ` / `> ` / `# ` 时回车交给编辑器续写；`Ctrl/⌘ + Enter` 也能发送；输入长度上限 4000，回车发送有 400ms 防抖。移动端默认收起工具栏，用「格式」按钮展开。
+- **新增 `ChatMarkdown.vue`**：用 `Vditor.md2html` 渲染消息，纯文本消息不触发解析，结果按内容缓存（LRU 400 条）；解析完成前先按纯文本显示，避免 Lute 加载期间气泡空白；渲染结果再做一次兜底清洗（剥 `script` / 内联事件 / `javascript:` 链接，外链补 `target=_blank`）。不启用代码高亮，避免为短消息额外拉 highlight.js。
+- **气泡内 Markdown 排版**（`main.css`）：标题、段落、列表、代码块、引用、表格在气泡内整体压缩；表格单元格不换行并在气泡内横向滚动，代码块内部换行显示；本人气泡内所有 Markdown 元素统一转浅色。
+
+### 后端
+
+- `ChatMessage` 新增 `time`（服务端毫秒时间戳）与 `members`（在线成员快照，仅 JOIN / LEAVE 下发，聊天消息不重复传输名单）；`ChatPresenceRegistry` 新增 `members()` 统一生成按昵称排序的名单，`WebSocketEventListener` 离开广播同步带上。
+- `sendMessage` 增加服务端保护：内容为空或超过 4000 字符直接丢弃，避免超长 Markdown 占用广播带宽。
+- 客户端 JOIN / CHAT 只上报 `type` / `content` / `clientToken`，身份继续由握手会话绑定（不信任 payload）。
+
+### 聊天室输入区三处交互修复（同日补充）
+
+1. **工具栏悬浮标签被裁掉**：`.chat-composer-card` 原本 `overflow: hidden`，而 Vditor 的按钮提示用 `bottom: 100%` 向上弹出，正好被卡片边界裁掉。改为 `overflow: visible`，工具栏补上顶部圆角与 `z-index: 5`，`.chat-dock` 设 `z-index: 1`，提示可正常盖在消息流之上；表情面板同样不再被裁。
+2. **编辑区盖住发送栏**：Vditor 自带 `.vditor-content { min-height: 60px }`，加上约 42px 工具栏共 102px，超过编辑器 84px 的容器高度并溢出 18px。覆盖 `min-height: 0`，并把桌面端编辑器高度调到 108px（移动端工具栏收起时仍为 84px），编辑区与发送栏不再重叠。
+3. **回车要按两次**：中文输入法组合态的 Enter（`isComposing=true` / `keyCode=229`）原先被直接丢弃，第一下只用于确认候选词。改为 `keydown` 只拦截 Vditor 默认行为，发送改由 `keyup` 触发，`compositionend` 兜底；同时把 `ready`（等 CDN 上的 Lute 加载完才置位）从发送条件里移除，避免初始化期间第一次回车静默失效。连接未建立时回车给出「聊天室连接中」提示。`Shift + Enter` 换行、`Ctrl/⌘ + Enter` 发送、列表内回车续写均保持原有行为。
+
+## 2026-11-23 · 隐私优化
+
+新增支持隐藏关注、隐藏问题、隐藏话题。
+
+优化问题列表展示
+
 ## 2026-11-22 · 后台「问题管理」重构：筛选、详情与删除/恢复闭环
 
 对齐「评论管理」页的交互与设计系统，替换原先只有一张全量表格、无筛选无详情的问题管理页。

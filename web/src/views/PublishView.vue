@@ -30,6 +30,7 @@ const newSegment = () => ({ key: ++segmentSeq, type: 0, content: '', password: '
 const editId = computed(() => route.params.id || null)
 const title = ref('')
 const classification = ref(0)
+const visibility = ref(0)
 const topicId = ref(0)
 const topicKeyword = ref('')
 const showTopicPanel = ref(false)
@@ -137,6 +138,7 @@ async function loadEdit() {
   if (!editId.value) {
     title.value = ''
     classification.value = 0
+    visibility.value = 0
     topicId.value = Number(route.query.topic || 0)
     selectedTopic.value = null
     segments.value = [newSegment()]
@@ -150,6 +152,7 @@ async function loadEdit() {
   const question = data.question
   title.value = question.title || ''
   classification.value = Number(question.classification || 0)
+  visibility.value = Number(question.visibility || 0)
   topicId.value = Number(question.topicId || 0)
   selectedTopic.value = null
   tags.value = (data.tags || []).map((t) => t.name)
@@ -231,6 +234,7 @@ async function submit() {
     const result = await questionApi.save({
       title: title.value.trim(),
       classification: Number(classification.value),
+      visibility: Number(visibility.value),
       topicId: Number(topicId.value),
       contents,
       tagNames: tags.value,
@@ -345,6 +349,33 @@ async function submit() {
                 @click="classification = item.value"
               >
                 {{ item.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <span class="mb-2 block text-xs font-medium ui-text-base">可见范围</span>
+            <p class="mb-2 text-xs ui-text-muted">「登录可见」的帖子匿名用户只能看到标题，正文与评论需要登录后查看。</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition"
+                :class="visibility === 0
+                  ? 'border-indigo-500 ui-bg-brand font-medium ui-text-brand'
+                  : 'ui-border ui-text-base hover:border-indigo-300 hover:text-indigo-600'"
+                @click="visibility = 0"
+              >
+                <Eye class="size-3.5" />公开
+              </button>
+              <button
+                type="button"
+                class="flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition"
+                :class="visibility === 1
+                  ? 'border-indigo-500 ui-bg-brand font-medium ui-text-brand'
+                  : 'ui-border ui-text-base hover:border-indigo-300 hover:text-indigo-600'"
+                @click="visibility = 1"
+              >
+                <Lock class="size-3.5" />登录可见
               </button>
             </div>
           </div>
@@ -526,7 +557,7 @@ async function submit() {
         <div class="mb-4 border-b ui-border pb-3">
           <h2 class="text-xl font-bold ui-text-strong">{{ title || '（未填写标题）' }}</h2>
           <p class="mt-1 text-xs ui-text-muted">
-            {{ selectedTopic?.title || '未选择话题' }} · {{ meta.classificationLabel(classification) || '未选择类型' }} · {{ tags.join(' / ') || '暂无标签' }}
+            {{ selectedTopic?.title || '未选择话题' }} · {{ meta.classificationLabel(classification) || '未选择类型' }} · {{ visibility === 1 ? '登录可见' : '公开' }} · {{ tags.join(' / ') || '暂无标签' }}
           </p>
         </div>
         <div class="max-h-[55vh] overflow-y-auto">

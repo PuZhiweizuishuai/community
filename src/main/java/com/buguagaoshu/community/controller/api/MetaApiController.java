@@ -5,29 +5,43 @@ import com.buguagaoshu.community.cache.ClassificationCache;
 import com.buguagaoshu.community.cache.HotQuestionCache;
 import com.buguagaoshu.community.cache.HotTagCache;
 import com.buguagaoshu.community.cache.HotUserCache;
+import com.buguagaoshu.community.cache.TagClassCache;
+import com.buguagaoshu.community.dto.HotQuestionDTO;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.TagDTO;
+import com.buguagaoshu.community.dto.TopicActivityStat;
 import com.buguagaoshu.community.dto.UserDto;
 import com.buguagaoshu.community.enums.QuestionClassType;
 import com.buguagaoshu.community.enums.QuestionSortType;
 import com.buguagaoshu.community.enums.TagClassTypeEnum;
+import com.buguagaoshu.community.enums.TopicVisibilityEnum;
+import com.buguagaoshu.community.mapper.QuestionMapper;
 import com.buguagaoshu.community.model.Classification;
+import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.Tag;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.SystemConfigService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.util.AuthUtil;
+import com.buguagaoshu.community.util.HotRankingUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 全站公共数据按用途拆分为多个小接口，页面按需拉取：
@@ -52,6 +66,8 @@ public class MetaApiController {
     private final SystemConfigService systemConfigService;
     private final TagClassService tagClassService;
     private final QuestionTagService questionTagService;
+    private final TagClassCache tagClassCache;
+    private final QuestionMapper questionMapper;
 
     public MetaApiController(HotTagCache hotTagCache,
                              HotQuestionCache hotQuestionCache,
@@ -63,7 +79,9 @@ public class MetaApiController {
                              SiteCacheService siteCache,
                              SystemConfigService systemConfigService,
                              TagClassService tagClassService,
-                             QuestionTagService questionTagService) {
+                             QuestionTagService questionTagService,
+                             TagClassCache tagClassCache,
+                             QuestionMapper questionMapper) {
         this.hotTagCache = hotTagCache;
         this.hotQuestionCache = hotQuestionCache;
         this.hotUserCache = hotUserCache;
@@ -75,6 +93,8 @@ public class MetaApiController {
         this.systemConfigService = systemConfigService;
         this.tagClassService = tagClassService;
         this.questionTagService = questionTagService;
+        this.tagClassCache = tagClassCache;
+        this.questionMapper = questionMapper;
     }
 
     /** 基础字典：体积小、全站通用，前端启动时拉取一次 */
@@ -96,15 +116,75 @@ public class MetaApiController {
         return ResultDTO.okOf(data);
     }
 
-    /** 侧边栏榜单：热门标签 + 热门问题 */
+    /** 侧边栏榜单：热门话题 + 热门标签 + 热门问题 */
     @GetMapping("/hot")
     public ResultDTO<Map<String, Object>> hot() {
         Map<String, Object> data = new LinkedHashMap<>();
+        data.put("hotTopics", siteCache.get(SiteCacheService.META + "hotTopics", 60_000,
+                this::hotTopics));
         data.put("hots", siteCache.get(SiteCacheService.META + "hots", 60_000,
                 () -> hotTagCache.getHots() == null ? List.of() : hotTagCache.getHots()));
         data.put("hotQuestions", siteCache.get(SiteCacheService.META + "hotQuestions", 60_000,
-                hotQuestionCache::getHotQuestionDTOList));
+                this::publicHotQuestions));
         return ResultDTO.okOf(data);
+    }
+
+    /**
+     * 热门话题只取公开、审核通过且启用的话题：
+     * 该接口免登录且全站缓存，不能包含任何私有话题信息。
+     *
+     * <p>排序不再只看关注数/讨论总数，而是按 {@link HotRankingUtil#topicScore}
+     * 综合长期沉淀、最近 7 天新讨论、最近 30 天活跃帖数与互动量，并按最后活跃时间衰减。
+     */
+    private List<TagClass> hotTopics() {
+        List<TagClass> list = tagClassCache.getTagClassList();
+        if (list == null || list.isEmpty()) {
+            return List.of();
+        }
+        long now = System.currentTimeMillis();
+        Map<Long, TopicActivityStat> activityMap = questionMapper.selectTopicActivityStats(
+                        now - HotRankingUtil.TOPIC_ACTIVITY_WINDOW_MILLIS,
+                        now - HotRankingUtil.TOPIC_NEW_WINDOW_MILLIS).stream()
+                .filter(item -> item.getTopicId() != null)
+                .collect(Collectors.toMap(TopicActivityStat::getTopicId, Function.identity(),
+                        (first, second) -> first));
+        return list.stream()
+                .filter(topic -> topic.getStatus() == 1 && topic.getReviewStatus() == 1
+                        && topic.getVisibility() == TopicVisibilityEnum.PUBLIC.getCode())
+                .sorted(Comparator.comparingDouble((TagClass topic) ->
+                                HotRankingUtil.topicScore(topic, activityMap.get(topic.getId()), now))
+                        .reversed()
+                        .thenComparing(Comparator.comparingLong(TagClass::getTalkCount).reversed())
+                        .thenComparingLong(TagClass::getId))
+                .limit(10)
+                .toList();
+    }
+
+    /**
+     * 热门问题是每小时计算的快照，读取时按当前话题可见性再过滤一次，
+     * 避免话题改为私有后旧榜单继续泄露标题。
+     */
+    private List<HotQuestionDTO> publicHotQuestions() {
+        List<HotQuestionDTO> list = hotQuestionCache.getHotQuestionDTOList();
+        if (list == null || list.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> ids = list.stream().map(HotQuestionDTO::getQuestionId)
+                .filter(id -> id != null && id > 0).collect(Collectors.toSet());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Question> questionMap = questionMapper.selectListByIds(ids).stream()
+                .collect(Collectors.toMap(Question::getQuestionId, Function.identity()));
+        return list.stream().filter(item -> {
+            Question question = questionMap.get(item.getQuestionId());
+            if (question == null || question.getTopicId() == null) {
+                return false;
+            }
+            TagClass topic = tagClassCache.getById(question.getTopicId());
+            return topic != null && topic.getVisibility() == 0
+                    && topic.getReviewStatus() == 1 && topic.getStatus() == 1;
+        }).toList();
     }
 
     /** 热门用户榜单：仅用户列表页使用 */
@@ -121,8 +201,10 @@ public class MetaApiController {
     @GetMapping("/topic-options")
     public ResultDTO<List<Map<String, Object>>> topicOptions(
             @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "limit", defaultValue = "20") int limit) {
-        return ResultDTO.okOf(tagClassService.searchEnabledTopics(keyword, limit).stream()
+            @RequestParam(value = "limit", defaultValue = "20") int limit,
+            HttpServletRequest request) {
+        return ResultDTO.okOf(tagClassService.searchEnabledTopics(keyword, limit,
+                        AuthUtil.currentUser(request)).stream()
                 .map(topic -> {
                     Map<String, Object> item = new LinkedHashMap<>();
                     item.put("id", topic.getId());

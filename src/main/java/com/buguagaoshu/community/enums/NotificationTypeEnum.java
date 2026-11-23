@@ -86,9 +86,22 @@ public enum NotificationTypeEnum {
      */
     TAG_REVIEW_PASS(20, "标签审核通过"),
 
-    TAG_REVIEW_REJECT(21, "标签审核未通过");
+    TAG_REVIEW_REJECT(21, "标签审核未通过"),
 
+    /**
+     * 话题相关通知：outerId 指向话题 ID
+     */
+    TOPIC_REVIEW_PASS(22, "话题审核通过"),
 
+    TOPIC_REVIEW_REJECT(23, "话题审核未通过"),
+
+    TOPIC_APPLY_RECEIVED(24, "收到加入申请"),
+
+    TOPIC_APPLY_PASS(25, "加入申请已通过"),
+
+    TOPIC_APPLY_REJECT(26, "加入申请未通过"),
+
+    TOPIC_INVITE(27, "邀请你加入话题");
 
 
     private int type;
@@ -115,5 +128,15 @@ public enum NotificationTypeEnum {
             }
         }
         return "";
+    }
+
+    /** 话题通知：outerId 语义为话题 ID，而不是问题 ID */
+    public static boolean isTopicType(int type) {
+        return type >= TOPIC_REVIEW_PASS.type && type <= TOPIC_INVITE.type;
+    }
+
+    /** 标签审核通知：没有可跳转的详情页，outerId 为占位值 */
+    public static boolean isTagType(int type) {
+        return type == TAG_REVIEW_PASS.type || type == TAG_REVIEW_REJECT.type;
     }
 }

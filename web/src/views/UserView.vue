@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Heart, MessageSquareText, SquarePen, Star, Tags, Trophy, UserMinus, UserPlus, Users } from '@lucide/vue'
+import { Heart, Lock, MessageSquareText, SquarePen, Star, Tags, Trophy, UserMinus, UserPlus, Users } from '@lucide/vue'
 import { discoverApi, interactionApi, assetUrl } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
@@ -55,6 +55,14 @@ async function toggleFollow() {
 
 const items = computed(() => data.value?.pagination?.data || [])
 const user = computed(() => data.value?.user || null)
+const privacyHidden = computed(() => !!data.value?.privacyHidden)
+const privacyLockText = computed(() => {
+  if (tab.value === 'questions') return '该用户未公开关注的问题'
+  if (tab.value === 'topic') return '该用户未公开关注的话题'
+  if (tab.value === 'fans') return '该用户未公开粉丝列表'
+  if (tab.value === 'user') return '该用户未公开关注的人'
+  return '该用户未公开此内容'
+})
 const ads = computed(() => meta.adsFor('userHome'))
 meta.loadAds('userHome')
 </script>
@@ -105,7 +113,17 @@ meta.loadAds('userHome')
           </button>
         </div>
 
-        <QuestionList v-if="tab === 'posts'" :items="items" empty-text="TA 还没有发布过问题" />
+        <div v-if="privacyHidden" class="surface empty-state">
+          <Lock class="size-9" :stroke-width="1.5" />
+          <p class="mt-2">{{ privacyLockText }}</p>
+          <p class="mt-1 text-xs">对方开启了主页隐私保护</p>
+        </div>
+
+        <QuestionList
+          v-else-if="tab === 'posts'"
+          :items="items"
+          empty-text="TA 还没有发布过问题"
+        />
 
         <template v-else-if="tab === 'questions'">
           <div v-if="!items.length" class="surface empty-state">还没有关注任何问题</div>
@@ -123,7 +141,12 @@ meta.loadAds('userHome')
         <template v-else-if="tab === 'topic'">
           <div v-if="!(data?.followTopics?.length)" class="surface empty-state">还没有关注任何话题</div>
           <div v-else class="grid gap-3 sm:grid-cols-2">
-            <RouterLink v-for="topic in data.followTopics" :key="topic.topicId || topic.topicTitle" :to="{ name: 'home', query: { tag: topic.topicTitle } }" class="surface flex items-center gap-3 p-3">
+            <RouterLink
+              v-for="topic in data.followTopics"
+              :key="topic.topicId || topic.topicTitle"
+              :to="{ name: 'topic-detail', params: { id: topic.topicId } }"
+              class="surface flex items-center gap-3 p-3"
+            >
               <img :src="assetUrl(topic.topicImage)" alt="" class="h-10 w-10 rounded object-cover" />
               <span class="text-sm ui-text-strong">{{ topic.topicTitle }}</span>
             </RouterLink>
@@ -143,7 +166,7 @@ meta.loadAds('userHome')
           </div>
         </template>
 
-        <Pagination :pagination="data?.pagination" @change="go({ page: $event })" />
+        <Pagination v-if="!privacyHidden" :pagination="data?.pagination" @change="go({ page: $event })" />
       </div>
 
       <aside class="side-panel">

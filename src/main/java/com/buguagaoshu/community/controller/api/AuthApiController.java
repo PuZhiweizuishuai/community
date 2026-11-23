@@ -1,13 +1,16 @@
 package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.dto.LoginRequest;
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserLoginHistory;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.SignInService;
 import com.buguagaoshu.community.service.UserBanService;
+import com.buguagaoshu.community.service.UserLoginHistoryService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -40,6 +44,7 @@ public class AuthApiController {
     private final NotificationService notificationService;
     private final OnlineUserService onlineUserService;
     private final UserBanService userBanService;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
@@ -47,11 +52,13 @@ public class AuthApiController {
     public AuthApiController(SignInService signInService,
                              NotificationService notificationService,
                              OnlineUserService onlineUserService,
-                             UserBanService userBanService) {
+                             UserBanService userBanService,
+                             UserLoginHistoryService userLoginHistoryService) {
         this.signInService = signInService;
         this.notificationService = notificationService;
         this.onlineUserService = onlineUserService;
         this.userBanService = userBanService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     /**
@@ -75,6 +82,16 @@ public class AuthApiController {
         data.put("loggedIn", user != null);
         data.put("isAdmin", admin != null);
         return ResultDTO.okOf(data);
+    }
+
+    /** 当前用户的登录历史，用于自查异常登录 */
+    @GetMapping("/login-history")
+    public ResultDTO<PaginationDto<UserLoginHistory>> loginHistory(
+            @RequestParam(value = "page", defaultValue = "1") String page,
+            @RequestParam(value = "size", defaultValue = "10") String size,
+            HttpServletRequest request) {
+        User user = AuthUtil.requireUser(request);
+        return ResultDTO.okOf(userLoginHistoryService.pageByUser(user.getId(), page, size));
     }
 
     /**

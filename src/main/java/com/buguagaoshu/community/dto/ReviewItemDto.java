@@ -58,5 +58,17 @@ public class ReviewItemDto {
 
     private String tag;
 
+    /** 话题类型 code（classifications.kind=topic），仅 type=topic 时返回 */
+    private Integer topicType;
+
+    /** 话题可见性：0 公开，1 私有可申请，2 私有隐藏 */
+    private Integer visibility;
+
+    /** 话题简介（仅 type=topic） */
+    private String description;
+
+    /** 话题图标（仅 type=topic） */
+    private String image;
+
     private String reviewerName;
 }

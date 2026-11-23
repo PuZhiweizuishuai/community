@@ -50,7 +50,7 @@ const rows = computed(() => data.value?.pagination?.data || [])
 const latest = computed(() => rows.value[0] || null)
 const overview = computed(() => data.value?.overview || {})
 const pending = computed(
-  () => overview.value.pendingReview || { question: 0, comment: 0, total: 0 },
+  () => overview.value.pendingReview || { question: 0, comment: 0, topic: 0, total: 0 },
 )
 const system = computed(() => overview.value.system || {})
 const reports = computed(
@@ -126,7 +126,7 @@ const cards = computed(() => {
     {
       label: '待审核内容',
       value: pending.value.total,
-      hint: `待审问题 ${formatNumber(pending.value.question)} · 待审评论 ${formatNumber(pending.value.comment)}`,
+      hint: `待审问题 ${formatNumber(pending.value.question)} · 待审评论 ${formatNumber(pending.value.comment)} · 待审话题 ${formatNumber(pending.value.topic)}`,
       icon: ShieldCheck,
       grad: 'from-amber-500 to-orange-500 shadow-amber-500/25',
       valueClass: Number(pending.value.total) > 0 ? 'text-amber-600' : 'ui-text-strong',
@@ -186,6 +186,15 @@ const pendingTiles = computed(() => [
     grad: 'from-sky-500 to-cyan-500',
     valueClass: Number(pending.value.comment) > 0 ? 'text-amber-600' : 'ui-text-strong',
     to: '/admin/reviews?type=comment&status=0',
+  },
+  {
+    key: 'topic',
+    label: '待审核话题',
+    value: pending.value.topic,
+    icon: Tags,
+    grad: 'from-violet-500 to-fuchsia-500',
+    valueClass: Number(pending.value.topic) > 0 ? 'text-amber-600' : 'ui-text-strong',
+    to: '/admin/reviews?type=topic&status=0',
   },
   {
     key: 'total',
@@ -446,7 +455,7 @@ const option = computed(() => {
           </div>
         </div>
 
-        <div class="relative mt-4 grid gap-3 sm:grid-cols-3">
+        <div class="relative mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <component
             :is="canReview ? RouterLink : 'div'"
             v-for="tile in pendingTiles"

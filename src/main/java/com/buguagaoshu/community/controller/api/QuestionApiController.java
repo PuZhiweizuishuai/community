@@ -9,12 +9,14 @@ import com.buguagaoshu.community.dto.CommentDto;
 import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionContentCreateDTO;
 import com.buguagaoshu.community.dto.QuestionContentDto;
+import com.buguagaoshu.community.dto.QuestionAccessDto;
 import com.buguagaoshu.community.dto.QuestionContentUnlockDTO;
 import com.buguagaoshu.community.dto.QuestionCreateDTO;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.enums.CommentSortTypeEnum;
 import com.buguagaoshu.community.enums.QuestionContentTypeEnum;
+import com.buguagaoshu.community.enums.QuestionVisibilityEnum;
 import com.buguagaoshu.community.enums.ReviewStatusEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
@@ -27,11 +29,13 @@ import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.ClickLikeService;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.FollowQuestionService;
+import com.buguagaoshu.community.service.QuestionAccessService;
 import com.buguagaoshu.community.service.QuestionContentService;
 import com.buguagaoshu.community.service.QuestionService;
 import com.buguagaoshu.community.service.QuestionTagService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.service.TopicAccessService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.IpUtil;
 import com.buguagaoshu.community.util.StringUtil;
@@ -69,6 +73,8 @@ public class QuestionApiController {
     private final QuestionTagService questionTagService;
     private final TagClassService tagClassService;
     private final ClassificationCache classificationCache;
+    private final QuestionAccessService questionAccessService;
+    private final TopicAccessService topicAccessService;
 
     public QuestionApiController(QuestionService questionService,
                                  QuestionContentService questionContentService,
@@ -79,7 +85,9 @@ public class QuestionApiController {
                                  ViewCountBuffer viewCountBuffer,
                                  QuestionTagService questionTagService,
                                  TagClassService tagClassService,
-                                 ClassificationCache classificationCache) {
+                                 ClassificationCache classificationCache,
+                                 QuestionAccessService questionAccessService,
+                                 TopicAccessService topicAccessService) {
         this.questionService = questionService;
         this.questionContentService = questionContentService;
         this.commentService = commentService;
@@ -90,6 +98,8 @@ public class QuestionApiController {
         this.questionTagService = questionTagService;
         this.tagClassService = tagClassService;
         this.classificationCache = classificationCache;
+        this.questionAccessService = questionAccessService;
+        this.topicAccessService = topicAccessService;
     }
 
     /**
@@ -116,7 +126,17 @@ public class QuestionApiController {
                     : CustomizeErrorCode.CONTENT_UNDER_REVIEW);
         }
 
-        if (question.getStatus() != 0 && question.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()) {
+        QuestionAccessDto access = questionAccessService.resolve(toAccessQuestion(question), user, admin);
+        if (!access.visible()) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+        if (!access.canViewContent() && !access.loginRequired()) {
+            // 私有话题内容对非成员按不存在处理，避免泄露话题存在性与成员限制
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+
+        if (access.canViewContent() && question.getStatus() != 0
+                && question.getReviewStatus() == ReviewStatusEnum.APPROVED.getStatus()) {
             // 浏览数先累加到 Redis，定时批量回写，读接口不再同步写库
             viewCountBuffer.increment(question.getQuestionId());
             question.setViewCount(question.getViewCount() + viewCountBuffer.pending(question.getQuestionId()));
@@ -124,7 +144,7 @@ public class QuestionApiController {
 
         boolean liked = false;
         boolean followed = false;
-        if (user != null) {
+        if (user != null && access.canViewContent()) {
             ClickLike clickLike = new ClickLike();
             clickLike.setNotifier(user.getId());
             clickLike.setQuestionId(question.getQuestionId());
@@ -139,20 +159,37 @@ public class QuestionApiController {
 
         Map<String, Object> data = new LinkedHashMap<>();
         // 正文统一走内容段落接口，受保护段落按访问者裁剪，description 不再随详情下发
-        List<QuestionContentDto> contents = questionContentService.visibleContents(
-                question.getQuestionId(), question.getUserId(), user, admin != null);
+        List<QuestionContentDto> contents = access.canViewContent()
+                ? questionContentService.visibleContents(
+                        question.getQuestionId(), question.getUserId(), user, admin != null)
+                : List.of();
         question.setDescription(null);
         boolean canEdit = user != null && question.getUser() != null
                 && user.getId() == question.getUser().getId();
         // 详情页标签：访客只看到已通过标签，作者本人额外看到自己的待审核标签
-        question.setTags(questionTagService.tagsForDetail(question.getQuestionId(),
-                user == null ? null : user.getId(), canEdit));
+        question.setTags(access.canViewContent()
+                ? questionTagService.tagsForDetail(question.getQuestionId(),
+                        user == null ? null : user.getId(), canEdit)
+                : List.of());
         data.put("question", question);
         data.put("contents", contents);
+        data.put("loginRequired", access.loginRequired());
         data.put("isQuestionClickLike", liked);
         data.put("isFollowQuestion", followed);
         data.put("canEdit", canEdit);
         return ResultDTO.okOf(data);
+    }
+
+    /** 详情 DTO 转回访问控制需要的轻量实体，避免为鉴权重复查库 */
+    private Question toAccessQuestion(QuestionDto question) {
+        Question accessQuestion = new Question();
+        accessQuestion.setQuestionId(question.getQuestionId());
+        accessQuestion.setUserId(question.getUserId());
+        accessQuestion.setTopicId(question.getTopicId());
+        accessQuestion.setVisibility(question.getVisibility());
+        accessQuestion.setStatus(question.getStatus());
+        accessQuestion.setReviewStatus(question.getReviewStatus());
+        return accessQuestion;
     }
 
     /**
@@ -169,14 +206,15 @@ public class QuestionApiController {
         if (question == null) {
             throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
         }
+        User user = AuthUtil.currentUser(request);
+        User admin = AuthUtil.currentAdmin(request);
         // 未公开的问题不返回评论，避免通过评论接口绕过审核查看内容
         if (question.getReviewStatus() != ReviewStatusEnum.APPROVED.getStatus()) {
-            User user = AuthUtil.currentUser(request);
-            User admin = AuthUtil.currentAdmin(request);
             if (admin == null && (user == null || user.getId() != question.getUserId())) {
                 throw new CustomizeException(CustomizeErrorCode.CONTENT_UNDER_REVIEW);
             }
         }
+        requireQuestionContent(question, user, admin);
         return ResultDTO.okOf(commentService.getCommentDtoByQuestionIdForQuestion(
                 questionId, page, size, CommentSortTypeEnum.getType(sort)));
     }
@@ -185,8 +223,30 @@ public class QuestionApiController {
      * 相关问题：按问题标签匹配，随问题详情一起加载一次。
      */
     @GetMapping("/{questionId}/relevant")
-    public ResultDTO<List<Question>> relevant(@PathVariable("questionId") String questionId) {
+    public ResultDTO<List<Question>> relevant(@PathVariable("questionId") String questionId,
+                                              HttpServletRequest request) {
+        Question question = questionService.selectQuestionNotDtoById(questionId);
+        if (question == null) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+        requireQuestionContent(question, AuthUtil.currentUser(request), AuthUtil.currentAdmin(request));
         return ResultDTO.okOf(questionService.getRelevantQuestion(questionId));
+    }
+
+    /**
+     * 统一内容读取守卫：不可见按 404，需登录按 403，私有话题非成员按 403。
+     */
+    private void requireQuestionContent(Question question, User user, User admin) {
+        QuestionAccessDto access = questionAccessService.resolve(question, user, admin);
+        if (!access.visible()) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+        if (access.loginRequired()) {
+            throw new CustomizeException(CustomizeErrorCode.LOGIN_REQUIRED);
+        }
+        if (!access.canViewContent()) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
     }
 
     /**
@@ -222,8 +282,14 @@ public class QuestionApiController {
         } catch (NumberFormatException e) {
             throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
         }
+        Question question = questionService.selectQuestionNotDtoById(questionId);
+        if (question == null) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
+        User user = AuthUtil.currentUser(request);
+        requireQuestionContent(question, user, AuthUtil.currentAdmin(request));
         String content = questionContentService.unlock(qId, body.getContentId(), body.getPassword(),
-                AuthUtil.currentUser(request), IpUtil.getIpAddr(request));
+                user, IpUtil.getIpAddr(request));
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("contentId", body.getContentId());
         data.put("content", content);
@@ -263,9 +329,15 @@ public class QuestionApiController {
         if (!classificationCache.isValidQuestionCode(body.getClassification())) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "所选问题类型不存在或已停用");
         }
-        TagClass topic = tagClassService.findById(body.getTopicId());
-        if (topic == null || topic.getStatus() != 1) {
+        TagClass topic = tagClassService.findApprovedById(body.getTopicId());
+        if (topic == null) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "所选话题不存在或已停用");
+        }
+        if (!topicAccessService.canPostInTopic(body.getTopicId(), user)) {
+            throw new CustomizeException(CustomizeErrorCode.FORBIDDEN.getCode(), "该话题仅成员可以发帖");
+        }
+        if (!QuestionVisibilityEnum.isValid(body.getVisibility())) {
+            throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "可见范围不正确");
         }
         if (body.getTagNames() != null && !body.getTagNames().isEmpty()) {
             boolean tooMany = body.getTagNames().stream()
@@ -285,6 +357,7 @@ public class QuestionApiController {
         question.setClassification(body.getClassification());
         question.setTopicId(body.getTopicId());
         question.setUserId(user.getId());
+        question.setVisibility(body.getVisibility() == null ? 0 : body.getVisibility());
         question.setCreateTime(body.getCreateTime() == null ? 0L : body.getCreateTime());
 
         questionService.createQuestion(question, contents, body.getTagNames());

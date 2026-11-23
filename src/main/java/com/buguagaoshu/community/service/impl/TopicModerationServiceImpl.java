@@ -69,8 +69,10 @@ public class TopicModerationServiceImpl implements TopicModerationService {
         if (user == null || topicId <= 0) {
             return false;
         }
-        // 全局问题管理员不受话题限制
-        if (AuthUtil.hasPermission(user, PermissionCodes.ADMIN_QUESTION)) {
+        // 全局管理员不受话题限制
+        if (AuthUtil.hasPermission(user, PermissionCodes.ADMIN_QUESTION)
+                || AuthUtil.hasPermission(user, PermissionCodes.ADMIN_TOPIC)
+                || AuthUtil.hasPermission(user, PermissionCodes.ADMIN_ACCESS)) {
             return true;
         }
         return moderatorMapper.selectOne(topicId, user.getId()) != null;
@@ -124,6 +126,10 @@ public class TopicModerationServiceImpl implements TopicModerationService {
         long userId = user.getId();
         String cleanRole = TopicModerator.ROLE_OWNER.equals(role)
                 ? TopicModerator.ROLE_OWNER : TopicModerator.ROLE_MODERATOR;
+        if (TopicModerator.ROLE_OWNER.equals(cleanRole)) {
+            // 每个话题只保留一个吧主，新吧主上任时旧吧主自动降级为小吧
+            moderatorMapper.demoteOwners(topicId);
+        }
         TopicModerator exists = moderatorMapper.selectOne(topicId, userId);
         if (exists != null) {
             exists.setRole(cleanRole);
@@ -153,6 +159,12 @@ public class TopicModerationServiceImpl implements TopicModerationService {
 
     @Override
     public void remove(long topicId, long userId, User admin) {
+        TopicModerator target = moderatorMapper.selectOne(topicId, userId);
+        if (target != null && TopicModerator.ROLE_OWNER.equals(target.getRole())
+                && moderatorMapper.selectOwners(topicId).size() <= 1) {
+            throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(),
+                    "该用户是话题唯一吧主，请先任命新的吧主");
+        }
         if (moderatorMapper.deleteByTopicAndUser(topicId, userId) > 0) {
             log.info("管理员 {} 卸任话题 {} 的吧务 {}", admin.getId(), topicId, userId);
         }

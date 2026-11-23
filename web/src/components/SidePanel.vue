@@ -1,6 +1,6 @@
 <script setup>
 import { computed, watch } from 'vue'
-import { Flame, Star, Tags } from '@lucide/vue'
+import { Flame, Hash, Star, Tags } from '@lucide/vue'
 import { useMetaStore } from '@/stores/meta'
 import { assetUrl } from '@/api'
 import AdCarousel from '@/components/AdCarousel.vue'
@@ -57,20 +57,6 @@ watch(
 
     <AdCarousel :items="ads" title="社区推广" />
 
-    <section v-if="showHotTags && meta.hots.length" class="surface p-4">
-      <h3 class="section-title mb-3"><Tags class="size-4 ui-text-brand" />热门标签</h3>
-      <div class="flex flex-wrap gap-2">
-        <RouterLink
-          v-for="tag in meta.hots.slice(0, 20)"
-          :key="tag"
-          :to="{ name: 'home', query: { tag, page: 1 } }"
-          class="chip"
-        >
-          {{ tag }}
-        </RouterLink>
-      </div>
-    </section>
-
     <section v-if="showHotQuestions && meta.hotQuestions.length" class="surface p-4">
       <h3 class="section-title mb-3"><Flame class="size-4 text-orange-500" />热门问题</h3>
       <ol class="space-y-2.5">
@@ -86,6 +72,39 @@ watch(
           </RouterLink>
         </li>
       </ol>
+    </section>
+
+    <section v-if="position === 'home' && meta.hotTopics.length" class="surface p-4">
+      <h3 class="section-title mb-3"><Hash class="size-4 ui-text-brand" />热门话题</h3>
+      <ul class="space-y-1">
+        <li v-for="(topic, i) in meta.hotTopics.slice(0, 5)" :key="topic.id">
+          <RouterLink :to="`/topics/${topic.id}`" class="flex items-center gap-1.5 rounded-lg px-1 py-1 hover:bg-indigo-50/60">
+            <span
+              class="flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold"
+              :class="i < 3 ? 'rank-top text-white' : 'ui-bg-soft ui-text-base'"
+            >
+              {{ i + 1 }}
+            </span>
+            <img :src="assetUrl(topic.image)" :alt="topic.title" class="h-5 w-5 shrink-0 rounded object-cover" />
+            <span class="min-w-0 flex-1 truncate text-xs ui-text-strong">{{ topic.title }}</span>
+            <span class="shrink-0 text-[10px] ui-text-muted">{{ topic.talkCount }} 讨论</span>
+          </RouterLink>
+        </li>
+      </ul>
+    </section>
+
+    <section v-if="showHotTags && meta.hots.length" class="surface p-4">
+      <h3 class="section-title mb-3"><Tags class="size-4 ui-text-brand" />热门标签</h3>
+      <div class="flex flex-wrap gap-2">
+        <RouterLink
+          v-for="tag in meta.hots.slice(0, 20)"
+          :key="tag"
+          :to="{ name: 'home', query: { tag, page: 1 } }"
+          class="chip"
+        >
+          {{ tag }}
+        </RouterLink>
+      </div>
     </section>
 
     <AdCarousel v-if="showNews" :items="news" title="New! 社区新闻" />

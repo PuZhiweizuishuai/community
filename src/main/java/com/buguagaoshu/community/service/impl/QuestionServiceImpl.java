@@ -101,7 +101,9 @@ public class QuestionServiceImpl implements QuestionService {
     private QueryWrapper listCondition(int sort, Integer classification, String tagName, Long topicId) {
         QueryWrapper query = QueryWrapper.create()
                 .where(QUESTION.STATUS.eq(1))
-                .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()));
+                .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()))
+                // 站点级列表只展示公开话题内容，私有话题帖子仅在话题页内可见
+                .and(QuestionMapper.PUBLIC_TOPIC_CONDITION);
         if (classification != null) {
             query.and(QUESTION.CLASSIFICATION.eq(classification));
         }
@@ -303,7 +305,8 @@ public class QuestionServiceImpl implements QuestionService {
         QueryWrapper condition = QueryWrapper.create()
                 .where(QUESTION.USER_ID.eq(id))
                 .and(QUESTION.STATUS.eq(1))
-                .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()));
+                .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()))
+                .and(QuestionMapper.PUBLIC_TOPIC_CONDITION);
         long allQuestionCount = questionMapper.selectCountByQuery(condition);
         long[] param = NumberUtils.getPageAndSize(page, size, allQuestionCount);
         List<Question> questionList = questionMapper.selectListByQuery(
@@ -383,6 +386,8 @@ public class QuestionServiceImpl implements QuestionService {
         List<Question> questions = questionMapper.selectListByQuery(QueryWrapper.create()
                 .where(QUESTION.QUESTION_ID.in(questionIds))
                 .and(QUESTION.STATUS.eq(1))
+                .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()))
+                .and(QuestionMapper.PUBLIC_TOPIC_CONDITION)
                 .select(QuestionMapper.LIST_QUERY_COLUMNS));
         Map<Long, User> userMap = userBatchLoader.loadUsers(
                 questions.stream().map(Question::getUserId).toList(), true);
@@ -449,6 +454,7 @@ public class QuestionServiceImpl implements QuestionService {
         return questionMapper.selectListByQuery(QueryWrapper.create()
                 .where(QUESTION.STATUS.eq(1))
                 .and(QUESTION.REVIEW_STATUS.eq(ReviewStatusEnum.APPROVED.getStatus()))
+                .and(QuestionMapper.PUBLIC_TOPIC_CONDITION)
                 .select(QuestionMapper.LIST_QUERY_COLUMNS)
                 .orderBy(QUESTION.ALTER_TIME.desc()).limit(page, size));
     }

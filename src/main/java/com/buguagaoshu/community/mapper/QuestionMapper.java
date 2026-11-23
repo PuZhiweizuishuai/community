@@ -1,5 +1,6 @@
 package com.buguagaoshu.community.mapper;
 
+import com.buguagaoshu.community.dto.TopicActivityStat;
 import com.buguagaoshu.community.model.Question;
 import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.query.QueryColumn;
@@ -27,14 +28,22 @@ public interface QuestionMapper extends BaseMapper<Question> {
 
     /** 列表查询专用列：不含 description 正文，避免列表页传输/读取大字段 */
     String LIST_COLUMNS = "questionId, userId, title, classification, topicId, fileUrl, viewCount, " +
-            "commentCount, likeCount, followCount, tag, isTop, isEssence, createTime, alterTime, status, reviewStatus";
+            "commentCount, likeCount, followCount, tag, isTop, isEssence, visibility, createTime, alterTime, status, reviewStatus";
+
+    /** 站点级列表只展示公开且已审核通过的话题内容 */
+    String PUBLIC_TOPIC_CONDITION = "exists (select 1 from topics t where t.id=questions.topicId " +
+            "and t.reviewStatus=1 and t.status=1 and t.visibility=0)";
+
+    /** 带 q 别名的查询使用 */
+    String PUBLIC_TOPIC_CONDITION_Q = "exists (select 1 from topics t where t.id=q.topicId " +
+            "and t.reviewStatus=1 and t.status=1 and t.visibility=0)";
 
     /** 与 LIST_COLUMNS 对应的类型安全查询列，供 QueryWrapper.select 使用 */
     QueryColumn[] LIST_QUERY_COLUMNS = {
             QUESTION.QUESTION_ID, QUESTION.USER_ID, QUESTION.TITLE, QUESTION.CLASSIFICATION,
             QUESTION.TOPIC_ID, QUESTION.FILE_URL,
             QUESTION.VIEW_COUNT, QUESTION.COMMENT_COUNT, QUESTION.LIKE_COUNT, QUESTION.FOLLOW_COUNT, QUESTION.TAG,
-            QUESTION.IS_TOP, QUESTION.IS_ESSENCE,
+            QUESTION.IS_TOP, QUESTION.IS_ESSENCE, QUESTION.VISIBILITY,
             QUESTION.CREATE_TIME, QUESTION.ALTER_TIME, QUESTION.STATUS, QUESTION.REVIEW_STATUS
     };
 
@@ -43,7 +52,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
             QUESTION.QUESTION_ID, QUESTION.USER_ID, QUESTION.TITLE, QUESTION.CLASSIFICATION,
             QUESTION.TOPIC_ID, QUESTION.FILE_URL,
             QUESTION.VIEW_COUNT, QUESTION.COMMENT_COUNT, QUESTION.LIKE_COUNT, QUESTION.FOLLOW_COUNT, QUESTION.TAG,
-            QUESTION.IS_TOP, QUESTION.IS_ESSENCE,
+            QUESTION.IS_TOP, QUESTION.IS_ESSENCE, QUESTION.VISIBILITY,
             QUESTION.CREATE_TIME, QUESTION.ALTER_TIME, QUESTION.STATUS, QUESTION.REVIEW_STATUS,
             QUESTION.REVIEW_REASON, QUESTION.REVIEW_SUGGESTION, QUESTION.REVIEWER_ID, QUESTION.REVIEW_TIME
     };
@@ -52,8 +61,8 @@ public interface QuestionMapper extends BaseMapper<Question> {
      * 插入问题。viewCount/status 等列依赖数据库默认值，不能按实体全字段插入，保留显式列 SQL。
      * 正文存放在 question_content 表，description 列不再写入。
      */
-    @Insert("insert into questions(userId, title, classification, topicId, fileUrl, tag, createTime, alterTime, reviewStatus) " +
-            "values (#{userId}, #{title}, #{classification}, #{topicId}, #{fileUrl}, #{tag}, #{createTime}, #{alterTime}, #{reviewStatus})")
+    @Insert("insert into questions(userId, title, classification, topicId, fileUrl, tag, visibility, createTime, alterTime, reviewStatus) " +
+            "values (#{userId}, #{title}, #{classification}, #{topicId}, #{fileUrl}, #{tag}, #{visibility}, #{createTime}, #{alterTime}, #{reviewStatus})")
     @Options(useGeneratedKeys = true, keyProperty = "questionId", keyColumn = "questionId")
     int createQuestion(Question question);
 
@@ -67,6 +76,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
         update.setTopicId(question.getTopicId());
         update.setFileUrl(question.getFileUrl());
         update.setTag(question.getTag());
+        update.setVisibility(question.getVisibility());
         update.setAlterTime(question.getAlterTime());
         return update(update);
     }
@@ -188,6 +198,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
      * 相关问题：与当前问题共享任意一个「已通过」标签。
      */
     @Select("select " + LIST_COLUMNS + " from questions q where q.questionId!=#{questionId} and q.status=#{status} and q.reviewStatus=1 " +
+            "and " + PUBLIC_TOPIC_CONDITION_Q + " " +
             "and exists (select 1 from question_tags qt join question_tags mine on mine.tagId=qt.tagId " +
             "join tags t on t.id=qt.tagId and t.status=1 where qt.questionId=q.questionId and mine.questionId=#{questionId}) " +
             "order by q.questionId desc limit #{size}")
@@ -198,10 +209,12 @@ public interface QuestionMapper extends BaseMapper<Question> {
     // 关键字搜索：FULLTEXT(ngram) 布尔模式，走 ft_questions_title_tag 索引
     // ------------------------------------------------------------------
 
-    @Select("select " + LIST_COLUMNS + " from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1 order by questionId desc limit #{page}, #{size}")
+    @Select("select " + LIST_COLUMNS + " from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1 " +
+            "and " + PUBLIC_TOPIC_CONDITION + " order by questionId desc limit #{page}, #{size}")
     List<Question> fulltextSearchQuestion(@Param("search") String search, @Param("page") long page, @Param("size") long size, @Param("status") int status);
 
-    @Select("select COUNT(*) from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1")
+    @Select("select COUNT(*) from questions where MATCH(title, tag) AGAINST(#{search} IN BOOLEAN MODE) and status=#{status} and reviewStatus=1 " +
+            "and " + PUBLIC_TOPIC_CONDITION)
     long fulltextSearchQuestionCount(@Param("search") String search, @Param("status") int status);
 
     // ------------------------------------------------------------------
@@ -211,6 +224,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
     // ------------------------------------------------------------------
 
     @Select("<script>select " + LIST_COLUMNS + " from questions where status=#{status} and reviewStatus=1 " +
+            "and " + PUBLIC_TOPIC_CONDITION + " " +
             "and (alterTime &lt; #{alterTime} or (alterTime = #{alterTime} and questionId &lt; #{questionId})) " +
             "<if test='classification != null'>and classification=#{classification} </if>" +
             "<if test='topicId != null'>and topicId=#{topicId} </if>" +
@@ -226,6 +240,7 @@ public interface QuestionMapper extends BaseMapper<Question> {
                                                  @Param("status") int status);
 
     @Select("<script>select " + LIST_COLUMNS + " from questions where status=#{status} and reviewStatus=1 and commentCount=0 and questionId &lt; #{questionId} " +
+            "and " + PUBLIC_TOPIC_CONDITION + " " +
             "<if test='classification != null'>and classification=#{classification} </if>" +
             "<if test='topicId != null'>and topicId=#{topicId} </if>" +
             "<if test='tag != null'>and exists (select 1 from question_tags qt join tags t on t.id=qt.tagId " +
@@ -261,8 +276,25 @@ public interface QuestionMapper extends BaseMapper<Question> {
     /**
      * 批量统计各用户的问题数（活跃用户榜单装配用）
      */
-    @Select("<script>select userId, COUNT(*) as cnt from questions where status=1 and reviewStatus=1 and userId in " +
+    @Select("<script>select userId, COUNT(*) as cnt from questions where status=1 and reviewStatus=1 " +
+            "and " + PUBLIC_TOPIC_CONDITION + " and userId in " +
             "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
             " group by userId</script>")
     List<Map<String, Object>> countQuestionByUserIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * 热门话题活跃统计：一次分组聚合出各话题近期的活跃帖数、新讨论数与互动量，
+     * 避免逐个话题查询；只扫描统计窗口内有活跃的帖子，控制扫描范围。
+     *
+     * @param since   活跃窗口起点（最近 30 天）
+     * @param weekAgo 新讨论窗口起点（最近 7 天）
+     */
+    @Select("select topicId, count(*) as activeQuestionCount, " +
+            "sum(case when createTime >= #{weekAgo} then 1 else 0 end) as newQuestionCount, " +
+            "sum(commentCount) as commentCount, sum(likeCount) as likeCount, " +
+            "sum(viewCount) as viewCount, max(alterTime) as lastActiveTime " +
+            "from questions where status=1 and reviewStatus=1 and topicId is not null " +
+            "and alterTime >= #{since} group by topicId")
+    List<TopicActivityStat> selectTopicActivityStats(@Param("since") long since,
+                                                     @Param("weekAgo") long weekAgo);
 }

@@ -22,6 +22,9 @@ import java.util.Map;
 @Controller
 public class ChatController {
 
+    /** 单条消息最大长度：聊天室只做短消息交流，避免超长 Markdown 占用广播带宽 */
+    private static final int MAX_CONTENT_LENGTH = 4000;
+
     private final ChatPresenceRegistry presence;
     private final SystemConfigService systemConfigService;
 
@@ -56,6 +59,7 @@ public class ChatController {
             rejected.setSender(userName);
             rejected.setContent("该账号已在其他窗口加入聊天室，请先关闭其他窗口后再试。");
             rejected.setCount(presence.count());
+            rejected.setTime(System.currentTimeMillis());
             return rejected;
         }
 
@@ -70,6 +74,9 @@ public class ChatController {
         message.setImage(image);
         message.setType(ChatMessage.MessageType.JOIN);
         message.setCount(presence.count());
+        message.setTime(System.currentTimeMillis());
+        // 加入是客户端拿到「当前在线名单」的唯一时机，此后只在他人 JOIN / LEAVE 时增量刷新
+        message.setMembers(presence.members());
         return message;
     }
 
@@ -87,10 +94,15 @@ public class ChatController {
         if (userId == null || !presence.isActive(userId, clientToken)) {
             return null;
         }
+        String content = message.getContent();
+        if (content == null || content.isBlank() || content.length() > MAX_CONTENT_LENGTH) {
+            return null;
+        }
         message.setId(userId);
         message.setSender(attribute(attributes, ChatHandshakeInterceptor.ATTR_USER_NAME));
         message.setImage(attribute(attributes, ChatHandshakeInterceptor.ATTR_IMAGE));
         message.setCount(presence.count());
+        message.setTime(System.currentTimeMillis());
         return message;
     }
 

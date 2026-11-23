@@ -250,6 +250,14 @@ a.surface:hover,
   color: var(--brand);
 }
 
+/* 问题列表中的次级标签，尺寸需小于话题胶囊 */
+.chip-xs {
+  padding: 0.14rem 0.45rem;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
 .link-muted {
   color: var(--text-muted);
   transition: color 0.15s ease;
@@ -373,30 +381,428 @@ a.surface:hover,
   border: 3px solid var(--page-bg);
 }
 
-/* 聊天室：适配移动端浏览器地址栏与底部安全区 */
+/* ===========================================================================
+   聊天室：全屏三栏（顶栏 / 消息流 + 输入区 / 在线成员侧栏）
+   移动端按 100dvh 撑满并适配安全区，桌面端用右侧栏承载成员与守则
+   =========================================================================== */
 .chat-shell {
   height: 100dvh;
   padding-top: env(safe-area-inset-top);
 }
-.chat-composer {
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+
+.chat-topbar {
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--header-bg);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 
-/* 聊天室消息气泡：互斥类名，避免背景/文字颜色互相覆盖 */
+/* 连接状态胶囊：在线绿 / 连接中琥珀 / 关闭与拒绝红 */
+.chat-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-pill);
+  background: var(--soft-bg);
+  color: var(--text-base);
+  padding: 0.16rem 0.55rem;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.chat-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+}
+.chat-status-online {
+  border-color: rgb(16 185 129 / 32%);
+  background: rgb(16 185 129 / 10%);
+  color: #047857;
+}
+.chat-status-online .chat-status-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgb(16 185 129 / 18%);
+}
+.chat-status-pending {
+  border-color: rgb(217 119 6 / 30%);
+  background: rgb(217 119 6 / 10%);
+  color: #b45309;
+}
+.chat-status-pending .chat-status-dot {
+  background: #f59e0b;
+  animation: chat-pulse 1.2s ease-in-out infinite;
+}
+.chat-status-offline,
+.chat-status-warn {
+  border-color: rgb(220 38 38 / 28%);
+  background: rgb(220 38 38 / 9%);
+  color: #b91c1c;
+}
+.chat-status-offline .chat-status-dot,
+.chat-status-warn .chat-status-dot {
+  background: #ef4444;
+}
+[data-theme='dark'] .chat-status-online {
+  color: #6ee7b7;
+}
+[data-theme='dark'] .chat-status-pending {
+  color: #fbbf24;
+}
+[data-theme='dark'] .chat-status-offline,
+[data-theme='dark'] .chat-status-warn {
+  color: #fca5a5;
+}
+@keyframes chat-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.chat-aside {
+  border-left: 1px solid var(--surface-border);
+}
+
+/* 消息不足一屏时贴着输入区显示，避免顶部撑开后下面留一大片空白 */
+.chat-stream {
+  display: flex;
+  flex-direction: column;
+}
+.chat-stream-inner {
+  margin-top: auto;
+}
+
+/* 日期分隔与系统提示 */
+.chat-day {
+  display: flex;
+  justify-content: center;
+  margin: 1.1rem 0 0.7rem;
+}
+.chat-day > span {
+  border-radius: var(--radius-pill);
+  background: var(--soft-bg);
+  color: var(--text-muted);
+  padding: 0.1rem 0.6rem;
+  font-size: 0.6875rem;
+}
+.chat-system {
+  margin: 0.5rem 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* 消息行：本人靠右，连续消息合并（只保留首条头像与昵称） */
+.chat-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+.chat-row-grouped {
+  margin-top: 0.2rem;
+}
+.chat-row-mine {
+  flex-direction: row-reverse;
+}
+.chat-avatar {
+  width: 34px;
+  flex-shrink: 0;
+}
+.chat-main {
+  display: flex;
+  min-width: 0;
+  max-width: min(85%, 640px);
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.chat-row-mine .chat-main {
+  align-items: flex-end;
+}
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.2rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.chat-name {
+  font-weight: 600;
+  color: var(--text-base);
+}
+.chat-self {
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand);
+  padding: 0 0.35rem;
+  font-size: 0.625rem;
+}
+.chat-time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 消息气泡：背景与文字必须用互斥类名，避免工具类顺序导致白字白底 */
 .chat-bubble {
   overflow-wrap: anywhere;
+  border-radius: var(--radius-card);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  box-shadow: var(--shadow-1);
 }
 .chat-bubble-other {
   background: var(--surface-bg);
   color: var(--text-body);
   border: 1px solid var(--surface-border);
+  border-top-left-radius: var(--radius-xs);
 }
 .chat-bubble-mine {
   background: var(--brand-grad-from);
   color: #ffffff;
+  border-top-right-radius: var(--radius-xs);
 }
 [data-theme='dark'] .chat-bubble-mine {
-  background: #6366f1;
+  background: #4f46e5;
+}
+
+/* 气泡内的 Markdown：聊天场景要紧凑，标题、段落、列表都压缩间距 */
+.chat-md-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-bubble .markdown-body {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: inherit;
+}
+.chat-bubble .markdown-body > :first-child {
+  margin-top: 0;
+}
+.chat-bubble .markdown-body > :last-child {
+  margin-bottom: 0;
+}
+.chat-bubble .markdown-body p {
+  margin: 0.35em 0;
+}
+.chat-bubble .markdown-body h1,
+.chat-bubble .markdown-body h2,
+.chat-bubble .markdown-body h3,
+.chat-bubble .markdown-body h4,
+.chat-bubble .markdown-body h5,
+.chat-bubble .markdown-body h6 {
+  margin: 0.5em 0 0.3em;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: inherit;
+}
+.chat-bubble .markdown-body ul,
+.chat-bubble .markdown-body ol {
+  margin: 0.35em 0;
+  padding-left: 1.15rem;
+  list-style: disc;
+}
+.chat-bubble .markdown-body ol {
+  list-style: decimal;
+}
+.chat-bubble .markdown-body li {
+  margin: 0.1em 0;
+}
+.chat-bubble .markdown-body pre {
+  margin: 0.45em 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+/* 聊天气泡里代码换行显示，避免长行被横向裁掉却看不出还有内容 */
+.chat-bubble .markdown-body pre > code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-bubble .markdown-body blockquote {
+  margin: 0.45em 0;
+  padding: 0.25em 0.7em;
+  font-size: 0.875rem;
+}
+/* 表格按内容宽度展开，超出气泡时横向滚动，避免单元格被逐字挤断 */
+.chat-bubble .markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0.45em 0;
+  font-size: 0.8125rem;
+}
+/* 表格最后一列不换行，否则单元格会被逐字挤断；超宽时气泡内横向滚动 */
+.chat-bubble .markdown-body th,
+.chat-bubble .markdown-body td {
+  padding: 0.25em 0.55em;
+  white-space: nowrap;
+}
+.chat-bubble .markdown-body img {
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.chat-bubble .markdown-body hr {
+  margin: 0.7em 0;
+  border-color: var(--soft-border);
+}
+
+/* 本人气泡是品牌底色，内部 Markdown 要整体转成浅色 */
+.chat-bubble-mine .markdown-body,
+.chat-bubble-mine .markdown-body p,
+.chat-bubble-mine .markdown-body li,
+.chat-bubble-mine .markdown-body strong,
+.chat-bubble-mine .markdown-body em,
+.chat-bubble-mine .markdown-body blockquote,
+.chat-bubble-mine .markdown-body td,
+.chat-bubble-mine .markdown-body th {
+  color: #ffffff;
+}
+.chat-bubble-mine .markdown-body a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.chat-bubble-mine .markdown-body :not(pre) > code {
+  background: rgb(255 255 255 / 20%);
+  color: #ffffff;
+}
+.chat-bubble-mine .markdown-body pre {
+  background: rgb(0 0 0 / 22%);
+  border-color: rgb(255 255 255 / 18%);
+  color: #f8fafc;
+}
+.chat-bubble-mine .markdown-body blockquote {
+  background: rgb(255 255 255 / 14%);
+  border-left-color: rgb(255 255 255 / 55%);
+}
+.chat-bubble-mine .markdown-body th,
+.chat-bubble-mine .markdown-body td {
+  border-color: rgb(255 255 255 / 28%);
+}
+
+/* 输入区：外层负责安全区，内层是带焦点的卡片 */
+.chat-dock {
+  position: relative;
+  /* 工具栏的悬浮提示需要能盖在消息流之上 */
+  z-index: 1;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.chat-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.9rem 0.45rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.chat-jump {
+  position: absolute;
+  top: -2.3rem;
+  left: 50%;
+  z-index: 2;
+  display: inline-flex;
+  transform: translateX(-50%);
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-bg);
+  color: var(--brand);
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+  box-shadow: var(--shadow-2);
+}
+.chat-composer {
+  padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+}
+.chat-composer-card {
+  /* 不能裁切溢出：Vditor 的按钮提示（tooltip）与表情面板要能弹出卡片外 */
+  overflow: visible;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-card);
+  background: var(--surface-bg);
+  box-shadow: var(--shadow-2);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.chat-composer-card:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
+}
+/* Vditor 只当作 Markdown 输入面：去掉自带边框、工具栏底色与缩放条 */
+.chat-composer .vditor {
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.chat-composer .vditor-toolbar {
+  position: relative;
+  /* 提示气泡 / 表情面板必须高于编辑区，否则会被输入框盖住 */
+  z-index: 5;
+  border-bottom: 1px solid var(--soft-border);
+  border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0 0;
+  background: var(--soft-bg);
+  padding: 1px 4px;
+}
+.chat-composer .vditor-toolbar__item {
+  margin: 2px 1px;
+}
+.chat-composer .vditor-toolbar__divider {
+  margin: 0 2px;
+}
+.chat-composer .vditor-content {
+  /* Vditor 默认 min-height: 60px，会把固定高度的编辑器撑破并盖住发送栏 */
+  min-height: 0;
+  background: transparent;
+}
+.chat-composer .vditor-ir pre.vditor-reset,
+.chat-composer .vditor-wysiwyg pre.vditor-reset {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.chat-composer .vditor-resize {
+  display: none;
+}
+.chat-composer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: 1px solid var(--soft-border);
+  padding: 0.3rem 0.5rem;
+}
+/* 移动端默认收起工具栏，给消息区让出高度 */
+@media (max-width: 639px) {
+  .chat-composer:not(.is-toolbar-open) .vditor-toolbar {
+    display: none;
+  }
+  .chat-composer .vditor-ir pre.vditor-reset,
+  .chat-composer .vditor-wysiwyg pre.vditor-reset {
+    padding: 0.4rem 0.6rem;
+  }
+}
+
+.chat-kbd {
+  border: 1px solid var(--soft-border);
+  border-radius: var(--radius-xs);
+  background: var(--soft-bg);
+  color: var(--text-base);
+  padding: 0.05rem 0.35rem;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 0.6875rem;
 }
 
 .auth-bg {

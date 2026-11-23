@@ -4,6 +4,7 @@ import { metaApi } from '@/api'
 
 const EMPTY = {
   hots: [],
+  hotTopics: [],
   hotQuestions: [],
   hotUsers: [],
   tagCategories: [],
@@ -19,7 +20,7 @@ const EMPTY = {
 /**
  * 全站公共数据按用途分片懒加载：
  * load()            基础字典（分类/排序/话题分类/在线人数），启动时调用
- * loadHot()         热门标签 / 热门问题（侧边栏、登录页统计）
+ * loadHot()         热门话题 / 热门标签 / 热门问题（侧边栏、登录页统计）
  * loadHotUsers()    热门用户（仅用户列表页）
  * loadTagCategories() 标签分类（仅发布页）
  * loadAds(position) 按广告位拉取广告
@@ -60,6 +61,7 @@ export const useMetaStore = defineStore('meta', () => {
       data.value = {
         ...data.value,
         hots: result?.hots || [],
+        hotTopics: result?.hotTopics || [],
         hotQuestions: result?.hotQuestions || [],
       }
     })
@@ -88,6 +90,7 @@ export const useMetaStore = defineStore('meta', () => {
 
   const ads = computed(() => data.value.advertisements || {})
   const hots = computed(() => data.value.hots || [])
+  const hotTopics = computed(() => data.value.hotTopics || [])
   const hotQuestions = computed(() => data.value.hotQuestions || [])
   const hotUsers = computed(() => data.value.hotUsers || [])
   const classifications = computed(() => data.value.classifications || [])
@@ -127,6 +130,7 @@ export const useMetaStore = defineStore('meta', () => {
     ads,
     adsFor,
     hots,
+    hotTopics,
     hotQuestions,
     hotUsers,
     classifications,

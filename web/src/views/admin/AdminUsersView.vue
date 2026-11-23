@@ -1,14 +1,14 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Ban, ChevronDown, Crown, KeyRound, LockOpen, ShieldCheck, UserRound, X } from '@lucide/vue'
+import { Ban, ChevronDown, Crown, History, KeyRound, LockOpen, ShieldCheck, UserRound, X } from '@lucide/vue'
 import { adminApi } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import Avatar from '@/components/Avatar.vue'
 import Pagination from '@/components/Pagination.vue'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime, parseUserAgent } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -143,6 +143,37 @@ async function unban(user) {
   toast.success('已解除封禁')
   await load()
 }
+// ---------------- 登录历史 ----------------
+const historyTarget = ref(null)
+const historyData = ref(null)
+const historyLoading = ref(false)
+const historyPage = ref(1)
+
+async function openHistory(user) {
+  historyTarget.value = user
+  historyData.value = null
+  historyPage.value = 1
+  await loadHistory()
+}
+
+async function loadHistory() {
+  if (!historyTarget.value) return
+  historyLoading.value = true
+  try {
+    historyData.value = await adminApi.userLoginHistory(historyTarget.value.id, {
+      page: historyPage.value,
+      size: 10,
+    })
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+function changeHistoryPage(page) {
+  historyPage.value = Number(page) || 1
+  loadHistory()
+}
+
 const resetTarget = ref(null)
 const resetting = ref(false)
 const tempPassword = ref('')
@@ -207,6 +238,7 @@ async function confirmReset() {
                 <li v-if="canAssignRoles"><button type="button" @click="openRoles(user)"><ShieldCheck class="size-3.5" />分配角色</button></li>
                 <li><button type="button" @click="setPower(user, 2)"><Crown class="size-3.5" />设为 VIP</button></li>
                 <li><button type="button" @click="setPower(user, 1)"><UserRound class="size-3.5" />设为普通用户</button></li>
+                <li><button type="button" @click="openHistory(user)"><History class="size-3.5" />登录历史</button></li>
                 <li v-if="canBanUser(user)">
                   <button v-if="isBannedUser(user)" type="button" @click="unban(user)"><LockOpen class="size-3.5" />解除封禁</button>
                   <button v-else type="button" class="text-rose-500" @click="openBan(user)"><Ban class="size-3.5" />封禁用户</button>
@@ -324,6 +356,48 @@ async function confirmReset() {
         <button class="btn btn-primary btn-sm" :disabled="roleSaving || roleLoading" type="button" @click="saveRoles">
           {{ roleSaving ? '保存中…' : '保存' }}
         </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 登录历史 -->
+  <dialog v-if="historyTarget" class="modal modal-open">
+    <div class="modal-box max-w-3xl">
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-semibold">登录历史</h3>
+          <p class="mt-0.5 text-xs ui-text-muted">{{ historyTarget.userName }} · {{ historyTarget.userId }}</p>
+        </div>
+        <button class="btn btn-ghost btn-circle btn-xs" type="button" aria-label="关闭" @click="historyTarget = null"><X class="size-4" /></button>
+      </div>
+      <div v-if="historyLoading && !historyData" class="empty-state">正在加载登录历史…</div>
+      <div v-else class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr><th>登录时间</th><th>IP</th><th>入口</th><th>设备 / UA</th></tr></thead>
+          <tbody>
+            <tr v-for="item in historyData?.data || []" :key="item.id">
+              <td class="whitespace-nowrap text-xs">{{ formatDateTime(item.loginTime) }}</td>
+              <td class="font-mono text-xs">{{ item.ip || '—' }}</td>
+              <td>
+                <span class="badge badge-sm" :class="item.loginType === 2 ? 'badge-warning' : 'badge-ghost'">
+                  {{ item.loginType === 2 ? '后台' : '前台' }}
+                </span>
+              </td>
+              <td class="max-w-xs text-xs" :title="item.userAgent || ''">
+                <div>{{ parseUserAgent(item.userAgent) }}</div>
+                <div class="truncate text-[11px] ui-text-muted">{{ item.userAgent || '—' }}</div>
+              </td>
+            </tr>
+            <tr v-if="!historyData?.data?.length">
+              <td colspan="4" class="text-center ui-text-muted">暂无登录记录</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <Pagination :pagination="historyData" @change="changeHistoryPage" />
+      <p class="mt-2 text-xs ui-text-muted">仅记录成功登录，历史保留 180 天。</p>
+      <div class="modal-action">
+        <button class="btn btn-primary btn-sm" type="button" @click="historyTarget = null">关闭</button>
       </div>
     </div>
   </dialog>

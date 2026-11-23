@@ -72,6 +72,15 @@ public class User {
 
     private long likeCount;
 
+    /** 个人主页隐私开关：1 公开，0 隐藏 */
+    private int showFollowQuestions = 1;
+
+    private int showFollowTopics = 1;
+
+    private int showFans = 1;
+
+    private int showFollowingUsers = 1;
+
     @Column(ignore = true)
     private int power;
 

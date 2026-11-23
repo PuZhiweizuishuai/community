@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.dto;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +38,10 @@ public class QuestionCreateDTO {
     /** 标签名称（≤5）；新标签创建后为待审核，审核通过才公开显示 */
     @Size(max = 5, message = "最多只能添加 5 个标签")
     private List<String> tagNames;
+    /** 可见性：0 公开，1 登录可见 */
+    @Min(value = 0, message = "可见范围不正确")
+    @Max(value = 1, message = "可见范围不正确")
+    private Integer visibility = 0;
     private Long questionId = -1L;
     private Long createTime = 0L;
     private String captcha;

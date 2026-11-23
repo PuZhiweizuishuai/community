@@ -33,7 +33,7 @@ const keyword = ref(typeof route.params.keyword === 'string' ? route.params.keyw
 const navItems = computed(() => [
   { label: '首页', to: '/' },
   { label: '话题', to: '/topics' },
-  { label: '用户', to: '/users' },
+  //{ label: '用户', to: '/users' },
   ...(meta.chatEnabled ? [{ label: '聊天室', to: '/chat' }] : []),
   { label: '关于', to: '/about' },
 ])
@@ -142,6 +142,7 @@ const bottomTabs = computed(() => [
             @focus="openHistory"
             @blur="closeHistoryLater"
           />
+          <span>&nbsp;</span>
           <button class="btn btn-sm btn-primary join-item" type="submit"><Search class="size-4" />搜索</button>
         </form>
 

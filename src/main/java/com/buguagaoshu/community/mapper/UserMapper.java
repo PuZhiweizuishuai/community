@@ -55,6 +55,16 @@ public interface UserMapper extends BaseMapper<User> {
         return update(update);
     }
 
+    default int updatePrivacySettings(long id, int showFollowQuestions, int showFollowTopics,
+                                      int showFans, int showFollowingUsers) {
+        User update = UpdateEntity.of(User.class, id);
+        update.setShowFollowQuestions(showFollowQuestions);
+        update.setShowFollowTopics(showFollowTopics);
+        update.setShowFans(showFans);
+        update.setShowFollowingUsers(showFollowingUsers);
+        return update(update);
+    }
+
     default int updateUserHeadUrlById(long id, String headUrl) {
         User update = UpdateEntity.of(User.class, id);
         update.setHeadUrl(headUrl);

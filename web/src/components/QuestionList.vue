@@ -1,5 +1,5 @@
 <script setup>
-import { Eye, Inbox, MessageCircle, Pin, Sparkles, ThumbsUp } from '@lucide/vue'
+import { Eye, Inbox, Lock, MessageCircle, Pin, Sparkles, ThumbsUp } from '@lucide/vue'
 import Avatar from '@/components/Avatar.vue'
 import { splitTags, shortNumber, timeAgo } from '@/utils/format'
 import { useMetaStore } from '@/stores/meta'
@@ -41,31 +41,40 @@ const tagsOf = (item) => {
         </RouterLink>
         <Avatar v-else :src="item.user?.headUrl" :name="item.user?.userName" :size="38" />
         <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-center gap-2">
-            <RouterLink
-              v-if="item.topicId"
-              :to="`/topics/${item.topicId}`"
-              class="badge badge-sm badge-primary hover:opacity-80"
-            >
-              {{ item.topicTitle || '话题' }}
-            </RouterLink>
-            <span v-if="item.isTop" class="badge badge-sm badge-warning gap-1"><Pin class="size-3" />置顶</span>
-            <span v-if="item.isEssence" class="badge badge-sm badge-success gap-1"><Sparkles class="size-3" />精华</span>
-            <span v-if="item.classification" class="badge badge-sm badge-outline ui-border ui-text-brand">
-              {{ meta.classificationLabel(item.classification) }}
-            </span>
+          <!-- 标题独占一行，避免话题/类型等标签挤压标题 -->
+          <div class="flex items-start gap-2">
             <RouterLink
               :to="`/question/${item.questionId}`"
-              class="line-clamp-2 flex-1 text-[15px] font-semibold ui-text-strong hover:text-indigo-600 sm:line-clamp-1"
+              class="line-clamp-2 min-w-0 flex-1 text-[15px] font-semibold leading-snug ui-text-strong hover:text-indigo-600"
             >
               {{ item.title }}
             </RouterLink>
-            <span v-if="showStatus" class="badge badge-sm" :class="item.status === 1 ? 'badge-success' : 'badge-error'">
+            <span v-if="showStatus" class="badge badge-sm shrink-0" :class="item.status === 1 ? 'badge-success' : 'badge-error'">
               {{ item.status === 1 ? '正常' : '已删除' }}
             </span>
           </div>
 
-          <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs ui-text-muted">
+          <!-- 话题、类型、状态与互动数据统一放在标题下方，标题保持干净 -->
+          <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs ui-text-muted">
+            <RouterLink
+              v-if="item.topicId"
+              :to="`/topics/${item.topicId}`"
+              class="inline-flex items-center rounded-full ui-bg-brand px-2.5 py-0.5 text-xs font-medium ui-text-brand hover:opacity-80"
+            >
+              {{ item.topicTitle || '话题' }}
+            </RouterLink>
+            <span v-if="item.classification" class="ui-text-base">
+              {{ meta.classificationLabel(item.classification) }}
+            </span>
+            <span v-if="item.isTop" class="inline-flex items-center gap-0.5 font-medium text-amber-600">
+              <Pin class="size-3" />置顶
+            </span>
+            <span v-if="item.isEssence" class="inline-flex items-center gap-0.5 font-medium text-emerald-600">
+              <Sparkles class="size-3" />精华
+            </span>
+            <span v-if="item.visibility === 1" class="inline-flex items-center gap-0.5">
+              <Lock class="size-3" />登录可见
+            </span>
             <RouterLink v-if="authorPath(item)" :to="authorPath(item)" class="hover:text-indigo-600">
               {{ item.user?.userName || '匿名用户' }}
             </RouterLink>
@@ -76,12 +85,12 @@ const tagsOf = (item) => {
             <span class="flex items-center gap-1"><Eye class="size-3.5" /> {{ shortNumber(item.viewCount) }}</span>
           </div>
 
-          <div v-if="tagsOf(item).length" class="mt-2 flex flex-wrap gap-1.5">
+          <div v-if="tagsOf(item).length" class="mt-2 flex flex-wrap gap-1">
             <RouterLink
               v-for="tag in tagsOf(item)"
               :key="tag"
               :to="{ name: 'home', query: { tag } }"
-              class="chip"
+              class="chip chip-xs"
             >
               # {{ tag }}
             </RouterLink>

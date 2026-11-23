@@ -52,6 +52,8 @@ public class WebSocketEventListener {
         message.setImage(removed.image());
         message.setId(userId);
         message.setCount(presence.count());
+        message.setTime(System.currentTimeMillis());
+        message.setMembers(presence.members());
         messagingTemplate.convertAndSend("/topic/public", message);
     }
 }

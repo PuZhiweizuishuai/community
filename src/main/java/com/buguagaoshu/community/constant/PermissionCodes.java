@@ -27,6 +27,7 @@ public final class PermissionCodes {
     public static final String CONTENT_QUESTION_PUBLISH = "content:question:publish";
     public static final String CONTENT_COMMENT_CREATE = "content:comment:create";
     public static final String CONTENT_REPORT_CREATE = "content:report:create";
+    public static final String CONTENT_TOPIC_CREATE = "content:topic:create";
     public static final String FILE_UPLOAD = "file:upload";
 
     private PermissionCodes() {

@@ -67,6 +67,31 @@ export function timeAgo(value) {
   return formatDateTime(time)
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+/** 聊天消息的日期分组键：本地时区的 yyyy-MM-dd */
+export function chatDayKey(value) {
+  const date = new Date(Number(value) || Date.now())
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+}
+
+/** 聊天消息的日期分隔文案：今天 / 昨天 / yyyy-MM-dd */
+export function chatDayLabel(value) {
+  const key = chatDayKey(value)
+  if (key === chatDayKey(Date.now())) return '今天'
+  if (key === chatDayKey(Date.now() - 86_400_000)) return '昨天'
+  return key
+}
+
+/** 聊天消息时间：当天只显示 HH:mm，跨天补上 MM-dd */
+export function chatTimeLabel(value) {
+  const date = new Date(Number(value) || Date.now())
+  const hm = `${pad2(date.getHours())}:${pad2(date.getMinutes())}`
+  return chatDayKey(value) === chatDayKey(Date.now()) ? hm : `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${hm}`
+}
+
 export function notificationIcon(type) {
   if (type >= 6) return 'system'
   if (type === 3) return 'like'
@@ -78,4 +103,28 @@ export function queryOf(params) {
   return Object.fromEntries(
     Object.entries(params || {}).filter(([, v]) => v !== undefined && v !== null && v !== ''),
   )
+}
+
+/** 简化 User-Agent 展示：浏览器 · 操作系统 */
+export function parseUserAgent(value) {
+  const ua = String(value || '').trim()
+  if (!ua) return '未知设备'
+  let browser = ''
+  if (/MicroMessenger/i.test(ua)) browser = '微信'
+  else if (/Edg\//i.test(ua)) browser = 'Edge'
+  else if (/Firefox\//i.test(ua)) browser = 'Firefox'
+  else if (/Chrome\//i.test(ua)) browser = 'Chrome'
+  else if (/Safari\//i.test(ua)) browser = 'Safari'
+  else if (/curl\//i.test(ua)) browser = 'curl'
+  else if (/PostmanRuntime/i.test(ua)) browser = 'Postman'
+
+  let os = ''
+  if (/Windows NT/i.test(ua)) os = 'Windows'
+  else if (/Android/i.test(ua)) os = 'Android'
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS'
+  else if (/Mac OS X/i.test(ua)) os = 'macOS'
+  else if (/Linux/i.test(ua)) os = 'Linux'
+
+  const label = [browser, os].filter(Boolean).join(' · ')
+  return label || ua.slice(0, 60)
 }

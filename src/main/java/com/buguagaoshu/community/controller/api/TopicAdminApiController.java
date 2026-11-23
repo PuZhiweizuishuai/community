@@ -2,9 +2,11 @@ package com.buguagaoshu.community.controller.api;
 
 import com.buguagaoshu.community.annotation.RequirePermission;
 import com.buguagaoshu.community.cache.ClassificationCache;
+import com.buguagaoshu.community.component.UserBatchLoader;
 import com.buguagaoshu.community.constant.PermissionCodes;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.dto.TopicModeratorDto;
+import com.buguagaoshu.community.enums.TopicVisibilityEnum;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.QuestionMapper;
@@ -34,6 +36,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.buguagaoshu.community.model.table.QuestionTableDef.QUESTION;
 import static com.buguagaoshu.community.model.table.TagClassTableDef.TAG_CLASS;
@@ -72,18 +77,21 @@ public class TopicAdminApiController {
     private final SiteCacheService siteCache;
     private final QuestionMapper questionMapper;
     private final TopicModerationService topicModerationService;
+    private final UserBatchLoader userBatchLoader;
 
     public TopicAdminApiController(TagClassMapper tagClassMapper, TagClassTasks tagClassTasks,
                                    ClassificationCache classificationCache,
                                    SiteCacheService siteCache,
                                    QuestionMapper questionMapper,
-                                   TopicModerationService topicModerationService) {
+                                   TopicModerationService topicModerationService,
+                                   UserBatchLoader userBatchLoader) {
         this.tagClassMapper = tagClassMapper;
         this.tagClassTasks = tagClassTasks;
         this.classificationCache = classificationCache;
         this.siteCache = siteCache;
         this.questionMapper = questionMapper;
         this.topicModerationService = topicModerationService;
+        this.userBatchLoader = userBatchLoader;
     }
 
     /**
@@ -92,23 +100,50 @@ public class TopicAdminApiController {
     @GetMapping
     public ResultDTO<Map<String, Object>> list(
             @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "reviewStatus", required = false) String reviewStatus,
+            @RequestParam(value = "visibility", required = false) String visibility,
             @RequestParam(value = "keyword", required = false) String keyword,
             HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
-        Integer typeCode = null;
-        if (StringUtils.isNotBlank(type)) {
-            try {
-                typeCode = Integer.valueOf(type.trim());
-            } catch (NumberFormatException e) {
-                return ResultDTO.okOf(Map.of("topics", List.of(), "total", 0));
-            }
-        }
+        Integer typeCode = parseOptionalInt(type);
+        Integer reviewCode = parseOptionalInt(reviewStatus);
+        Integer visibilityCode = parseOptionalInt(visibility);
         String kw = StringUtils.trimToNull(keyword);
-        List<TagClass> result = tagClassMapper.selectAdminList(typeCode, kw);
+        List<TagClass> result = tagClassMapper.selectAdminList(typeCode, reviewCode, visibilityCode, kw);
+        fillCreatorNames(result);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("topics", result);
         data.put("total", result.size());
         return ResultDTO.okOf(data);
+    }
+
+    private Integer parseOptionalInt(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** 后台列表补齐创建人昵称，避免前端只看到用户 ID */
+    private void fillCreatorNames(List<TagClass> topics) {
+        Set<Long> creatorIds = topics.stream()
+                .map(TagClass::getCreatedBy)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (creatorIds.isEmpty()) {
+            return;
+        }
+        Map<Long, User> userMap = userBatchLoader.loadUsers(creatorIds);
+        topics.forEach(topic -> {
+            User creator = topic.getCreatedBy() == null ? null : userMap.get(topic.getCreatedBy());
+            if (creator != null) {
+                topic.setCreatorName(creator.getUserName());
+            }
+        });
     }
 
     /**
@@ -116,7 +151,7 @@ public class TopicAdminApiController {
      */
     @PostMapping("/save")
     public ResultDTO<TagClass> save(@RequestBody TagClass body, HttpServletRequest request) {
-        AuthUtil.requireAdmin(request);
+        User admin = AuthUtil.requireAdmin(request);
         if (body == null || StringUtils.isBlank(body.getTitle())) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR);
         }
@@ -127,10 +162,15 @@ public class TopicAdminApiController {
                 && !classificationCache.isValidTopicCode(type))) {
             return ResultDTO.errorOf(400, "所选话题分类不存在或已停用，请先在「分类管理」中配置");
         }
+        int visibility = body.getVisibility();
+        if (!TopicVisibilityEnum.isValid(visibility)) {
+            return ResultDTO.errorOf(400, "话题可见性不正确");
+        }
         long now = System.currentTimeMillis();
         body.setTitle(title);
         body.setType(type);
         body.setStatus(body.getStatus() == 0 ? 0 : 1);
+        body.setVisibility(visibility);
         body.setModifiedTime(now);
         if (StringUtils.isBlank(body.getImage())) {
             body.setImage("/image/topicicon/default.svg");
@@ -147,6 +187,11 @@ public class TopicAdminApiController {
             body.setCreateTime(now);
             body.setTalkCount(0);
             body.setFollowCount(0);
+            // 管理员后台直接创建的话题无需再审核
+            body.setCreatedBy(admin.getId());
+            body.setReviewStatus(1);
+            body.setReviewerId(admin.getId());
+            body.setReviewTime(now);
             tagClassMapper.insertSelective(body);
         } else {
             TagClass old = tagClassMapper.selectOneById(body.getId());
@@ -156,12 +201,14 @@ public class TopicAdminApiController {
             body.setTalkCount(old.getTalkCount());
             body.setFollowCount(old.getFollowCount());
             body.setCreateTime(old.getCreateTime());
+            body.setCreatedBy(old.getCreatedBy());
+            body.setReviewStatus(old.getReviewStatus());
+            body.setReviewReason(old.getReviewReason());
+            body.setReviewerId(old.getReviewerId());
+            body.setReviewTime(old.getReviewTime());
             tagClassMapper.updateTagClass(body);
         }
-        tagClassTasks.TagClassCache();
-        siteCache.invalidate(SiteCacheService.TOPICS);
-        siteCache.invalidate(SiteCacheService.META + "tagClasses");
-        siteCache.invalidate(SiteCacheService.TOPICS + "options");
+        invalidateTopicCaches();
         return ResultDTO.okOf(body);
     }
 
@@ -178,11 +225,18 @@ public class TopicAdminApiController {
             return ResultDTO.errorOf(409, "该话题下还有 " + questionCount + " 个帖子，请先移动或删除后再删除话题");
         }
         int rows = tagClassMapper.deleteById(body.id());
+        invalidateTopicCaches();
+        return ResultDTO.okOf(Map.of("deleted", rows > 0));
+    }
+
+    private void invalidateTopicCaches() {
         tagClassTasks.TagClassCache();
         siteCache.invalidate(SiteCacheService.TOPICS);
         siteCache.invalidate(SiteCacheService.META + "tagClasses");
         siteCache.invalidate(SiteCacheService.TOPICS + "options");
-        return ResultDTO.okOf(Map.of("deleted", rows > 0));
+        siteCache.invalidate(SiteCacheService.HOME);
+        siteCache.invalidate(SiteCacheService.META + "hots");
+        siteCache.invalidate(SiteCacheService.META + "hotQuestions");
     }
 
     /** 话题吧务团队 */

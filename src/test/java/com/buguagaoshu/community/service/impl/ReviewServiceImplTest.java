@@ -7,15 +7,18 @@ import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.ContentReviewLogMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
+import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.ContentReviewLog;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.QuestionContentService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.service.TopicService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -36,11 +39,13 @@ class ReviewServiceImplTest {
 
     private QuestionMapper questionMapper;
     private CommentMapper commentMapper;
+    private TagClassMapper tagClassMapper;
     private ContentReviewLogMapper reviewLogMapper;
     private CommentService commentService;
     private TagClassService tagClassService;
     private NotificationService notificationService;
     private SiteCacheService siteCache;
+    private TopicService topicService;
     private ReviewServiceImpl service;
 
     private final User admin = user(99);
@@ -50,14 +55,16 @@ class ReviewServiceImplTest {
     void setUp() {
         questionMapper = mock(QuestionMapper.class);
         commentMapper = mock(CommentMapper.class);
+        tagClassMapper = mock(TagClassMapper.class);
         reviewLogMapper = mock(ContentReviewLogMapper.class);
         commentService = mock(CommentService.class);
         tagClassService = mock(TagClassService.class);
         notificationService = mock(NotificationService.class);
         siteCache = mock(SiteCacheService.class);
-        service = new ReviewServiceImpl(questionMapper, commentMapper, reviewLogMapper, commentService,
-                tagClassService, notificationService, mock(QuestionContentService.class),
-                mock(UserBatchLoader.class), siteCache);
+        topicService = mock(TopicService.class);
+        service = new ReviewServiceImpl(questionMapper, commentMapper, tagClassMapper,
+                reviewLogMapper, commentService, tagClassService, notificationService,
+                mock(QuestionContentService.class), mock(UserBatchLoader.class), siteCache, topicService);
     }
 
     @Test
@@ -165,6 +172,43 @@ class ReviewServiceImplTest {
 
         assertThrows(CustomizeException.class, () -> service.approve("comment", 20, admin));
         verify(commentService, never()).publishApprovedComment(any(Comment.class));
+    }
+
+    @Test
+    void approvingTopicDelegatesToTopicServiceAndWritesLog() {
+        when(tagClassMapper.selectOneById(30L)).thenReturn(topic(30));
+
+        service.approve("topic", 30, admin);
+
+        verify(topicService).reviewTopic(30, true, null, admin);
+        ArgumentCaptor<ContentReviewLog> log = ArgumentCaptor.forClass(ContentReviewLog.class);
+        verify(reviewLogMapper).insertSelective(log.capture());
+        assertEquals("topic", log.getValue().getTargetType());
+    }
+
+    @Test
+    void rejectingTopicUsesReasonAndWritesLog() {
+        when(tagClassMapper.selectOneById(30L)).thenReturn(topic(30));
+
+        service.reject("topic", 30, "话题简介不符合规范", null, admin);
+
+        verify(topicService).reviewTopic(30, false, "话题简介不符合规范", admin);
+        ArgumentCaptor<ContentReviewLog> log = ArgumentCaptor.forClass(ContentReviewLog.class);
+        verify(reviewLogMapper).insertSelective(log.capture());
+        assertEquals("topic", log.getValue().getTargetType());
+        assertEquals("话题简介不符合规范", log.getValue().getReason());
+    }
+
+    private static TagClass topic(long id) {
+        TagClass topic = new TagClass();
+        topic.setId(id);
+        topic.setTitle("待审核话题");
+        topic.setSimpleDesc("话题简介");
+        topic.setType(1);
+        topic.setStatus(0);
+        topic.setReviewStatus(0);
+        topic.setCreateTime(1L);
+        return topic;
     }
 
     private static Question question(long id, long userId, String tag) {

@@ -9,6 +9,9 @@ target/
 /REALEAS
 /不挂高数社区使用说明
 /buguagaoshu.key
+.playwright-cli
+.screenshots
+aq.yml
 
 ### STS ###
 .apt_generated

@@ -87,7 +87,7 @@ public class ContentReportServiceImpl implements ContentReportService {
     @Transactional(rollbackFor = Exception.class)
     public void create(ContentReportCreateDto dto, User reporter) {
         ReviewTargetTypeEnum targetType = ReviewTargetTypeEnum.of(dto.getTargetType());
-        if (targetType == null) {
+        if (targetType == null || targetType == ReviewTargetTypeEnum.TOPIC) {
             throw new CustomizeException(CustomizeErrorCode.PARAM_ERROR.getCode(), "举报对象类型不正确");
         }
         ReportReasonEnum reason = ReportReasonEnum.of(dto.getReason());

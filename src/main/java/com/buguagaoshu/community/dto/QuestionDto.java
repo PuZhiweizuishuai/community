@@ -21,6 +21,8 @@ public class QuestionDto {
     private String topicTitle;
     private int isTop;
     private int isEssence;
+    /** 可见性：0 公开，1 登录可见 */
+    private int visibility;
     /** 已通过审核的标签（列表批量装配；详情页作者本人额外可见自己的待审核标签） */
     private List<QuestionTagDto> tags;
     private String description;

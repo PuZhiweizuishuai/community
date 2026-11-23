@@ -1,9 +1,14 @@
 package com.buguagaoshu.community.service.impl;
 
 import com.buguagaoshu.community.cache.TagClassCache;
+import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.mapper.TagClassMapper;
+import com.buguagaoshu.community.enums.TopicVisibilityEnum;
 import com.buguagaoshu.community.model.TagClass;
+import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.TagClassService;
+import com.buguagaoshu.community.service.TopicAccessService;
+import com.buguagaoshu.community.util.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,10 +34,14 @@ public class TagClassServiceImpl implements TagClassService {
 
     private final TagClassCache tagClassCache;
 
+    private final TopicAccessService topicAccessService;
+
     @Autowired
-    public TagClassServiceImpl(TagClassMapper tagClassMapper, TagClassCache tagClassCache) {
+    public TagClassServiceImpl(TagClassMapper tagClassMapper, TagClassCache tagClassCache,
+                              TopicAccessService topicAccessService) {
         this.tagClassMapper = tagClassMapper;
         this.tagClassCache = tagClassCache;
+        this.topicAccessService = topicAccessService;
     }
 
     @Override
@@ -57,7 +66,11 @@ public class TagClassServiceImpl implements TagClassService {
             return tagClassList;
         }
         for (TagClass tagClass : cached) {
-            if (tagClass.getType() == typeCode) {
+            // 公共话题列表：只展示已审核、启用且非私有隐藏的话题；私有可申请保留可见性标识
+            if (tagClass.getType() == typeCode
+                    && tagClass.getReviewStatus() == 1
+                    && tagClass.getStatus() == 1
+                    && tagClass.getVisibility() != TopicVisibilityEnum.PRIVATE_HIDDEN.getCode()) {
                 tagClassList.add(tagClass);
             }
         }
@@ -65,7 +78,7 @@ public class TagClassServiceImpl implements TagClassService {
     }
 
     @Override
-    public List<TagClass> searchEnabledTopics(String keyword, int limit) {
+    public List<TagClass> searchEnabledTopics(String keyword, int limit, User viewer) {
         int max = Math.min(Math.max(limit, 1), 50);
         String kw = StringUtils.trimToNull(keyword);
         List<TagClass> cached = tagClassCache.getTagClassList();
@@ -81,12 +94,52 @@ public class TagClassServiceImpl implements TagClassService {
                 .thenComparingLong(TagClass::getId);
         String lower = kw == null ? null : kw.toLowerCase(Locale.ROOT);
         return cached.stream()
-                .filter(topic -> topic.getStatus() == 1)
+                .filter(topic -> topic.getStatus() == 1 && topic.getReviewStatus() == 1)
+                // 私有话题只对成员 / 吧务 / 创建者 / 管理员展示
+                .filter(topic -> topic.getVisibility() == TopicVisibilityEnum.PUBLIC.getCode()
+                        || topicAccessService.canPostInTopic(topic.getId(), viewer))
                 .filter(topic -> lower == null || (topic.getTitle() != null
                         && topic.getTitle().toLowerCase(Locale.ROOT).contains(lower)))
                 .sorted(byPopularity)
                 .limit(max)
                 .toList();
+    }
+
+    @Override
+    public PaginationDto<TagClass> searchTopics(String keyword, String page, String size, User viewer) {
+        PaginationDto<TagClass> result = new PaginationDto<>();
+        String kw = StringUtils.trimToNull(keyword);
+        if (kw == null) {
+            return result;
+        }
+        List<TagClass> cached = tagClassCache.getTagClassList();
+        if (cached == null) {
+            cached = tagClassMapper.selectAll();
+        }
+        if (cached == null) {
+            return result;
+        }
+        Comparator<TagClass> byPopularity = Comparator
+                .comparingLong(TagClass::getFollowCount).reversed()
+                .thenComparing(Comparator.comparingLong(TagClass::getTalkCount).reversed())
+                .thenComparingLong(TagClass::getId);
+        String lower = kw.toLowerCase(Locale.ROOT);
+        List<TagClass> matched = cached.stream()
+                .filter(topic -> topic.getStatus() == 1 && topic.getReviewStatus() == 1)
+                // 公开话题直接可见；私有话题仅在信息对搜索者可见时出现
+                .filter(topic -> topic.getVisibility() == TopicVisibilityEnum.PUBLIC.getCode()
+                        || topicAccessService.resolve(topic.getId(), viewer).visible())
+                .filter(topic -> topic.getTitle() != null
+                        && topic.getTitle().toLowerCase(Locale.ROOT).contains(lower))
+                .sorted(byPopularity)
+                .toList();
+        long[] param = NumberUtils.getPageAndSize(page, size, matched.size());
+        int from = (int) Math.min(param[0], (long) matched.size());
+        int to = (int) Math.min(from + param[1], (long) matched.size());
+        result.setData(matched.subList(from, to));
+        result.setAllCount(matched.size());
+        result.setPagination(param[2], param[3], param[1]);
+        return result;
     }
 
     @Override
@@ -123,6 +176,15 @@ public class TagClassServiceImpl implements TagClassService {
             return cached;
         }
         return tagClassMapper.selectOneById(topicId);
+    }
+
+    @Override
+    public TagClass findApprovedById(long topicId) {
+        TagClass topic = findById(topicId);
+        if (topic == null || topic.getReviewStatus() != 1 || topic.getStatus() != 1) {
+            return null;
+        }
+        return topic;
     }
 
     /** 事务提交后再重建缓存；无事务上下文时立即重建 */

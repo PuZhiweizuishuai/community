@@ -1,6 +1,8 @@
 package com.buguagaoshu.community.util;
 
+import com.buguagaoshu.community.dto.TopicActivityStat;
 import com.buguagaoshu.community.model.Question;
+import com.buguagaoshu.community.model.TagClass;
 
 /**
  * 热门内容排序打分工具。
@@ -41,6 +43,27 @@ public final class HotRankingUtil {
     private static final double DAY_MILLIS = 86_400_000.0;
     private static final double SCALE = 1_000_000.0;
 
+    /** 话题活跃统计窗口：最近 30 天有新增或回复的帖子参与热度计算 */
+    public static final long TOPIC_ACTIVITY_WINDOW_MILLIS = 30L * 86_400_000L;
+    /** 话题新讨论统计窗口：最近 7 天 */
+    public static final long TOPIC_NEW_WINDOW_MILLIS = 7L * 86_400_000L;
+
+    /** 长期沉淀权重：关注数、历史讨论数 */
+    private static final double W_TOPIC_FOLLOW = 3.0;
+    private static final double W_TOPIC_HISTORY = 2.0;
+    /** 近期热度权重：新讨论 > 活跃帖子 > 评论 > 点赞 > 浏览 */
+    private static final double W_TOPIC_NEW_POST = 8.0;
+    private static final double W_TOPIC_ACTIVE_POST = 3.0;
+    private static final double W_TOPIC_COMMENT = 0.5;
+    private static final double W_TOPIC_LIKE = 0.2;
+    private static final double W_TOPIC_VIEW = 0.02;
+    /** 近期热度在总分中的占比，越高越偏向「当下正在热门」 */
+    private static final double TOPIC_RECENT_WEIGHT = 2.0;
+    /** 话题最后活跃时间的衰减尺度（天），比单帖更短，强调当前热度 */
+    private static final double TOPIC_IDLE_DECAY_DAYS = 7.0;
+    /** 衰减下限：长期无人讨论的话题保留少量历史沉淀分 */
+    private static final double TOPIC_RECENCY_FLOOR = 0.15;
+
     private HotRankingUtil() {
     }
 
@@ -78,6 +101,48 @@ public final class HotRankingUtil {
         // 标签维度衰减更宽容（21 天 + 下限），让长尾技术标签也能沉淀下来
         double recency = 0.15 + 0.85 * Math.exp(-idleDays / IDLE_DECAY_DAYS);
         return (1 + Math.log1p(engagement(question))) * recency;
+    }
+
+    /**
+     * 话题热度分，参考 Hacker News / Reddit 的「互动质量 × 时间衰减」：
+     *
+     * <ol>
+     *   <li><b>长期沉淀</b>：关注数与历史讨论数取对数，避免超大话题碾压小话题。</li>
+     *   <li><b>近期热度</b>：最近 7 天新讨论权重最高，其次为最近 30 天活跃帖子、
+     *       评论、点赞与浏览，浏览量权重最低。</li>
+     *   <li><b>时间衰减</b>：按话题最后活跃时间做 7 天尺度的指数衰减，
+     *       长期无人讨论的话题保留下限分，正在讨论的话题获得完整权重。</li>
+     * </ol>
+     *
+     * @param topic 话题（关注数、历史讨论数来自 topics 表）
+     * @param stat  近期活跃统计，无活跃时可为 null
+     * @param now   当前时间
+     * @return 无单位的相对热度分，仅用于排序
+     */
+    public static double topicScore(TagClass topic, TopicActivityStat stat, long now) {
+        if (topic == null) {
+            return 0;
+        }
+        double legacy = Math.log1p(W_TOPIC_FOLLOW * Math.max(0, topic.getFollowCount())
+                + W_TOPIC_HISTORY * Math.max(0, topic.getTalkCount()));
+
+        long activePosts = stat == null ? 0 : Math.max(0, stat.getActiveQuestionCount());
+        long newPosts = stat == null ? 0 : Math.max(0, stat.getNewQuestionCount());
+        long comments = stat == null ? 0 : Math.max(0, stat.getCommentCount());
+        long likes = stat == null ? 0 : Math.max(0, stat.getLikeCount());
+        long views = stat == null ? 0 : Math.max(0, stat.getViewCount());
+        double recent = Math.log1p(W_TOPIC_NEW_POST * newPosts
+                + W_TOPIC_ACTIVE_POST * activePosts
+                + W_TOPIC_COMMENT * comments
+                + W_TOPIC_LIKE * likes
+                + W_TOPIC_VIEW * views);
+
+        long lastActive = stat == null ? 0 : stat.getLastActiveTime();
+        // 无活跃记录时按极长闲置处理，只保留衰减下限分
+        double idleDays = lastActive > 0 ? Math.max(0, (now - lastActive) / DAY_MILLIS) : 3650.0;
+        double recency = TOPIC_RECENCY_FLOOR
+                + (1 - TOPIC_RECENCY_FLOOR) * Math.exp(-idleDays / TOPIC_IDLE_DECAY_DAYS);
+        return (legacy + TOPIC_RECENT_WEIGHT * recent) * recency;
     }
 
     /** 转成可存进 Long 的排序权值 */

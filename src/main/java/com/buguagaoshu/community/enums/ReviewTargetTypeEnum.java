@@ -5,7 +5,8 @@ package com.buguagaoshu.community.enums;
  */
 public enum ReviewTargetTypeEnum {
     QUESTION("question", "问题"),
-    COMMENT("comment", "评论");
+    COMMENT("comment", "评论"),
+    TOPIC("topic", "话题");
 
     private final String type;
     private final String name;

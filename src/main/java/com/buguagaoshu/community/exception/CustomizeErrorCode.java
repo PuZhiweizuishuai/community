@@ -55,6 +55,7 @@ public enum CustomizeErrorCode implements ICustomizeErrorCode {
     REVIEW_REASON_REQUIRED(2030, 400, "请填写审核不通过原因"),
     REVIEW_RESUBMIT_FORBIDDEN(2031, 403, "该内容当前不可修改，请刷新后重试"),
     USER_BANNED(2032, 403, "账号已被封禁"),
+    LOGIN_REQUIRED(2034, 403, "该内容需登录后查看"),
     FORBIDDEN(403, 403, "没有权限执行该操作"),
     CONFLICT(409, 409, "操作冲突，请刷新后重试");
 

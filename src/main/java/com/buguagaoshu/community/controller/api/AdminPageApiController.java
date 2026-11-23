@@ -11,14 +11,17 @@ import com.buguagaoshu.community.dto.PaginationDto;
 import com.buguagaoshu.community.dto.QuestionDto;
 import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
+import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.Advertisement;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserLoginHistory;
 import com.buguagaoshu.community.service.AdminDataService;
 import com.buguagaoshu.community.service.AdminOverviewService;
 import com.buguagaoshu.community.service.AdvertisementService;
 import com.buguagaoshu.community.service.LogService;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.QuestionService;
+import com.buguagaoshu.community.service.UserLoginHistoryService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,6 +63,7 @@ public class AdminPageApiController {
     private final OnlineUserService onlineUserService;
     private final LogService logService;
     private final AdvertisementService advertisementService;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     public AdminPageApiController(AdminDataService adminDataService,
                                   AdminOverviewService adminOverviewService,
@@ -67,7 +71,8 @@ public class AdminPageApiController {
                                   UserService userService,
                                   OnlineUserService onlineUserService,
                                   LogService logService,
-                                  AdvertisementService advertisementService) {
+                                  AdvertisementService advertisementService,
+                                  UserLoginHistoryService userLoginHistoryService) {
         this.adminDataService = adminDataService;
         this.adminOverviewService = adminOverviewService;
         this.questionService = questionService;
@@ -75,6 +80,7 @@ public class AdminPageApiController {
         this.onlineUserService = onlineUserService;
         this.logService = logService;
         this.advertisementService = advertisementService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     /** 当前管理员登录态（前端路由守卫使用，不强制要求已登录） */
@@ -114,6 +120,21 @@ public class AdminPageApiController {
             HttpServletRequest request) {
         AuthUtil.requireAdmin(request);
         return ResultDTO.okOf(userService.getUserList(page, size));
+    }
+
+    /** 用户登录历史：时间、IP、UA、前台/后台入口 */
+    @GetMapping("/users/{id}/login-history")
+    @RequirePermission(PermissionCodes.ADMIN_USER)
+    public ResultDTO<PaginationDto<UserLoginHistory>> loginHistory(
+            @PathVariable("id") @Positive(message = "用户 ID 不合法") long id,
+            @RequestParam(value = "page", defaultValue = "1") String page,
+            @RequestParam(value = "size", defaultValue = "20") String size,
+            HttpServletRequest request) {
+        AuthUtil.requireAdmin(request);
+        if (userService.selectUserById(id) == null) {
+            throw new CustomizeException(CustomizeErrorCode.NOT_FOUND);
+        }
+        return ResultDTO.okOf(userLoginHistoryService.pageByUser(id, page, size));
     }
 
     @GetMapping("/questions")

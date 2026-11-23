@@ -33,6 +33,12 @@ const routes = [
   },
   { path: '/topics', name: 'topics', component: () => import('@/views/TopicsView.vue'), meta: { title: '话题' } },
   {
+    path: '/topics/create',
+    name: 'topic-create',
+    component: () => import('@/views/TopicCreateView.vue'),
+    meta: { title: '发起话题', requiresAuth: true, permission: 'content:topic:create' },
+  },
+  {
     path: '/topics/:id',
     name: 'topic-detail',
     component: () => import('@/views/TopicDetailView.vue'),

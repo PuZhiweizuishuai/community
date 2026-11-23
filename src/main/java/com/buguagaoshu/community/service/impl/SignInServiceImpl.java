@@ -5,10 +5,12 @@ import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.exception.CustomizeException;
 import com.buguagaoshu.community.model.OnlineUser;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserLoginHistory;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.SignInService;
 import com.buguagaoshu.community.service.UserBanService;
+import com.buguagaoshu.community.service.UserLoginHistoryService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.IpUtil;
@@ -50,6 +52,8 @@ public class SignInServiceImpl implements SignInService {
 
     private final UserBanService userBanService;
 
+    private final UserLoginHistoryService userLoginHistoryService;
+
     /** 非「记住我」token 有效期，默认 2 小时 */
     @Value("${jwt.ttl}")
     private long defaultTtlMillis;
@@ -57,13 +61,15 @@ public class SignInServiceImpl implements SignInService {
     @Autowired
     public SignInServiceImpl(UserPermissionService userPermissionService, UserService userService,
                              OnlineUserService onlineUserService, JwtUtil jwtUtil,
-                             RateLimitService rateLimitService, UserBanService userBanService) {
+                             RateLimitService rateLimitService, UserBanService userBanService,
+                             UserLoginHistoryService userLoginHistoryService) {
         this.userPermissionService = userPermissionService;
         this.userService = userService;
         this.onlineUserService = onlineUserService;
         this.jwtUtil = jwtUtil;
         this.rateLimitService = rateLimitService;
         this.userBanService = userBanService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     @Override
@@ -115,6 +121,8 @@ public class SignInServiceImpl implements SignInService {
         // cookie MaxAge（秒）：非记住我为会话级 cookie
         hashMap.put("time", rememberMe ? (int) (ttlMillis / 1000) : -1);
         userService.updateUserLastTimeById(user.getId(), now);
+        userLoginHistoryService.record(user.getId(), ip, request.getHeader("User-Agent"),
+                UserLoginHistory.TYPE_WEB);
         return hashMap;
     }
 }

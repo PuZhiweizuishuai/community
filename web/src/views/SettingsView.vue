@@ -1,14 +1,16 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Image, KeyRound, Pencil, UserRoundPen } from '@lucide/vue'
-import { settingApi, assetUrl } from '@/api'
+import { ArrowLeft, Heart, History, Image, KeyRound, Lock, Pencil, Star, Tags, UserRoundPen, Users } from '@lucide/vue'
+import { authApi, settingApi, assetUrl } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import Avatar from '@/components/Avatar.vue'
 import Captcha from '@/components/Captcha.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
+import Pagination from '@/components/Pagination.vue'
 import { checkPassword, PASSWORD_HINT } from '@/utils/validate'
+import { formatDateTime, parseUserAgent } from '@/utils/format'
 
 const session = useSessionStore()
 const toast = useToastStore()
@@ -16,7 +18,53 @@ const router = useRouter()
 
 const tab = ref('profile')
 const user = ref({ ...session.user })
-watch(() => session.user, (value) => (user.value = { ...value }), { deep: true })
+
+// ---------------- 隐私设置 ----------------
+const privacy = reactive({
+  showFollowQuestions: true,
+  showFollowTopics: true,
+  showFans: true,
+  showFollowingUsers: true,
+})
+const privacySaving = ref(false)
+
+const privacyOptions = [
+  { key: 'showFollowQuestions', label: '关注的问题', desc: '允许其他用户查看你关注的问题列表', icon: Star },
+  { key: 'showFollowTopics', label: '关注的话题', desc: '允许其他用户查看你关注的话题列表', icon: Tags },
+  { key: 'showFans', label: '粉丝', desc: '允许其他用户查看你的粉丝列表', icon: Heart },
+  { key: 'showFollowingUsers', label: '关注的人', desc: '允许其他用户查看你关注的人列表', icon: Users },
+]
+
+function syncPrivacy(value) {
+  privacy.showFollowQuestions = Number(value?.showFollowQuestions ?? 1) === 1
+  privacy.showFollowTopics = Number(value?.showFollowTopics ?? 1) === 1
+  privacy.showFans = Number(value?.showFans ?? 1) === 1
+  privacy.showFollowingUsers = Number(value?.showFollowingUsers ?? 1) === 1
+}
+syncPrivacy(session.user)
+
+watch(
+  () => session.user,
+  (value) => {
+    user.value = { ...value }
+    syncPrivacy(value)
+  },
+  { deep: true },
+)
+
+async function savePrivacy() {
+  privacySaving.value = true
+  try {
+    await settingApi.updatePrivacy({ ...privacy })
+    await session.refresh(true)
+    toast.success('隐私设置已更新')
+  } catch {
+    // 保存失败时恢复为服务端当前状态
+    syncPrivacy(session.user)
+  } finally {
+    privacySaving.value = false
+  }
+}
 
 const saving = ref(false)
 const pwd = ref({ oldPassword: '', newPassword: '', confirm: '', captcha: '' })
@@ -29,8 +77,33 @@ const uploading = ref(false)
 const tabs = [
   { value: 'profile', label: '基本资料', icon: UserRoundPen, hint: '昵称、学校与自我介绍' },
   { value: 'security', label: '安全设置', icon: KeyRound, hint: '修改登录密码' },
+  { value: 'privacy', label: '隐私设置', icon: Lock, hint: '控制主页公开范围' },
+  { value: 'login-history', label: '登录历史', icon: History, hint: '自查最近登录记录' },
   { value: 'media', label: '头像与封面', icon: Image, hint: '上传前可裁剪' },
 ]
+
+// ---------------- 登录历史 ----------------
+const historyData = ref(null)
+const historyLoading = ref(false)
+const historyPage = ref(1)
+
+async function loadHistory() {
+  historyLoading.value = true
+  try {
+    historyData.value = await authApi.loginHistory({ page: historyPage.value, size: 10 })
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+function changeHistoryPage(page) {
+  historyPage.value = Number(page) || 1
+  loadHistory()
+}
+
+watch(tab, (value) => {
+  if (value === 'login-history') loadHistory()
+})
 
 const coverUrl = computed(() => assetUrl(user.value?.userTopPhotoUrl))
 
@@ -266,6 +339,80 @@ async function onCropConfirm(dataUrl) {
           <button class="btn btn-primary btn-sm px-6" :disabled="saving" type="button" @click="savePassword">
             {{ saving ? '提交中…' : '确认修改' }}
           </button>
+        </div>
+
+        <div v-else-if="tab === 'privacy'" class="space-y-5">
+          <div>
+            <h2 class="text-base font-semibold ui-text-strong">隐私设置</h2>
+            <p class="mt-1 text-xs ui-text-muted">
+              控制其他用户可以在你的个人主页查看哪些列表；你自己始终可以查看全部内容。
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <label
+              v-for="option in privacyOptions"
+              :key="option.key"
+              class="flex cursor-pointer items-center gap-3 rounded-xl border ui-border p-4 transition hover:border-indigo-300"
+            >
+              <span class="flex size-9 shrink-0 items-center justify-center rounded-xl ui-bg-soft ui-text-brand">
+                <component :is="option.icon" class="size-4" />
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-medium ui-text-strong">{{ option.label }}</span>
+                <span class="mt-0.5 block text-xs leading-relaxed ui-text-muted">{{ option.desc }}</span>
+              </span>
+              <input v-model="privacy[option.key]" type="checkbox" class="toggle toggle-primary shrink-0" />
+            </label>
+          </div>
+
+          <p class="flex items-start gap-1.5 rounded-lg ui-bg-soft px-3 py-2 text-xs leading-relaxed ui-text-muted">
+            <Lock class="mt-0.5 size-3.5 shrink-0" />
+            关闭后，其他用户访问对应页面时会看到「该用户未公开此内容」，不会影响你自己查看和操作。
+          </p>
+
+          <div class="border-t ui-border pt-4">
+            <button class="btn btn-primary btn-sm px-6" :disabled="privacySaving" type="button" @click="savePrivacy">
+              {{ privacySaving ? '保存中…' : '保存隐私设置' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-else-if="tab === 'login-history'" class="space-y-5">
+          <div>
+            <h2 class="text-base font-semibold ui-text-strong">登录历史</h2>
+            <p class="mt-1 text-xs ui-text-muted">
+              仅记录成功登录，保留最近 180 天。如发现陌生 IP 或设备，请立即修改密码。
+            </p>
+          </div>
+
+          <div v-if="historyLoading && !historyData" class="empty-state">正在加载登录历史…</div>
+          <div v-else class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead>
+                <tr><th>登录时间</th><th>IP</th><th>入口</th><th>设备 / UA</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in historyData?.data || []" :key="item.id">
+                  <td class="whitespace-nowrap text-xs">{{ formatDateTime(item.loginTime) }}</td>
+                  <td class="font-mono text-xs">{{ item.ip || '—' }}</td>
+                  <td>
+                    <span class="badge badge-sm" :class="item.loginType === 2 ? 'badge-warning' : 'badge-ghost'">
+                      {{ item.loginType === 2 ? '后台' : '前台' }}
+                    </span>
+                  </td>
+                  <td class="max-w-xs text-xs" :title="item.userAgent || ''">
+                    <div>{{ parseUserAgent(item.userAgent) }}</div>
+                    <div class="truncate text-[11px] ui-text-muted">{{ item.userAgent || '—' }}</div>
+                  </td>
+                </tr>
+                <tr v-if="!historyData?.data?.length">
+                  <td colspan="4" class="text-center ui-text-muted">暂无登录记录</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <Pagination :pagination="historyData" @change="changeHistoryPage" />
         </div>
 
         <div v-else class="space-y-5">

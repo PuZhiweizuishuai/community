@@ -1,19 +1,22 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { ChevronDown, ChevronRight, Plus, Power, RefreshCw, Search, SquarePen, Tags, Trash2, Users, X } from '@lucide/vue'
+import { ChevronDown, ChevronRight, Plus, Power, RefreshCw, Search, ShieldCheck, SquarePen, Tags, Trash2, Users, X } from '@lucide/vue'
 import { adminApi, settingApi, assetUrl } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useMetaStore } from '@/stores/meta'
+import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
 import Avatar from '@/components/Avatar.vue'
 
 const meta = useMetaStore()
+const session = useSessionStore()
 const toast = useToastStore()
 const confirm = useConfirmStore()
 
 const topics = ref([])
 const loading = ref(false)
 const type = ref('')
+const reviewFilter = ref('')
 const keyword = ref('')
 const editing = ref(null)
 const saving = ref(false)
@@ -27,6 +30,7 @@ const emptyForm = () => ({
   image: '/image/topicicon/default.svg',
   type: 1,
   status: 1,
+  visibility: 0,
 })
 const form = ref(emptyForm())
 
@@ -71,6 +75,11 @@ async function removeModerator(item) {
 }
 
 const typeLabel = (value) => meta.topicTypes.find((t) => String(t.value) === String(value))?.label || `分类 ${value}`
+const reviewLabel = (status) => (Number(status) === 0 ? '待审核' : Number(status) === 2 ? '未通过' : '已通过')
+const reviewClass = (status) =>
+  Number(status) === 0 ? 'badge-warning' : Number(status) === 2 ? 'badge-error' : 'badge-success'
+const visibilityLabel = (visibility) =>
+  Number(visibility) === 2 ? '私有 · 仅邀请' : Number(visibility) === 1 ? '私有 · 可申请' : '公开'
 
 const filtered = computed(() => {
   const kw = keyword.value.trim().toLowerCase()
@@ -101,7 +110,15 @@ const groups = computed(() => {
 async function load(force = false) {
   loading.value = true
   try {
-    const result = await adminApi.topics(force ? {} : { type: type.value || undefined, keyword: keyword.value || undefined })
+    const result = await adminApi.topics(
+      force
+        ? {}
+        : {
+            type: type.value || undefined,
+            reviewStatus: reviewFilter.value === '' ? undefined : reviewFilter.value,
+            keyword: keyword.value || undefined,
+          },
+    )
     topics.value = result.topics || []
   } finally {
     loading.value = false
@@ -180,8 +197,11 @@ async function uploadImage(event) {
     <div class="surface flex flex-wrap items-center gap-2 p-4">
       <div class="mr-auto">
         <h2 class="section-title">话题管理</h2>
-        <p class="mt-1 text-xs ui-text-muted">按所属分类分组展示，可直接修改话题的分类、名称、图标与简介</p>
+        <p class="mt-1 text-xs ui-text-muted">按所属分类分组展示，可直接维护话题信息；话题审核已统一移到「内容审核」</p>
       </div>
+      <RouterLink v-if="session.can('admin:review')" to="/admin/reviews?type=topic&status=0" class="btn btn-ghost btn-sm">
+        <ShieldCheck class="size-4" />话题审核
+      </RouterLink>
       <RouterLink to="/admin/classifications" class="btn btn-ghost btn-sm"><Tags class="size-4" />管理分类</RouterLink>
       <button class="btn btn-ghost btn-sm" type="button" @click="refreshCache"><RefreshCw class="size-4" />同步缓存</button>
       <button class="btn btn-primary btn-sm" type="button" @click="openCreate()"><Plus class="size-4" />新增话题</button>
@@ -191,6 +211,12 @@ async function uploadImage(event) {
       <select v-model="type" class="select select-bordered select-sm w-40" @change="load()">
         <option value="">全部分类</option>
         <option v-for="item in meta.topicTypes" :key="item.value" :value="item.value">{{ item.label }}</option>
+      </select>
+      <select v-model="reviewFilter" class="select select-bordered select-sm w-36" @change="load()">
+        <option value="">全部审核状态</option>
+        <option value="0">待审核</option>
+        <option value="1">已通过</option>
+        <option value="2">未通过</option>
       </select>
       <form class="join" @submit.prevent="load()">
         <input v-model="keyword" class="input input-bordered input-sm join-item w-56" placeholder="搜索话题名称 / 简介" />
@@ -226,12 +252,16 @@ async function uploadImage(event) {
             <div class="flex items-start gap-3">
               <img :src="assetUrl(item.image)" :alt="item.title" class="h-12 w-12 shrink-0 rounded-lg ui-bg-soft object-cover" />
               <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
                   <h4 class="truncate font-medium ui-text-strong">{{ item.title }}</h4>
                   <span class="badge badge-xs" :class="item.status === 1 ? 'badge-success' : 'badge-ghost'">{{ item.status === 1 ? '启用' : '停用' }}</span>
+                  <span class="badge badge-xs" :class="reviewClass(item.reviewStatus)">{{ reviewLabel(item.reviewStatus) }}</span>
+                  <span class="badge badge-xs badge-outline">{{ visibilityLabel(item.visibility) }}</span>
                 </div>
                 <p class="line-clamp-2 mt-1 text-xs ui-text-base">{{ item.simpleDesc || '暂无简介' }}</p>
-                <p class="mt-1.5 text-xs ui-text-muted">{{ item.followCount }} 人关注 · {{ item.talkCount }} 条讨论</p>
+                <p class="mt-1.5 text-xs ui-text-muted">
+                  {{ item.creatorName ? `创建人 ${item.creatorName}` : '系统创建' }} · {{ item.followCount }} 人关注 · {{ item.talkCount }} 条讨论
+                </p>
               </div>
             </div>
             <div class="mt-3 flex flex-wrap gap-1 border-t ui-border pt-2">
@@ -255,12 +285,16 @@ async function uploadImage(event) {
         <div class="flex items-start gap-3">
           <img :src="assetUrl(item.image)" :alt="item.title" class="h-12 w-12 shrink-0 rounded-lg ui-bg-soft object-cover" />
           <div class="min-w-0">
-            <h4 class="truncate font-medium ui-text-strong">{{ item.title }}</h4>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <h4 class="truncate font-medium ui-text-strong">{{ item.title }}</h4>
+              <span class="badge badge-xs" :class="reviewClass(item.reviewStatus)">{{ reviewLabel(item.reviewStatus) }}</span>
+              <span class="badge badge-xs badge-outline">{{ visibilityLabel(item.visibility) }}</span>
+            </div>
             <p class="mt-0.5 text-xs ui-text-brand">{{ typeLabel(item.type) }}</p>
             <p class="line-clamp-2 mt-1 text-xs ui-text-base">{{ item.simpleDesc || '暂无简介' }}</p>
           </div>
         </div>
-        <div class="mt-3 flex gap-1 border-t ui-border pt-2">
+        <div class="mt-3 flex flex-wrap gap-1 border-t ui-border pt-2">
           <button class="btn btn-ghost btn-xs" type="button" @click="openModerators(item)"><Users class="size-3.5" />吧务</button>
           <button class="btn btn-ghost btn-xs" type="button" @click="openEdit(item)"><SquarePen class="size-3.5" />编辑</button>
           <button class="btn btn-ghost btn-xs text-rose-500" type="button" @click="remove(item)"><Trash2 class="size-3.5" />删除</button>
@@ -283,11 +317,19 @@ async function uploadImage(event) {
             <span class="label-text-alt mt-1 ui-text-muted">名称同时作为前台标签，修改后旧标签的帖子不会自动迁移</span>
           </label>
 
-          <div class="grid gap-3 sm:grid-cols-2">
+          <div class="grid gap-3 sm:grid-cols-3">
             <label class="form-control">
               <span class="label-text mb-1 font-medium">所属分类 *</span>
               <select v-model.number="form.type" class="select select-bordered select-sm">
                 <option v-for="item in meta.topicTypes" :key="item.value" :value="item.value">{{ item.label }}</option>
+              </select>
+            </label>
+            <label class="form-control">
+              <span class="label-text mb-1 font-medium">可见性</span>
+              <select v-model.number="form.visibility" class="select select-bordered select-sm">
+                <option :value="0">公开</option>
+                <option :value="1">私有 · 可申请</option>
+                <option :value="2">私有 · 仅邀请</option>
               </select>
             </label>
             <label class="form-control">

@@ -8,9 +8,11 @@ import com.buguagaoshu.community.dto.ResultDTO;
 import com.buguagaoshu.community.exception.CustomizeErrorCode;
 import com.buguagaoshu.community.mapper.UserMapper;
 import com.buguagaoshu.community.model.User;
+import com.buguagaoshu.community.model.UserLoginHistory;
 import com.buguagaoshu.community.model.UserPermission;
 import com.buguagaoshu.community.service.OnlineUserService;
 import com.buguagaoshu.community.service.UserBanService;
+import com.buguagaoshu.community.service.UserLoginHistoryService;
 import com.buguagaoshu.community.service.UserPermissionService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.IpUtil;
@@ -52,6 +54,7 @@ public class AdminApiController {
     private final UserPermissionService userPermissionService;
     private final UserBanService userBanService;
     private final RateLimitService rateLimitService;
+    private final UserLoginHistoryService userLoginHistoryService;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
@@ -59,12 +62,14 @@ public class AdminApiController {
     public AdminApiController(UserMapper userMapper, OnlineUserService onlineUserService,
                               UserPermissionService userPermissionService,
                               UserBanService userBanService,
-                              RateLimitService rateLimitService) {
+                              RateLimitService rateLimitService,
+                              UserLoginHistoryService userLoginHistoryService) {
         this.userMapper = userMapper;
         this.onlineUserService = onlineUserService;
         this.userPermissionService = userPermissionService;
         this.userBanService = userBanService;
         this.rateLimitService = rateLimitService;
+        this.userLoginHistoryService = userLoginHistoryService;
     }
 
     @PostMapping({"/api/admin/login", "/admin/login"})
@@ -110,6 +115,10 @@ public class AdminApiController {
         request.getSession();
         request.changeSessionId();
         request.getSession().setAttribute(AuthUtil.SESSION_USER, user);
+        long now = System.currentTimeMillis();
+        userMapper.updateUserLastTimeById(user.getId(), now);
+        userLoginHistoryService.record(user.getId(), ip, request.getHeader("User-Agent"),
+                UserLoginHistory.TYPE_ADMIN);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("user", AuthUtil.safeUser(user));

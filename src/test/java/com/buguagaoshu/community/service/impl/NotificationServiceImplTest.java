@@ -7,6 +7,7 @@ import com.buguagaoshu.community.enums.NotificationTypeEnum;
 import com.buguagaoshu.community.mapper.CommentMapper;
 import com.buguagaoshu.community.mapper.NotificationMapper;
 import com.buguagaoshu.community.mapper.QuestionMapper;
+import com.buguagaoshu.community.mapper.TagClassMapper;
 import com.buguagaoshu.community.model.Comment;
 import com.buguagaoshu.community.model.Notification;
 import com.buguagaoshu.community.model.Question;
@@ -31,6 +32,7 @@ class NotificationServiceImplTest {
     private NotificationMapper notificationMapper;
     private QuestionMapper questionMapper;
     private CommentMapper commentMapper;
+    private TagClassMapper tagClassMapper;
     private UserBatchLoader userBatchLoader;
     private NotificationServiceImpl service;
 
@@ -39,8 +41,10 @@ class NotificationServiceImplTest {
         notificationMapper = mock(NotificationMapper.class);
         questionMapper = mock(QuestionMapper.class);
         commentMapper = mock(CommentMapper.class);
+        tagClassMapper = mock(TagClassMapper.class);
         userBatchLoader = mock(UserBatchLoader.class);
-        service = new NotificationServiceImpl(notificationMapper, questionMapper, commentMapper, userBatchLoader);
+        service = new NotificationServiceImpl(notificationMapper, questionMapper, commentMapper,
+                tagClassMapper, userBatchLoader);
     }
 
     @Test
