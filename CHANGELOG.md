@@ -1,5 +1,40 @@
 # 更新日志（Changelog）
 
+## 2026-11-24 · 数据修复：富文本里重复拼接的文件链接
+
+历史数据（老版本上传逻辑留下）里存在一类坏链：外层已经有 `/api/file/{存储id}/{用户名}/` 前缀，内层又重复拼了一段 `api/file/{存储id}/`，导致访问 404。
+
+- 坏：`/api/file/0/admin/api/file/0/79a16ae0-e59c-43a5-8bfe-9953d885620f.docx`
+- 好：`/api/file/0/admin/file/79a16ae0-e59c-43a5-8bfe-9953d885620f.docx`
+
+规则：保留最外层前缀，删掉内层多余的 `api/file/{存储id}/`，只留 `file/` + 文件名；修完的地址与 `file_records.url` 完全一致。
+
+### 修复范围（开发库 192.168.0.100/community）
+
+| 表 | 列 | 影响行数 | 重复链接数 |
+| --- | --- | --- | --- |
+| `question_contents` | `content` | 11 | 14 |
+| `comments` | `content` | 2 | 2 |
+| `questions` | `description` | 12 | 12 |
+
+`notifications.commentContent`（评论内容快照）统计为 0 条，未处理。
+
+### 新增脚本
+
+- `SQL_Upgrade/004_fix_nested_file_urls.sql`：幂等修复脚本，含预览 → 原值留底（`file_url_fix_log`）→ 修复 → 校验；只更新仍命中正则的行，重复执行安全。
+- `SQL_Upgrade/004_rollback.sql`：按留底表还原，每行保留「最早一次修复前」的原值，避免多次修复后回滚叠加出新问题。
+
+### 验证
+
+- 逐行与修复前备份做字节级比对：3 张表共 25 行，**不一致 0 条**（仅目标片段变化，其余内容原样）。
+- 修复后重复链接残留 0；所有修复后的链接都能在本地存储 `file/{用户名}/{类型}/{文件名}` 找到对应文件。
+- 脚本在开发库真实执行过「修复 → 回滚 → 再修复 → 再执行一次」，第二次执行 0 行受影响（幂等成立）。
+
+### 两个踩坑记录
+
+1. **不能用 `@变量` 传正则**：用户变量是 IMPLICIT 排序规则，和列上的 `utf8mb4_unicode_ci` 会报 `Illegal mix of collations ... for operation 'regexp_like'`；改为内联字面量（可被自动转换）。
+2. **预览/校验不要写 `UNION ALL`**：`question_contents.content` 建表时是 `utf8mb4_0900_ai_ci`，另两张表的 `content` / `description` 是 `utf8mb4_unicode_ci`，放进同一个 `UNION` 列会报 `Illegal mix of collations for operation 'UNION'`；改为每张表一条 `SELECT`。
+
 ## 2026-11-23 · 聊天室改版：布局重构 + Markdown 富文本（Vditor）
 
 引入 Vditor 的「Markdown 编辑 + Markdown 渲染」能力，**不使用其文件上传功能**（上传按钮不进工具栏，`upload.handler` 直接返回提示，不会向后端发起任何请求），聊天室整体布局同步重排。

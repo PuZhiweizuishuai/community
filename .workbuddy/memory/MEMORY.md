@@ -19,6 +19,8 @@
 - **聊天室单窗口**：`ChatPresenceRegistry` 按 userId 占用席位，前端 JOIN/CHAT 必须带 `clientToken`；改动聊天逻辑时保持该约束。聊天气泡必须用互斥类名，避免白底白字。
 - **缓存**：`SiteCacheService` 是全站统一 TTL 缓存（热门标签/问题、动态分类、话题、首页列表、在线人数）。新增读多写少接口时优先 `get(key, ttl, loader)`，并在对应写操作里 `invalidate(prefix)`；`/api/admin/cache` 可看命中率。
 - **数据库变更约定**：`databases.sql` 面向全新安装；已有库的升级一律写幂等脚本放到 `SQL_Upgrade/`，并配套 rollback 脚本。MySQL 无 `CREATE INDEX IF NOT EXISTS`，用 `information_schema.statistics` + 存储过程判断。本机无 mysql CLI，改用 MySQL Connector/J + 自写 JDBC runner 验证。
+- **排序规则不统一**：`question_contents.content` 是 `utf8mb4_0900_ai_ci`，`comments.content` / `questions.description` 等是 `utf8mb4_unicode_ci`。因此写 SQL 时：REGEXP 里不要用 `@变量`（IMPLICIT 排序规则会撞 `regexp_like`），这些列也不要放进同一个 `UNION`。已踩两次坑，详见 `SQL_Upgrade/004_fix_nested_file_urls.sql` 头部备注。
+- **文件链接正确形态**：`/api/file/{storageId}/{用户名}/{类型目录}/{文件名}`（类型目录 image/video/file），与 `file_records.url` 一致；历史数据里有一批重复拼接成 `.../{用户名}/api/file/{storageId}/{文件名}` 的坏链，已由 `SQL_Upgrade/004_*` 修复。
 - **前端样式约定**：条件颜色用互斥类名（不要默认类 + 覆盖类叠加）；写死颜色前先看 `main.css` 是否有对应 CSS 变量，保证夜间模式可用。
 - **2026-11-16 起统一设计系统**：颜色 / 文字层级一律用 `main.css` 的 CSS 变量与语义类 `ui-text-strong|base|muted|brand`、`ui-bg|ui-bg-soft|ui-bg-brand|ui-bg-page`、`ui-border`，**不要再写 `text-slate-*` / `bg-white` / `border-slate-*`**；圆角用 `--radius-*`、阴影用 `--shadow-*`；卡片标题用 `.section-title`、空状态用 `.empty-state`、标签用 `.chip`。新组件沿用这套类，暗色模式自动适配。
 - **移动端布局**：`<lg` 时 AppHeader 渲染固定底部导航（因此 `App.vue` 的 main 需保留 `pb-24 lg:pb-6`）；后台侧栏 `<md` 为抽屉；全屏页用 `100dvh` + `env(safe-area-inset-*)`；输入框在 `<sm` 由 CSS 强制 16px 防 iOS 缩放。
