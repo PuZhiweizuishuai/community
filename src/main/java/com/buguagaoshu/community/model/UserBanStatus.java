@@ -16,5 +16,8 @@ public class UserBanStatus {
     /** 临时封禁结束时间（毫秒），永久封禁为 0 */
     private long banEndTime;
 
+    /** 最近一次封禁时间（毫秒） */
+    private long banTime;
+
     private String banReason;
 }

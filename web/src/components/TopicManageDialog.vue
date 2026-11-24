@@ -1,12 +1,14 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { Check, Clock, Settings, Trash2, UserPlus, Users, X } from '@lucide/vue'
+import { Check, Clock, ImagePlus, Loader, Settings, Trash2, UserPlus, Users, X } from '@lucide/vue'
 import { assetUrl, discoverApi, settingApi } from '@/api'
 import { useConfirmStore } from '@/stores/confirm'
 import { useToastStore } from '@/stores/toast'
 import Avatar from '@/components/Avatar.vue'
+import ImageCropper from '@/components/ImageCropper.vue'
 import Pagination from '@/components/Pagination.vue'
 import { timeAgo } from '@/utils/format'
+import { dataUrlToBlob, ensureDecodable, readAsDataUrl, validateImageFile } from '@/utils/image'
 
 const props = defineProps({
   topic: { type: Object, required: true },
@@ -36,6 +38,10 @@ const settings = ref({
   visibility: Number(props.topic.visibility || 0),
 })
 const savingSettings = ref(false)
+// 图标上传：选图 → 1:1 裁剪 → 上传
+const iconInput = ref(null)
+const iconCrop = ref(null)
+const iconUploading = ref(false)
 
 const status = computed(() => (tab.value === 'applications' ? 0 : 1))
 
@@ -122,18 +128,36 @@ async function remove(member) {
   emit('updated')
 }
 
-async function uploadImage(event) {
+async function pickIcon(event) {
   const file = event.target.files?.[0]
-  if (!file) return
-  const formData = new FormData()
-  formData.append('editormd-image-file', file)
-  formData.append('type', 'topic')
-  const result = await settingApi.uploadImage(formData)
-  if (result?.url) {
-    settings.value.image = result.url
-    toast.success('图标已上传')
-  }
   event.target.value = ''
+  const invalid = validateImageFile(file)
+  if (invalid) return toast.warning(invalid)
+  const src = await readAsDataUrl(file)
+  try {
+    await ensureDecodable(src)
+  } catch {
+    return toast.warning('这张图片无法解析，请换一张 JPG / PNG 图片')
+  }
+  iconCrop.value = { src, title: '裁剪话题图标（1:1）' }
+}
+
+async function confirmIcon(dataUrl) {
+  iconCrop.value = null
+  iconUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('editormd-image-file', dataUrlToBlob(dataUrl), 'topic-icon.jpeg')
+    formData.append('type', 'topic')
+    const result = await settingApi.uploadImage(formData)
+    if (!result?.url) return toast.error('图标上传失败，请重试')
+    settings.value.image = result.url
+    toast.success('图标已上传，记得保存设置')
+  } catch {
+    toast.error('图标上传失败，请重试')
+  } finally {
+    iconUploading.value = false
+  }
 }
 
 async function saveSettings() {
@@ -271,15 +295,32 @@ onMounted(load)
           <div class="form-control">
             <span class="label-text mb-1 font-medium">话题图标</span>
             <div class="flex items-center gap-3">
-              <img :src="assetUrl(settings.image)" alt="话题图标" class="h-14 w-14 rounded-lg border ui-border object-cover" />
+              <div class="relative shrink-0">
+                <img :src="assetUrl(settings.image)" alt="话题图标" class="h-14 w-14 rounded-lg border ui-border object-cover" />
+                <span
+                  v-if="iconUploading"
+                  class="absolute inset-0 flex items-center justify-center rounded-lg bg-slate-900/55"
+                >
+                  <Loader class="size-4 animate-spin text-white" />
+                </span>
+              </div>
               <div class="min-w-0 flex-1">
-                <input v-model="settings.image" class="input input-bordered input-sm w-full" placeholder="图标地址" />
-                <label class="btn btn-outline btn-xs mt-2">
-                  上传新图标
-                  <input type="file" accept="image/*" class="hidden" @change="uploadImage" />
-                </label>
+                <button
+                  class="btn btn-outline btn-xs"
+                  type="button"
+                  :disabled="iconUploading"
+                  @click="iconInput?.click()"
+                >
+                  <ImagePlus class="size-3.5" />
+                  {{ iconUploading ? '上传中…' : '选择图片并裁剪' }}
+                </button>
+                <input ref="iconInput" type="file" accept="image/*" class="hidden" @change="pickIcon" />
+                <input v-model="settings.image" class="input input-bordered input-xs mt-2 w-full" placeholder="图标地址" />
               </div>
             </div>
+            <span class="label-text-alt mt-1 ui-text-muted">
+              建议 1:1 正方形，选择图片后可拖动、缩放裁剪，确认后才会上传；保存设置后生效。
+            </span>
           </div>
 
           <label class="form-control">
@@ -315,4 +356,15 @@ onMounted(load)
       </div>
     </div>
   </dialog>
+
+  <ImageCropper
+    v-if="iconCrop"
+    :src="iconCrop.src"
+    :aspect="1"
+    :output-width="400"
+    :output-height="400"
+    :title="iconCrop.title"
+    @confirm="confirmIcon"
+    @cancel="iconCrop = null"
+  />
 </template>

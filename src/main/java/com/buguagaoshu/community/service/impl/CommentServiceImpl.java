@@ -17,6 +17,7 @@ import com.buguagaoshu.community.model.*;
 import com.buguagaoshu.community.service.CommentService;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.SystemConfigService;
+import com.buguagaoshu.community.util.NotificationTextUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -166,24 +167,26 @@ public class CommentServiceImpl implements CommentService {
             }
             if (target != null) {
                 createNotification(comment, target.getCommentator(), "",
-                        StringUtil.subString(comment.getContent(), 200),
+                        NotificationTextUtil.shortText(comment.getContent(), 120),
                         NotificationTypeEnum.REPLY_COMMENT, question.getQuestionId(), target.getCommentId());
             }
         } else {
+            // 记下这条评论的 id：消息中心里「回复他」才能挂在他的评论下，对方也能收到回复通知
             createNotification(comment, question.getUserId(), "",
-                    StringUtil.subString(comment.getContent(), 200),
-                    NotificationTypeEnum.REPLY_QUESTION, question.getQuestionId(), -1L);
+                    NotificationTextUtil.shortText(comment.getContent(), 120),
+                    NotificationTypeEnum.REPLY_QUESTION, question.getQuestionId(), comment.getCommentId());
         }
     }
 
     /**
      * 评论进入审核区时给作者一条系统消息，解释为什么暂时看不到自己的评论。
+     * 标题是「你的评论已提交审核」，详情只留评论摘要，不再复述标题。
      */
     private void notifyReviewSubmitted(Comment comment) {
-        String summary = "你的评论已提交审核，通过后将公开展示：" + StringUtil.subString(comment.getContent(), 100);
         notificationService.createSystemNotification(comment.getCommentator(), comment.getCommentator(),
                 comment.getQuestionId(), comment.getCommentId(),
-                NotificationTypeEnum.REVIEW_COMMENT_PENDING.getType(), summary);
+                NotificationTypeEnum.REVIEW_COMMENT_PENDING.getType(),
+                "通过审核后会自动公开展示：" + NotificationTextUtil.shortText(comment.getContent(), 120));
     }
 
     /**

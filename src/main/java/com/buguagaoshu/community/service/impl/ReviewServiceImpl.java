@@ -27,6 +27,7 @@ import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.service.TopicService;
 import com.buguagaoshu.community.util.CacheInvalidation;
+import com.buguagaoshu.community.util.NotificationTextUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -312,7 +313,7 @@ public class ReviewServiceImpl implements ReviewService {
             writeLog(ReviewTargetTypeEnum.QUESTION, id, ReviewActionEnum.APPROVE, admin.getId(), null, null);
             notificationService.createSystemNotification(question.getUserId(), admin.getId(),
                     question.getQuestionId(), -1, NotificationTypeEnum.REVIEW_QUESTION_PASS.getType(),
-                    "你的问题已通过审核，现已公开展示：「" + StringUtil.subString(question.getTitle(), 40) + "」");
+                    "审核通过后已自动公开展示，如有需要可以继续编辑完善内容");
             invalidateQuestionCache();
             log.info("管理员 {} 审核通过问题 {}", admin.getId(), id);
             return;
@@ -331,7 +332,7 @@ public class ReviewServiceImpl implements ReviewService {
         notificationService.createSystemNotification(comment.getCommentator(), admin.getId(),
                 comment.getQuestionId(), comment.getCommentId(),
                 NotificationTypeEnum.REVIEW_COMMENT_PASS.getType(),
-                "你的评论已通过审核，现已公开展示：" + StringUtil.subString(comment.getContent(), 100));
+                "审核通过后已自动公开展示：" + NotificationTextUtil.shortText(comment.getContent(), 120));
         CacheInvalidation.afterCommit(() -> siteCache.invalidate(SiteCacheService.HOME));
         log.info("管理员 {} 审核通过评论 {}", admin.getId(), id);
     }
@@ -381,7 +382,7 @@ public class ReviewServiceImpl implements ReviewService {
                     cleanReason, cleanSuggestion);
             notificationService.createSystemNotification(question.getUserId(), admin.getId(),
                     question.getQuestionId(), -1, NotificationTypeEnum.REVIEW_QUESTION_REJECT.getType(),
-                    rejectContent("问题", question.getTitle(), cleanReason, cleanSuggestion));
+                    rejectContent(cleanReason, cleanSuggestion, null));
             log.info("管理员 {} 驳回问题 {}：{}", admin.getId(), id, cleanReason);
             return;
         }
@@ -398,7 +399,8 @@ public class ReviewServiceImpl implements ReviewService {
         notificationService.createSystemNotification(comment.getCommentator(), admin.getId(),
                 comment.getQuestionId(), comment.getCommentId(),
                 NotificationTypeEnum.REVIEW_COMMENT_REJECT.getType(),
-                rejectContent("评论", comment.getContent(), cleanReason, cleanSuggestion));
+                rejectContent(cleanReason, cleanSuggestion,
+                        NotificationTextUtil.shortText(comment.getContent(), 60)));
         log.info("管理员 {} 驳回评论 {}：{}", admin.getId(), id, cleanReason);
     }
 
@@ -431,7 +433,8 @@ public class ReviewServiceImpl implements ReviewService {
         notificationService.createSystemNotification(user.getId(), user.getId(),
                 comment.getQuestionId(), commentId,
                 NotificationTypeEnum.REVIEW_COMMENT_PENDING.getType(),
-                "你的评论已修改并重新提交审核，通过后将公开展示：" + StringUtil.subString(cleanContent, 100));
+                "修改内容已重新提交审核，通过后会公开展示："
+                        + NotificationTextUtil.shortText(cleanContent, 120));
         log.info("用户 {} 重新提交评论 {} 进入审核", user.getId(), commentId);
     }
 
@@ -581,14 +584,15 @@ public class ReviewServiceImpl implements ReviewService {
         return page;
     }
 
-    private String rejectContent(String targetName, String title, String reason, String suggestion) {
-        StringBuilder builder = new StringBuilder("你的")
-                .append(targetName)
-                .append("未通过审核。原因：")
-                .append(reason);
-        if (title != null && !title.isBlank()) {
-            builder.append("（内容：").append(StringUtil.subString(title, 40)).append("）");
+    /**
+     * 驳回文案：标题已经说明「未通过审核」，这里只补充原因、建议与被驳回的内容摘要。
+     */
+    private String rejectContent(String reason, String suggestion, String excerpt) {
+        StringBuilder builder = new StringBuilder();
+        if (excerpt != null && !excerpt.isBlank()) {
+            builder.append("内容：").append(excerpt).append("。");
         }
+        builder.append("原因：").append(reason);
         if (suggestion != null && !suggestion.isBlank()) {
             builder.append("。修改建议：").append(suggestion);
         }

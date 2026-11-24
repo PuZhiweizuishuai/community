@@ -193,15 +193,15 @@ public class QuestionServiceImpl implements QuestionService {
 
     /**
      * 问题进入审核区时给作者一条系统消息，说明为什么暂时看不到自己的问题。
+     * 标题由通知类型给出（「你的问题已提交审核」），这里只补充后续说明，不要重复标题。
      */
     private void notifyReviewSubmitted(Question question, boolean created) {
         String content = created
-                ? "你的问题已提交审核，通过后将公开展示"
-                : "你的问题修改已提交审核，通过后将重新公开展示";
+                ? "通过审核后会自动公开展示，你可以在「我的审核」中查看进度"
+                : "修改内容已提交审核，通过后会重新公开展示，可在「我的审核」中查看进度";
         notificationService.createSystemNotification(question.getUserId(), question.getUserId(),
                 question.getQuestionId(), -1,
-                NotificationTypeEnum.REVIEW_QUESTION_PENDING.getType(),
-                content + "：「" + StringUtil.subString(question.getTitle(), 40) + "」");
+                NotificationTypeEnum.REVIEW_QUESTION_PENDING.getType(), content);
     }
 
     @Override

@@ -149,12 +149,12 @@ public interface UserMapper extends BaseMapper<User> {
     // 用户封禁
     // ------------------------------------------------------------------
 
-    @Select("SELECT id AS userId, banType, banEndTime, banReason FROM users WHERE id = #{userId}")
+    @Select("SELECT id AS userId, banType, banEndTime, banTime, banReason FROM users WHERE id = #{userId}")
     UserBanStatus selectBanStatus(@Param("userId") long userId);
 
     @Select("""
             <script>
-            SELECT id AS userId, banType, banEndTime, banReason
+            SELECT id AS userId, banType, banEndTime, banTime, banReason
             FROM users
             WHERE id IN
             <foreach collection="userIds" item="id" open="(" separator="," close=")">#{id}</foreach>

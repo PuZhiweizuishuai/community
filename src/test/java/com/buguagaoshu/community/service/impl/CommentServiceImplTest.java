@@ -126,6 +126,27 @@ class CommentServiceImplTest {
         assertTrue(service.getTwoLevelCommentByParent("1", "1", "10").getData().isEmpty());
     }
 
+    @Test
+    void topLevelCommentNotifiesOwnerWithCommentId() {
+        // 一级评论：通知里要带上这条评论的 id，消息中心才能「就地回复」挂到它下面
+        Comment topLevel = new Comment();
+        topLevel.setQuestionId(10L);
+        topLevel.setParentId(10L);
+        topLevel.setType(CommentTypeEnum.QUESTION.getType());
+        topLevel.setCommentator(7L);
+        topLevel.setContent("一级评论");
+        topLevel.setCreateTime(2L);
+        topLevel.setModifiedTime(2L);
+
+        service.insertComment(topLevel);
+
+        ArgumentCaptor<Notification> notification = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationMapper).insertSelective(notification.capture());
+        assertEquals(2L, notification.getValue().getReceiver());
+        assertEquals(NotificationTypeEnum.REPLY_QUESTION.getType(), notification.getValue().getType());
+        assertEquals(100L, notification.getValue().getCommentId());
+    }
+
     private static Comment comment(long id, int type, long parentId, long parentCommentId, long commentator) {
         Comment comment = new Comment();
         comment.setCommentId(id);

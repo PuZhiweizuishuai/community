@@ -184,8 +184,8 @@ public class TopicServiceImpl implements TopicService {
                     approved ? NotificationTypeEnum.TOPIC_REVIEW_PASS.getType()
                             : NotificationTypeEnum.TOPIC_REVIEW_REJECT.getType(),
                     approved
-                            ? "你创建的话题「" + topic.getTitle() + "」已通过审核，你已成为吧主"
-                            : "你创建的话题「" + topic.getTitle() + "」未通过审核：" + cleanReason);
+                            ? "你已成为吧主，可以完善话题简介、发布规则并管理成员了"
+                            : "未通过原因：" + cleanReason);
         }
         invalidateTopicCaches();
         log.info("管理员 {} {} 了用户 {} 创建的话题 {}", admin.getId(),

@@ -151,10 +151,11 @@ public class TopicMemberServiceImpl implements TopicMemberService {
                 throw new CustomizeException(CustomizeErrorCode.CONFLICT.getCode(), "邀请已发送，请勿重复操作");
             }
         }
-        TagClass topic = topicAccessService.resolve(topicId, operator).topic();
+        // 话题标题交给通知详情的 outerTitle 展示，这里只校验操作权限，不再重复拼标题
+        topicAccessService.resolve(topicId, operator);
         notificationService.createSystemNotification(target.getId(), operator.getId(), topicId, -1,
                 NotificationTypeEnum.TOPIC_INVITE.getType(),
-                "吧主邀请你加入话题「" + (topic == null ? "" : topic.getTitle()) + "」，请前往话题页接受邀请");
+                "请前往话题页接受邀请，接受后即可参与话题讨论");
     }
 
     @Override
@@ -206,10 +207,10 @@ public class TopicMemberServiceImpl implements TopicMemberService {
                 TopicMemberStatusEnum.PENDING.getCode(), operator.getId(), System.currentTimeMillis()) == 0) {
             throw new CustomizeException(CustomizeErrorCode.REVIEW_ALREADY_HANDLED);
         }
-        TagClass topic = topicAccessService.resolve(topicId, operator).topic();
-        String resultText = approve ? "已通过"
-                : "未通过" + (StringUtils.isBlank(reason) ? "" : "：" + reason);
-        String content = "你加入话题「" + (topic == null ? "" : topic.getTitle()) + "」的申请" + resultText;
+        topicAccessService.resolve(topicId, operator);
+        String content = approve
+                ? "现在就可以在该话题下发帖、参与讨论了"
+                : "未通过原因：" + (StringUtils.isBlank(reason) ? "吧主未填写原因" : reason);
         notificationService.createSystemNotification(member.getUserId(), operator.getId(), topicId, -1,
                 approve ? NotificationTypeEnum.TOPIC_APPLY_PASS.getType()
                         : NotificationTypeEnum.TOPIC_APPLY_REJECT.getType(),
@@ -242,7 +243,8 @@ public class TopicMemberServiceImpl implements TopicMemberService {
         }
     }
 
-    /** 申请加入时通知整个吧务团队（吧主与小吧均可审核） */
+    /** 申请加入时通知整个吧务团队（吧主与小吧均可审核）
+     *  发起人是申请者本人，前端会展示其昵称与头像，详情只写后续操作。 */
     private void notifyOwners(long topicId, User applicant, TagClass topic) {
         List<TopicModerator> moderators = topicModeratorMapper.selectByTopicId(topicId);
         Set<Long> receiverIds = moderators.stream().map(TopicModerator::getUserId).collect(Collectors.toSet());
@@ -252,8 +254,7 @@ public class TopicMemberServiceImpl implements TopicMemberService {
             }
             notificationService.createSystemNotification(receiverId, applicant.getId(), topicId, -1,
                     NotificationTypeEnum.TOPIC_APPLY_RECEIVED.getType(),
-                    "用户「" + applicant.getUserName() + "」申请加入话题「"
-                            + (topic == null ? "" : topic.getTitle()) + "」，请前往话题页审核");
+                    "请前往话题页处理这条加入申请");
         }
     }
 

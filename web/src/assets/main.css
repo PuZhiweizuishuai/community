@@ -1274,6 +1274,33 @@ svg.lucide {
   color: var(--text-body);
 }
 
+/* 评论编辑器（.comment-editor）移动端：Vditor 在 <=520px 会把每个工具栏按钮
+   撑到 49px 宽，六七个按钮就折行、吃掉编辑高度。这里把按钮收紧到约 37px，
+   让精简工具栏稳定排成一行（320px 窄屏也是单行），编辑区拿到整块高度。
+   注意：这些规则必须放在 @layer 之外，否则压不过 Vditor 自带样式。 */
+@media (max-width: 639px) {
+  .comment-editor .vditor-toolbar {
+    padding: 0 4px;
+  }
+  .comment-editor .vditor-toolbar .vditor-toolbar__item {
+    padding: 0 6px;
+  }
+  .comment-editor .vditor-toolbar__divider {
+    margin-right: 4px;
+    margin-left: 4px;
+  }
+  /* 字数统计在窄屏会独占一行（约 18px），评论框不需要实时字数，直接隐藏 */
+  .comment-editor .vditor-counter {
+    display: none;
+  }
+  .comment-editor .vditor-ir pre.vditor-reset,
+  .comment-editor .vditor-wysiwyg pre.vditor-reset {
+    padding: 10px 12px;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+}
+
 /* 正文目录（Vditor.outlineRender 输出） */
 .markdown-toc ul {
   list-style: none !important;

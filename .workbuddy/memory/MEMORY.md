@@ -22,10 +22,21 @@
 - **排序规则不统一**：`question_contents.content` 是 `utf8mb4_0900_ai_ci`，`comments.content` / `questions.description` 等是 `utf8mb4_unicode_ci`。因此写 SQL 时：REGEXP 里不要用 `@变量`（IMPLICIT 排序规则会撞 `regexp_like`），这些列也不要放进同一个 `UNION`。已踩两次坑，详见 `SQL_Upgrade/004_fix_nested_file_urls.sql` 头部备注。
 - **文件链接正确形态**：`/api/file/{storageId}/{用户名}/{类型目录}/{文件名}`（类型目录 image/video/file），与 `file_records.url` 一致；历史数据里有一批重复拼接成 `.../{用户名}/api/file/{storageId}/{文件名}` 的坏链，已由 `SQL_Upgrade/004_*` 修复。
 - **前端样式约定**：条件颜色用互斥类名（不要默认类 + 覆盖类叠加）；写死颜色前先看 `main.css` 是否有对应 CSS 变量，保证夜间模式可用。
+- **z-index 约定**：ToastHost `z-[120]`、`ImageCropper` `z-[1000]`（daisyUI 5 的 `.modal` 自带 `z-index:999`，任何叠在弹窗上的自绘浮层都必须 ≥1000）。图片上传前一律先走 `components/ImageCropper.vue` 裁剪，工具函数在 `web/src/utils/image.js`。
 - **2026-11-16 起统一设计系统**：颜色 / 文字层级一律用 `main.css` 的 CSS 变量与语义类 `ui-text-strong|base|muted|brand`、`ui-bg|ui-bg-soft|ui-bg-brand|ui-bg-page`、`ui-border`，**不要再写 `text-slate-*` / `bg-white` / `border-slate-*`**；圆角用 `--radius-*`、阴影用 `--shadow-*`；卡片标题用 `.section-title`、空状态用 `.empty-state`、标签用 `.chip`。新组件沿用这套类，暗色模式自动适配。
 - **移动端布局**：`<lg` 时 AppHeader 渲染固定底部导航（因此 `App.vue` 的 main 需保留 `pb-24 lg:pb-6`）；后台侧栏 `<md` 为抽屉；全屏页用 `100dvh` + `env(safe-area-inset-*)`；输入框在 `<sm` 由 CSS 强制 16px 防 iOS 缩放。
 - **Vditor 主题**：代码高亮与内容主题是运行时 CDN 注入的 `<link>`，`preview.mode` 不管这个；统一走 `web/src/utils/vditorTheme.js` 的 `vditorPreviewTheme(isDark)`，编辑器切换主题要调 `setTheme(editor, content, code)` 三参数。`main.css` 有 `[data-theme='dark']` 作用域的 GitHub Dark 兜底，改动 Vditor 相关组件时别删。
+- **覆盖第三方库样式必须放 `@layer` 外**：`main.css` 的移动端段落整块在 `@layer utilities` 内，层内规则无论选择器多具体都压不过 Vditor 等非分层样式；这类覆盖写到文件末尾的 vditor 修正区（非 layer）。
+- **Vditor 工具栏在窄屏**：`<=520px` 每项 `padding:0 12px`（约 49px/项），完整工具栏在手机上折 4 行占 141px。`VditorEditor` 提供 `mobileHeight` / `mobileToolbar`（初始化时定型，运行时改不了工具栏），窄屏场景传精简子集；评论框用 `comment-editor` 类收紧按钮并隐藏窄屏独占一行的 `vditor-counter`。
 - **后台列表页统一范式**（评论管理 → 问题管理已照此重构）：页头 `surface` 卡片（渐变图标 + 标题 + 说明 + 刷新）+ 筛选 `surface`（`ui-bg-soft` 胶囊里放状态标签、`共 N 条`、右侧 join 搜索）+ `surface overflow-hidden` 表格（空状态用 `Inbox`，加载/空行用 `colspan`）+ `Pagination` + 详情 `dialog.modal modal-open` 弹窗，条件全部放路由 query（`status`/`keyword`/`page`）。激活标签用 `ui-bg`（不要 `bg-white`，夜间是白块）；表格中文标题列必须给 `min-w-[260px]` 否则被挤成极窄多行。
+
+## 消息通知（2026-11-24 文案与展示重构）
+
+- 文案统一按「收件人视角」：`NotificationTypeEnum` 带 `Actor`（USER / SYSTEM）。**USER 类型写动词短语**（前端渲染「昵称 + 短语」），**SYSTEM 类型写完整句子**（前端渲染「系统徽章 + 句子」）。新增通知类型时必须一起选 actor，别再靠 `type >= 5` 判断系统消息（邀请/加入申请是真实用户发起的）。
+- 详情（`notifications.commentContent`）只写「补充说明」，不要复述类型文案、不要重复拼话题名/用户名；展示侧 `NotificationTextUtil.cleanDetail()` 还会兜底清洗历史数据（去掉与标题重复的开头、首个小句重复整句丢弃、160 字截断）。回复/点赞的详情是用户原文，清洗只压空白。
+- 前端 `MessagesView.vue`：系统消息用场景图标 + 小号「系统」徽章，用户消息用头像 + 昵称；未读=左侧品牌竖条+浅底+加粗；时间右上角，`<sm` 挪到最下一行。标签类消息无详情页、删除类消息不跳错误页，走轻提示。
+- 列表接口必须回填 `commentId`（就地回复靠它定位被回复评论），`notifierAvatar` 供头像展示、`notifierId` 供跳 `/user/{id}`。就地回复复用 `CommentComposer`（`topLevel` 开关 + 内联错误），只有 type 1/2 才给入口；已读状态改动统一走 `applyRead()`，顶栏角标与 tab 小红点一起减。
+- 分页要记得 `paginationDto.setAllCount()`，否则页面显示「共 0 条」。
 
 ## 聊天室（2026-11-23 改版）
 

@@ -17,6 +17,7 @@ import com.buguagaoshu.community.model.Question;
 import com.buguagaoshu.community.model.TagClass;
 import com.buguagaoshu.community.model.User;
 import com.buguagaoshu.community.service.NotificationService;
+import com.buguagaoshu.community.util.NotificationTextUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,12 @@ import java.util.stream.Collectors;
  */
 @Service
 public class NotificationServiceImpl implements NotificationService {
+
+    /** 前端据 actorType 决定前缀是头像昵称还是「系统」徽章 */
+    private static final String ACTOR_USER = "user";
+    private static final String ACTOR_SYSTEM = "system";
+    private static final String ACTOR_SYSTEM_NAME = "系统";
+
     private final NotificationMapper notificationMapper;
 
     private final QuestionMapper questionMapper;
@@ -141,27 +148,33 @@ public class NotificationServiceImpl implements NotificationService {
 
         List<NotificationDTO> notificationDTOS = new ArrayList<>();
         for (Notification notification : notifications) {
+            NotificationTypeEnum typeEnum = NotificationTypeEnum.typeOf(notification.getType());
             NotificationDTO notificationDTO = new NotificationDTO();
 
             notificationDTO.setId(notification.getId());
             notificationDTO.setCreateTime(StringUtil.foematTime(notification.getCreateTime()));
-            notificationDTO.setCommentContent(notification.getCommentContent());
+            notificationDTO.setTypeName(typeEnum == null ? "" : typeEnum.getName());
+            notificationDTO.setType(notification.getType());
+            notificationDTO.setStatus(notification.getStatus());
+
             // 系统通知不暴露处理人身份，通知表仍保留 notifier 供后台审计
-            boolean systemNotification = notification.getType() >= NotificationTypeEnum.SYSTEM_NOTIFICATION.getType();
-            if (systemNotification) {
-                notificationDTO.setNotifierName("系统");
+            if (typeEnum == null || typeEnum.isSystemActor()) {
+                notificationDTO.setActorType(ACTOR_SYSTEM);
+                notificationDTO.setNotifierName(ACTOR_SYSTEM_NAME);
             } else {
+                notificationDTO.setActorType(ACTOR_USER);
                 notificationDTO.setNotifier(notification.getNotifier());
                 User notifier = userMap.get(notification.getNotifier());
                 notificationDTO.setNotifierId(notifier == null ? null : notifier.getUserId());
                 notificationDTO.setNotifierName(notifier == null ? "已注销用户" : notifier.getUserName());
+                notificationDTO.setNotifierAvatar(notifier == null ? null : notifier.getHeadUrl());
             }
 
             if (notification.getType() == NotificationTypeEnum.LIKE_COMMENT.getType()
                     || notification.getType() == NotificationTypeEnum.REPLY_COMMENT.getType()) {
                 Comment comment = commentMap.get(notification.getCommentId());
                 notificationDTO.setOuterTitle(comment == null || comment.getStatus() == 0
-                        ? "内容已删除" : StringUtil.subString(comment.getContent(), 25));
+                        ? "内容已删除" : NotificationTextUtil.shortText(comment.getContent(), 25));
             } else if (NotificationTypeEnum.isTopicType(notification.getType())) {
                 TagClass topic = topicMap.get(notification.getOuterId());
                 notificationDTO.setOuterTitle(topic == null ? "话题已删除" : topic.getTitle());
@@ -173,14 +186,18 @@ public class NotificationServiceImpl implements NotificationService {
                 notificationDTO.setOuterTitle(question == null ? "内容已删除" : question.getTitle());
             }
             notificationDTO.setOuterid(notification.getOuterId());
-            notificationDTO.setTypeName(NotificationTypeEnum.nameOfType(notification.getType()));
-            notificationDTO.setType(notification.getType());
-            notificationDTO.setStatus(notification.getStatus());
+            // 就地回复需要知道被回复的评论：评论类消息带 commentId，其余为 -1
+            notificationDTO.setCommentId(notification.getCommentId());
+            // 详情去掉与标题重复的部分，并截断过长的脏数据
+            notificationDTO.setCommentContent(NotificationTextUtil.cleanDetail(
+                    typeEnum, notification.getCommentContent(), notificationDTO.getOuterTitle()));
             notificationDTOS.add(notificationDTO);
         }
 
         PaginationDto<NotificationDTO> paginationDto = new PaginationDto<>();
         paginationDto.setData(notificationDTOS);
+        // allCount 供前端分页显示「共 N 条」，不传会一直显示 0
+        paginationDto.setAllCount(allNotification);
         paginationDto.setPagination(param[2], param[3], param[1]);
         return paginationDto;
     }

@@ -58,6 +58,9 @@ const commentText = ref('')
 const captcha = ref('')
 const captchaRef = ref(null)
 const commentEditor = ref(null)
+// 移动端评论框工具栏：窄屏每个按钮约 49px 宽，只保留输入最常用的操作，
+// 保证工具栏排成一行、把编辑高度留给正文（完整工具栏会折成 3~4 行）
+const commentMobileToolbar = ['emoji', 'bold', 'italic', 'list', 'code', 'upload']
 const submitting = ref(false)
 const expanded = ref({})
 // 当前正在回复的评论：parentCommentId 为根评论，targetCommentId 为被回复评论
@@ -864,7 +867,7 @@ async function submitReport() {
         </section>
 
         <!-- 发表评论 -->
-        <section id="reply-box" class="surface mt-5 p-5">
+        <section id="reply-box" class="surface mt-5 p-4 sm:p-5">
           <h2 class="mb-3 text-base font-semibold ui-text-strong">发表评论</h2>
           <div
             v-if="reviewStatus !== 1"
@@ -875,14 +878,17 @@ async function submitReport() {
           <template v-else-if="canComment">
             <VditorEditor
               ref="commentEditor"
+              class="comment-editor"
               v-model="commentText"
               :height="220"
+              :mobile-height="300"
+              :mobile-toolbar="commentMobileToolbar"
               placeholder="友善地表达你的观点…"
             />
-            <div class="mt-3 flex flex-wrap items-center gap-3">
-              <div class="w-56"><Captcha ref="captchaRef" v-model="captcha" /></div>
+            <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <div class="w-full sm:w-56"><Captcha ref="captchaRef" v-model="captcha" /></div>
               <button
-                class="btn btn-primary btn-sm"
+                class="btn btn-primary btn-sm w-full sm:w-auto"
                 :disabled="submitting"
                 type="button"
                 @click="submitComment"

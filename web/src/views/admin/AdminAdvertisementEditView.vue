@@ -1,9 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Check, ImagePlus, Minus, Upload } from '@lucide/vue'
+import { ArrowLeft, Check, ImagePlus, Loader, Minus, Upload } from '@lucide/vue'
 import { adminApi, settingApi, assetUrl } from '@/api'
 import { useToastStore } from '@/stores/toast'
+import ImageCropper from '@/components/ImageCropper.vue'
+import { dataUrlToBlob, ensureDecodable, readAsDataUrl, validateImageFile } from '@/utils/image'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,6 +18,7 @@ const saving = ref(false)
 const uploading = ref(false)
 const dragging = ref(false)
 const fileInput = ref(null)
+const crop = ref(null)
 const loading = ref(false)
 
 const imageUrl = computed(() => preview.value || (form.value.image ? assetUrl(form.value.image) : ''))
@@ -41,31 +44,51 @@ onMounted(async () => {
   }
 })
 
-async function uploadFile(file) {
-  if (!file) return
-  if (!file.type.startsWith('image/')) return toast.warning('请选择图片文件')
+async function pickFile(file) {
+  const invalid = validateImageFile(file)
+  if (invalid) return toast.warning(invalid)
+  const src = await readAsDataUrl(file)
+  try {
+    await ensureDecodable(src)
+  } catch {
+    return toast.warning('这张图片无法解析，请换一张 JPG / PNG 图片')
+  }
+  crop.value = { src, title: '裁剪广告图（16:9）' }
+}
+
+/** 裁剪确认后才真正上传，先用裁剪结果做本地预览 */
+async function onCropConfirm(dataUrl) {
+  crop.value = null
+  preview.value = dataUrl
   uploading.value = true
   try {
-    preview.value = URL.createObjectURL(file)
     const formData = new FormData()
-    formData.append('editormd-image-file', file)
+    formData.append('editormd-image-file', dataUrlToBlob(dataUrl), 'ad.jpeg')
     formData.append('type', 'ad')
     const result = await settingApi.uploadImage(formData)
-    if (result?.url) {
-      form.value.image = result.url
-      toast.success('图片已上传')
+    if (!result?.url) {
+      preview.value = ''
+      return toast.error('图片上传失败，请重试')
     }
+    form.value.image = result.url
+    preview.value = ''
+    toast.success('图片已上传')
+  } catch {
+    preview.value = ''
+    toast.error('图片上传失败，请重试')
   } finally {
     uploading.value = false
   }
 }
+
 function onPick(event) {
-  uploadFile(event.target.files?.[0])
+  const file = event.target.files?.[0]
   event.target.value = ''
+  pickFile(file)
 }
 function onDrop(event) {
   dragging.value = false
-  uploadFile(event.dataTransfer?.files?.[0])
+  pickFile(event.dataTransfer?.files?.[0])
 }
 
 async function save() {
@@ -115,13 +138,13 @@ async function save() {
               广告标题 <span class="text-xs font-normal ui-text-muted">{{ form.title.length }} / 60</span>
             </span>
             <input v-model="form.title" maxlength="60" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="例如：社区年度技术沙龙" />
-            <span class="label-text-alt mt-1 ui-text-muted">会显示在图片下方，也会用于后台检索</span>
+            <span class="label-text-alt mt-1 block ui-text-muted">会显示在图片下方，也会用于后台检索</span>
           </label>
 
           <label class="form-control mt-4">
             <span class="label-text mb-1.5 font-medium ui-text-strong">跳转链接</span>
             <input v-model="form.url" class="input input-bordered w-full focus:border-indigo-400 focus:outline-none" placeholder="https://example.com 或 /about" />
-            <span class="label-text-alt mt-1" :class="urlValid ? 'ui-text-muted' : 'text-rose-500'">
+            <span class="label-text-alt mt-1 block" :class="urlValid ? 'ui-text-muted' : 'text-rose-500'">
               {{ urlValid ? '用户点击广告图时打开，统计浏览量后由服务端跳转' : '请填写以 http(s):// 或 / 开头的合法地址' }}
             </span>
           </label>
@@ -131,12 +154,13 @@ async function save() {
           <div class="mb-4 flex items-center gap-2 border-b ui-border pb-3">
             <span class="flex h-6 w-6 items-center justify-center rounded-md ui-bg-brand text-xs font-bold ui-text-brand">2</span>
             <h2 class="section-title">展示素材</h2>
-            <span class="ml-auto text-xs ui-text-muted">建议 16:6 宽幅图</span>
+            <span class="ml-auto text-xs ui-text-muted">16:9 宽幅图（1280 × 720）</span>
           </div>
 
           <div
-            class="relative flex h-44 items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition"
-            :class="dragging ? 'border-indigo-400 ui-bg-brand' : 'ui-border ui-bg-soft'"
+            class="relative flex h-44 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition"
+            :class="dragging ? 'border-indigo-400 ui-bg-brand' : 'ui-border ui-bg-soft hover:border-indigo-300'"
+            @click="fileInput?.click()"
             @dragover.prevent="dragging = true"
             @dragleave.prevent="dragging = false"
             @drop.prevent="onDrop"
@@ -144,15 +168,23 @@ async function save() {
             <img v-if="imageUrl" :src="imageUrl" alt="广告图片预览" class="h-full w-full object-cover" />
             <div v-else class="text-center text-xs ui-text-muted">
               <ImagePlus class="mx-auto size-8 ui-text-muted" :stroke-width="1.5" />
-              <p class="mt-1">拖拽图片到这里，或点击下方按钮上传</p>
+              <p class="mt-1">拖拽图片到这里，或点击选择；确认裁剪后才会上传</p>
             </div>
-            <span v-if="uploading" class="absolute inset-0 flex items-center justify-center bg-slate-900/40 text-sm text-white">上传中…</span>
+            <span
+              v-if="uploading"
+              class="absolute inset-0 flex items-center justify-center gap-2 bg-slate-900/45 text-sm text-white"
+            >
+              <Loader class="size-4 animate-spin" />上传中…
+            </span>
           </div>
 
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onPick" />
-            <button class="btn btn-outline btn-sm" type="button" :disabled="uploading" @click="fileInput?.click()"><Upload class="size-4" />选择图片</button>
-            <span v-if="form.image" class="truncate text-xs ui-text-muted">{{ form.image }}</span>
+            <button class="btn btn-outline btn-sm" type="button" :disabled="uploading" @click="fileInput?.click()">
+              <Upload class="size-4" />{{ form.image ? '重新选择并裁剪' : '选择图片并裁剪' }}
+            </button>
+            <span class="text-xs ui-text-muted">JPG / PNG / WebP，≤ 10MB</span>
+            <span v-if="form.image" class="w-full truncate text-xs ui-text-muted">{{ form.image }}</span>
           </div>
 
           <label class="form-control mt-3">
@@ -198,12 +230,23 @@ async function save() {
         <section class="surface p-4">
           <h2 class="mb-2 section-title">小贴士</h2>
           <ul class="list-inside list-disc space-y-1.5 text-xs leading-relaxed ui-text-base">
-            <li>图片会自动裁剪填充，重要内容请放在中间。</li>
+            <li>上传前会按 16:9 裁剪，前台按容器比例自动填充，重要内容请放在中间。</li>
             <li>创建后默认为「未投放」，需要在列表中点击「投放」。</li>
             <li>每个位置可投放的广告数由后台配置限制。</li>
           </ul>
         </section>
       </aside>
     </div>
+
+    <ImageCropper
+      v-if="crop"
+      :src="crop.src"
+      :aspect="16 / 9"
+      :output-width="1280"
+      :output-height="720"
+      :title="crop.title"
+      @confirm="onCropConfirm"
+      @cancel="crop = null"
+    />
   </div>
 </template>

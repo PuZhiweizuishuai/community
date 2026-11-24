@@ -11,6 +11,7 @@ import ImageCropper from '@/components/ImageCropper.vue'
 import Pagination from '@/components/Pagination.vue'
 import { checkPassword, PASSWORD_HINT } from '@/utils/validate'
 import { formatDateTime, parseUserAgent } from '@/utils/format'
+import { dataUrlToBlob, readAsDataUrl } from '@/utils/image'
 
 const session = useSessionStore()
 const toast = useToastStore()
@@ -106,24 +107,6 @@ watch(tab, (value) => {
 })
 
 const coverUrl = computed(() => assetUrl(user.value?.userTopPhotoUrl))
-
-function readAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-function dataUrlToBlob(dataUrl) {
-  const [meta, base64] = dataUrl.split(',')
-  const mime = /:(.*?);/.exec(meta)?.[1] || 'image/jpeg'
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return new Blob([bytes], { type: mime })
-}
 
 async function saveProfile() {
   saving.value = true

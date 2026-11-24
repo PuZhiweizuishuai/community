@@ -446,22 +446,18 @@ public class ContentReportServiceImpl implements ContentReportService {
         if (report.getReporterId() == admin.getId()) {
             return;
         }
-        String targetName = ReviewTargetTypeEnum.QUESTION.getType().equals(report.getTargetType()) ? "问题" : "评论";
+        // 标题由通知类型给出（「你的举报已受理」/「你的举报未受理」），详情只补充处理结果
         String snapshot = truncate(report.getTargetSnapshot(), 60);
         StringBuilder content = new StringBuilder();
-        if (accepted) {
-            content.append("你举报的").append(targetName).append("已受理");
-            if (contentRemoved) {
-                content.append("，相关内容已同步删除");
-            }
-            content.append("。");
-        } else {
-            content.append("你举报的").append(targetName).append("未予受理。");
+        if (accepted && contentRemoved) {
+            content.append("相关内容已同步删除。");
         }
-        if (note != null) {
-            content.append("处理说明：").append(note);
+        if (note != null && !note.isBlank()) {
+            content.append("处理说明：").append(note.strip()).append("。");
         }
-        content.append(" 举报内容：").append(snapshot);
+        if (!snapshot.isEmpty()) {
+            content.append("举报内容：").append(snapshot);
+        }
         NotificationTypeEnum type = accepted
                 ? NotificationTypeEnum.REPORT_ACCEPTED : NotificationTypeEnum.REPORT_REJECTED;
         notificationService.createSystemNotification(report.getReporterId(), admin.getId(),

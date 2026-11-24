@@ -89,6 +89,7 @@ public class UserBanServiceImpl implements UserBanService {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("banned", banned);
         data.put("banType", banned ? status.getBanType() : 0);
+        data.put("banTime", banned ? status.getBanTime() : 0);
         data.put("banEndTime", banned ? status.getBanEndTime() : 0);
         data.put("banReason", banned ? status.getBanReason() : null);
         data.put("banMessage", banned ? formatMessage(status) : null);

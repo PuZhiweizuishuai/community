@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Heart, Lock, MessageSquareText, SquarePen, Star, Tags, Trophy, UserMinus, UserPlus, Users } from '@lucide/vue'
+import { Ban, Heart, Lock, MessageSquareText, SquarePen, Star, Tags, Trophy, UserMinus, UserPlus, Users } from '@lucide/vue'
 import { discoverApi, interactionApi, assetUrl } from '@/api'
 import { useSessionStore } from '@/stores/session'
 import { useToastStore } from '@/stores/toast'
@@ -55,6 +55,9 @@ async function toggleFollow() {
 
 const items = computed(() => data.value?.pagination?.data || [])
 const user = computed(() => data.value?.user || null)
+const ban = computed(() => data.value?.ban || null)
+const banActive = computed(() => !!ban.value?.banned)
+const banPermanent = computed(() => Number(ban.value?.banType) === 2)
 const privacyHidden = computed(() => !!data.value?.privacyHidden)
 const privacyLockText = computed(() => {
   if (tab.value === 'questions') return '该用户未公开关注的问题'
@@ -74,7 +77,13 @@ meta.loadAds('userHome')
       <div class="flex flex-wrap items-end gap-4 px-5 pb-5 -mt-9">
         <Avatar :src="user.headUrl" :name="user.userName" :size="76" />
         <div class="min-w-0 flex-1 pt-9">
-          <h1 class="text-xl font-bold ui-text-strong">{{ user.userName }}</h1>
+          <h1 class="flex flex-wrap items-center gap-2 text-xl font-bold ui-text-strong">
+            {{ user.userName }}
+            <span v-if="banActive" class="badge badge-error badge-sm shrink-0 gap-1 whitespace-nowrap font-normal">
+              <Ban class="size-3" />
+              {{ banPermanent ? '永久封禁' : '已封禁' }}
+            </span>
+          </h1>
           <p class="line-clamp-1 text-sm ui-text-base">{{ user.simpleSelfIntroduction || '这个人很懒，什么都没写～' }}</p>
           <p class="mt-1 text-xs ui-text-muted">
             {{ user.school || '未填写学校' }} · {{ user.major || '未填写专业' }} · {{ user.sex || '保密' }}
@@ -88,6 +97,23 @@ meta.loadAds('userHome')
             <component :is="followed ? UserMinus : UserPlus" class="size-4" />
             {{ followed ? '取消关注' : '关注 TA' }}
           </button>
+        </div>
+      </div>
+      <div
+        v-if="banActive && !data.isSelf"
+        class="mx-5 mb-4 flex items-start gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3"
+      >
+        <Ban class="mt-0.5 size-5 shrink-0 text-rose-500" />
+        <div class="min-w-0 flex-1 text-xs text-amber-800">
+          <p class="text-sm font-semibold">
+            该用户已被{{ banPermanent ? '永久封禁' : '封禁' }}，暂时无法发布内容或参与互动
+          </p>
+          <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+            <span>封禁时间：{{ ban.banTime ? formatDateTime(ban.banTime) : '未知' }}</span>
+            <span v-if="banPermanent">解封时间：永久</span>
+            <span v-else-if="ban.banEndTime">解封时间：{{ formatDateTime(ban.banEndTime) }}</span>
+          </div>
+          <p class="mt-1 break-words">封禁原因：{{ ban.banReason || '未填写' }}</p>
         </div>
       </div>
       <div v-if="showDetail" class="border-t ui-border px-5 py-4 text-sm ui-text-base">

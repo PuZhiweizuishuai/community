@@ -16,6 +16,14 @@ const theme = useThemeStore()
 const props = defineProps({
   modelValue: { type: String, default: '' },
   height: { type: Number, default: 420 },
+  /** 移动端（<640px）高度；0 表示沿用 height */
+  mobileHeight: { type: Number, default: 0 },
+  /**
+   * 移动端工具栏项。移动端每个按钮会被 Vditor 放大到约 49px 宽，
+   * 完整工具栏会折成三四行、把编辑区挤没，所以窄屏场景传入精简子集；
+   * 留空表示移动端仍用完整工具栏。
+   */
+  mobileToolbar: { type: Array, default: () => [] },
   placeholder: { type: String, default: '写点什么吧…支持 Markdown' },
   mode: { type: String, default: 'ir' },
   upload: { type: Boolean, default: true },
@@ -40,10 +48,64 @@ function applyValue(value) {
   if (editor.getValue?.() !== next) editor.setValue?.(next)
 }
 
+// 移动端屏幕窄，Vditor 在窄屏会把每个工具栏按钮放大到约 49px，
+// 完整工具栏会折成三四行、把编辑区挤成两三行可见高度。
+// Vditor 的工具栏换行在初始化时计算，也没有运行时替换工具栏的 API，
+// 所以由调用方通过 mobile-toolbar 传一套精简子集，这里只在初始化时选一次。
+const MOBILE_QUERY = '(max-width: 639px)'
+const isMobileLayout =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(MOBILE_QUERY).matches
+    : false
+
+/** 桌面端完整工具栏 */
+const FULL_TOOLBAR = [
+  'emoji',
+  'headings',
+  'bold',
+  'italic',
+  'strike',
+  '|',
+  'list',
+  'ordered-list',
+  'check',
+  'outdent',
+  'indent',
+  '|',
+  'quote',
+  'line',
+  'code',
+  'inline-code',
+  'insert-before',
+  'insert-after',
+  '|',
+  'upload',
+  'link',
+  'table',
+  '|',
+  'undo',
+  'redo',
+  '|',
+  'edit-mode',
+  'fullscreen',
+  'outline',
+  'preview',
+]
+
+function toolbarOf() {
+  const list = isMobileLayout && props.mobileToolbar.length ? props.mobileToolbar : FULL_TOOLBAR
+  return list.filter((item) => item !== 'upload' || props.upload)
+}
+
+function heightOf() {
+  if (isMobileLayout && props.mobileHeight > 0) return props.mobileHeight
+  return props.height
+}
+
 function options() {
   const t = vditorThemeOf(theme.isDark)
   return {
-    height: props.height,
+    height: heightOf(),
     mode: props.mode,
     value: pendingValue ?? props.modelValue ?? '',
     placeholder: props.placeholder,
@@ -57,38 +119,7 @@ function options() {
       // 关键：代码高亮与内容主题跟随全站主题，否则夜间模式下代码块仍是白底
       ...vditorPreviewTheme(theme.isDark),
     },
-    toolbar: [
-      'emoji',
-      'headings',
-      'bold',
-      'italic',
-      'strike',
-      '|',
-      'list',
-      'ordered-list',
-      'check',
-      'outdent',
-      'indent',
-      '|',
-      'quote',
-      'line',
-      'code',
-      'inline-code',
-      'insert-before',
-      'insert-after',
-      '|',
-      props.upload ? 'upload' : '',
-      'link',
-      'table',
-      '|',
-      'undo',
-      'redo',
-      '|',
-      'edit-mode',
-      'fullscreen',
-      'outline',
-      'preview',
-    ].filter(Boolean),
+    toolbar: toolbarOf(),
     upload: props.upload
       ? {
           url: EDITOR_UPLOAD_URL,

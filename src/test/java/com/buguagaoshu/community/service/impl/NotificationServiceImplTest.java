@@ -97,6 +97,70 @@ class NotificationServiceImplTest {
         assertEquals("Liker", page.getData().get(0).getNotifierName());
     }
 
+    @Test
+    void systemNotificationUsesSentenceAndSystemActor() {
+        // 系统消息只展示一句完整的话，不再出现「系统 提交了问题审核」这种拼接
+        Notification notification = new Notification();
+        notification.setId(2);
+        notification.setType(NotificationTypeEnum.REVIEW_QUESTION_PENDING.getType());
+        notification.setNotifier(1);
+        notification.setReceiver(5);
+        notification.setOuterId(10);
+        notification.setCreateTime(System.currentTimeMillis());
+        notification.setCommentContent("你的问题已提交审核，通过后将公开展示：「如何入门 Java」");
+        when(notificationMapper.getAllSystemCount(5)).thenReturn(1L);
+        when(notificationMapper.getAllSystemNotification(anyLong(), anyLong(), anyLong()))
+                .thenReturn(List.of(notification));
+        Question question = new Question();
+        question.setQuestionId(10);
+        question.setTitle("如何入门 Java");
+        when(questionMapper.selectListByIds(any())).thenReturn(List.of(question));
+
+        NotificationDTO dto = service.getAllNotification("1", "10", 5, "5").getData().get(0);
+
+        assertEquals("system", dto.getActorType());
+        assertEquals("你的问题已提交审核", dto.getTypeName());
+        assertEquals("如何入门 Java", dto.getOuterTitle());
+        assertEquals("通过后将公开展示", dto.getCommentContent());
+    }
+
+    @Test
+    void replyNotificationKeepsAuthorName() {
+        Notification notification = new Notification();
+        notification.setId(3);
+        notification.setType(NotificationTypeEnum.REPLY_QUESTION.getType());
+        notification.setNotifier(8);
+        notification.setReceiver(5);
+        notification.setOuterId(10);
+        notification.setCommentId(274);
+        notification.setCreateTime(System.currentTimeMillis());
+        notification.setCommentContent("我也想知道");
+        when(notificationMapper.getAllCommentCount(5)).thenReturn(1L);
+        when(notificationMapper.getAllCommentNotification(anyLong(), anyLong(), anyLong()))
+                .thenReturn(List.of(notification));
+        User notifier = new User();
+        notifier.setId(8);
+        notifier.setUserId("replier");
+        notifier.setUserName("Replier");
+        notifier.setHeadUrl("/image/head/nohead.png");
+        when(userBatchLoader.loadUsers(any())).thenReturn(Map.of(8L, notifier));
+        Question question = new Question();
+        question.setQuestionId(10);
+        question.setTitle("如何入门 Java");
+        when(questionMapper.selectListByIds(any())).thenReturn(List.of(question));
+
+        NotificationDTO dto = service.getAllNotification("1", "10", 5, "0").getData().get(0);
+
+        assertEquals("user", dto.getActorType());
+        assertEquals("回复了你的问题", dto.getTypeName());
+        assertEquals("Replier", dto.getNotifierName());
+        // 列表要带上真实头像与评论 id，前端才能显示照片、点进主页、就地回复
+        assertEquals("/image/head/nohead.png", dto.getNotifierAvatar());
+        assertEquals("replier", dto.getNotifierId());
+        assertEquals(274L, dto.getCommentId());
+        assertEquals("我也想知道", dto.getCommentContent());
+    }
+
     private Comment comment(long commentator) {
         Comment comment = new Comment();
         comment.setCommentator(commentator);

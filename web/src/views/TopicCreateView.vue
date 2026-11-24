@@ -7,6 +7,8 @@ import {
   Crown,
   FileText,
   Globe2,
+  ImagePlus,
+  Loader,
   Lock,
   MessageSquare,
   Minus,
@@ -14,7 +16,6 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
-  Upload,
   UserPlus,
   Users,
 } from '@lucide/vue'
@@ -22,21 +23,31 @@ import { assetUrl, discoverApi, settingApi } from '@/api'
 import { useMetaStore } from '@/stores/meta'
 import { useToastStore } from '@/stores/toast'
 import Captcha from '@/components/Captcha.vue'
+import ImageCropper from '@/components/ImageCropper.vue'
+import { dataUrlToBlob, ensureDecodable, readAsDataUrl, validateImageFile } from '@/utils/image'
 
 const router = useRouter()
 const meta = useMetaStore()
 const toast = useToastStore()
 
+const DEFAULT_ICON = '/image/topicicon/default.svg'
+
 const form = ref({
   title: '',
   type: meta.topicTypes[0]?.value || 1,
   simpleDesc: '',
-  image: '/image/topicicon/default.svg',
+  image: DEFAULT_ICON,
   visibility: 0,
   captcha: '',
 })
 const saving = ref(false)
 const captchaRef = ref(null)
+
+// 图标上传：先选本地图片 → 裁剪 1:1 → 才真正上传
+const iconInput = ref(null)
+const iconCrop = ref(null)
+const iconUploading = ref(false)
+const hasCustomIcon = computed(() => !!form.value.image && form.value.image !== DEFAULT_ICON)
 
 const visibilityOptions = [
   { value: 0, label: '公开', desc: '所有用户都可以浏览话题内容并发帖', icon: Globe2 },
@@ -63,18 +74,40 @@ const previewDesc = computed(
   () => form.value.simpleDesc.trim() || '用一句话介绍这个话题的讨论范围，让同好一眼了解这里聊什么。',
 )
 
-async function uploadImage(event) {
+async function pickIcon(event) {
   const file = event.target.files?.[0]
-  if (!file) return
-  const formData = new FormData()
-  formData.append('editormd-image-file', file)
-  formData.append('type', 'topic')
-  const result = await settingApi.uploadImage(formData)
-  if (result?.url) {
+  event.target.value = ''
+  const invalid = validateImageFile(file)
+  if (invalid) return toast.warning(invalid)
+  const src = await readAsDataUrl(file)
+  try {
+    await ensureDecodable(src)
+  } catch {
+    return toast.warning('这张图片无法解析，请换一张 JPG / PNG 图片')
+  }
+  iconCrop.value = { src, title: '裁剪话题图标（1:1）' }
+}
+
+async function confirmIcon(dataUrl) {
+  iconCrop.value = null
+  iconUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('editormd-image-file', dataUrlToBlob(dataUrl), 'topic-icon.jpeg')
+    formData.append('type', 'topic')
+    const result = await settingApi.uploadImage(formData)
+    if (!result?.url) return toast.error('图标上传失败，请重试')
     form.value.image = result.url
     toast.success('图标已上传')
+  } catch {
+    toast.error('图标上传失败，请重试')
+  } finally {
+    iconUploading.value = false
   }
-  event.target.value = ''
+}
+
+function resetIcon() {
+  form.value.image = DEFAULT_ICON
 }
 
 async function submit() {
@@ -177,26 +210,56 @@ async function submit() {
 
           <div class="mt-6">
             <span class="mb-2 block text-xs font-medium ui-text-base">话题图标</span>
-            <label class="group flex cursor-pointer items-center gap-4 rounded-xl border border-dashed ui-border ui-bg-soft p-4 transition hover:border-indigo-300">
-              <img
-                :src="assetUrl(form.image)"
-                alt="话题图标"
-                class="h-16 w-16 shrink-0 rounded-xl ui-bg object-cover shadow-sm"
-              />
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium ui-text-strong">上传话题图标</p>
-                <p class="mt-0.5 text-xs ui-text-muted">建议使用 1:1 正方形图片，支持 JPG / PNG</p>
+            <div class="rounded-xl border border-dashed ui-border ui-bg-soft p-4">
+              <div class="flex items-center gap-4">
+                <div class="relative shrink-0">
+                  <img
+                    :src="assetUrl(form.image)"
+                    alt="话题图标"
+                    class="h-16 w-16 rounded-xl ui-bg object-cover shadow-sm"
+                  />
+                  <span
+                    v-if="iconUploading"
+                    class="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-900/55"
+                  >
+                    <Loader class="size-5 animate-spin text-white" />
+                  </span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium ui-text-strong">
+                    {{ hasCustomIcon ? '已使用自定义图标' : '上传话题图标' }}
+                  </p>
+                  <p class="mt-0.5 text-xs leading-relaxed ui-text-muted">
+                    选择图片后可拖动、缩放裁剪成 1:1 正方形，确认后才会开始上传
+                  </p>
+                </div>
               </div>
-              <Upload class="size-4 shrink-0 ui-text-muted transition group-hover:text-indigo-600" />
-              <input type="file" accept="image/*" class="hidden" @change="uploadImage" />
-            </label>
-            <button
-              type="button"
-              class="mt-2 text-xs ui-text-muted transition hover:text-indigo-600"
-              @click="form.image = '/image/topicicon/default.svg'"
-            >
-              使用默认图标
-            </button>
+              <div class="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  class="btn btn-outline btn-xs"
+                  type="button"
+                  :disabled="iconUploading"
+                  @click="iconInput?.click()"
+                >
+                  <Loader v-if="iconUploading" class="size-3.5 animate-spin" />
+                  <ImagePlus v-else class="size-3.5" />
+                  {{ iconUploading ? '上传中…' : hasCustomIcon ? '重新选择并裁剪' : '选择图片并裁剪' }}
+                </button>
+                <button
+                  v-if="hasCustomIcon"
+                  class="btn btn-ghost btn-xs font-normal ui-text-muted"
+                  type="button"
+                  :disabled="iconUploading"
+                  @click="resetIcon"
+                >
+                  使用默认图标
+                </button>
+                <span class="text-[11px] leading-relaxed ui-text-muted">
+                  JPG / PNG / WebP，≤ 10MB，输出 400 × 400
+                </span>
+              </div>
+            </div>
+            <input ref="iconInput" type="file" accept="image/*" class="hidden" @change="pickIcon" />
           </div>
         </section>
 
@@ -383,5 +446,16 @@ async function submit() {
         </section>
       </aside>
     </div>
+
+    <ImageCropper
+      v-if="iconCrop"
+      :src="iconCrop.src"
+      :aspect="1"
+      :output-width="400"
+      :output-height="400"
+      :title="iconCrop.title"
+      @confirm="confirmIcon"
+      @cancel="iconCrop = null"
+    />
   </div>
 </template>

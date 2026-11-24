@@ -1,5 +1,129 @@
 # 更新日志（Changelog）
 
+## 2026-11-24 · 问题详情移动端：评论框工具栏不再挤占编辑区
+
+### 问题
+
+问题详情页「发表评论」用的是 Vditor。Vditor 在 `<=520px` 会给每个工具栏按钮加 `padding: 0 12px`（单个按钮约 49px 宽），完整工具栏（25 项）在手机上折成 **5 行、176px 高**，220px 的编辑器只剩 **60px** 可写（约 2 行），实际编辑区域被操作栏吃掉大半。
+
+### 前端
+
+- `components/VditorEditor.vue`：新增 `mobileHeight`（窄屏高度）与 `mobileToolbar`（窄屏工具栏子集）两个 props，初始化时按 `(max-width: 639px)` 选择高度与工具栏；Vditor 没有运行时替换工具栏的 API，所以在 `options()` 里一次定型。默认不传 `mobileToolbar`，其他页面（发布页、评论编辑）行为不变。
+- `views/QuestionView.vue`：评论框改为 `:height="220"` + `:mobile-height="300"` + `:mobile-toolbar="['emoji','bold','italic','list','code','upload']"`，并加 `comment-editor` 类；验证码行与「发布评论」按钮在 `<sm` 改为整行排列（原来 224px 验证码 + 按钮会挤成两行）。
+- `assets/main.css`：新增 `@media (max-width: 639px)` 的 `.comment-editor` 规则——工具栏按钮收紧到 37px、隐藏独占一行的字数统计（`vditor-counter` 窄屏会单独占 18px）、正文 `16px/1.7`（同时规避 iOS 聚焦缩放）。
+  - 注意这些规则写在 `@layer` **之外**：`main.css` 的移动端段落在 `@layer utilities` 里，层内规则压不过 Vditor 自带的非分层样式。
+- `components/CommentComposer.vue`（就地回复）：文本框窄屏最小高度提到 6.5rem，验证码行 `<sm` 整行、按钮 `<sm` 保持 xs 尺寸，桌面端不变。
+
+### 效果（390px 宽实测）
+
+| | 工具栏 | 编辑区 |
+| --- | --- | --- |
+| 改动前 | 5 行 / 176px | 60px（220px 编辑器） |
+| 改动后 | 1 行 / 36px | 262px（300px 编辑器） |
+
+320px 窄屏下仍为单行；工具栏保留表情、加粗、斜体、列表、代码、图片上传 6 项常用操作。
+
+### 验证
+
+- 用 Vditor 实测页（390 / 320 / 1280px）读取工具栏行数、`contentH`：390px → 1 行 / 262px；320px → 1 行 / 262px；桌面 1280px 仍为完整工具栏、220px 编辑器。
+- `npm run build` 通过，ESLint 无告警，已同步 `src/main/resources/static`。
+
+## 2026-11-24 · 个人主页：封禁用户增加「已封禁」标识
+
+### 问题
+
+被封禁用户的个人主页与正常用户完全一样：其他用户访问时看不出该账号处于封禁状态，也不知道封到什么时候、为什么被封，容易把「长期不更新」误解为「社区没人管」。
+
+### 后端
+
+- `UserBanStatus` / `UserMapper.selectBanStatus*` 补上 `banTime`（最近一次封禁时间），`banInfo()` 一并返回 `banned / banType / banTime / banEndTime / banReason / banMessage`。
+- `DiscoverApiController#userHome`（`GET /api/users/{userId}`）注入 `UserBanService`，响应新增 `ban` 字段；临时封禁到期后 `banned` 自动变为 `false`（复用 `UserBanService` 的 30 秒本地缓存，不额外压库）。
+- 只暴露封禁展示所需字段，操作人、流水等后台信息不下发。
+
+### 前端（`UserView.vue`）
+
+- 用户名右侧增加封禁徽章：临时封禁显示「已封禁」，永久封禁显示「永久封禁」（`badge-error`，`shrink-0 whitespace-nowrap`，移动端不折行）。
+- 主页信息区下方新增提示条（琥珀色，`bg-amber-50 / border-amber-200 / text-amber-800`，夜间模式已有覆盖样式）：说明「已被封禁，暂时无法发布内容或参与互动」，并列出**封禁时间**（`banTime`）、**解封时间**（临时显示到期时间、永久显示「永久」）、**封禁原因**（缺失时显示「未填写」）。
+- 本人访问自己的主页不显示该提示条（顶部已有全站封禁提醒，避免重复）。
+
+### 验证
+
+- 临时封禁 `smoketest` 后实测接口与页面：徽章、封禁时间、解封时间、原因均正确，夜间模式与 420px 移动端布局无溢出、不折行；验证后已解封还原。
+- 重新构建前端并同步 `src/main/resources/static`（`dist` 产物），生产构建页面控制台 0 报错。
+
+## 2026-11-24 · 消息通知：真实头像 + 就地回复
+
+### 1. 用户头像
+
+- `NotificationDTO` 新增 `notifierAvatar`（来自 `users.headUrl`），列表接口一并返回，前端用 `Avatar` 组件渲染真实头像（之前是昵称首字占位）。
+- 头像包了一层 `RouterLink` → `/user/{notifierId}`，点一下进对方主页；`@click.stop` 不触发整行的「打开消息」。注销用户没有 `notifierId` 时退化为纯头像、不可点。
+- 系统消息仍用场景图标，不显示头像。
+
+### 2. 就地回复（普通文本框）
+
+- 只有「别人回复了我的问题 / 我的评论」（type 1、2）才出现「回复」入口；点赞、系统消息不显示。问题已删除 / 内容审核中的消息也会隐藏（`isPlaceholder` 判断）。
+- 点「回复」在消息下方展开 `CommentComposer`（沿用问题页同一个组件：textarea + 图形验证码 + Ctrl/⌘+Enter 提交），走同一个 `/api/comment` 接口，不做富文本。
+- 评论落点：
+  - 消息带 `commentId`（别人回复了我的评论）→ `type=2`，挂在那条评论下，对方会收到回复通知；
+  - 没有 `commentId`（历史数据）→ 退化为 `type=1` 一级评论，挂在问题下。
+- **配套后端改动**：`CommentServiceImpl` 给 `REPLY_QUESTION` 通知写入被回复评论的 id（原来固定 -1）；`NotificationServiceImpl` 列表接口补齐 `commentId` 回填（原来只有单条已读接口返回，前端一直拿不到）。
+- 提交后：收起回复框、轻提示（开启审核时提示「已提交审核，通过后对方会收到通知」），并把这条消息标记已读——未读角标与当前标签页小红点同步递减（新增 `applyRead`）。
+- `CommentComposer` 增强：新增 `topLevel` 开关、失败时内联展示后端错误文案（如「内容审核中」「验证码错误」）并自动换一张验证码；问题页原有调用行为不变。
+
+### 验证
+
+- 后端 `CommentServiceImplTest` 新增「一级评论通知带 commentId」用例，`NotificationServiceImplTest` 补 `notifierAvatar` / `notifierId` / `commentId` 断言；全量 120 个用例通过。
+- 浏览器实测（真账号 + 真头像）：头像加载 200、点头像进 `/user/maojinming`；回复后落库 `parentId` 与目标评论一致（274 / 294）；错误验证码显示内联红字并换图；`回复2 → 回复1` 角标联动；390px 下回复框不溢出。测试数据已清理。
+
+## 2026-11-24 · 消息通知：文案统一为「收件人视角」+ 列表展示重做
+
+### 问题
+
+消息中心把「发起人」和「动作」硬拼在一起，系统消息因此出现读不通的句子：
+
+- 旧：`系统 提交了问题审核`（实际想说的是「你的问题已提交审核」）
+- 旧：`系统 审核通过了你的问题`、`系统 删除了问题`（类型 7/9 的文案本身就是错的，把评论写成了问题）
+- 详情又把标题重复一遍：标题「提交了问题审核」+ 详情「你的问题已提交审核，通过后将公开展示：「XXX」」
+
+### 文案模型（后端）
+
+`NotificationTypeEnum` 增加 `Actor` 维度，文案统一按收件人视角书写：
+
+- `Actor.USER`（1~4 回复/点赞、24 加入申请、27 邀请）：写**动词短语**，前端渲染为「昵称 + 短语」。
+- `Actor.SYSTEM`（5~23、25、26）：写**完整一句话**，前端渲染为「系统徽章 + 句子」，不再拼昵称。
+- 修正 7/9 的文案错误（删除了评论 / 恢复了评论），其余类型全部改成「你的问题已通过审核」这类句子。
+- `NotificationDTO` 新增 `actorType`（`user` / `system`），发起人身份不再靠 `type >= 5` 猜；`notifierName` 对系统消息仍返回「系统」保持兼容。
+
+### 详情去重（新增 `NotificationTextUtil`）
+
+系统生成的详情不再重复标题，历史数据在展示时也会被清洗一遍：
+
+1. 去掉与 `outerTitle` 重复的「标题」引用；
+2. 去掉与文案完全相同的开头；
+3. 首个小句与文案结尾相同（≥3 字）时整句丢弃——但小句里带「」引用（例如标签名只出现在这里）则保留，避免丢信息；
+4. 压缩空白、去掉首尾标点、超 160 字截断。
+
+回复 / 点赞的详情是用户原文，只压缩空白，不做任何删改。
+
+### 各发送点的文案同步收敛
+
+`QuestionServiceImpl`、`CommentServiceImpl`、`ReviewServiceImpl`、`TopicServiceImpl`、`TopicMemberServiceImpl`、`TagAdminServiceImpl`、`ContentReportServiceImpl`、`AdminCommentServiceImpl` 里写死的详情改为只写「补充说明」（例如「通过审核后会自动公开展示，你可以在「我的审核」中查看进度」），不再复述标题，也不再重复拼话题名 / 用户名。
+
+### 列表展示（`MessagesView.vue`）
+
+- 系统消息不再显示「系统」昵称头像，改为按场景上色的图标（审核通过绿盾 / 驳回红盾 / 删除红桶 / 举报黄旗 / 标签、话题蓝），主文案前加一个小号「系统」徽章。
+- 用户消息保留头像 + 昵称 + 动作短语；引用对象单独一行，作为可点击链接。
+- 未读行：左侧品牌色竖条 + 浅底 + 文案加粗，替代原来的「未读」小徽章。
+- 时间移到右上角（手机端自动移到最下方一行，避免标题被挤成两行）。
+- 标签类消息（无详情页）不再跳到 `/question/0`，删除类消息不再跳进错误页，均改为轻提示。
+- 补了首屏骨架屏、空状态说明；分页补充 `allCount`，修掉「共 0 条」。
+
+### 验证
+
+- 新增 `NotificationTextUtilTest`（8 个用例，覆盖历史文案去重、用户原文不被动、截断、标签名保留）与 `NotificationServiceImplTest` 两个 DTO 用例（系统/用户两种 actorType）。
+- 相关 7 个测试类共 45 个用例全绿。
+- 开发库造了 9 种类型通知实测接口输出与页面（含历史格式详情、夜间模式、390px 移动端）：文案、图标、跳转、已读联动均正常；验证数据已清理。
+
 ## 2026-11-24 · 数据修复：富文本里重复拼接的文件链接
 
 历史数据（老版本上传逻辑留下）里存在一类坏链：外层已经有 `/api/file/{存储id}/{用户名}/` 前缀，内层又重复拼了一段 `api/file/{存储id}/`，导致访问 404。

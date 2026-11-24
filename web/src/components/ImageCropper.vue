@@ -199,7 +199,7 @@ watch(zoom, draw)
 </script>
 
 <template>
-  <div class="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 p-4">
+  <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 p-4">
     <div class="w-full max-w-2xl rounded-2xl ui-bg p-5 shadow-2xl">
       <div class="mb-4 flex items-center justify-between">
         <div>

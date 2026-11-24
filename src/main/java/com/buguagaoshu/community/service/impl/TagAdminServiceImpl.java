@@ -123,7 +123,7 @@ public class TagAdminServiceImpl implements TagAdminService {
         tagMapper.updateStatus(id, ReviewStatusEnum.APPROVED.getStatus(), admin.getId(), now, null);
         refreshQuestionsOfTag(id);
         notifyCreator(tag, admin, NotificationTypeEnum.TAG_REVIEW_PASS,
-                "你创建的标签「" + tag.getName() + "」已通过审核，所有关联帖子现在会公开显示该标签");
+                "标签「" + tag.getName() + "」的关联帖子现在会公开显示该标签");
         invalidateCaches();
         log.info("管理员 {} 通过标签 {}（{}）", admin.getId(), id, tag.getName());
         tag.setStatus(ReviewStatusEnum.APPROVED.getStatus());
@@ -149,7 +149,7 @@ public class TagAdminServiceImpl implements TagAdminService {
                 now, cleanReason);
         refreshQuestionsOfTag(id);
         notifyCreator(tag, admin, NotificationTypeEnum.TAG_REVIEW_REJECT,
-                "你创建的标签「" + tag.getName() + "」未通过审核：" + cleanReason);
+                "标签「" + tag.getName() + "」未通过原因：" + cleanReason);
         invalidateCaches();
         log.info("管理员 {} 拒绝标签 {}（{}）：{}", admin.getId(), id, tag.getName(), cleanReason);
         tag.setStatus(ReviewStatusEnum.REJECTED.getStatus());

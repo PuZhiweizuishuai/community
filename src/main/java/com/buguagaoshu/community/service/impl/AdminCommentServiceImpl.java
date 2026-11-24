@@ -19,6 +19,7 @@ import com.buguagaoshu.community.service.AdminCommentService;
 import com.buguagaoshu.community.service.NotificationService;
 import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.util.CacheInvalidation;
+import com.buguagaoshu.community.util.NotificationTextUtil;
 import com.buguagaoshu.community.util.NumberUtils;
 import com.buguagaoshu.community.util.StringUtil;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -156,7 +157,7 @@ public class AdminCommentServiceImpl implements AdminCommentService {
             adjustCommentCount(comment, -1);
         }
         notifyAuthor(comment, admin, NotificationTypeEnum.ADMIN_DELETE_COMMENT,
-                "你的评论已被管理员删除：" + StringUtil.subString(safeContent(comment), 100));
+                "评论内容：" + NotificationTextUtil.shortText(safeContent(comment), 80));
         CacheInvalidation.afterCommit(() -> siteCache.invalidate(SiteCacheService.HOME));
         log.info("管理员 {} 删除评论 {}", admin.getId(), commentId);
     }
@@ -178,7 +179,7 @@ public class AdminCommentServiceImpl implements AdminCommentService {
             adjustCommentCount(comment, 1);
         }
         notifyAuthor(comment, admin, NotificationTypeEnum.ADMIN_RECOVER_COMMENT,
-                "你的评论已被管理员恢复：" + StringUtil.subString(safeContent(comment), 100));
+                "评论内容：" + NotificationTextUtil.shortText(safeContent(comment), 80));
         CacheInvalidation.afterCommit(() -> siteCache.invalidate(SiteCacheService.HOME));
         log.info("管理员 {} 恢复评论 {}", admin.getId(), commentId);
     }

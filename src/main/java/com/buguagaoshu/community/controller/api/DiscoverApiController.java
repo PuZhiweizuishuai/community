@@ -22,6 +22,7 @@ import com.buguagaoshu.community.service.SiteCacheService;
 import com.buguagaoshu.community.service.TagClassService;
 import com.buguagaoshu.community.service.TopicAccessService;
 import com.buguagaoshu.community.service.TopicModerationService;
+import com.buguagaoshu.community.service.UserBanService;
 import com.buguagaoshu.community.service.UserService;
 import com.buguagaoshu.community.util.AuthUtil;
 import com.buguagaoshu.community.util.NumberUtils;
@@ -56,6 +57,7 @@ public class DiscoverApiController {
     private final TopicModerationService topicModerationService;
     private final TopicAccessService topicAccessService;
     private final TopicMemberMapper topicMemberMapper;
+    private final UserBanService userBanService;
 
     public DiscoverApiController(QuestionService questionService,
                                  UserService userService,
@@ -67,7 +69,8 @@ public class DiscoverApiController {
                                  SiteCacheService siteCache,
                                  TopicModerationService topicModerationService,
                                  TopicAccessService topicAccessService,
-                                 TopicMemberMapper topicMemberMapper) {
+                                 TopicMemberMapper topicMemberMapper,
+                                 UserBanService userBanService) {
         this.siteCache = siteCache;
         this.questionService = questionService;
         this.userService = userService;
@@ -79,6 +82,7 @@ public class DiscoverApiController {
         this.topicModerationService = topicModerationService;
         this.topicAccessService = topicAccessService;
         this.topicMemberMapper = topicMemberMapper;
+        this.userBanService = userBanService;
     }
 
     /**
@@ -179,6 +183,8 @@ public class DiscoverApiController {
         data.put("tab", tab);
         data.put("isFollowUser", isFollowUser);
         data.put("isSelf", isSelf);
+        // 封禁状态：主页顶部展示「已封禁」标识，附带封禁时间与原因
+        data.put("ban", userBanService.banInfo(user.getId()));
         data.put("privacyHidden", privacyHidden);
         data.put("pagination", privacyHidden ? emptyPagination(page, size) : switch (tab) {
             case "questions" -> followQuestionService.selectUserFollowQuestion(user.getId(), page, size);
